@@ -1,1 +1,3 @@
 rootProject.name = 'sw-campus-server'
+
+include 'sw-campus-api'

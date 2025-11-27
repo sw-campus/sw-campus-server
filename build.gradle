@@ -1,12 +1,8 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.8'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version '3.5.8' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
 }
-
-group = 'com.swcampus'
-version = '0.0.1-SNAPSHOT'
-description = 'sw-campus-server'
 
 java {
     toolchain {
@@ -14,16 +10,33 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
+allprojects {
+    group = 'com.swcampus'
+    version = '0.0.1-SNAPSHOT'
+    description = 'sw-campus-server'
+
+    repositories {
+        mavenCentral()
+    }
 }
 
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+subprojects {
+    apply {
+        plugin 'java'
+        plugin 'org.springframework.boot'
+        plugin 'io.spring.dependency-management'
+    }
+
+    dependencies {
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+
+    bootJar.enabled = false
+    jar.enabled = true
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-}
