@@ -1,3 +1,18 @@
+pluginManagement {
+    def pluginVersions = [
+            'org.springframework.boot'       : springBootVersion,
+            'io.spring.dependency-management': springDependencyManagementVersion
+    ]
+
+    resolutionStrategy {
+        eachPlugin {
+            def version = pluginVersions[requested.id.id]
+            if (version)
+                useVersion(version)
+        }
+    }
+}
+
 rootProject.name = 'sw-campus-server'
 
 include 'sw-campus-api'
