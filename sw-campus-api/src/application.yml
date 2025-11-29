@@ -1,8 +1,0 @@
-spring:
-  application:
-    name: sw-campus-api
-  profiles:
-    active: local
-  config:
-    activate:
-      on-profile: local

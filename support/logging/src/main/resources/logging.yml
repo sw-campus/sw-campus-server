@@ -1,0 +1,7 @@
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  config: classpath:logback/logback-${spring.profiles.active}.xml

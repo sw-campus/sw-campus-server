@@ -1,0 +1,6 @@
+spring:
+  profiles:
+    active: local
+  config:
+    import:
+      - optional:classpath:logging.yml # 공통 로깅 설정 불러오기

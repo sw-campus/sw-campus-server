@@ -1,7 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' apply false
-    id 'io.spring.dependency-management' apply false
+    id 'io.spring.dependency-management'
 }
 
 java {
@@ -13,7 +12,6 @@ java {
 allprojects {
     group = projectGroup
     version = applicationVersion
-    description = 'sw-campus-server'
 
     repositories {
         mavenCentral()
@@ -23,26 +21,11 @@ allprojects {
 subprojects {
     apply {
         plugin 'java'
-        plugin 'org.springframework.boot'
         plugin 'io.spring.dependency-management'
-    }
-
-    dependencyManagement {
-        imports {
-            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudDependenciesVersion}"
-        }
-    }
-
-    dependencies {
-        testImplementation 'org.springframework.boot:spring-boot-starter-test'
-        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
 
     tasks.named('test') {
         useJUnitPlatform()
     }
-
-    bootJar.enabled = false
-    jar.enabled = true
 }
 
