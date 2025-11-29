@@ -1,6 +1,13 @@
 spring:
   profiles:
-    active: local
+    active: local # 기본 실행 프로필
   config:
     import:
       - optional:classpath:logging.yml # 공통 로깅 설정 불러오기
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none # 스키마를 변경하지 않음
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100 # N+1 최적화

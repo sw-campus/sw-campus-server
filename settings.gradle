@@ -17,3 +17,5 @@ rootProject.name = 'sw-campus-server'
 
 include 'sw-campus-api'
 include 'support:logging'
+include 'storage:db-postgres'
+include 'storage:db-mongodb'

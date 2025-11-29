@@ -1,6 +1,7 @@
 plugins {
     id 'java'
-    id 'io.spring.dependency-management'
+    id 'org.springframework.boot' apply false
+    id 'io.spring.dependency-management' apply false
 }
 
 java {
@@ -21,7 +22,15 @@ allprojects {
 subprojects {
     apply {
         plugin 'java'
+        plugin 'org.springframework.boot'
         plugin 'io.spring.dependency-management'
+    }
+
+    dependencies {
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        testCompileOnly 'org.projectlombok:lombok'
+        testAnnotationProcessor 'org.projectlombok:lombok'
     }
 
     tasks.named('test') {
