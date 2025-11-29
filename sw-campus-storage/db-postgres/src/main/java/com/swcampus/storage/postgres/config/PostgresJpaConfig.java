@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
 @EnableTransactionManagement
-@EntityScan(basePackages = "com.swcampus.swcampusserver.storage.db.postgres")
-@EnableJpaRepositories(basePackages = "com.swcampus.swcampusserver.storage.db.postgres")
+@EntityScan(basePackages = "com.swcampus.storage.db.postgres")
+@EnableJpaRepositories(basePackages = "com.swcampus.storage.postgres")
 public class PostgresJpaConfig {
 }

@@ -6,9 +6,9 @@ plugins {
 
 dependencies {
     implementation project(':sw-campus-core')
-    implementation project(':support:logging')
-    runtimeOnly project(':storage:db-postgres') // write
-//    runtimeOnly project(':storage:db-mongodb')  // read
+    implementation project(':sw-campus-platform:logging')
+    runtimeOnly project(':sw-campus-storage:db-postgres') // write
+//    runtimeOnly project(':sw-campus-storage:db-mongodb')  // read
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
