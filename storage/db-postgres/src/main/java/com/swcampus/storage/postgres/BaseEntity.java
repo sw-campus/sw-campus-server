@@ -1,4 +1,4 @@
-package com.swcampus.swcampusserver.storage.db.postgres;
+package com.swcampus.storage.postgres;
 
 import java.time.LocalDateTime;
 

@@ -1,4 +1,4 @@
-package com.swcampus.swcampusserver.storage.db.postgres.config;
+package com.swcampus.storage.postgres.config;
 
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Configuration;

@@ -4,5 +4,6 @@ plugins {
 }
 
 dependencies {
+    compileOnly (project(':sw-campus-api'))
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 }

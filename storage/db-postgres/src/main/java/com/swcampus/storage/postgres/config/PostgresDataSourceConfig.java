@@ -1,4 +1,4 @@
-package com.swcampus.swcampusserver.storage.db.postgres.config;
+package com.swcampus.storage.postgres.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
