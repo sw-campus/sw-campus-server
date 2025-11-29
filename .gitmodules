@@ -1,0 +1,3 @@
+[submodule "sw-campus-api/src/main/resources/config"]
+	path = sw-campus-api/src/main/resources/config
+	url = https://github.com/sw-campus/config.git
