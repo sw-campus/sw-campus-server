@@ -1,4 +1,4 @@
-package com.swcampus.storage.postgres;
+package com.swcampus.infra.postgres;
 
 import java.time.LocalDateTime;
 
@@ -16,7 +16,7 @@ import lombok.Getter;
 public abstract class BaseEntity {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	private Long id;
 
 	@CreationTimestamp
