@@ -22,8 +22,13 @@ allprojects {
 subprojects {
     apply {
         plugin 'java'
-        plugin 'org.springframework.boot'
         plugin 'io.spring.dependency-management'
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+        }
     }
 
     dependencies {
@@ -38,3 +43,6 @@ subprojects {
     }
 }
 
+project(':sw-campus-api') {
+    apply plugin: 'org.springframework.boot'
+}

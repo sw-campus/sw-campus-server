@@ -16,6 +16,7 @@ pluginManagement {
 rootProject.name = 'sw-campus-server'
 
 include 'sw-campus-api'
+include 'sw-campus-core'
 include 'support:logging'
 include 'storage:db-postgres'
 include 'storage:db-mongodb'
