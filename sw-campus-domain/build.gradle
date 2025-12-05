@@ -3,4 +3,7 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Spring Security (PasswordEncoder 사용)
+    implementation 'org.springframework.security:spring-security-core'
 }
