@@ -4,8 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation project(':sw-campus-domain')
-
+    compileOnly (project(':sw-campus-api'))
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'org.postgresql:postgresql'
 }
