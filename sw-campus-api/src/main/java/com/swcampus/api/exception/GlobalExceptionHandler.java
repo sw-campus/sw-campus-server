@@ -1,7 +1,9 @@
 package com.swcampus.api.exception;
 
 import com.swcampus.domain.auth.exception.DuplicateEmailException;
+import com.swcampus.domain.auth.exception.EmailNotVerifiedException;
 import com.swcampus.domain.auth.exception.EmailVerificationExpiredException;
+import com.swcampus.domain.auth.exception.InvalidPasswordException;
 import com.swcampus.domain.auth.exception.InvalidTokenException;
 import com.swcampus.domain.auth.exception.MailSendException;
 import com.swcampus.domain.auth.exception.TokenExpiredException;
@@ -54,6 +56,20 @@ public class GlobalExceptionHandler {
         log.error("메일 발송 실패: {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "이메일 발송에 실패했습니다"));
+    }
+
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ResponseEntity<ErrorResponse> handleEmailNotVerifiedException(EmailNotVerifiedException e) {
+        log.warn("이메일 미인증: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPasswordException(InvalidPasswordException e) {
+        log.warn("비밀번호 정책 위반: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
     }
 
     // === Validation 예외 ===
