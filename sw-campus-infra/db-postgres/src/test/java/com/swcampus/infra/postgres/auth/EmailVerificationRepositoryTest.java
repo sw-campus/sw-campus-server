@@ -28,17 +28,49 @@ class EmailVerificationRepositoryTest {
     @DisplayName("이메일 인증 저장 및 조회")
     void saveAndFindByEmail() {
         // given
-        EmailVerification ev = EmailVerification.create("test@example.com", "123456");
+        EmailVerification ev = EmailVerification.create("test@example.com");
 
         // when
-        emailVerificationRepository.save(ev);
+        EmailVerification saved = emailVerificationRepository.save(ev);
         Optional<EmailVerification> found = emailVerificationRepository.findByEmail("test@example.com");
 
         // then
         assertThat(found).isPresent();
         assertThat(found.get().getEmail()).isEqualTo("test@example.com");
-        assertThat(found.get().getCode()).isEqualTo("123456");
+        assertThat(found.get().getToken()).isNotNull();
+        assertThat(found.get().getToken()).hasSize(36); // UUID
         assertThat(found.get().isVerified()).isFalse();
+    }
+
+    @Test
+    @DisplayName("토큰으로 조회")
+    void findByToken() {
+        // given
+        EmailVerification ev = EmailVerification.create("test@example.com");
+        EmailVerification saved = emailVerificationRepository.save(ev);
+
+        // when
+        Optional<EmailVerification> found = emailVerificationRepository.findByToken(saved.getToken());
+
+        // then
+        assertThat(found).isPresent();
+        assertThat(found.get().getEmail()).isEqualTo("test@example.com");
+    }
+
+    @Test
+    @DisplayName("인증 완료된 이메일 조회")
+    void findByEmailAndVerified() {
+        // given
+        EmailVerification ev = EmailVerification.create("test@example.com");
+        ev.verify();
+        emailVerificationRepository.save(ev);
+
+        // when
+        Optional<EmailVerification> found = emailVerificationRepository.findByEmailAndVerified("test@example.com", true);
+
+        // then
+        assertThat(found).isPresent();
+        assertThat(found.get().isVerified()).isTrue();
     }
 
     @Test

@@ -21,8 +21,8 @@ public class EmailVerificationEntity {
     @Column(nullable = false)
     private String email;
 
-    @Column(nullable = false, length = 6)
-    private String code;
+    @Column(nullable = false, unique = true)
+    private String token;
 
     @Column(nullable = false)
     private boolean verified;
@@ -37,7 +37,7 @@ public class EmailVerificationEntity {
         EmailVerificationEntity entity = new EmailVerificationEntity();
         entity.id = ev.getId();
         entity.email = ev.getEmail();
-        entity.code = ev.getCode();
+        entity.token = ev.getToken();
         entity.verified = ev.isVerified();
         entity.expiresAt = ev.getExpiresAt();
         entity.createdAt = ev.getCreatedAt();
@@ -48,7 +48,7 @@ public class EmailVerificationEntity {
         return EmailVerification.of(
                 id,
                 email,
-                code,
+                token,
                 verified,
                 expiresAt,
                 createdAt
