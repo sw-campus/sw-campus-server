@@ -27,6 +27,18 @@ public class EmailVerificationRepositoryImpl implements EmailVerificationReposit
     }
 
     @Override
+    public Optional<EmailVerification> findByToken(String token) {
+        return jpaRepository.findByToken(token)
+                .map(EmailVerificationEntity::toDomain);
+    }
+
+    @Override
+    public Optional<EmailVerification> findByEmailAndVerified(String email, boolean verified) {
+        return jpaRepository.findByEmailAndVerified(email, verified)
+                .map(EmailVerificationEntity::toDomain);
+    }
+
+    @Override
     public void deleteByEmail(String email) {
         jpaRepository.deleteByEmail(email);
     }

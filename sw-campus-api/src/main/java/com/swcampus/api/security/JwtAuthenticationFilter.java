@@ -51,7 +51,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String resolveToken(HttpServletRequest request) {
-        // 1. Cookie에서 토큰 추출
+        // 1. Authorization 헤더에서 토큰 추출 (Bearer 토큰) - 헤더 우선
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+
+        // 2. Cookie에서 토큰 추출 (fallback)
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
@@ -59,12 +65,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return cookie.getValue();
                 }
             }
-        }
-
-        // 2. Authorization 헤더에서 토큰 추출 (Bearer 토큰)
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
         }
 
         return null;
