@@ -1,9 +1,13 @@
 package com.swcampus.api.auth;
 
 import com.swcampus.api.auth.request.EmailSendRequest;
+import com.swcampus.api.auth.request.SignupRequest;
 import com.swcampus.api.auth.response.EmailStatusResponse;
 import com.swcampus.api.auth.response.MessageResponse;
+import com.swcampus.api.auth.response.SignupResponse;
+import com.swcampus.domain.auth.AuthService;
 import com.swcampus.domain.auth.EmailService;
+import com.swcampus.domain.member.Member;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +27,7 @@ import java.net.URI;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private final AuthService authService;
     private final EmailService emailService;
 
     @Value("${app.frontend-url:http://localhost:3000}")
@@ -54,5 +59,13 @@ public class AuthController {
             @RequestParam("email") String email) {
         boolean verified = emailService.isEmailVerified(email);
         return ResponseEntity.ok(EmailStatusResponse.of(email, verified));
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<SignupResponse> signup(
+            @Valid @RequestBody SignupRequest request) {
+        Member member = authService.signup(request.toCommand());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(SignupResponse.from(member));
     }
 }

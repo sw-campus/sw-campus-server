@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swcampus.api.auth.request.EmailSendRequest;
 import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.exception.GlobalExceptionHandler;
+import com.swcampus.domain.auth.AuthService;
 import com.swcampus.domain.auth.EmailService;
 import com.swcampus.domain.auth.exception.DuplicateEmailException;
 import com.swcampus.domain.auth.exception.InvalidTokenException;
@@ -47,6 +48,9 @@ class AuthControllerEmailTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private AuthService authService;
 
     @MockitoBean
     private EmailService emailService;
