@@ -49,7 +49,7 @@ public record LectureResponse(
 				lecture.getDays(),
 				lecture.getStartTime(),
 				lecture.getEndTime(),
-				lecture.getLectureLoc().name(),
+				lecture.getLectureLoc() != null ? lecture.getLectureLoc().name() : null,
 				lecture.getLocation(),
 				lecture.getRecruitType().name(),
 				lecture.getSubsidy(),
