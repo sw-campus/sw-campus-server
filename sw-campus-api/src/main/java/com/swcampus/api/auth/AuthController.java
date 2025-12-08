@@ -15,6 +15,7 @@ import com.swcampus.domain.auth.EmailService;
 import com.swcampus.domain.auth.LoginResult;
 import com.swcampus.domain.auth.OrganizationSignupResult;
 import com.swcampus.domain.auth.TokenProvider;
+import com.swcampus.domain.auth.exception.InvalidTokenException;
 import com.swcampus.domain.member.Member;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -126,6 +127,24 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, deleteAccessCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, deleteRefreshCookie.toString())
+                .build();
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<Void> refresh(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken) {
+
+        if (refreshToken == null) {
+            throw new InvalidTokenException();
+        }
+
+        String newAccessToken = authService.refresh(refreshToken);
+
+        ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(
+                newAccessToken, tokenProvider.getAccessTokenValidity());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
                 .build();
     }
 }
