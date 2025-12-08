@@ -9,6 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = "lecture")
 public class LectureQualEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +21,8 @@ public class LectureQualEntity {
 	private LectureEntity lecture;
 
 	@Column(name = "TYPE", nullable = false)
-	private String type;
+	@Enumerated(EnumType.STRING)
+	private com.swcampus.domain.lecture.LectureQualType type;
 
 	@Column(name = "TEXT", nullable = false)
 	private String text;

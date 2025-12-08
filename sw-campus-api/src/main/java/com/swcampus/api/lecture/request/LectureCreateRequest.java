@@ -12,11 +12,14 @@ import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 public record LectureCreateRequest(
 		Long orgId,
 		String lectureName,
-		String days,
+		Set<String> days, // MONDAY, TUESDAY ...
 		LocalTime startTime,
 		LocalTime endTime,
 		String lectureLoc,
@@ -45,11 +48,14 @@ public record LectureCreateRequest(
 		List<QualRequest> quals,
 		List<TeacherRequest> teachers,
 		List<CurriculumRequest> curriculums) {
+
 	public Lecture toDomain() {
 		return Lecture.builder()
 				.orgId(orgId)
 				.lectureName(lectureName)
-				.days(days)
+				.days(days != null 
+						? days.stream().map(com.swcampus.domain.lecture.LectureDay::valueOf).collect(Collectors.toSet()) 
+						: Collections.emptySet())
 				.startTime(startTime)
 				.endTime(endTime)
 				.lectureLoc(com.swcampus.domain.lecture.LectureLocation.valueOf(lectureLoc))
@@ -70,8 +76,9 @@ public record LectureCreateRequest(
 				.afterCompletion(afterCompletion)
 				.url(url)
 				.lectureImageUrl(lectureImageUrl)
-				.status("RECRUITING") // 초기 상태
+				.status(com.swcampus.domain.lecture.LectureStatus.RECRUITING) // 초기 상태
 				.lectureAuthStatus(false) // 관리자 승인시 true
+				
 				// 1. 기수(Cohorts) 변환
 				.cohorts(cohorts != null
 						? cohorts.stream().map(CohortRequest::toDomain).toList()
@@ -136,7 +143,7 @@ public record LectureCreateRequest(
 	public record QualRequest(String type, String text) {
 		public LectureQual toDomain() {
 			return LectureQual.builder()
-					.type(type)
+					.type(com.swcampus.domain.lecture.LectureQualType.valueOf(type))
 					.text(text)
 					.build();
 		}
@@ -159,7 +166,7 @@ public record LectureCreateRequest(
 		public LectureCurriculum toDomainInfo() {
 			return LectureCurriculum.builder()
 					.curriculumId(curriculumId)
-					.level(level)
+					.level(com.swcampus.domain.lecture.CurriculumLevel.valueOf(level))
 					.build();
 		}
 	}

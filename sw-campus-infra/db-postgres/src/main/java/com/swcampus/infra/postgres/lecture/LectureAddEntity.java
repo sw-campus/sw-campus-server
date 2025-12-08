@@ -9,6 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = "lecture")
 public class LectureAddEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

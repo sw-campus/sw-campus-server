@@ -11,6 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = {"lecture", "teacher"})
 public class LectureTeacherEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,7 +14,7 @@ public class Lecture {
 	private Long lectureId;
 	private Long orgId;
 	private String lectureName;
-	private String days; // 월,수,금 등
+	private Set<LectureDay> days; // 월,수,금 등
 	private LocalTime startTime;
 	private LocalTime endTime;
 	private LectureLocation lectureLoc; // 온라인/오프라인/혼합
@@ -34,7 +35,7 @@ public class Lecture {
 	private Integer afterCompletion; // 수료 후 사후관리 (개월)
 	private String url; // 신청 링크
 	private String lectureImageUrl; // 이미지 URL
-	private String status; // 모집중, 진행중, 종료
+	private LectureStatus status; // 모집중, 진행중, 종료
 	private Boolean lectureAuthStatus; // 등록 상태
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;

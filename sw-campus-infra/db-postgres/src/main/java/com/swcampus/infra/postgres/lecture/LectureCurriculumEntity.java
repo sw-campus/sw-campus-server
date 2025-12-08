@@ -11,6 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = {"lecture", "curriculum"})
 public class LectureCurriculumEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +26,8 @@ public class LectureCurriculumEntity {
 	private CurriculumEntity curriculum;
 
 	@Column(name = "LEVEL")
-	private String level; // 없음/기본/심화
+	@Enumerated(EnumType.STRING)
+	private com.swcampus.domain.lecture.CurriculumLevel level; // 없음/기본/심화
 
 	public com.swcampus.domain.lecture.LectureCurriculum toDomain() {
 		return com.swcampus.domain.lecture.LectureCurriculum.builder()

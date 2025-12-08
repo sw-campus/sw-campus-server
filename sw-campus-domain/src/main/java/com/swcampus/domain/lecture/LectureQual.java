@@ -8,6 +8,6 @@ import lombok.Getter;
 public class LectureQual {
 	private Long qualId;
 	private Long lectureId;
-	private String type; // REQUIRED/PREFERRED
+	private LectureQualType type; // REQUIRED/PREFERRED
 	private String text;
 }

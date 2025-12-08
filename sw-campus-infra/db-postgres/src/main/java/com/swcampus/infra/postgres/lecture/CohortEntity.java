@@ -10,6 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = "lecture")
 public class CohortEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

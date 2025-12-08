@@ -21,6 +21,7 @@ import com.swcampus.infra.postgres.category.CurriculumEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = {"cohorts", "steps", "adds", "quals", "lectureTeachers", "lectureCurriculums"})
 public class LectureEntity {
 
 	@Id
@@ -102,7 +103,8 @@ public class LectureEntity {
 	private String lectureImageUrl;
 
 	@Column(name = "STATUS", nullable = false)
-	private String status;
+	@Enumerated(EnumType.STRING)
+	private com.swcampus.domain.lecture.LectureStatus status;
 
 	@Column(name = "LECTURE_AUTH_STATUS")
 	private Boolean lectureAuthStatus;
@@ -152,7 +154,7 @@ public class LectureEntity {
 				.lectureId(lecture.getLectureId())
 				.orgId(lecture.getOrgId())
 				.lectureName(lecture.getLectureName())
-				.days(lecture.getDays())
+				.days(lecture.getDays() != null ? lecture.getDays().stream().map(Enum::name).collect(java.util.stream.Collectors.joining(",")) : null)
 				.startTime(lecture.getStartTime())
 				.endTime(lecture.getEndTime())
 				.lectureLoc(lecture.getLectureLoc())
@@ -254,7 +256,8 @@ public class LectureEntity {
 	public com.swcampus.domain.lecture.Lecture toDomain() {
 		return com.swcampus.domain.lecture.Lecture.builder()
 				.lectureId(lectureId).orgId(orgId).lectureName(lectureName)
-				.days(days).startTime(startTime).endTime(endTime)
+				.days(days != null && !days.isEmpty() ? java.util.Arrays.stream(days.split(",")).map(com.swcampus.domain.lecture.LectureDay::valueOf).collect(java.util.stream.Collectors.toSet()) : java.util.Collections.emptySet())
+				.startTime(startTime).endTime(endTime)
 				.lectureLoc(lectureLoc).location(location).recruitType(recruitType)
 				.subsidy(subsidy).lectureFee(lectureFee).eduSubsidy(eduSubsidy)
 				.goal(goal).maxCapacity(maxCapacity)

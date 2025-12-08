@@ -12,6 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = "lecture")
 public class LectureStepEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -4,13 +4,16 @@ import com.swcampus.domain.lecture.Lecture;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public record LectureResponse(
 		Long lectureId,
 		Long orgId,
 		String lectureName,
-		String days,
+		Set<String> days,
 		LocalTime startTime,
 		LocalTime endTime,
 		String lectureLoc,
@@ -46,7 +49,9 @@ public record LectureResponse(
 				lecture.getLectureId(),
 				lecture.getOrgId(),
 				lecture.getLectureName(),
-				lecture.getDays(),
+				lecture.getDays() != null 
+						? lecture.getDays().stream().map(Enum::name).collect(Collectors.toSet()) 
+						: Collections.emptySet(),
 				lecture.getStartTime(),
 				lecture.getEndTime(),
 				lecture.getLectureLoc().name(),
@@ -67,7 +72,7 @@ public record LectureResponse(
 				lecture.getAfterCompletion(),
 				lecture.getUrl(),
 				lecture.getLectureImageUrl(),
-				lecture.getStatus(),
+				lecture.getStatus().name(),
 				lecture.getLectureAuthStatus(),
 
 				// Null-safe List Mapping
@@ -103,7 +108,7 @@ public record LectureResponse(
 
 	public record QualResponse(Long qualId, String type, String text) {
 		public static QualResponse from(com.swcampus.domain.lecture.LectureQual q) {
-			return new QualResponse(q.getQualId(), q.getType(), q.getText());
+			return new QualResponse(q.getQualId(), q.getType().name(), q.getText());
 		}
 	}
 
@@ -118,7 +123,7 @@ public record LectureResponse(
 			return new CurriculumResponse(
 					lc.getCurriculumId(),
 					lc.getCurriculum() != null ? lc.getCurriculum().getCurriculumName() : "",
-					lc.getLevel());
+					lc.getLevel().name());
 		}
 	}
 }

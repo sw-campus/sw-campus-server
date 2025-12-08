@@ -17,12 +17,7 @@ public class TeacherEntityRepository implements TeacherRepository {
 
 	@Override
 	public Teacher save(Teacher teacher) {
-		TeacherEntity entity = TeacherEntity.builder()
-				.teacherId(teacher.getTeacherId())
-				.teacherName(teacher.getTeacherName())
-				.teacherDescription(teacher.getTeacherDescription())
-				.teacherImageUrl(teacher.getTeacherImageUrl())
-				.build();
+		TeacherEntity entity = TeacherEntity.from(teacher);
 
 		return jpaRepository.save(entity).toDomain();
 	}

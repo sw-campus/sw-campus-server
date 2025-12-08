@@ -10,7 +10,7 @@ import lombok.Getter;
 public class LectureCurriculum {
 	private Long lectureId;
 	private Long curriculumId;
-	private String level; // 입문/기본/심화
+	private CurriculumLevel level; // 입문/기본/심화
 
 	private Curriculum curriculum;
 }

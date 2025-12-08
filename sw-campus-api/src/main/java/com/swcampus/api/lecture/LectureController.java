@@ -1,5 +1,6 @@
 package com.swcampus.api.lecture;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +14,7 @@ import com.swcampus.api.lecture.response.LectureResponse;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -23,11 +25,12 @@ public class LectureController {
 	private final LectureService lectureService;
 
 	@PostMapping
+	@Valid
 	public ResponseEntity<LectureResponse> createLecture(@RequestBody LectureCreateRequest request) {
 		Lecture lectureDomain = request.toDomain();
 		Lecture savedLecture = lectureService.registerLecture(lectureDomain);
 
-		return ResponseEntity.ok(LectureResponse.from(savedLecture));
+		return ResponseEntity.status(HttpStatus.CREATED).body(LectureResponse.from(savedLecture));
 	}
 
 	@GetMapping("/{lectureId}")
