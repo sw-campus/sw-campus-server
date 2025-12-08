@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ContextConfiguration(classes = TestApplication.class)
-@Import(RefreshTokenRepositoryImpl.class)
+@Import(RefreshTokenEntityRepository.class)
 @ActiveProfiles("test")
 class RefreshTokenRepositoryTest {
 

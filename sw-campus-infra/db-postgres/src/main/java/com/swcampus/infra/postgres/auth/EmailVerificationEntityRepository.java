@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class EmailVerificationRepositoryImpl implements EmailVerificationRepository {
+public class EmailVerificationEntityRepository implements EmailVerificationRepository {
 
     private final EmailVerificationJpaRepository jpaRepository;
 

@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class OrganizationRepositoryImpl implements OrganizationRepository {
+public class OrganizationEntityRepository implements OrganizationRepository {
 
     private final OrganizationJpaRepository jpaRepository;
 

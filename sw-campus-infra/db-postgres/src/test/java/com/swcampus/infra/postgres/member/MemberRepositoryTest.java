@@ -25,7 +25,7 @@ class MemberRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        memberRepository = new MemberRepositoryImpl(memberJpaRepository);
+        memberRepository = new MemberEntityRepository(memberJpaRepository);
     }
 
     @Test

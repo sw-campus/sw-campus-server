@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ContextConfiguration(classes = TestApplication.class)
-@Import(EmailVerificationRepositoryImpl.class)
+@Import(EmailVerificationEntityRepository.class)
 @ActiveProfiles("test")
 class EmailVerificationRepositoryTest {
 
