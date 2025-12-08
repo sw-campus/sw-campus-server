@@ -1,5 +1,6 @@
 package com.swcampus.api.exception;
 
+import com.swcampus.domain.auth.exception.CertificateRequiredException;
 import com.swcampus.domain.auth.exception.DuplicateEmailException;
 import com.swcampus.domain.auth.exception.EmailNotVerifiedException;
 import com.swcampus.domain.auth.exception.EmailVerificationExpiredException;
@@ -14,6 +15,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.stream.Collectors;
 
@@ -80,6 +82,28 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining(", "));
         log.warn("Validation 실패: {}", message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), message));
+    }
+
+    // === Organization 관련 예외 ===
+
+    @ExceptionHandler(CertificateRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleCertificateRequiredException(CertificateRequiredException e) {
+        log.warn("재직증명서 누락: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+    }
+
+    // === Multipart 예외 ===
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestPartException(MissingServletRequestPartException e) {
+        String partName = e.getRequestPartName();
+        String message = "certificateImage".equals(partName) 
+                ? "재직증명서는 필수입니다" 
+                : String.format("필수 파일이 누락되었습니다: %s", partName);
+        log.warn("필수 파일 누락: {}", partName);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), message));
     }

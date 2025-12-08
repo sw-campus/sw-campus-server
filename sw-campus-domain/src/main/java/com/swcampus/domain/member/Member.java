@@ -16,7 +16,6 @@ public class Member {
     private String nickname;
     private String phone;
     private Role role;
-    private Integer orgAuth;
     private Long orgId;
     private String location;
     private LocalDateTime createdAt;
@@ -33,7 +32,6 @@ public class Member {
         member.phone = phone;
         member.location = location;
         member.role = Role.USER;
-        member.orgAuth = null;
         member.createdAt = LocalDateTime.now();
         member.updatedAt = LocalDateTime.now();
         return member;
@@ -44,13 +42,12 @@ public class Member {
                                             String phone, String location) {
         Member member = createUser(email, password, name, nickname, phone, location);
         member.role = Role.ORGANIZATION;
-        member.orgAuth = 0;
         return member;
     }
 
     public static Member of(Long id, String email, String password,
                             String name, String nickname, String phone,
-                            Role role, Integer orgAuth, Long orgId,
+                            Role role, Long orgId,
                             String location, LocalDateTime createdAt,
                             LocalDateTime updatedAt) {
         Member member = new Member();
@@ -61,12 +58,16 @@ public class Member {
         member.nickname = nickname;
         member.phone = phone;
         member.role = role;
-        member.orgAuth = orgAuth;
         member.orgId = orgId;
         member.location = location;
         member.createdAt = createdAt;
         member.updatedAt = updatedAt;
         return member;
+    }
+
+    public void setOrgId(Long orgId) {
+        this.orgId = orgId;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void changePassword(String newPassword) {

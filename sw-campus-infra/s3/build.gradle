@@ -1,0 +1,14 @@
+plugins {
+    id 'java'
+    id 'io.spring.dependency-management'
+}
+
+dependencies {
+    implementation project(':sw-campus-domain')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+    
+    // AWS S3 SDK v2
+    implementation platform('software.amazon.awssdk:bom:2.21.0')
+    implementation 'software.amazon.awssdk:s3'
+}

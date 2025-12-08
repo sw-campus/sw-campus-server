@@ -37,9 +37,6 @@ public class MemberEntity extends BaseEntity {
     @Column(nullable = false)
     private Role role;
 
-    @Column(name = "org_auth")
-    private Integer orgAuth;
-
     @Column(name = "org_id")
     private Long orgId;
 
@@ -54,7 +51,6 @@ public class MemberEntity extends BaseEntity {
         entity.nickname = member.getNickname();
         entity.phone = member.getPhone();
         entity.role = member.getRole();
-        entity.orgAuth = member.getOrgAuth();
         entity.orgId = member.getOrgId();
         entity.location = member.getLocation();
         return entity;
@@ -69,7 +65,6 @@ public class MemberEntity extends BaseEntity {
             this.nickname,
             this.phone,
             this.role,
-            this.orgAuth,
             this.orgId,
             this.location,
             this.getCreatedAt(),
