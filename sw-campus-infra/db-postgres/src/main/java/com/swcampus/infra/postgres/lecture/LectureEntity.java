@@ -1,19 +1,29 @@
 package com.swcampus.infra.postgres.lecture;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
-import java.time.LocalTime;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import com.swcampus.infra.postgres.teacher.TeacherEntity;
-import com.swcampus.infra.postgres.category.CurriculumEntity;
+import lombok.ToString;
 
 @Entity
 @Table(name = "LECTURES")
@@ -225,27 +235,6 @@ public class LectureEntity {
 							.lecture(entity)
 							.type(q.getType())
 							.text(q.getText())
-							.build())
-					.toList());
-		}
-
-		// N:M Relationships (Teachers)
-		if (lecture.getTeachers() != null) {
-			entity.getLectureTeachers().addAll(lecture.getTeachers().stream()
-					.map(t -> LectureTeacherEntity.builder()
-							.lecture(entity)
-							.teacher(TeacherEntity.builder().teacherId(t.getTeacherId()).build())
-							.build())
-					.toList());
-		}
-
-		// N:M Relationships (Curriculums)
-		if (lecture.getLectureCurriculums() != null) {
-			entity.getLectureCurriculums().addAll(lecture.getLectureCurriculums().stream()
-					.map(lc -> LectureCurriculumEntity.builder()
-							.lecture(entity)
-							.curriculum(CurriculumEntity.builder().curriculumId(lc.getCurriculumId()).build())
-							.level(lc.getLevel())
 							.build())
 					.toList());
 		}
