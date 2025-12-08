@@ -44,7 +44,7 @@ public class LectureService {
 
 	public Lecture getLecture(Long lectureId) {
 		return lectureRepository.findById(lectureId)
-				.orElseThrow(() -> new ResourceNotFoundException("강의를 찾을 수 없습니다. ID: " + lectureId));
+				.orElseThrow(() -> new ResourceNotFoundException("Lecture not found with id: " + lectureId));
 	}
 
 }
