@@ -26,12 +26,16 @@ public class CohortEntity {
 	@Column(name = "END_AT", nullable = false)
 	private LocalDateTime endAt;
 
+	@Column(name = "TOTAL_DAYS", nullable = false)
+	private Integer totalDays;
+
 	public com.swcampus.domain.lecture.Cohort toDomain() {
 		return com.swcampus.domain.lecture.Cohort.builder()
 			.cohortNum(cohortNum)
 			.lectureId(lecture.getLectureId())
 			.startAt(startAt)
 			.endAt(endAt)
+			.totalDays(totalDays)
 			.build();
 	}
 }

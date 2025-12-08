@@ -11,4 +11,5 @@ public class Cohort {
 	private Long lectureId;
 	private LocalDateTime startAt;
 	private LocalDateTime endAt;
+	private Integer totalDays;
 }

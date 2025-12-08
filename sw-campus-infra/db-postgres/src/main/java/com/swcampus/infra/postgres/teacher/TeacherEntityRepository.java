@@ -1,11 +1,13 @@
 package com.swcampus.infra.postgres.teacher;
 
-import com.swcampus.domain.teacher.Teacher;
-import com.swcampus.domain.teacher.TeacherRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.swcampus.domain.teacher.Teacher;
+import com.swcampus.domain.teacher.TeacherRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,15 +30,5 @@ public class TeacherEntityRepository implements TeacherRepository {
 	@Override
 	public Optional<Teacher> findById(Long id) {
 		return jpaRepository.findById(id).map(TeacherEntity::toDomain);
-	}
-
-	@Override
-	public Optional<Teacher> findByName(String name) {
-		return jpaRepository.findByTeacherName(name).map(TeacherEntity::toDomain);
-	}
-
-	@Override
-	public void deleteById(Long id) {
-		jpaRepository.deleteById(id);
 	}
 }

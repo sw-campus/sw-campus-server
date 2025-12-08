@@ -6,8 +6,4 @@ public interface TeacherRepository {
 	Teacher save(Teacher teacher);
 
 	Optional<Teacher> findById(Long id);
-
-	Optional<Teacher> findByName(String name);
-
-	void deleteById(Long id);
 }

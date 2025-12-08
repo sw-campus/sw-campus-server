@@ -1,11 +1,17 @@
 package com.swcampus.domain.lecture;
 
-import com.swcampus.domain.common.ResourceNotFoundException;
 import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.swcampus.domain.common.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
+@Service
 @RequiredArgsConstructor
+@Transactional
 public class LectureService {
 
 	private final LectureRepository lectureRepository;

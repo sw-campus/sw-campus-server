@@ -1,12 +1,19 @@
 package com.swcampus.api.lecture;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.swcampus.api.lecture.request.LectureCreateRequest;
 import com.swcampus.api.lecture.response.LectureResponse;
 import com.swcampus.domain.lecture.Lecture;
-import com.swcampus.domain.lecture.LectureService; // Domain Service (Interface or Class)
+import com.swcampus.domain.lecture.LectureService;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/lectures")
@@ -17,13 +24,9 @@ public class LectureController {
 
 	@PostMapping
 	public ResponseEntity<LectureResponse> createLecture(@RequestBody LectureCreateRequest request) {
-		// 1. DTO -> Domain 변환
 		Lecture lectureDomain = request.toDomain();
-
-		// 2. 비즈니스 로직 실행 (저장)
 		Lecture savedLecture = lectureService.registerLecture(lectureDomain);
 
-		// 3. Domain -> DTO 변환 및 응답
 		return ResponseEntity.ok(LectureResponse.from(savedLecture));
 	}
 

@@ -16,16 +16,16 @@ public class Lecture {
 	private String days; // 월,수,금 등
 	private LocalTime startTime;
 	private LocalTime endTime;
-	private String lectureLoc; // 온라인/오프라인/혼합
+	private LectureLocation lectureLoc; // 온라인/오프라인/혼합
 	private String location; // 오프라인 주소 (NULL 허용)
-	private String recruitType; // 내일배움카드 필요/불필요
+	private RecruitType recruitType; // 내일배움카드 필요/불필요
 	private BigDecimal subsidy; // 지원금
 	private BigDecimal lectureFee; // 훈련비
 	private BigDecimal eduSubsidy; // 훈련수당
 	private String goal; // 훈련목표
 	private Integer maxCapacity; // 모집정원
-	private String equipPc; // 시설 PC 사양
-	private String equipLaptop; // 시설 노트북 사양
+	private EquipmentType equipPc; // 시설 PC 사양
+	private EquipmentType equipLaptop; // 시설 노트북 사양
 	private Boolean equipGpu; // GPU 여부
 	private Boolean books; // 교재 지원 유무
 	private Boolean resume; // 이력서 첨삭

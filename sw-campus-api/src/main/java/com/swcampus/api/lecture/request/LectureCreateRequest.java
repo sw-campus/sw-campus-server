@@ -52,16 +52,16 @@ public record LectureCreateRequest(
 				.days(days)
 				.startTime(startTime)
 				.endTime(endTime)
-				.lectureLoc(lectureLoc)
+				.lectureLoc(com.swcampus.domain.lecture.LectureLocation.valueOf(lectureLoc))
 				.location(location)
-				.recruitType(recruitType)
+				.recruitType(com.swcampus.domain.lecture.RecruitType.valueOf(recruitType))
 				.subsidy(subsidy)
 				.lectureFee(lectureFee)
 				.eduSubsidy(eduSubsidy)
 				.goal(goal)
 				.maxCapacity(maxCapacity)
-				.equipPc(equipPc)
-				.equipLaptop(equipLaptop)
+				.equipPc(com.swcampus.domain.lecture.EquipmentType.valueOf(equipPc))
+				.equipLaptop(com.swcampus.domain.lecture.EquipmentType.valueOf(equipLaptop))
 				.equipGpu(equipGpu)
 				.books(books)
 				.resume(resume)
@@ -105,12 +105,13 @@ public record LectureCreateRequest(
 				.build();
 	}
 
-	public record CohortRequest(String startAt, String endAt) {
+	public record CohortRequest(String startAt, String endAt, Integer totalDays) {
 		public Cohort toDomain() {
 			// 입력 포맷: "2024-01-01"
 			return Cohort.builder()
 					.startAt(LocalDate.parse(startAt).atStartOfDay())
 					.endAt(LocalDate.parse(endAt).atStartOfDay())
+					.totalDays(totalDays)
 					.build();
 		}
 	}

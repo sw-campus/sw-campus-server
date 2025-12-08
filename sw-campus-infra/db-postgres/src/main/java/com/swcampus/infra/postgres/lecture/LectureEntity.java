@@ -44,13 +44,15 @@ public class LectureEntity {
 	private LocalTime endTime;
 
 	@Column(name = "LECTURE_LOC", nullable = false)
-	private String lectureLoc;
+	@Enumerated(EnumType.STRING)
+	private com.swcampus.domain.lecture.LectureLocation lectureLoc;
 
 	@Column(name = "LOCATION")
 	private String location;
 
 	@Column(name = "RECRUIT_TYPE", nullable = false)
-	private String recruitType;
+	@Enumerated(EnumType.STRING)
+	private com.swcampus.domain.lecture.RecruitType recruitType;
 
 	@Column(name = "SUBSIDY", nullable = false)
 	private BigDecimal subsidy;
@@ -68,10 +70,12 @@ public class LectureEntity {
 	private Integer maxCapacity;
 
 	@Column(name = "EQUIP_PC")
-	private String equipPc;
+	@Enumerated(EnumType.STRING)
+	private com.swcampus.domain.lecture.EquipmentType equipPc;
 
 	@Column(name = "EQUIP_LAPTOP")
-	private String equipLaptop;
+	@Enumerated(EnumType.STRING)
+	private com.swcampus.domain.lecture.EquipmentType equipLaptop;
 
 	@Column(name = "EQUIP_GPU")
 	private Boolean equipGpu;
@@ -183,6 +187,7 @@ public class LectureEntity {
 							.lecture(entity)
 							.startAt(c.getStartAt())
 							.endAt(c.getEndAt())
+							.totalDays(c.getTotalDays())
 							.build())
 					.toList());
 		}

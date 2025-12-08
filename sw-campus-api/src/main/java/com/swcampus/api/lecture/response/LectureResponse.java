@@ -49,16 +49,16 @@ public record LectureResponse(
 				lecture.getDays(),
 				lecture.getStartTime(),
 				lecture.getEndTime(),
-				lecture.getLectureLoc(),
+				lecture.getLectureLoc().name(),
 				lecture.getLocation(),
-				lecture.getRecruitType(),
+				lecture.getRecruitType().name(),
 				lecture.getSubsidy(),
 				lecture.getLectureFee(),
 				lecture.getEduSubsidy(),
 				lecture.getGoal(),
 				lecture.getMaxCapacity(),
-				lecture.getEquipPc(),
-				lecture.getEquipLaptop(),
+				lecture.getEquipPc().name(),
+				lecture.getEquipLaptop().name(),
 				lecture.getEquipGpu(),
 				lecture.getBooks(),
 				lecture.getResume(),
@@ -83,10 +83,9 @@ public record LectureResponse(
 						: List.of());
 	}
 
-	// Inner Records for Children
-	public record CohortResponse(Long cohortNum, String startAt, String endAt) {
+	public record CohortResponse(Long cohortNum, String startAt, String endAt, Integer totalDays) {
 		public static CohortResponse from(com.swcampus.domain.lecture.Cohort c) {
-			return new CohortResponse(c.getCohortNum(), c.getStartAt().toString(), c.getEndAt().toString());
+			return new CohortResponse(c.getCohortNum(), c.getStartAt().toString(), c.getEndAt().toString(), c.getTotalDays());
 		}
 	}
 
