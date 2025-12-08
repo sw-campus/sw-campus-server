@@ -4,6 +4,7 @@ spring:
   config:
     import:
       - optional:classpath:logging.yml # 공통 로깅 설정 불러오기
+      - optional:classpath:config/application-${spring.profiles.active}.yml # Submodule 설정
   jpa:
     open-in-view: false
     hibernate:

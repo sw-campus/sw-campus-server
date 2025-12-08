@@ -4,7 +4,11 @@ plugins {
 }
 
 dependencies {
-    compileOnly (project(':sw-campus-api'))
+    implementation project(':sw-campus-domain')
+
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'org.postgresql:postgresql'
+
+    // Test (H2 In-Memory DB)
+    testRuntimeOnly 'com.h2database:h2'
 }

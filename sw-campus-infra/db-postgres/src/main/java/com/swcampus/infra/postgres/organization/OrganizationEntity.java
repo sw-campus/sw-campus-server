@@ -1,0 +1,79 @@
+package com.swcampus.infra.postgres.organization;
+
+import com.swcampus.domain.organization.Organization;
+import com.swcampus.infra.postgres.BaseEntity;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "organizations")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class OrganizationEntity extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "org_id")
+    private Long id;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    @Column(name = "org_name")
+    private String name;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "gov_auth", length = 100)
+    private String govAuth;
+
+    @Column(name = "facility_image_url", columnDefinition = "TEXT")
+    private String facilityImageUrl;
+
+    @Column(name = "facility_image_url2", columnDefinition = "TEXT")
+    private String facilityImageUrl2;
+
+    @Column(name = "facility_image_url3", columnDefinition = "TEXT")
+    private String facilityImageUrl3;
+
+    @Column(name = "facility_image_url4", columnDefinition = "TEXT")
+    private String facilityImageUrl4;
+
+    @Column(name = "org_logo_url", columnDefinition = "TEXT")
+    private String logoUrl;
+
+    public static OrganizationEntity from(Organization organization) {
+        OrganizationEntity entity = new OrganizationEntity();
+        entity.id = organization.getId();
+        entity.userId = organization.getUserId();
+        entity.name = organization.getName();
+        entity.description = organization.getDescription();
+        entity.govAuth = organization.getGovAuth();
+        entity.facilityImageUrl = organization.getFacilityImageUrl();
+        entity.facilityImageUrl2 = organization.getFacilityImageUrl2();
+        entity.facilityImageUrl3 = organization.getFacilityImageUrl3();
+        entity.facilityImageUrl4 = organization.getFacilityImageUrl4();
+        entity.logoUrl = organization.getLogoUrl();
+        return entity;
+    }
+
+    public Organization toDomain() {
+        return Organization.of(
+                id,
+                userId,
+                name,
+                description,
+                govAuth,
+                facilityImageUrl,
+                facilityImageUrl2,
+                facilityImageUrl3,
+                facilityImageUrl4,
+                logoUrl,
+                getCreatedAt(),
+                getUpdatedAt()
+        );
+    }
+}
