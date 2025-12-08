@@ -55,6 +55,12 @@ class AuthControllerEmailTest {
     @MockitoBean
     private EmailService emailService;
 
+    @MockitoBean
+    private com.swcampus.domain.auth.TokenProvider tokenProvider;
+
+    @MockitoBean
+    private com.swcampus.api.config.CookieUtil cookieUtil;
+
     @Nested
     @DisplayName("POST /api/v1/auth/email/send - 인증 메일 발송")
     class SendVerificationEmail {

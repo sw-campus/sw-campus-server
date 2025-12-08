@@ -53,6 +53,12 @@ class AuthControllerSignupTest {
     @MockitoBean
     private EmailService emailService;
 
+    @MockitoBean
+    private com.swcampus.domain.auth.TokenProvider tokenProvider;
+
+    @MockitoBean
+    private com.swcampus.api.config.CookieUtil cookieUtil;
+
     @Nested
     @DisplayName("POST /api/v1/auth/signup - 회원가입")
     class Signup {

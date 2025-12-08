@@ -1,22 +1,30 @@
 package com.swcampus.api.auth;
 
 import com.swcampus.api.auth.request.EmailSendRequest;
+import com.swcampus.api.auth.request.LoginRequest;
 import com.swcampus.api.auth.request.OrganizationSignupRequest;
 import com.swcampus.api.auth.request.SignupRequest;
 import com.swcampus.api.auth.response.EmailStatusResponse;
+import com.swcampus.api.auth.response.LoginResponse;
 import com.swcampus.api.auth.response.MessageResponse;
 import com.swcampus.api.auth.response.OrganizationSignupResponse;
 import com.swcampus.api.auth.response.SignupResponse;
+import com.swcampus.api.config.CookieUtil;
 import com.swcampus.domain.auth.AuthService;
 import com.swcampus.domain.auth.EmailService;
+import com.swcampus.domain.auth.LoginResult;
 import com.swcampus.domain.auth.OrganizationSignupResult;
+import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.member.Member;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,6 +44,8 @@ public class AuthController {
 
     private final AuthService authService;
     private final EmailService emailService;
+    private final TokenProvider tokenProvider;
+    private final CookieUtil cookieUtil;
 
     @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;
@@ -84,5 +94,38 @@ public class AuthController {
         OrganizationSignupResult result = authService.signupOrganization(request.toCommand(certificateImage));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(OrganizationSignupResponse.from(result));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        LoginResult result = authService.login(request.getEmail(), request.getPassword());
+
+        ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(
+                result.getAccessToken(), tokenProvider.getAccessTokenValidity());
+        ResponseCookie refreshTokenCookie = cookieUtil.createRefreshTokenCookie(
+                result.getRefreshToken(), tokenProvider.getRefreshTokenValidity());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                .body(LoginResponse.from(result));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = "accessToken", required = false) String accessToken) {
+
+        if (accessToken != null && tokenProvider.validateToken(accessToken)) {
+            Long memberId = tokenProvider.getMemberId(accessToken);
+            authService.logout(memberId);
+        }
+
+        ResponseCookie deleteAccessCookie = cookieUtil.deleteAccessTokenCookie();
+        ResponseCookie deleteRefreshCookie = cookieUtil.deleteRefreshTokenCookie();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, deleteAccessCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, deleteRefreshCookie.toString())
+                .build();
     }
 }
