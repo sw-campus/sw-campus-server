@@ -12,6 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.swcampus.infra.postgres.teacher.TeacherEntity;
+import com.swcampus.infra.postgres.category.CurriculumEntity;
 
 @Entity
 @Table(name = "LECTURES")
@@ -127,7 +129,7 @@ public class LectureEntity {
 	@Builder.Default
 	private List<LectureQualEntity> quals = new ArrayList<>();
 
-	// --- N:M Relationships (Mapping Tables) ---
+	// --- N:M Relationships ---
 
 	@OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
@@ -137,33 +139,138 @@ public class LectureEntity {
 	@Builder.Default
 	private List<LectureCurriculumEntity> lectureCurriculums = new ArrayList<>();
 
-	// --- Mapper Methods ---
+	public static LectureEntity from(com.swcampus.domain.lecture.Lecture lecture) {
+		if (lecture == null) {
+			return null;
+		}
+
+		LectureEntity entity = LectureEntity.builder()
+				.lectureId(lecture.getLectureId())
+				.orgId(lecture.getOrgId())
+				.lectureName(lecture.getLectureName())
+				.days(lecture.getDays())
+				.startTime(lecture.getStartTime())
+				.endTime(lecture.getEndTime())
+				.lectureLoc(lecture.getLectureLoc())
+				.location(lecture.getLocation())
+				.recruitType(lecture.getRecruitType())
+				.subsidy(lecture.getSubsidy())
+				.lectureFee(lecture.getLectureFee())
+				.eduSubsidy(lecture.getEduSubsidy())
+				.goal(lecture.getGoal())
+				.maxCapacity(lecture.getMaxCapacity())
+				.equipPc(lecture.getEquipPc())
+				.equipLaptop(lecture.getEquipLaptop())
+				.equipGpu(lecture.getEquipGpu())
+				.books(lecture.getBooks())
+				.resume(lecture.getResume())
+				.mockInterview(lecture.getMockInterview())
+				.employmentHelp(lecture.getEmploymentHelp())
+				.afterCompletion(lecture.getAfterCompletion())
+				.url(lecture.getUrl())
+				.lectureImageUrl(lecture.getLectureImageUrl())
+				.status(lecture.getStatus())
+				.lectureAuthStatus(lecture.getLectureAuthStatus())
+				.createdAt(lecture.getCreatedAt())
+				.updatedAt(lecture.getUpdatedAt())
+				.build();
+
+		// 1:N Relationships (Cohorts)
+		if (lecture.getCohorts() != null) {
+			entity.getCohorts().addAll(lecture.getCohorts().stream()
+					.map(c -> CohortEntity.builder()
+							.cohortNum(c.getCohortNum())
+							.lecture(entity)
+							.startAt(c.getStartAt())
+							.endAt(c.getEndAt())
+							.build())
+					.toList());
+		}
+
+		// 1:N Relationships (Steps)
+		if (lecture.getSteps() != null) {
+			entity.getSteps().addAll(lecture.getSteps().stream()
+					.map(s -> LectureStepEntity.builder()
+							.stepId(s.getStepId())
+							.lecture(entity)
+							.stepName(s.getStepName())
+							.stepOrder(s.getStepOrder())
+							.build())
+					.toList());
+		}
+
+		// 1:N Relationships (Adds)
+		if (lecture.getAdds() != null) {
+			entity.getAdds().addAll(lecture.getAdds().stream()
+					.map(a -> LectureAddEntity.builder()
+							.addId(a.getAddId())
+							.lecture(entity)
+							.addName(a.getAddName())
+							.build())
+					.toList());
+		}
+
+		// 1:N Relationships (Quals)
+		if (lecture.getQuals() != null) {
+			entity.getQuals().addAll(lecture.getQuals().stream()
+					.map(q -> LectureQualEntity.builder()
+							.qualId(q.getQualId())
+							.lecture(entity)
+							.type(q.getType())
+							.text(q.getText())
+							.build())
+					.toList());
+		}
+
+		// N:M Relationships (Teachers)
+		if (lecture.getTeachers() != null) {
+			entity.getLectureTeachers().addAll(lecture.getTeachers().stream()
+					.map(t -> LectureTeacherEntity.builder()
+							.lecture(entity)
+							.teacher(TeacherEntity.builder().teacherId(t.getTeacherId()).build())
+							.build())
+					.toList());
+		}
+
+		// N:M Relationships (Curriculums)
+		if (lecture.getLectureCurriculums() != null) {
+			entity.getLectureCurriculums().addAll(lecture.getLectureCurriculums().stream()
+					.map(lc -> LectureCurriculumEntity.builder()
+							.lecture(entity)
+							.curriculum(CurriculumEntity.builder().curriculumId(lc.getCurriculumId()).build())
+							.level(lc.getLevel())
+							.build())
+					.toList());
+		}
+
+		return entity;
+	}
 
 	public com.swcampus.domain.lecture.Lecture toDomain() {
 		return com.swcampus.domain.lecture.Lecture.builder()
-			.lectureId(lectureId).orgId(orgId).lectureName(lectureName)
-			.days(days).startTime(startTime).endTime(endTime)
-			.lectureLoc(lectureLoc).location(location).recruitType(recruitType)
-			.subsidy(subsidy).lectureFee(lectureFee).eduSubsidy(eduSubsidy)
-			.goal(goal).maxCapacity(maxCapacity)
-			.equipPc(equipPc).equipLaptop(equipLaptop).equipGpu(equipGpu)
-			.books(books).resume(resume).mockInterview(mockInterview)
-			.employmentHelp(employmentHelp).afterCompletion(afterCompletion)
-			.url(url).lectureImageUrl(lectureImageUrl)
-			.status(status).lectureAuthStatus(lectureAuthStatus)
-			.createdAt(createdAt).updatedAt(updatedAt)
-			// Lists mapping
-			.cohorts(cohorts.stream().map(CohortEntity::toDomain).toList())
-			.steps(steps.stream().map(LectureStepEntity::toDomain).toList())
-			.adds(adds.stream().map(LectureAddEntity::toDomain).toList())
-			.quals(quals.stream().map(LectureQualEntity::toDomain).toList())
-			// N:M mapping (Entity -> Domain)
-			.teachers(lectureTeachers.stream()
-				.map(lt -> lt.getTeacher().toDomain())
-				.toList())
-			.lectureCurriculums(lectureCurriculums.stream()
-				.map(LectureCurriculumEntity::toDomain)
-				.toList())
-			.build();
+				.lectureId(lectureId).orgId(orgId).lectureName(lectureName)
+				.days(days).startTime(startTime).endTime(endTime)
+				.lectureLoc(lectureLoc).location(location).recruitType(recruitType)
+				.subsidy(subsidy).lectureFee(lectureFee).eduSubsidy(eduSubsidy)
+				.goal(goal).maxCapacity(maxCapacity)
+				.equipPc(equipPc).equipLaptop(equipLaptop).equipGpu(equipGpu)
+				.books(books).resume(resume).mockInterview(mockInterview)
+				.employmentHelp(employmentHelp).afterCompletion(afterCompletion)
+				.url(url).lectureImageUrl(lectureImageUrl)
+				.status(status).lectureAuthStatus(lectureAuthStatus)
+				.createdAt(createdAt).updatedAt(updatedAt)
+				// Lists mapping
+				.cohorts(cohorts.stream().map(CohortEntity::toDomain).toList())
+				.steps(steps.stream().map(LectureStepEntity::toDomain).toList())
+				.adds(adds.stream().map(LectureAddEntity::toDomain).toList())
+				.quals(quals.stream().map(LectureQualEntity::toDomain).toList())
+				// N:M mapping (Entity -> Domain)
+				.teachers(lectureTeachers.stream()
+						.map(lt -> lt.getTeacher().toDomain())
+						.toList())
+				.lectureCurriculums(lectureCurriculums.stream()
+						.map(LectureCurriculumEntity::toDomain)
+						.toList())
+				.build();
 	}
 }

@@ -8,10 +8,10 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class Lecture {
 	private Long lectureId;
-	private Long orgId; // Organizations.org_id (External)
+	private Long orgId;
 	private String lectureName;
 	private String days; // 월,수,금 등
 	private LocalTime startTime;
@@ -39,15 +39,13 @@ public class Lecture {
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 
-	// 1:N Relationships (Composition)
-	private List<Cohort> cohorts;       // 기수
-	private List<LectureStep> steps;    // 선발절차
-	private List<LectureAdd> adds;      // 추가혜택
-	private List<LectureQual> quals;    // 지원자격
+	// 1:N Relationships
+	private List<Cohort> cohorts; // 기수
+	private List<LectureStep> steps; // 선발절차
+	private List<LectureAdd> adds; // 추가혜택
+	private List<LectureQual> quals; // 지원자격
 
-	// N:M Relationships (Managed via Join Domain Models or IDs)
-	// 도메인 레벨에서는 강사 객체 리스트를 직접 들고 있는 것이 사용하기 편합니다.
-	private List<Teacher> teachers;
-	// 커리큘럼은 레벨(난이도) 정보가 포함된 연결 객체가 필요합니다.
+	// N:M Relationships
+	private List<com.swcampus.domain.teacher.Teacher> teachers;
 	private List<LectureCurriculum> lectureCurriculums;
 }
