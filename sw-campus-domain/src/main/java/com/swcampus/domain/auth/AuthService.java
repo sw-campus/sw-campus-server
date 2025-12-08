@@ -4,6 +4,8 @@ import com.swcampus.domain.auth.exception.CertificateRequiredException;
 import com.swcampus.domain.auth.exception.DuplicateEmailException;
 import com.swcampus.domain.auth.exception.EmailNotVerifiedException;
 import com.swcampus.domain.auth.exception.InvalidCredentialsException;
+import com.swcampus.domain.auth.exception.InvalidTokenException;
+import com.swcampus.domain.auth.exception.TokenExpiredException;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
 import com.swcampus.domain.member.Role;
@@ -150,5 +152,41 @@ public class AuthService {
 
     public void logout(Long memberId) {
         refreshTokenRepository.deleteByMemberId(memberId);
+    }
+
+    public String refresh(String refreshToken) {
+        // 1. Refresh Token 유효성 검증
+        if (!tokenProvider.validateToken(refreshToken)) {
+            throw new InvalidTokenException();
+        }
+
+        // 2. 토큰에서 사용자 ID 추출
+        Long memberId = tokenProvider.getMemberId(refreshToken);
+
+        // 3. DB에서 저장된 Refresh Token 조회
+        RefreshToken storedToken = refreshTokenRepository.findByMemberId(memberId)
+                .orElseThrow(InvalidTokenException::new);
+
+        // 4. 토큰 값 일치 확인 (동시 로그인 제한)
+        if (!storedToken.getToken().equals(refreshToken)) {
+            throw new InvalidTokenException();
+        }
+
+        // 5. 만료 확인
+        if (storedToken.isExpired()) {
+            refreshTokenRepository.deleteByMemberId(memberId);
+            throw new TokenExpiredException();
+        }
+
+        // 6. 사용자 정보 조회
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(InvalidTokenException::new);
+
+        // 7. 새 Access Token 발급
+        return tokenProvider.createAccessToken(
+                member.getId(),
+                member.getEmail(),
+                member.getRole()
+        );
     }
 }
