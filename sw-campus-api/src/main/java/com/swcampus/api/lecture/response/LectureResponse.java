@@ -51,7 +51,7 @@ public record LectureResponse(
 				lecture.getEndTime(),
 				lecture.getLectureLoc() != null ? lecture.getLectureLoc().name() : null,
 				lecture.getLocation(),
-				lecture.getRecruitType().name(),
+				lecture.getRecruitType() != null ? lecture.getRecruitType().name() : null,
 				lecture.getSubsidy(),
 				lecture.getLectureFee(),
 				lecture.getEduSubsidy(),
