@@ -4,6 +4,7 @@ import com.swcampus.domain.auth.exception.CertificateRequiredException;
 import com.swcampus.domain.auth.exception.DuplicateEmailException;
 import com.swcampus.domain.auth.exception.EmailNotVerifiedException;
 import com.swcampus.domain.auth.exception.EmailVerificationExpiredException;
+import com.swcampus.domain.auth.exception.InvalidCredentialsException;
 import com.swcampus.domain.auth.exception.InvalidPasswordException;
 import com.swcampus.domain.auth.exception.InvalidTokenException;
 import com.swcampus.domain.auth.exception.MailSendException;
@@ -72,6 +73,13 @@ public class GlobalExceptionHandler {
         log.warn("비밀번호 정책 위반: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(InvalidCredentialsException e) {
+        log.warn("로그인 실패: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), e.getMessage()));
     }
 
     // === Validation 예외 ===

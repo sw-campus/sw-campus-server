@@ -3,8 +3,10 @@ package com.swcampus.domain.auth;
 import com.swcampus.domain.auth.exception.CertificateRequiredException;
 import com.swcampus.domain.auth.exception.DuplicateEmailException;
 import com.swcampus.domain.auth.exception.EmailNotVerifiedException;
+import com.swcampus.domain.auth.exception.InvalidCredentialsException;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
+import com.swcampus.domain.member.Role;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationRepository;
 import com.swcampus.domain.storage.FileStorageService;
@@ -21,9 +23,11 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final OrganizationRepository organizationRepository;
     private final EmailVerificationRepository emailVerificationRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
     private final FileStorageService fileStorageService;
+    private final TokenProvider tokenProvider;
 
     public Member signup(SignupCommand command) {
         // 1. 중복 이메일 검증
@@ -107,5 +111,44 @@ public class AuthService {
         memberRepository.save(savedMember);
 
         return new OrganizationSignupResult(savedMember, savedOrganization);
+    }
+
+    public LoginResult login(String email, String password) {
+        // 1. 회원 조회
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(InvalidCredentialsException::new);
+
+        // 2. 비밀번호 검증
+        if (!passwordEncoder.matches(password, member.getPassword())) {
+            throw new InvalidCredentialsException();
+        }
+
+        // 3. 기존 Refresh Token 삭제 (동시 로그인 제한)
+        refreshTokenRepository.deleteByMemberId(member.getId());
+
+        // 4. 토큰 생성
+        String accessToken = tokenProvider.createAccessToken(
+                member.getId(), member.getEmail(), member.getRole());
+        String refreshToken = tokenProvider.createRefreshToken(member.getId());
+
+        // 5. Refresh Token 저장
+        RefreshToken refreshTokenEntity = RefreshToken.create(
+                member.getId(),
+                refreshToken,
+                tokenProvider.getRefreshTokenValidity()
+        );
+        refreshTokenRepository.save(refreshTokenEntity);
+
+        // 6. ORGANIZATION인 경우 Organization 정보 조회
+        Organization organization = null;
+        if (member.getRole() == Role.ORGANIZATION && member.getOrgId() != null) {
+            organization = organizationRepository.findById(member.getOrgId()).orElse(null);
+        }
+
+        return new LoginResult(accessToken, refreshToken, member, organization);
+    }
+
+    public void logout(Long memberId) {
+        refreshTokenRepository.deleteByMemberId(memberId);
     }
 }
