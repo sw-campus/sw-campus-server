@@ -1,25 +1,32 @@
 package com.swcampus.api.auth;
 
 import com.swcampus.api.auth.request.EmailSendRequest;
+import com.swcampus.api.auth.request.OrganizationSignupRequest;
 import com.swcampus.api.auth.request.SignupRequest;
 import com.swcampus.api.auth.response.EmailStatusResponse;
 import com.swcampus.api.auth.response.MessageResponse;
+import com.swcampus.api.auth.response.OrganizationSignupResponse;
 import com.swcampus.api.auth.response.SignupResponse;
 import com.swcampus.domain.auth.AuthService;
 import com.swcampus.domain.auth.EmailService;
+import com.swcampus.domain.auth.OrganizationSignupResult;
 import com.swcampus.domain.member.Member;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.net.URI;
 
 @RestController
@@ -67,5 +74,15 @@ public class AuthController {
         Member member = authService.signup(request.toCommand());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(SignupResponse.from(member));
+    }
+
+    @PostMapping(value = "/signup/organization", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<OrganizationSignupResponse> signupOrganization(
+            @Valid @ModelAttribute OrganizationSignupRequest request,
+            @RequestParam("certificateImage") MultipartFile certificateImage) throws IOException {
+
+        OrganizationSignupResult result = authService.signupOrganization(request.toCommand(certificateImage));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(OrganizationSignupResponse.from(result));
     }
 }

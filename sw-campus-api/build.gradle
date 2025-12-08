@@ -8,6 +8,7 @@ dependencies {
     implementation project(':sw-campus-domain')
     implementation project(':sw-campus-shared:logging')
     runtimeOnly project(':sw-campus-infra:db-postgres') // write
+    runtimeOnly project(':sw-campus-infra:s3')          // s3 file storage
 //    runtimeOnly project(':sw-campus-infra:db-mongodb')  // read
 
     implementation 'org.springframework.boot:spring-boot-starter-web'

@@ -79,7 +79,6 @@ class AuthControllerSignupTest {
                     "010-1234-5678",
                     Role.USER,
                     null,
-                    null,
                     "서울시 강남구",
                     null,
                     null
