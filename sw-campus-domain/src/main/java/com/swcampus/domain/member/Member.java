@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -72,6 +73,47 @@ public class Member {
 
     public void changePassword(String newPassword) {
         this.password = newPassword;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * OAuth 사용자 생성 - 랜덤 닉네임 자동 생성
+     */
+    public static Member createOAuthUser(String email, String name) {
+        Member member = new Member();
+        member.email = email;
+        member.name = name;
+        member.nickname = generateRandomNickname();  // 랜덤 닉네임 생성
+        member.password = null;  // OAuth 사용자는 비밀번호 없음
+        member.phone = null;     // nullable
+        member.location = null;  // nullable
+        member.role = Role.USER;
+        member.createdAt = LocalDateTime.now();
+        member.updatedAt = LocalDateTime.now();
+        return member;
+    }
+
+    /**
+     * 랜덤 닉네임 생성 (예: "사용자_a1b2c3d4")
+     */
+    private static String generateRandomNickname() {
+        String randomSuffix = UUID.randomUUID().toString().substring(0, 8);
+        return "사용자_" + randomSuffix;
+    }
+
+    /**
+     * 프로필 수정 (선택적 필드)
+     */
+    public void updateProfile(String nickname, String phone, String location) {
+        if (nickname != null && !nickname.isBlank()) {
+            this.nickname = nickname;
+        }
+        if (phone != null) {
+            this.phone = phone;
+        }
+        if (location != null) {
+            this.location = location;
+        }
         this.updatedAt = LocalDateTime.now();
     }
 }
