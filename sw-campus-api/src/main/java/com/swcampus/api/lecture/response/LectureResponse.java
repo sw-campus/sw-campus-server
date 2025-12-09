@@ -47,6 +47,7 @@ public record LectureResponse(
 		
 		String startAt,
 		String endAt,
+		String deadline,
 		Integer totalDays,
 		Integer totalTimes,
 
@@ -93,12 +94,11 @@ public record LectureResponse(
 				lecture.getProjectTool(),
 				lecture.getProjectMentor(),
 
-				(lecture.getCohorts() != null && !lecture.getCohorts().isEmpty())
-						? lecture.getCohorts().stream()
-								.max(Comparator.comparing(Cohort::getStartAt)) // 날짜가 가장 늦은 것 선택
-								.map(CohortResponse::from)
-								.orElse(null)
-						: null,
+				lecture.getStartAt() != null ? lecture.getStartAt().toString() : null,
+				lecture.getEndAt() != null ? lecture.getEndAt().toString() : null,
+				lecture.getDeadline() != null ? lecture.getDeadline().toString() : null,
+				lecture.getTotalDays(),
+				lecture.getTotalTimes(),
 				lecture.getSteps() != null ? lecture.getSteps().stream().map(StepResponse::from).toList() : List.of(),
 				lecture.getAdds() != null ? lecture.getAdds().stream().map(AddResponse::from).toList() : List.of(),
 				lecture.getQuals() != null ? lecture.getQuals().stream().map(QualResponse::from).toList() : List.of(),

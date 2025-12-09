@@ -40,6 +40,7 @@
         
         <result property="startAt" column="start_date"/>
         <result property="endAt" column="end_date"/>
+        <result property="deadline" column="deadline"/>
         <result property="totalDays" column="total_days"/>
         <result property="totalTimes" column="total_times"/>
     </resultMap>
@@ -159,7 +160,7 @@
                 ORDER BY l.lecture_fee DESC, l.updated_at DESC
             </when>
             <when test="cond.sort != null and cond.sort.name() == 'START_SOON'">
-                ORDER BY l.start_date ASC NULLS LAST, l.updated_at DESC
+                ORDER BY l.deadline ASC NULLS LAST, l.updated_at DESC
             </when>
             <when test="cond.sort != null and cond.sort.name() == 'DURATION_ASC'">
                  ORDER BY l.total_days ASC NULLS LAST, l.updated_at DESC

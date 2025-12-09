@@ -48,6 +48,7 @@ public record LectureCreateRequest(
 		
 		String startAt,
 		String endAt,
+		String deadline,
 		Integer totalDays,
 		Integer totalTimes,
 
@@ -96,6 +97,7 @@ public record LectureCreateRequest(
 				
 				.startAt(LocalDate.parse(startAt).atStartOfDay())
 				.endAt(LocalDate.parse(endAt).atStartOfDay())
+				.deadline(deadline != null ? LocalDate.parse(deadline).atStartOfDay() : null)
 				.totalDays(totalDays)
 				.totalTimes(totalTimes)
 				

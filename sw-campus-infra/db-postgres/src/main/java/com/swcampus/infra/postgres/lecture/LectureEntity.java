@@ -141,6 +141,9 @@ public class LectureEntity {
 	@Column(name = "END_DATE", nullable = false)
 	private LocalDateTime endAt;
 
+	@Column(name = "DEADLINE")
+	private LocalDateTime deadline;
+
 	@Column(name = "TOTAL_DAYS", nullable = false)
 	private Integer totalDays;
 
@@ -219,6 +222,7 @@ public class LectureEntity {
 				.projectMentor(lecture.getProjectMentor())
 				.startAt(lecture.getStartAt())
 				.endAt(lecture.getEndAt())
+				.deadline(lecture.getDeadline())
 				.totalDays(lecture.getTotalDays())
 				.totalTimes(lecture.getTotalTimes())
 				.build();
@@ -276,7 +280,7 @@ public class LectureEntity {
 				.status(status).lectureAuthStatus(lectureAuthStatus)
 				// Project
 				.projectNum(projectNum).projectTime(projectTime).projectTeam(projectTeam).projectTool(projectTool).projectMentor(projectMentor)
-				.startAt(startAt).endAt(endAt).totalDays(totalDays).totalTimes(totalTimes)
+				.startAt(startAt).endAt(endAt).deadline(deadline).totalDays(totalDays).totalTimes(totalTimes)
 				.createdAt(createdAt).updatedAt(updatedAt)
 				// Lists mapping
 				.steps(steps.stream().map(LectureStepEntity::toDomain).toList())
