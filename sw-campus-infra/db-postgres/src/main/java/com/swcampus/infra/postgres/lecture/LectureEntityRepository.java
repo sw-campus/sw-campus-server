@@ -9,8 +9,15 @@ import com.swcampus.domain.lecture.LectureRepository;
 import com.swcampus.infra.postgres.category.CurriculumEntity;
 import com.swcampus.infra.postgres.teacher.TeacherEntity;
 
+import com.swcampus.domain.lecture.dto.LectureSearchCondition;
+import com.swcampus.infra.postgres.lecture.mapper.LectureMapper;
+
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 @Repository
 @RequiredArgsConstructor
@@ -18,6 +25,7 @@ public class LectureEntityRepository implements LectureRepository {
 
 	private final LectureJpaRepository jpaRepository;
 	private final EntityManager entityManager;
+	private final LectureMapper lectureMapper;
 
 	@Override
 	public Lecture save(Lecture lecture) {
@@ -58,5 +66,19 @@ public class LectureEntityRepository implements LectureRepository {
 	@Override
 	public Optional<Lecture> findById(Long id) {
 		return jpaRepository.findById(id).map(LectureEntity::toDomain);
+	}
+
+	@Override
+	public Page<Lecture> searchLectures(LectureSearchCondition condition) {
+		List<Lecture> content = lectureMapper.selectLectures(condition).stream()
+				.map(LectureEntity::toDomain)
+				.toList();
+
+		long total = lectureMapper.countLectures(condition);
+		
+		int page = (condition.getLimit() > 0) ? (int) (condition.getOffset() / condition.getLimit()) : 0;
+		int size = (condition.getLimit() > 0) ? condition.getLimit() : content.size() + 1; // avoid /0
+
+		return new PageImpl<>(content, PageRequest.of(page, size), total);
 	}
 }

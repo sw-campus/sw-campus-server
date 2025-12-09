@@ -13,6 +13,7 @@ import lombok.Getter;
 public class Lecture {
 	private Long lectureId;
 	private Long orgId;
+	private String orgName; // 검색 결과용
 	private String lectureName;
 	private Set<LectureDay> days; // 월,수,금 등
 	private LocalTime startTime;
@@ -25,9 +26,8 @@ public class Lecture {
 	private BigDecimal eduSubsidy; // 훈련수당
 	private String goal; // 훈련목표
 	private Integer maxCapacity; // 모집정원
-	private EquipmentType equipPc; // 시설 PC 사양
-	private EquipmentType equipLaptop; // 시설 노트북 사양
-	private Boolean equipGpu; // GPU 여부
+	private EquipmentType equipPc; // 시설 PC
+	private String equipMerit; // 시설 장점
 	private Boolean books; // 교재 지원 유무
 	private Boolean resume; // 이력서 첨삭
 	private Boolean mockInterview; // 모의면접
@@ -37,6 +37,13 @@ public class Lecture {
 	private String lectureImageUrl; // 이미지 URL
 	private LectureStatus status; // 모집중, 진행중, 종료
 	private Boolean lectureAuthStatus; // 등록 상태
+	
+    // 프로젝트 관련 (New)
+    private Integer projectNum;
+    private Integer projectTime;
+    private String projectTeam;
+    private String projectTool;
+    private Boolean projectMentor;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 

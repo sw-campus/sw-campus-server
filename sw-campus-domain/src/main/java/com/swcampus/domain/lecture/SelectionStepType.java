@@ -5,11 +5,11 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum EquipmentType {
-    NONE("없음"),
-    PC("PC"),
-    LAPTOP("노트북"),
-    PERSONAL("개인장비");
+public enum SelectionStepType {
+    DOCUMENT("서류심사"),
+    INTERVIEW("면접"),
+    CODING_TEST("코딩테스트"),
+    PRE_TASK("사전과제");
 
     private final String description;
 }
