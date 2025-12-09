@@ -38,7 +38,7 @@ public class Lecture {
 	private LectureStatus status; // 모집중, 진행중, 종료
 	private Boolean lectureAuthStatus; // 등록 상태
 	
-    // 프로젝트 관련 (New)
+    // 프로젝트 관련
     private Integer projectNum;
     private Integer projectTime;
     private String projectTeam;
@@ -47,8 +47,13 @@ public class Lecture {
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 
+	private LocalDateTime startAt; // 시작날짜
+	private LocalDateTime endAt; // 종료날짜
+	private LocalDateTime deadline; // 모집 마감일
+	private Integer totalDays; // 총일수
+	private Integer totalTimes; // 총 시간
+
 	// 1:N Relationships
-	private List<Cohort> cohorts; // 기수
 	private List<LectureStep> steps; // 선발절차
 	private List<LectureAdd> adds; // 추가혜택
 	private List<LectureQual> quals; // 지원자격
