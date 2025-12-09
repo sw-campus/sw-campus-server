@@ -1,3 +1,7 @@
+app:
+  cookie:
+    secure: true  # 기본값: HTTPS (운영 환경 기준). local 프로필에서 false로 override
+
 spring:
   profiles:
     active: local # 기본 실행 프로필

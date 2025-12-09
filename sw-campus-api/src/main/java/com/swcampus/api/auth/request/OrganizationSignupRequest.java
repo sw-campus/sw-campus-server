@@ -51,17 +51,21 @@ public class OrganizationSignupRequest {
     private String organizationName;
 
     public OrganizationSignupCommand toCommand(MultipartFile certificateImage) throws IOException {
-        return OrganizationSignupCommand.builder()
+        var builder = OrganizationSignupCommand.builder()
                 .email(email)
                 .password(password)
                 .name(name)
                 .nickname(nickname)
                 .phone(phone)
                 .location(location)
-                .organizationName(organizationName)
-                .certificateImage(certificateImage != null ? certificateImage.getBytes() : null)
-                .certificateFileName(certificateImage != null ? certificateImage.getOriginalFilename() : null)
-                .certificateContentType(certificateImage != null ? certificateImage.getContentType() : null)
-                .build();
+                .organizationName(organizationName);
+
+        if (certificateImage != null) {
+            builder.certificateImage(certificateImage.getBytes())
+                    .certificateFileName(certificateImage.getOriginalFilename())
+                    .certificateContentType(certificateImage.getContentType());
+        }
+
+        return builder.build();
     }
 }
