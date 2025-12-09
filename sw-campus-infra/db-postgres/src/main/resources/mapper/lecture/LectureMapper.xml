@@ -53,11 +53,11 @@
 
     <sql id="searchConditions">
         <!-- 텍스트 검색 (제목, 목표, 기관명) -->
-        <if test="cond.keyword != null and cond.keyword != ''">
+        <if test="cond.text != null and cond.text != ''">
             AND (
-                l.lecture_name LIKE CONCAT('%', #{cond.keyword}, '%')
-                OR l.goal LIKE CONCAT('%', #{cond.keyword}, '%')
-                OR o.org_name LIKE CONCAT('%', #{cond.keyword}, '%')
+                l.lecture_name LIKE CONCAT('%', #{cond.text}, '%')
+                OR l.goal LIKE CONCAT('%', #{cond.text}, '%')
+                OR o.org_name LIKE CONCAT('%', #{cond.text}, '%')
             )
         </if>
 
