@@ -140,14 +140,23 @@
 
     <!-- 메인 조회 쿼리 -->
     <select id="selectLectures" resultMap="LectureResultMap">
-        SELECT DISTINCT 
+        SELECT 
             l.*, 
             o.org_name
         FROM LECTURES l
-        <include refid="lectureJoins"/>
+        LEFT JOIN organizations o ON l.org_id = o.org_id
         
         WHERE 1=1
 
+        <!-- 카테고리 필터가 있을 때만 서브쿼리로 LECTURE_CURRICULUMS, CURRICULUMS 사용 -->
+        <if test="cond.categoryId != null">
+            AND l.lecture_id IN (
+                SELECT lc.lecture_id
+                FROM LECTURE_CURRICULUMS lc
+                LEFT JOIN CURRICULUMS c ON lc.curriculum_id = c.curriculum_id
+                WHERE c.category_id = #{cond.categoryId}
+            )
+        </if>
         <!-- 가격순, 마감 임박순 정렬  
             추후 후기순 정렬 추가 -->
         <include refid="searchConditions"/>
