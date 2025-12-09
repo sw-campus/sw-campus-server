@@ -44,7 +44,12 @@ public class SecurityConfig {
                         // 인증 없이 접근 가능
                         .requestMatchers(
                                 "/api/v1/auth/**",
-                                "/actuator/health"
+                                "/actuator/health",
+                                // Swagger UI
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**"
                         ).permitAll()
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()

@@ -12,3 +12,19 @@ spring:
     properties:
       hibernate:
         default_batch_fetch_size: 100 # N+1 최적화
+
+# Swagger UI 설정
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  packages-to-scan:
+    - com.swcampus.api
+  paths-to-match:
+    - /api/**
