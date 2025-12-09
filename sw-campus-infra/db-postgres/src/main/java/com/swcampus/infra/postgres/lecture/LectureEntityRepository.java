@@ -76,8 +76,13 @@ public class LectureEntityRepository implements LectureRepository {
 
 		long total = lectureMapper.countLectures(condition);
 		
-		int page = (condition.getLimit() > 0) ? (int) (condition.getOffset() / condition.getLimit()) : 0;
-		int size = (condition.getLimit() > 0) ? condition.getLimit() : content.size() + 1; // avoid /0
+		int page = (condition.getLimit() != null && condition.getLimit() > 0
+			&& condition.getOffset() != null)
+			? (int) (condition.getOffset() / condition.getLimit())
+			: 0;
+		int size = (condition.getLimit() != null && condition.getLimit() > 0)
+			? condition.getLimit()
+			: content.size() + 1; // avoid /0
 
 		return new PageImpl<>(content, PageRequest.of(page, size), total);
 	}
