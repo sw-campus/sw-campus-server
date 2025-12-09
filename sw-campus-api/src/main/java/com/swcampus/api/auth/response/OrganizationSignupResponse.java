@@ -24,7 +24,7 @@ public class OrganizationSignupResponse {
     @Schema(description = "닉네임", example = "대표님")
     private String nickname;
 
-    @Schema(description = "권한", example = "PROVIDER")
+    @Schema(description = "권한", example = "ORGANIZATION")
     private String role;
 
     @Schema(description = "기관 ID", example = "1")
