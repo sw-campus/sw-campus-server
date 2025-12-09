@@ -44,7 +44,14 @@ public class LectureEntity {
 	private Long orgId;
 
 	@Transient
-	private String orgName; // MyBatis Result Mapping Only
+	/**
+	 * Organization name for search result display.
+	 * <p>
+	 * This field is only used for MyBatis result mapping to avoid an N+1 query problem
+	 * when fetching organization names during search results. It should NOT be set or used
+	 * in JPA operations, as it is not persisted in the database.
+	 */
+	private String orgName;
 
 	@Column(name = "LECTURE_NAME", nullable = false)
 	private String lectureName;
