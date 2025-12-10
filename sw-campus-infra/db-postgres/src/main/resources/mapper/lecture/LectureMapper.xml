@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.swcampus.infra.postgres.lecture.mapper.LectureMapper">
+
+    <resultMap id="LectureResultMap" type="com.swcampus.infra.postgres.lecture.LectureEntity">
+        <id property="lectureId" column="lecture_id"/>
+        <result property="orgId" column="org_id"/>
+        <result property="orgName" column="org_name"/>
+        <result property="lectureName" column="lecture_name"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="lectureLoc" column="lecture_loc"/>
+        <result property="location" column="location"/>
+        <result property="recruitType" column="recruit_type"/>
+        <result property="subsidy" column="subsidy"/>
+        <result property="lectureFee" column="lecture_fee"/>
+        <result property="eduSubsidy" column="edu_subsidy"/>
+        <result property="goal" column="goal"/>
+        <result property="maxCapacity" column="max_capacity"/>
+        <result property="equipPc" column="equip_pc"/>
+        <result property="equipMerit" column="equip_merit"/>
+        <result property="books" column="books"/>
+        <result property="resume" column="resume"/>
+        <result property="mockInterview" column="mock_interview"/>
+        <result property="employmentHelp" column="employment_help"/>
+        <result property="afterCompletion" column="after_completion"/>
+        <result property="url" column="url"/>
+        <result property="lectureImageUrl" column="lecture_image_url"/>
+        <result property="status" column="status"/>
+        <result property="lectureAuthStatus" column="lecture_auth_status"/>
+        
+        <result property="projectNum" column="project_num"/>
+        <result property="projectTime" column="project_time"/>
+        <result property="projectTeam" column="project_team"/>
+        <result property="projectTool" column="project_tool"/>
+        <result property="projectMentor" column="project_mentor"/>
+        
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        
+        <result property="startAt" column="start_date"/>
+        <result property="endAt" column="end_date"/>
+        <result property="deadline" column="deadline"/>
+        <result property="totalDays" column="total_days"/>
+        <result property="totalTimes" column="total_times"/>
+    </resultMap>
+
+    <sql id="lectureJoins">
+        LEFT JOIN organizations o ON l.org_id = o.org_id
+        LEFT JOIN LECTURE_CURRICULUMS lc ON l.lecture_id = lc.lecture_id
+        LEFT JOIN CURRICULUMS c ON lc.curriculum_id = c.curriculum_id
+    </sql>
+
+    <sql id="searchConditions">
+        <!-- 텍스트 검색 (제목, 목표, 기관명) -->
+        <if test="cond.text != null and cond.text != ''">
+            AND (
+                l.lecture_name LIKE CONCAT('%', #{cond.text}, '%')
+                OR l.goal LIKE CONCAT('%', #{cond.text}, '%')
+                OR o.org_name LIKE CONCAT('%', #{cond.text}, '%')
+            )
+        </if>
+
+        <!-- 지역 검색 (다중 선택) -->
+        <if test="cond.regions != null and !cond.regions.isEmpty()">
+            AND (
+                <foreach item="region" collection="cond.regions" separator=" OR ">
+                    l.location LIKE CONCAT('%', #{region}, '%')
+                </foreach>
+            )
+        </if>
+
+        <!-- 카테고리 검색 -->
+        <if test="cond.categoryIds != null and !cond.categoryIds.isEmpty()">
+            AND (
+                <!-- 1. 본인 일치 (소분류 선택 시) -->
+                c.category_id IN 
+                <foreach item="catId" collection="cond.categoryIds" open="(" separator="," close=")">
+                    #{catId}
+                </foreach>
+                
+                <!-- 2. 자식 일치 (중분류 선택 시 -> 소분류 검색) -->
+                OR c.category_id IN (
+                    SELECT sub.category_id 
+                    FROM CATEGORIES sub 
+                    WHERE sub.pid IN
+                    <foreach item="catId" collection="cond.categoryIds" open="(" separator="," close=")">
+                        #{catId}
+                    </foreach>
+                )
+
+                <!-- 3. 손자 일치 (대분류 선택 시 -> 소분류 검색) -->
+                OR c.category_id IN (
+                    SELECT grand.category_id 
+                    FROM CATEGORIES grand 
+                    WHERE grand.pid IN (
+                        SELECT sub.category_id 
+                        FROM CATEGORIES sub 
+                        WHERE sub.pid IN
+                        <foreach item="catId" collection="cond.categoryIds" open="(" separator="," close=")">
+                            #{catId}
+                        </foreach>
+                    )
+                )
+            )
+        </if>
+
+        <!-- 비용 필터 -->
+        <if test="(cond.isFreeKdt != null and cond.isFreeKdt) or (cond.isFreeNoKdt != null and cond.isFreeNoKdt) or (cond.isPaid != null and cond.isPaid)">
+            AND
+            <trim prefix="(" suffix=")" prefixOverrides="OR">
+                <if test="cond.isFreeKdt != null and cond.isFreeKdt">
+                    OR (l.recruit_type = 'CARD_REQUIRED')
+                </if>
+                <if test="cond.isFreeNoKdt != null and cond.isFreeNoKdt">
+                    OR (l.recruit_type = 'GENERAL')
+                </if>
+                <if test="cond.isPaid != null and cond.isPaid">
+                    OR (l.lecture_fee > 0)
+                </if>
+            </trim>
+        </if>
+
+        <!-- 선발 절차 필터 -->
+        <if test="cond.hasCodingTest != null">
+            <if test="cond.hasCodingTest">
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'CODING_TEST')
+            </if>
+            <if test="!cond.hasCodingTest">
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'CODING_TEST')
+            </if>
+        </if>
+        <if test="cond.hasInterview != null">
+            <if test="cond.hasInterview">
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'INTERVIEW')
+            </if>
+            <if test="!cond.hasInterview">
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'INTERVIEW')
+            </if>
+        </if>
+        <if test="cond.hasPreTask != null">
+            <if test="cond.hasPreTask">
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'PRE_TASK')
+            </if>
+            <if test="!cond.hasPreTask">
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'PRE_TASK')
+            </if>
+        </if>
+        
+        <!-- 상태 검색 -->
+        <if test="cond.status != null">
+            AND l.status = #{cond.status}
+        </if>
+    </sql>
+
+    <!-- 메인 조회 쿼리 -->
+    <select id="selectLectures" resultMap="LectureResultMap">
+        SELECT 
+            l.*, 
+            o.org_name
+        FROM LECTURES l
+        LEFT JOIN organizations o ON l.org_id = o.org_id
+        
+        WHERE 1=1
+
+        <!-- 카테고리 필터가 있을 때만 서브쿼리로 LECTURE_CURRICULUMS, CURRICULUMS 사용 -->
+        <if test="cond.categoryId != null">
+            AND l.lecture_id IN (
+                SELECT lc.lecture_id
+                FROM LECTURE_CURRICULUMS lc
+                LEFT JOIN CURRICULUMS c ON lc.curriculum_id = c.curriculum_id
+                WHERE c.category_id = #{cond.categoryId}
+            )
+        </if>
+        <!-- 가격순, 마감 임박순 정렬  
+            추후 후기순 정렬 추가 -->
+        <include refid="searchConditions"/>
+        
+        <choose>
+            <when test="cond.sort.name() == 'FEE_ASC'">
+                ORDER BY l.lecture_fee ASC, l.updated_at DESC
+            </when>
+            <when test="cond.sort.name() == 'FEE_DESC'">
+                ORDER BY l.lecture_fee DESC, l.updated_at DESC
+            </when>
+            <when test="cond.sort.name() == 'START_SOON'">
+                ORDER BY l.deadline ASC NULLS LAST, l.updated_at DESC
+            </when>
+            <when test="cond.sort.name() == 'DURATION_ASC'">
+                 ORDER BY l.total_days ASC NULLS LAST, l.updated_at DESC
+            </when>
+            <when test="cond.sort.name() == 'DURATION_DESC'">
+                 ORDER BY l.total_days DESC NULLS LAST, l.updated_at DESC
+            </when>
+            <otherwise>
+                ORDER BY l.updated_at DESC
+            </otherwise>
+        </choose>
+        <if test="cond.limit != null and cond.offset != null">
+            LIMIT #{cond.limit} OFFSET #{cond.offset}
+        </if>
+    </select>
+
+    <!-- 카운트 쿼리 (페이징용) -->
+    <select id="countLectures" resultType="long">
+        SELECT COUNT(DISTINCT l.lecture_id)
+        FROM LECTURES l
+        <include refid="lectureJoins"/>
+        
+        WHERE 1=1
+        <include refid="searchConditions"/>
+    </select>
+</mapper>
