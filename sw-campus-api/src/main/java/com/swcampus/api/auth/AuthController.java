@@ -88,11 +88,11 @@ public class AuthController {
         try {
             emailService.verifyEmail(token);
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(frontendUrl + "/signup?verified=true"))
+                    .location(URI.create(frontendUrl + "/signup/personal?verified=true"))
                     .build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(frontendUrl + "/signup?error=invalid_token"))
+                    .location(URI.create(frontendUrl + "/signup/personal?error=invalid_token"))
                     .build();
         }
     }
