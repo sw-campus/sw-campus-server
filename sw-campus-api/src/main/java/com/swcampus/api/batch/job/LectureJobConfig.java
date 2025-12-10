@@ -43,10 +43,10 @@ public class LectureJobConfig {
 
                 log.info("Found {} expired lectures to close.", expiredLectures.size());
 
-                for (Lecture lecture : expiredLectures) {
-                    Lecture closedLecture = lecture.close();
-                    lectureRepository.save(closedLecture);
-                }
+                List<Lecture> closedLectures = expiredLectures.stream()
+                    .map(Lecture::close)
+                    .toList();
+                lectureRepository.saveAll(closedLectures);
 
                 log.info(">>>>> End lectureStatusUpdateStep");
                 return RepeatStatus.FINISHED;
