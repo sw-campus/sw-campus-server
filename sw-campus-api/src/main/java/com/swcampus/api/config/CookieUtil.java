@@ -9,6 +9,8 @@ public class CookieUtil {
 
     private static final String ACCESS_TOKEN_NAME = "accessToken";
     private static final String REFRESH_TOKEN_NAME = "refreshToken";
+    private static final String VERIFIED_EMAIL_NAME = "verifiedEmail";
+    private static final long VERIFIED_EMAIL_MAX_AGE = 300; // 5분
 
     @Value("${app.cookie.secure:true}")
     private boolean secure;
@@ -45,6 +47,26 @@ public class CookieUtil {
 
     public ResponseCookie deleteRefreshTokenCookie() {
         return ResponseCookie.from(REFRESH_TOKEN_NAME, "")
+                .httpOnly(true)
+                .secure(secure)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(0)
+                .build();
+    }
+
+    public ResponseCookie createVerifiedEmailCookie(String email) {
+        return ResponseCookie.from(VERIFIED_EMAIL_NAME, email)
+                .httpOnly(true)
+                .secure(secure)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(VERIFIED_EMAIL_MAX_AGE)
+                .build();
+    }
+
+    public ResponseCookie deleteVerifiedEmailCookie() {
+        return ResponseCookie.from(VERIFIED_EMAIL_NAME, "")
                 .httpOnly(true)
                 .secure(secure)
                 .sameSite("Strict")

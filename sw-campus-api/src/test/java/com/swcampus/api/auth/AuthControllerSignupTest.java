@@ -26,10 +26,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.springframework.http.ResponseCookie;
 
 @WebMvcTest(
         controllers = AuthController.class,
@@ -64,7 +68,7 @@ class AuthControllerSignupTest {
     class Signup {
 
         @Test
-        @DisplayName("성공 - 201 Created")
+        @DisplayName("성공 - 201 Created + 이메일 쿠키 삭제")
         void success() throws Exception {
             // given
             SignupRequest request = SignupRequest.builder()
@@ -90,17 +94,29 @@ class AuthControllerSignupTest {
                     null
             );
             when(authService.signup(any())).thenReturn(member);
+            
+            ResponseCookie deleteCookie = ResponseCookie.from("verifiedEmail", "")
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
+                    .path("/")
+                    .maxAge(0)
+                    .build();
+            when(cookieUtil.deleteVerifiedEmailCookie()).thenReturn(deleteCookie);
 
             // when & then
             mockMvc.perform(post("/api/v1/auth/signup")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
+                    .andExpect(header().exists("Set-Cookie"))
                     .andExpect(jsonPath("$.userId").value(1))
                     .andExpect(jsonPath("$.email").value("user@example.com"))
                     .andExpect(jsonPath("$.name").value("홍길동"))
                     .andExpect(jsonPath("$.nickname").value("길동이"))
                     .andExpect(jsonPath("$.role").value("USER"));
+            
+            verify(cookieUtil).deleteVerifiedEmailCookie();
         }
 
         @Test
