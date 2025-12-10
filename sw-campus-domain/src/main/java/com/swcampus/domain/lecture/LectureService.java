@@ -36,6 +36,7 @@ public class LectureService {
 		return lectureRepository.searchLectures(condition);
 	}
 
+	@Transactional(readOnly = true)
 	public List<Lecture> getLectureListByOrgId(Long orgId) {
 		return lectureRepository.findAllByOrgId(orgId);
 	}
