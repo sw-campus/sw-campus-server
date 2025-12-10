@@ -124,7 +124,7 @@ public class AuthController {
     }
 
     @PostMapping(value = "/signup/organization", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "기관 회원가입", description = "기관 사용자로 회원가입합니다. 사업자등록증 이미지가 필요하며, 관리자 승인 후 이용 가능합니다.")
+    @Operation(summary = "기관 회원가입", description = "기관 사용자로 회원가입합니다. 재직증명서 이미지가 필요하며, 관리자 승인 후 이용 가능합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "회원가입 성공 (승인 대기)"),
         @ApiResponse(responseCode = "400", description = "잘못된 요청",
@@ -132,7 +132,7 @@ public class AuthController {
     })
     public ResponseEntity<OrganizationSignupResponse> signupOrganization(
             @Valid @ModelAttribute OrganizationSignupRequest request,
-            @Parameter(description = "사업자등록증 이미지", required = true)
+            @Parameter(description = "재직증명서 이미지", required = true)
             @RequestParam("certificateImage") MultipartFile certificateImage) throws IOException {
 
         OrganizationSignupResult result = authService.signupOrganization(request.toCommand(certificateImage));
