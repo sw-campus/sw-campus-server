@@ -1,17 +1,19 @@
 package com.swcampus.api.lecture.response;
 
-import com.swcampus.domain.lecture.Lecture;
-
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.swcampus.domain.lecture.Lecture;
+
 public record LectureResponse(
 		Long lectureId,
 		Long orgId,
+		String orgName,
 		String lectureName,
 		Set<String> days,
 		LocalTime startTime,
@@ -25,8 +27,7 @@ public record LectureResponse(
 		String goal,
 		Integer maxCapacity,
 		String equipPc,
-		String equipLaptop,
-		Boolean equipGpu,
+		String equipMerit,
 		Boolean books,
 		Boolean resume,
 		Boolean mockInterview,
@@ -36,9 +37,21 @@ public record LectureResponse(
 		String lectureImageUrl,
 		String status,
 		Boolean lectureAuthStatus,
+		
+		// Project
+		Integer projectNum,
+		Integer projectTime,
+		String projectTeam,
+		String projectTool,
+		Boolean projectMentor,
+		
+		String startAt,
+		String endAt,
+		String deadline,
+		Integer totalDays,
+		Integer totalTimes,
 
 		// 하위 응답
-		List<CohortResponse> cohorts,
 		List<StepResponse> steps,
 		List<AddResponse> adds,
 		List<QualResponse> quals,
@@ -48,6 +61,7 @@ public record LectureResponse(
 		return new LectureResponse(
 				lecture.getLectureId(),
 				lecture.getOrgId(),
+				lecture.getOrgName(),
 				lecture.getLectureName(),
 				lecture.getDays() != null 
 						? lecture.getDays().stream().map(Enum::name).collect(Collectors.toSet()) 
@@ -63,8 +77,7 @@ public record LectureResponse(
 				lecture.getGoal(),
 				lecture.getMaxCapacity(),
 				lecture.getEquipPc() != null ? lecture.getEquipPc().name() : null,
-				lecture.getEquipLaptop() != null ? lecture.getEquipLaptop().name() : null,
-				lecture.getEquipGpu(),
+				lecture.getEquipMerit(),
 				lecture.getBooks(),
 				lecture.getResume(),
 				lecture.getMockInterview(),
@@ -74,10 +87,18 @@ public record LectureResponse(
 				lecture.getLectureImageUrl(),
 				lecture.getStatus().name(),
 				lecture.getLectureAuthStatus(),
+				
+				lecture.getProjectNum(),
+				lecture.getProjectTime(),
+				lecture.getProjectTeam(),
+				lecture.getProjectTool(),
+				lecture.getProjectMentor(),
 
-				// Null-safe List Mapping
-				lecture.getCohorts() != null ? lecture.getCohorts().stream().map(CohortResponse::from).toList()
-						: List.of(),
+				lecture.getStartAt() != null ? lecture.getStartAt().toString() : null,
+				lecture.getEndAt() != null ? lecture.getEndAt().toString() : null,
+				lecture.getDeadline() != null ? lecture.getDeadline().toString() : null,
+				lecture.getTotalDays(),
+				lecture.getTotalTimes(),
 				lecture.getSteps() != null ? lecture.getSteps().stream().map(StepResponse::from).toList() : List.of(),
 				lecture.getAdds() != null ? lecture.getAdds().stream().map(AddResponse::from).toList() : List.of(),
 				lecture.getQuals() != null ? lecture.getQuals().stream().map(QualResponse::from).toList() : List.of(),
@@ -88,15 +109,9 @@ public record LectureResponse(
 						: List.of());
 	}
 
-	public record CohortResponse(Long cohortNum, String startAt, String endAt, Integer totalDays) {
-		public static CohortResponse from(com.swcampus.domain.lecture.Cohort c) {
-			return new CohortResponse(c.getCohortNum(), c.getStartAt().toString(), c.getEndAt().toString(), c.getTotalDays());
-		}
-	}
-
-	public record StepResponse(Long stepId, String stepName, Integer stepOrder) {
+	public record StepResponse(Long stepId, String stepType, Integer stepOrder) {
 		public static StepResponse from(com.swcampus.domain.lecture.LectureStep s) {
-			return new StepResponse(s.getStepId(), s.getStepName(), s.getStepOrder());
+			return new StepResponse(s.getStepId(), s.getStepType() != null ? s.getStepType().name() : null, s.getStepOrder());
 		}
 	}
 

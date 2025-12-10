@@ -19,6 +19,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,7 +32,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"cohorts", "steps", "adds", "quals", "lectureTeachers", "lectureCurriculums"})
+@ToString(exclude = {"steps", "adds", "quals", "lectureTeachers", "lectureCurriculums"})
 public class LectureEntity {
 
 	@Id
@@ -41,6 +42,16 @@ public class LectureEntity {
 
 	@Column(name = "ORG_ID", nullable = false)
 	private Long orgId;
+
+	@Transient
+	/**
+	 * Organization name for search result display.
+	 * <p>
+	 * This field is only used for MyBatis result mapping to avoid an N+1 query problem
+	 * when fetching organization names during search results. It should NOT be set or used
+	 * in JPA operations, as it is not persisted in the database.
+	 */
+	private String orgName;
 
 	@Column(name = "LECTURE_NAME", nullable = false)
 	private String lectureName;
@@ -84,12 +95,8 @@ public class LectureEntity {
 	@Enumerated(EnumType.STRING)
 	private com.swcampus.domain.lecture.EquipmentType equipPc;
 
-	@Column(name = "EQUIP_LAPTOP")
-	@Enumerated(EnumType.STRING)
-	private com.swcampus.domain.lecture.EquipmentType equipLaptop;
-
-	@Column(name = "EQUIP_GPU")
-	private Boolean equipGpu;
+	@Column(name = "EQUIP_MERIT")
+	private String equipMerit;
 
 	@Column(name = "BOOKS", nullable = false)
 	private Boolean books;
@@ -118,21 +125,47 @@ public class LectureEntity {
 
 	@Column(name = "LECTURE_AUTH_STATUS")
 	private Boolean lectureAuthStatus;
+	
+    // Project Related (New)
+    @Column(name = "PROJECT_NUM")
+    private Integer projectNum;
+
+    @Column(name = "PROJECT_TIME")
+    private Integer projectTime;
+
+    @Column(name = "PROJECT_TEAM")
+    private String projectTeam;
+
+    @Column(name = "PROJECT_TOOL")
+    private String projectTool;
+
+    @Column(name = "PROJECT_MENTOR")
+    private Boolean projectMentor;
+
+	@Column(name = "START_DATE", nullable = false)
+	private LocalDateTime startAt;
+
+	@Column(name = "END_DATE", nullable = false)
+	private LocalDateTime endAt;
+
+	@Column(name = "DEADLINE")
+	private LocalDateTime deadline;
+
+	@Column(name = "TOTAL_DAYS", nullable = false)
+	private Integer totalDays;
+
+	@Column(name = "TOTAL_TIMES", nullable = false)
+	private Integer totalTimes;
 
 	@CreationTimestamp
 	@Column(name = "CREATED_AT")
 	private LocalDateTime createdAt;
 
-	@UpdateTimestamp
+	//@UpdateTimestamp // 하위 데이터 변경 시에도 갱신을 위해 수동 관리
 	@Column(name = "UPDATED_AT")
 	private LocalDateTime updatedAt;
 
 	// --- 1:N Relationships ---
-
-	@OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
-	@Builder.Default
-	private List<CohortEntity> cohorts = new ArrayList<>();
-
 	@OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<LectureStepEntity> steps = new ArrayList<>();
@@ -176,8 +209,7 @@ public class LectureEntity {
 				.goal(lecture.getGoal())
 				.maxCapacity(lecture.getMaxCapacity())
 				.equipPc(lecture.getEquipPc())
-				.equipLaptop(lecture.getEquipLaptop())
-				.equipGpu(lecture.getEquipGpu())
+				.equipMerit(lecture.getEquipMerit())
 				.books(lecture.getBooks())
 				.resume(lecture.getResume())
 				.mockInterview(lecture.getMockInterview())
@@ -188,21 +220,20 @@ public class LectureEntity {
 				.status(lecture.getStatus())
 				.lectureAuthStatus(lecture.getLectureAuthStatus())
 				.createdAt(lecture.getCreatedAt())
-				.updatedAt(lecture.getUpdatedAt())
+				// 하위 데이터 변경 시에도 강제로 업데이트 시간 갱신
+				.updatedAt(LocalDateTime.now()) 
+				// Project
+				.projectNum(lecture.getProjectNum())
+				.projectTime(lecture.getProjectTime())
+				.projectTeam(lecture.getProjectTeam())
+				.projectTool(lecture.getProjectTool())
+				.projectMentor(lecture.getProjectMentor())
+				.startAt(lecture.getStartAt())
+				.endAt(lecture.getEndAt())
+				.deadline(lecture.getDeadline())
+				.totalDays(lecture.getTotalDays())
+				.totalTimes(lecture.getTotalTimes())
 				.build();
-
-		// 1:N Relationships (Cohorts)
-		if (lecture.getCohorts() != null) {
-			entity.getCohorts().addAll(lecture.getCohorts().stream()
-					.map(c -> CohortEntity.builder()
-							.cohortNum(c.getCohortNum())
-							.lecture(entity)
-							.startAt(c.getStartAt())
-							.endAt(c.getEndAt())
-							.totalDays(c.getTotalDays())
-							.build())
-					.toList());
-		}
 
 		// 1:N Relationships (Steps)
 		if (lecture.getSteps() != null) {
@@ -210,7 +241,7 @@ public class LectureEntity {
 					.map(s -> LectureStepEntity.builder()
 							.stepId(s.getStepId())
 							.lecture(entity)
-							.stepName(s.getStepName())
+							.stepType(s.getStepType())
 							.stepOrder(s.getStepOrder())
 							.build())
 					.toList());
@@ -244,20 +275,22 @@ public class LectureEntity {
 
 	public com.swcampus.domain.lecture.Lecture toDomain() {
 		return com.swcampus.domain.lecture.Lecture.builder()
-				.lectureId(lectureId).orgId(orgId).lectureName(lectureName)
+				.lectureId(lectureId).orgId(orgId).orgName(orgName).lectureName(lectureName)
 				.days(days != null && !days.isEmpty() ? java.util.Arrays.stream(days.split(",")).map(com.swcampus.domain.lecture.LectureDay::valueOf).collect(java.util.stream.Collectors.toSet()) : java.util.Collections.emptySet())
 				.startTime(startTime).endTime(endTime)
 				.lectureLoc(lectureLoc).location(location).recruitType(recruitType)
 				.subsidy(subsidy).lectureFee(lectureFee).eduSubsidy(eduSubsidy)
 				.goal(goal).maxCapacity(maxCapacity)
-				.equipPc(equipPc).equipLaptop(equipLaptop).equipGpu(equipGpu)
+				.equipPc(equipPc).equipMerit(equipMerit)
 				.books(books).resume(resume).mockInterview(mockInterview)
 				.employmentHelp(employmentHelp).afterCompletion(afterCompletion)
 				.url(url).lectureImageUrl(lectureImageUrl)
 				.status(status).lectureAuthStatus(lectureAuthStatus)
+				// Project
+				.projectNum(projectNum).projectTime(projectTime).projectTeam(projectTeam).projectTool(projectTool).projectMentor(projectMentor)
+				.startAt(startAt).endAt(endAt).deadline(deadline).totalDays(totalDays).totalTimes(totalTimes)
 				.createdAt(createdAt).updatedAt(updatedAt)
 				// Lists mapping
-				.cohorts(cohorts.stream().map(CohortEntity::toDomain).toList())
 				.steps(steps.stream().map(LectureStepEntity::toDomain).toList())
 				.adds(adds.stream().map(LectureAddEntity::toDomain).toList())
 				.quals(quals.stream().map(LectureQualEntity::toDomain).toList())

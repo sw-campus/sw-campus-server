@@ -9,7 +9,7 @@ import lombok.Getter;
 public class LectureStep {
 	private Long stepId;
 	private Long lectureId;
-	private String stepName;
+	private SelectionStepType stepType; // Enum으로 변경
 	private Integer stepOrder;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;

@@ -1,6 +1,5 @@
 package com.swcampus.api.lecture.request;
 
-import com.swcampus.domain.lecture.Cohort;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureAdd;
 import com.swcampus.domain.lecture.LectureCurriculum;
@@ -31,8 +30,7 @@ public record LectureCreateRequest(
 		String goal,
 		Integer maxCapacity,
 		String equipPc,
-		String equipLaptop,
-		Boolean equipGpu,
+		String equipMerit,
 		Boolean books,
 		Boolean resume,
 		Boolean mockInterview,
@@ -40,9 +38,21 @@ public record LectureCreateRequest(
 		Integer afterCompletion,
 		String url,
 		String lectureImageUrl,
+		
+		// Project
+		Integer projectNum,
+		Integer projectTime,
+		String projectTeam,
+		String projectTool,
+		Boolean projectMentor,
+		
+		String startAt,
+		String endAt,
+		String deadline,
+		Integer totalDays,
+		Integer totalTimes,
 
 		// 하위 데이터
-		List<CohortRequest> cohorts,
 		List<StepRequest> steps,
 		List<AddRequest> adds,
 		List<QualRequest> quals,
@@ -67,8 +77,7 @@ public record LectureCreateRequest(
 				.goal(goal)
 				.maxCapacity(maxCapacity)
 				.equipPc(com.swcampus.domain.lecture.EquipmentType.valueOf(equipPc))
-				.equipLaptop(com.swcampus.domain.lecture.EquipmentType.valueOf(equipLaptop))
-				.equipGpu(equipGpu)
+				.equipMerit(equipMerit)
 				.books(books)
 				.resume(resume)
 				.mockInterview(mockInterview)
@@ -79,32 +88,40 @@ public record LectureCreateRequest(
 				.status(com.swcampus.domain.lecture.LectureStatus.RECRUITING) // 초기 상태
 				.lectureAuthStatus(false) // 관리자 승인시 true
 				
-				// 1. 기수(Cohorts) 변환
-				.cohorts(cohorts != null
-						? cohorts.stream().map(CohortRequest::toDomain).toList()
-						: List.of())
-
-				// 2. 선발절차(Steps) 변환
+				// Project
+				.projectNum(projectNum)
+				.projectTime(projectTime)
+				.projectTeam(projectTeam)
+				.projectTool(projectTool)
+				.projectMentor(projectMentor)
+				
+				.startAt(LocalDate.parse(startAt).atStartOfDay())
+				.endAt(LocalDate.parse(endAt).atStartOfDay())
+				.deadline(deadline != null ? LocalDate.parse(deadline).atStartOfDay() : null)
+				.totalDays(totalDays)
+				.totalTimes(totalTimes)
+				
+				// 선발절차(Steps) 변환
 				.steps(steps != null
 						? steps.stream().map(StepRequest::toDomain).toList()
 						: List.of())
 
-				// 3. 추가혜택(Adds) 변환
+				// 추가혜택(Adds) 변환
 				.adds(adds != null
 						? adds.stream().map(AddRequest::toDomain).toList()
 						: List.of())
 
-				// 4. 지원자격(Quals) 변환
+				// 지원자격(Quals) 변환
 				.quals(quals != null
 						? quals.stream().map(QualRequest::toDomain).toList()
 						: List.of())
 
-				// 5. 강사(Teachers) 변환
+				// 강사(Teachers) 변환
 				.teachers(teachers != null
 						? teachers.stream().map(TeacherRequest::toDomain).toList()
 						: List.of())
 
-				// 6. 커리큘럼(Curriculums) 변환 (연결 정보)
+				// 커리큘럼(Curriculums) 변환 (연결 정보)
 				.lectureCurriculums(curriculums != null
 						? curriculums.stream().map(CurriculumRequest::toDomainInfo).toList()
 						: List.of())
@@ -112,21 +129,10 @@ public record LectureCreateRequest(
 				.build();
 	}
 
-	public record CohortRequest(String startAt, String endAt, Integer totalDays) {
-		public Cohort toDomain() {
-			// 입력 포맷: "2024-01-01"
-			return Cohort.builder()
-					.startAt(LocalDate.parse(startAt).atStartOfDay())
-					.endAt(LocalDate.parse(endAt).atStartOfDay())
-					.totalDays(totalDays)
-					.build();
-		}
-	}
-
-	public record StepRequest(String stepName, Integer stepOrder) {
+	public record StepRequest(String stepType, Integer stepOrder) {
 		public LectureStep toDomain() {
 			return LectureStep.builder()
-					.stepName(stepName)
+					.stepType(com.swcampus.domain.lecture.SelectionStepType.valueOf(stepType))
 					.stepOrder(stepOrder)
 					.build();
 		}
