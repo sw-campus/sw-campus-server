@@ -1,23 +1,24 @@
 package com.swcampus.infra.postgres.lecture;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureRepository;
-import com.swcampus.infra.postgres.category.CurriculumEntity;
-import com.swcampus.infra.postgres.teacher.TeacherEntity;
-
+import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
+import com.swcampus.infra.postgres.category.CurriculumEntity;
 import com.swcampus.infra.postgres.lecture.mapper.LectureMapper;
+import com.swcampus.infra.postgres.teacher.TeacherEntity;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
-import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 @Repository
 @RequiredArgsConstructor
@@ -85,5 +86,13 @@ public class LectureEntityRepository implements LectureRepository {
 			: content.size() + 1; // avoid /0
 
 		return new PageImpl<>(content, PageRequest.of(page, size), total);
+	}
+
+	@Override
+	public List<Lecture> findAllExpiredAndRecruiting(LocalDateTime now) {
+		return jpaRepository.findAllByDeadlineBeforeAndStatus(now, com.swcampus.domain.lecture.LectureStatus.RECRUITING)
+				.stream()
+				.map(LectureEntity::toDomain)
+				.toList();
 	}
 }

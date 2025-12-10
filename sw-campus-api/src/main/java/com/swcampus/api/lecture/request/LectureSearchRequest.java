@@ -15,7 +15,7 @@ import lombok.ToString;
 public class LectureSearchRequest {
     private String text; // 제목, 내용, 기관명 검색
     
-    private List<String> regions; // 지역 (서울 등)
+    private List<String> regions; // 지역
     
     private List<Long> categoryIds; // 선택된 카테고리 ID 목록
 
@@ -27,7 +27,7 @@ public class LectureSearchRequest {
     // 선발절차
     private Boolean hasCodingTest;
     private Boolean hasInterview;
-    private Boolean hasNoSelection;
+    private Boolean hasPreTask;
     
     // 상태 (RECRUITING, ONGOING, FINISHED)
     private String status;
@@ -56,7 +56,7 @@ public class LectureSearchRequest {
                 .isPaid(this.isPaid)
                 .hasCodingTest(this.hasCodingTest)
                 .hasInterview(this.hasInterview)
-                .hasNoSelection(this.hasNoSelection)
+                .hasPreTask(this.hasPreTask)
                 .status(this.status != null ? com.swcampus.domain.lecture.LectureStatus.valueOf(this.status) : null)
                 .sort(this.sort != null ? this.sort : LectureSortType.LATEST)
                 .limit(pageSize)

@@ -18,6 +18,9 @@ public class CategoryTreeResponse {
 		this.categoryId = category.getCategoryId();
 		this.categoryName = category.getCategoryName();
 		this.sort = category.getSort();
+		this.children = category.getChildren().stream()
+			.map(CategoryTreeResponse::new)
+			.toList();
 	}
 
 	// 자식 추가

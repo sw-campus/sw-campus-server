@@ -36,7 +36,7 @@ public class Lecture {
 	private String url; // 신청 링크
 	private String lectureImageUrl; // 이미지 URL
 	private LectureStatus status; // 모집중, 진행중, 종료
-	private Boolean lectureAuthStatus; // 등록 상태
+	private LectureAuthStatus lectureAuthStatus; // 등록 상태
 	
     // 프로젝트 관련
     private Integer projectNum;
@@ -61,4 +61,9 @@ public class Lecture {
 	// N:M Relationships
 	private List<com.swcampus.domain.teacher.Teacher> teachers;
 	private List<LectureCurriculum> lectureCurriculums;
+	public Lecture close() {
+		return this.toBuilder()
+			.status(LectureStatus.FINISHED)
+			.build();
+	}
 }
