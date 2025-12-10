@@ -121,15 +121,30 @@
             </trim>
         </if>
 
-        <!-- 선발 절차 필터 (Enum 매칭) -->
-        <if test="cond.hasCodingTest != null and cond.hasCodingTest">
-            AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'CODING_TEST')
+        <!-- 선발 절차 필터 -->
+        <if test="cond.hasCodingTest != null">
+            <if test="cond.hasCodingTest">
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'CODING_TEST')
+            </if>
+            <if test="!cond.hasCodingTest">
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'CODING_TEST')
+            </if>
         </if>
-        <if test="cond.hasInterview != null and cond.hasInterview">
-            AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'INTERVIEW')
+        <if test="cond.hasInterview != null">
+            <if test="cond.hasInterview">
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'INTERVIEW')
+            </if>
+            <if test="!cond.hasInterview">
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'INTERVIEW')
+            </if>
         </if>
-        <if test="cond.hasNoSelection != null and cond.hasNoSelection">
-             AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id)
+        <if test="cond.hasPreTask != null">
+            <if test="cond.hasPreTask">
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'PRE_TASK')
+            </if>
+            <if test="!cond.hasPreTask">
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'PRE_TASK')
+            </if>
         </if>
         
         <!-- 상태 검색 -->
