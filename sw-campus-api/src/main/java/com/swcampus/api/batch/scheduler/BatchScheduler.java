@@ -33,7 +33,7 @@ public class BatchScheduler {
             jobLauncher.run(lectureStatusUpdateJob, jobParameters);
             
         } catch (Exception e) {
-            log.error("Batch Job Failed", e);
+            log.error("Lecture Status Update Batch Job Failed at {}", LocalDateTime.now(), e);
         }
     }
 }
