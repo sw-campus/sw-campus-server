@@ -132,8 +132,6 @@ class AuthControllerSignupTest {
                     .password("Password1!")
                     .name("")
                     .nickname("")
-                    .phone("")
-                    .location("")
                     .build();
 
             // when & then
