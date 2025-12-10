@@ -21,7 +21,6 @@ public class BatchScheduler {
     private final Job lectureStatusUpdateJob;
 
     // 매일 자정 실행 (0 0 0 * * *)
-    // 일단 매일 자정에 도는 것으로 설정
     @Scheduled(cron = "0 0 0 * * *")
     public void runLectureStatusUpdateJob() {
         try {
