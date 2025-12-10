@@ -30,35 +30,11 @@ public class CategoryController {
 	 */
 	@GetMapping("/tree")
 	public ResponseEntity<List<CategoryTreeResponse>> getCategoryTree() {
-		List<Category> allCategories = categoryService.getAllCategories();
-
-		// DTO로 변환하면서 Map에 저장 (Key: ID, Value: DTO)
-		// ID로 부모를 O(1)로 바로 찾을 수 있음
-		Map<Long, CategoryTreeResponse> dtoMap = allCategories.stream()
+		List<Category> categoryTree = categoryService.getCategoryTree();
+		List<CategoryTreeResponse> response = categoryTree.stream()
 			.map(CategoryTreeResponse::new)
-			.collect(Collectors.toMap(CategoryTreeResponse::getCategoryId, Function.identity()));
+			.toList();
 
-		List<CategoryTreeResponse> roots = new ArrayList<>();
-
-		for (Category cat : allCategories) {
-			CategoryTreeResponse currentDto = dtoMap.get(cat.getCategoryId());
-			Long pid = cat.getPid();
-
-			if (pid == null || pid == 0) {
-				// 부모가 없으면 최상위(대분류) -> Root 리스트에 추가
-				roots.add(currentDto);
-			} else {
-				// 부모가 있으면 -> 부모 DTO를 찾아서 그 자식으로 추가
-				CategoryTreeResponse parentDto = dtoMap.get(pid);
-				if (parentDto != null) {
-					parentDto.addChild(currentDto);
-				}
-			}
-		}
-
-		// 정렬 (Sort 순서) 
-		// roots.sort((a, b) -> a.getSort().compareTo(b.getSort()));
-
-		return ResponseEntity.ok(roots);
+		return ResponseEntity.ok(response);
 	}
 }

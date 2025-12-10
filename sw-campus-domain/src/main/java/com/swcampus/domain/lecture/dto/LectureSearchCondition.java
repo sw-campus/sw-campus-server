@@ -22,7 +22,7 @@ public class LectureSearchCondition {
     // 선발 절차 필터
     private Boolean hasCodingTest;
     private Boolean hasInterview;
-    private Boolean hasNoSelection;
+    private Boolean hasPreTask;
     
     // 상태 (RECRUITING, ONGOING, FINISHED)
     private LectureStatus status;
