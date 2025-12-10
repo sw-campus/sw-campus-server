@@ -11,9 +11,10 @@ import com.swcampus.domain.lecture.LectureStatus;
 
 public interface LectureJpaRepository extends JpaRepository<LectureEntity, Long> {
     List<LectureEntity> findAllByDeadlineBeforeAndStatus(LocalDateTime now, LectureStatus status);
-    
+
     List<LectureEntity> findAllByOrgId(Long orgId);
 
-    @Query("SELECT l.orgId, COUNT(l) FROM LectureEntity l WHERE l.status = :status GROUP BY l.orgId")
-    List<Object[]> countByStatusGroupByOrgId(@Param("status") LectureStatus status);
+    @Query("SELECT l.orgId, COUNT(l) FROM LectureEntity l WHERE l.status = :status AND l.orgId IN :orgIds GROUP BY l.orgId")
+    List<Object[]> countByStatusAndOrgIdInGroupByOrgId(@Param("status") LectureStatus status,
+            @Param("orgIds") List<Long> orgIds);
 }

@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.swcampus.domain.common.ResourceNotFoundException;
-import com.swcampus.domain.organization.dto.OrganizationSearchCondition;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,11 +26,14 @@ public class OrganizationService {
                 .orElseThrow(() -> new ResourceNotFoundException("해당 업체를 찾을 수 없습니다."));
     }
 
-    public List<Organization> getAllOrganizations() {
+    public List<Organization> getOrganizationList() {
         return organizationRepository.findAll();
     }
 
-    public List<Organization> searchOrganizations(OrganizationSearchCondition condition) {
-        return organizationRepository.searchOrganizations(condition);
+    public List<Organization> getOrganizationList(String keyword) {
+        if (keyword != null && !keyword.isBlank()) {
+            return organizationRepository.findByNameContaining(keyword);
+        }
+        return organizationRepository.findAll();
     }
 }

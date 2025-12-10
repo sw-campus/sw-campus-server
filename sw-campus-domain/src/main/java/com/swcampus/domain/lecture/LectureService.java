@@ -19,11 +19,10 @@ public class LectureService {
 
 	private final LectureRepository lectureRepository;
 
-
 	public Lecture registerLecture(Lecture lecture) {
 		Lecture newLecture = lecture.toBuilder()
-			.lectureAuthStatus(LectureAuthStatus.PENDING)
-			.build();
+				.lectureAuthStatus(LectureAuthStatus.PENDING)
+				.build();
 		return lectureRepository.save(newLecture);
 	}
 
@@ -37,12 +36,12 @@ public class LectureService {
 		return lectureRepository.searchLectures(condition);
 	}
 
-	public List<Lecture> getLecturesByOrgId(Long orgId) {
+	public List<Lecture> getLectureListByOrgId(Long orgId) {
 		return lectureRepository.findAllByOrgId(orgId);
 	}
 
-	public Map<Long, Long> getRecruitingLectureCounts() {
-		return lectureRepository.countLecturesByStatusGroupByOrg(LectureStatus.RECRUITING);
+	public Map<Long, Long> getRecruitingLectureCounts(List<Long> orgIds) {
+		return lectureRepository.countLecturesByStatusAndOrgIdIn(LectureStatus.RECRUITING, orgIds);
 	}
 
 }

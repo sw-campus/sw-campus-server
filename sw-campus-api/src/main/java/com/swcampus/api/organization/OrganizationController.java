@@ -16,7 +16,6 @@ import com.swcampus.api.organization.response.OrganizationSummaryResponse;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
-import com.swcampus.domain.organization.dto.OrganizationSearchCondition;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,18 +28,13 @@ public class OrganizationController {
     private final LectureService lectureService;
 
     @GetMapping
-    public ResponseEntity<List<OrganizationSummaryResponse>> getAllOrganizations(@RequestParam(required = false) String keyword) {
-        Map<Long, Long> counts = lectureService.getRecruitingLectureCounts();
-        List<Organization> result;
-        
-        if (keyword != null && !keyword.isBlank()) {
-            OrganizationSearchCondition condition = OrganizationSearchCondition.builder()
-                .keyword(keyword)
-                .build();
-            result = organizationService.searchOrganizations(condition);
-        } else {
-            result = organizationService.getAllOrganizations();
-        }
+    public ResponseEntity<List<OrganizationSummaryResponse>> getOrganizationList(
+            @RequestParam(required = false) String keyword) {
+
+        List<Organization> result = organizationService.getOrganizationList(keyword);
+
+        List<Long> orgIds = result.stream().map(Organization::getId).toList();
+        Map<Long, Long> counts = lectureService.getRecruitingLectureCounts(orgIds);
 
         List<OrganizationSummaryResponse> organizations = result.stream()
                 .map(org -> OrganizationSummaryResponse.from(org, counts.getOrDefault(org.getId(), 0L)))
@@ -55,10 +49,10 @@ public class OrganizationController {
     }
 
     @GetMapping("/{organizationId}/lectures")
-    public ResponseEntity<List<LectureResponse>> getOrganizationLectures(@PathVariable Long organizationId) {
-        List<LectureResponse> lectures = lectureService.getLecturesByOrgId(organizationId).stream()
-            .map(LectureResponse::from)
-            .toList();
+    public ResponseEntity<List<LectureResponse>> getOrganizationLectureList(@PathVariable Long organizationId) {
+        List<LectureResponse> lectures = lectureService.getLectureListByOrgId(organizationId).stream()
+                .map(LectureResponse::from)
+                .toList();
         return ResponseEntity.ok(lectures);
     }
 }

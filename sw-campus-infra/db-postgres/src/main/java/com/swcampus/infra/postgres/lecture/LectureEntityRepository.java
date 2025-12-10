@@ -106,8 +106,11 @@ public class LectureEntityRepository implements LectureRepository {
 	}
 
 	@Override
-	public Map<Long, Long> countLecturesByStatusGroupByOrg(LectureStatus status) {
-		List<Object[]> results = jpaRepository.countByStatusGroupByOrgId(status);
+	public Map<Long, Long> countLecturesByStatusAndOrgIdIn(LectureStatus status, List<Long> orgIds) {
+		if (orgIds == null || orgIds.isEmpty()) {
+			return Map.of();
+		}
+		List<Object[]> results = jpaRepository.countByStatusAndOrgIdInGroupByOrgId(status, orgIds);
 		return results.stream()
 				.collect(java.util.stream.Collectors.toMap(
 						row -> (Long) row[0],

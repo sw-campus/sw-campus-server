@@ -7,17 +7,20 @@ import org.springframework.stereotype.Repository;
 
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationRepository;
-import com.swcampus.domain.organization.dto.OrganizationSearchCondition;
+
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class OrganizationEntityRepository implements OrganizationRepository {
 
     private final OrganizationJpaRepository jpaRepository;
 
     @Override
+    @Transactional
     public Organization save(Organization organization) {
         OrganizationEntity entity = OrganizationEntity.from(organization);
         OrganizationEntity saved = jpaRepository.save(entity);
@@ -49,16 +52,8 @@ public class OrganizationEntityRepository implements OrganizationRepository {
     }
 
     @Override
-    public List<Organization> searchOrganizations(OrganizationSearchCondition condition) {
-        List<OrganizationEntity> entities;
-        
-        if (condition.getKeyword() != null && !condition.getKeyword().isBlank()) {
-            entities = jpaRepository.findByNameContaining(condition.getKeyword());
-        } else {
-            entities = jpaRepository.findAll();
-        }
-
-        return entities.stream()
+    public List<Organization> findByNameContaining(String keyword) {
+        return jpaRepository.findByNameContaining(keyword).stream()
                 .map(OrganizationEntity::toDomain)
                 .toList();
     }
