@@ -2,6 +2,13 @@
 
 > 이 문서는 GitHub Copilot이 PR 리뷰 및 코드 작성 시 참고하는 지침입니다.
 
+## ⚠️ 중요: 언어 설정
+
+- **모든 PR 리뷰 코멘트는 반드시 한국어로 작성해주세요.**
+- **코드 제안, 설명, 피드백 등 모든 응답은 한국어로 작성합니다.**
+
+---
+
 ## 프로젝트 개요
 
 - **프로젝트**: sw-campus-server (교육 플랫폼 백엔드)
@@ -38,7 +45,7 @@ sw-campus-server/
 | domain | `{Domain}Repository` | `UserRepository` |
 | infra | `{Domain}Entity` | `UserEntity` |
 | infra | `{Domain}JpaRepository` | `UserJpaRepository` |
-| infra | `{Domain}RepositoryImpl` | `UserRepositoryImpl` |
+| infra | `{Domain}EntityRepository` | `UserEntityRepository` |
 
 #### 메서드 네이밍
 - Controller: `getUser()`, `getUserList()`, `createUser()`, `updateUser()`, `deleteUser()`

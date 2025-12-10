@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class MemberRepositoryImpl implements MemberRepository {
+public class MemberEntityRepository implements MemberRepository {
 
     private final MemberJpaRepository jpaRepository;
 

@@ -13,6 +13,8 @@ public class Organization {
     private Long userId;
     private String name;
     private String description;
+    private ApprovalStatus approvalStatus;
+    private String certificateUrl;
     private String govAuth;
     private String facilityImageUrl;
     private String facilityImageUrl2;
@@ -22,17 +24,20 @@ public class Organization {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static Organization create(Long userId, String name, String description) {
+    public static Organization create(Long userId, String name, String description, String certificateUrl) {
         Organization org = new Organization();
         org.userId = userId;
         org.name = name;
         org.description = description;
+        org.approvalStatus = ApprovalStatus.PENDING;
+        org.certificateUrl = certificateUrl;
         org.createdAt = LocalDateTime.now();
         org.updatedAt = LocalDateTime.now();
         return org;
     }
 
     public static Organization of(Long id, Long userId, String name, String description,
+                                  ApprovalStatus approvalStatus, String certificateUrl,
                                   String govAuth, String facilityImageUrl,
                                   String facilityImageUrl2, String facilityImageUrl3,
                                   String facilityImageUrl4, String logoUrl,
@@ -42,6 +47,8 @@ public class Organization {
         org.userId = userId;
         org.name = name;
         org.description = description;
+        org.approvalStatus = approvalStatus;
+        org.certificateUrl = certificateUrl;
         org.govAuth = govAuth;
         org.facilityImageUrl = facilityImageUrl;
         org.facilityImageUrl2 = facilityImageUrl2;
@@ -51,6 +58,16 @@ public class Organization {
         org.createdAt = createdAt;
         org.updatedAt = updatedAt;
         return org;
+    }
+
+    public void approve() {
+        this.approvalStatus = ApprovalStatus.APPROVED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void reject() {
+        this.approvalStatus = ApprovalStatus.REJECTED;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateInfo(String name, String description) {
