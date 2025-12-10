@@ -9,6 +9,7 @@ import com.swcampus.api.auth.response.LoginResponse;
 import com.swcampus.api.auth.response.MessageResponse;
 import com.swcampus.api.auth.response.OrganizationSignupResponse;
 import com.swcampus.api.auth.response.SignupResponse;
+import com.swcampus.api.auth.response.VerifiedEmailResponse;
 import com.swcampus.api.config.CookieUtil;
 import com.swcampus.api.exception.ErrorResponse;
 import com.swcampus.domain.auth.AuthService;
@@ -86,8 +87,11 @@ public class AuthController {
             @Parameter(description = "인증 토큰", required = true)
             @RequestParam("token") String token) {
         try {
-            emailService.verifyEmail(token);
+            String email = emailService.verifyEmail(token);
+            ResponseCookie emailCookie = cookieUtil.createVerifiedEmailCookie(email);
+            
             return ResponseEntity.status(HttpStatus.FOUND)
+                    .header(HttpHeaders.SET_COOKIE, emailCookie.toString())
                     .location(URI.create(frontendUrl + "/signup/personal?verified=true"))
                     .build();
         } catch (Exception e) {
@@ -107,6 +111,20 @@ public class AuthController {
         return ResponseEntity.ok(EmailStatusResponse.of(email, verified));
     }
 
+    @GetMapping("/email/verified")
+    @Operation(summary = "인증된 이메일 조회", description = "HttpOnly 쿠키에 저장된 인증된 이메일을 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "404", description = "인증된 이메일 없음")
+    })
+    public ResponseEntity<VerifiedEmailResponse> getVerifiedEmail(
+            @CookieValue(name = "verifiedEmail", required = false) String verifiedEmail) {
+        if (verifiedEmail == null || verifiedEmail.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(VerifiedEmailResponse.of(verifiedEmail));
+    }
+
     @PostMapping("/signup")
     @Operation(summary = "일반 회원가입", description = "이메일 인증 완료 후 일반 사용자로 회원가입합니다.")
     @ApiResponses({
@@ -119,7 +137,10 @@ public class AuthController {
     public ResponseEntity<SignupResponse> signup(
             @Valid @RequestBody SignupRequest request) {
         Member member = authService.signup(request.toCommand());
+        ResponseCookie deleteEmailCookie = cookieUtil.deleteVerifiedEmailCookie();
+        
         return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, deleteEmailCookie.toString())
                 .body(SignupResponse.from(member));
     }
 

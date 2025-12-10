@@ -42,7 +42,7 @@ public class EmailService {
         mailSender.send(email, subject, content);
     }
 
-    public void verifyEmail(String token) {
+    public String verifyEmail(String token) {
         EmailVerification verification = emailVerificationRepository.findByToken(token)
                 .orElseThrow(InvalidTokenException::new);
 
@@ -53,6 +53,8 @@ public class EmailService {
 
         verification.verify();
         emailVerificationRepository.save(verification);
+        
+        return verification.getEmail();
     }
 
     @Transactional(readOnly = true)
