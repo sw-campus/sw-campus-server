@@ -34,7 +34,7 @@ public class LectureStepEntity {
 	@JoinColumn(name = "LECTURE_ID")
 	private LectureEntity lecture;
 
-	@Column(name = "STEP_NAME", nullable = false)
+	@Column(name = "STEP_TYPE", nullable = false)
 	@Enumerated(EnumType.STRING)
 	private SelectionStepType stepType;
 
