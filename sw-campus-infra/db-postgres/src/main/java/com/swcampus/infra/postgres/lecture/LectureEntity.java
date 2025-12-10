@@ -124,7 +124,8 @@ public class LectureEntity {
 	private com.swcampus.domain.lecture.LectureStatus status;
 
 	@Column(name = "LECTURE_AUTH_STATUS")
-	private Boolean lectureAuthStatus;
+	@Enumerated(EnumType.STRING)
+	private com.swcampus.domain.lecture.LectureAuthStatus lectureAuthStatus;
 	
     // Project Related (New)
     @Column(name = "PROJECT_NUM")
