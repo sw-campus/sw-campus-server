@@ -90,7 +90,7 @@ public class LectureEntityRepository implements LectureRepository {
 
 	@Override
 	public List<Lecture> findAllExpiredAndRecruiting(LocalDateTime now) {
-		return jpaRepository.findAllByDeadlineBeforeAndStatus(now, com.swcampus.domain.lecture.LectureStatus.RECRUITING)
+		return jpaRepository.findAllByDeadlineBeforeAndStatus(now, LectureStatus.RECRUITING)
 				.stream()
 				.map(LectureEntity::toDomain)
 				.toList();
