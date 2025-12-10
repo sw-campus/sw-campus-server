@@ -29,7 +29,7 @@ public class LectureSearchRequest {
     private Boolean hasInterview;
     private Boolean hasPreTask;
     
-    // 상태 (RECRUITING, ONGOING, FINISHED)
+    // 상태 (RECRUITING, FINISHED)
     private String status;
     
     // 정렬 (LATEST, FEE_ASC, START_SOON)
