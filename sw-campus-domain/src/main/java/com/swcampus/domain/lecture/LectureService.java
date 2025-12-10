@@ -14,11 +14,12 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class LectureService {
 
 	private final LectureRepository lectureRepository;
 
+	@Transactional
 	public Lecture registerLecture(Lecture lecture) {
 		Lecture newLecture = lecture.toBuilder()
 				.lectureAuthStatus(LectureAuthStatus.PENDING)
@@ -31,7 +32,6 @@ public class LectureService {
 				.orElseThrow(() -> new ResourceNotFoundException("Lecture not found with id: " + lectureId));
 	}
 
-	@Transactional(readOnly = true)
 	public Page<Lecture> searchLectures(LectureSearchCondition condition) {
 		return lectureRepository.searchLectures(condition);
 	}
