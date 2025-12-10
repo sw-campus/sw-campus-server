@@ -213,7 +213,8 @@ public class LectureEntity {
 				.status(lecture.getStatus())
 				.lectureAuthStatus(lecture.getLectureAuthStatus())
 				.createdAt(lecture.getCreatedAt())
-				.updatedAt(LocalDateTime.now()) // 하위 데이터 변경 시에도 강제로 업데이트 시간 갱신
+				// 하위 데이터 변경 시에도 강제로 업데이트 시간 갱신
+				.updatedAt(LocalDateTime.now()) 
 				// Project
 				.projectNum(lecture.getProjectNum())
 				.projectTime(lecture.getProjectTime())

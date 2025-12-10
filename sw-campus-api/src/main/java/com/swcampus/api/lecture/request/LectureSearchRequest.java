@@ -39,9 +39,12 @@ public class LectureSearchRequest {
     private Integer page;
     private Integer size;
 
+    private static final int DEFAULT_PAGE_SIZE = 20;
+    private static final int MIN_PAGE_NUMBER = 1;
+
     public LectureSearchCondition toCondition() {
-        int pageNum = (this.page == null || this.page < 1) ? 1 : this.page;
-        int pageSize = (this.size == null || this.size < 1) ? 20 : this.size;
+        int pageNum = (this.page == null || this.page < MIN_PAGE_NUMBER) ? MIN_PAGE_NUMBER : this.page;
+        int pageSize = (this.size == null || this.size < 1) ? DEFAULT_PAGE_SIZE : this.size;
         long offset = (long) (pageNum - 1) * pageSize;
 
         return LectureSearchCondition.builder()

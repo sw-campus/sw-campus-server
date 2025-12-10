@@ -45,7 +45,7 @@ public class LectureController {
 	}
 
 	@GetMapping("/search")
-	public ResponseEntity<Page<LectureResponse>> searchLectures(@ModelAttribute LectureSearchRequest request) {
+	public ResponseEntity<Page<LectureResponse>> searchLectures(@Valid @ModelAttribute LectureSearchRequest request) {
 		Page<Lecture> lectures = lectureService.searchLectures(request.toCondition());
 		Page<LectureResponse> response = lectures.map(LectureResponse::from);
 		return ResponseEntity.ok(response);

@@ -106,16 +106,16 @@
         </if>
 
         <!-- 비용 필터 -->
-        <if test="cond.isFreeKdt or cond.isFreeNoKdt or cond.isPaid">
+        <if test="(cond.isFreeKdt != null and cond.isFreeKdt) or (cond.isFreeNoKdt != null and cond.isFreeNoKdt) or (cond.isPaid != null and cond.isPaid)">
             AND
             <trim prefix="(" suffix=")" prefixOverrides="OR">
-                <if test="cond.isFreeKdt">
+                <if test="cond.isFreeKdt != null and cond.isFreeKdt">
                     OR (l.recruit_type = 'CARD_REQUIRED')
                 </if>
-                <if test="cond.isFreeNoKdt">
+                <if test="cond.isFreeNoKdt != null and cond.isFreeNoKdt">
                     OR (l.recruit_type = 'GENERAL')
                 </if>
-                <if test="cond.isPaid">
+                <if test="cond.isPaid != null and cond.isPaid">
                     OR (l.lecture_fee > 0)
                 </if>
             </trim>
@@ -153,19 +153,19 @@
         <include refid="searchConditions"/>
         
         <choose>
-            <when test="cond.sort != null and cond.sort.name() == 'FEE_ASC'">
+            <when test="cond.sort.name() == 'FEE_ASC'">
                 ORDER BY l.lecture_fee ASC, l.updated_at DESC
             </when>
-            <when test="cond.sort != null and cond.sort.name() == 'FEE_DESC'">
+            <when test="cond.sort.name() == 'FEE_DESC'">
                 ORDER BY l.lecture_fee DESC, l.updated_at DESC
             </when>
-            <when test="cond.sort != null and cond.sort.name() == 'START_SOON'">
+            <when test="cond.sort.name() == 'START_SOON'">
                 ORDER BY l.deadline ASC NULLS LAST, l.updated_at DESC
             </when>
-            <when test="cond.sort != null and cond.sort.name() == 'DURATION_ASC'">
+            <when test="cond.sort.name() == 'DURATION_ASC'">
                  ORDER BY l.total_days ASC NULLS LAST, l.updated_at DESC
             </when>
-            <when test="cond.sort != null and cond.sort.name() == 'DURATION_DESC'">
+            <when test="cond.sort.name() == 'DURATION_DESC'">
                  ORDER BY l.total_days DESC NULLS LAST, l.updated_at DESC
             </when>
             <otherwise>
