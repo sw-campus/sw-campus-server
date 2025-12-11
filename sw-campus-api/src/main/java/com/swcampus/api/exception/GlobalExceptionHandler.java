@@ -9,6 +9,7 @@ import com.swcampus.domain.auth.exception.InvalidPasswordException;
 import com.swcampus.domain.auth.exception.InvalidTokenException;
 import com.swcampus.domain.auth.exception.MailSendException;
 import com.swcampus.domain.auth.exception.TokenExpiredException;
+import com.swcampus.domain.certificate.exception.CertificateLectureMismatchException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -99,6 +100,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CertificateRequiredException.class)
     public ResponseEntity<ErrorResponse> handleCertificateRequiredException(CertificateRequiredException e) {
         log.warn("재직증명서 누락: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+    }
+
+    @ExceptionHandler(CertificateLectureMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleCertificateLectureMismatchException(CertificateLectureMismatchException e) {
+        log.warn("수료증 검증 실패 - 강의명 불일치: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
     }

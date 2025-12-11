@@ -1,16 +1,14 @@
-package com.swcampus.infra.oauth;
+package com.swcampus.infra.ocr;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class OAuthConfig {
+public class OcrConfig {
 
-    @Primary
     @Bean
-    public RestTemplate restTemplate() {
+    public RestTemplate ocrRestTemplate() {
         return new RestTemplate();
     }
 }
