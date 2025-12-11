@@ -75,6 +75,7 @@ jobs:
         tags: |
           ghcr.io/sw-campus/sw-campus-server:latest
           ghcr.io/sw-campus/sw-campus-server:${{ steps.version.outputs.version }}
+        no-cache: true
         
     - name: Update manifest and trigger ArgoCD
       if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || github.event_name == 'release'
