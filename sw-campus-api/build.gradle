@@ -11,6 +11,7 @@ dependencies {
     runtimeOnly project(':sw-campus-infra:s3')          // s3 file storage
     runtimeOnly project(':sw-campus-infra:db-redis')    // redis
     implementation project(':sw-campus-infra:oauth')    // oauth client
+    implementation project(':sw-campus-infra:ocr')      // ocr client
 //    runtimeOnly project(':sw-campus-infra:db-mongodb')  // read
     
     // Spring Batch
