@@ -27,7 +27,7 @@ public class CartService {
             // Add
             long count = cartRepository.countByUserId(userId);
             if (count >= 10) {
-                throw new IllegalStateException("Cart limit exceeded (Max 10)");
+                throw new IllegalStateException("장바구니는 최대 10개까지 추가할 수 있습니다");
             }
             cartRepository.save(Cart.builder()
                     .userId(userId)
