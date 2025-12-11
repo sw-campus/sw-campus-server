@@ -22,7 +22,10 @@ public class LectureService {
 
 
 	public Lecture registerLecture(Lecture lecture) {
-		return lectureRepository.save(lecture);
+		Lecture newLecture = lecture.toBuilder()
+			.lectureAuthStatus(LectureAuthStatus.PENDING)
+			.build();
+		return lectureRepository.save(newLecture);
 	}
 
 	public Lecture getLecture(Long lectureId) {

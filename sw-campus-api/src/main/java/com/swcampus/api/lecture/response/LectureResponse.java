@@ -36,7 +36,7 @@ public record LectureResponse(
 		String url,
 		String lectureImageUrl,
 		String status,
-		Boolean lectureAuthStatus,
+		String lectureAuthStatus,
 		
 		// Project
 		Integer projectNum,
@@ -86,7 +86,7 @@ public record LectureResponse(
 				lecture.getUrl(),
 				lecture.getLectureImageUrl(),
 				lecture.getStatus().name(),
-				lecture.getLectureAuthStatus(),
+				lecture.getLectureAuthStatus() != null ? lecture.getLectureAuthStatus().name() : null,
 				
 				lecture.getProjectNum(),
 				lecture.getProjectTime(),
