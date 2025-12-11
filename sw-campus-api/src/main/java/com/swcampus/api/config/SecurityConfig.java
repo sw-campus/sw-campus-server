@@ -1,9 +1,7 @@
 package com.swcampus.api.config;
 
-import com.swcampus.api.security.JwtAuthenticationFilter;
-import com.swcampus.domain.auth.TokenProvider;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,7 +16,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.swcampus.api.security.JwtAuthenticationFilter;
+import com.swcampus.domain.auth.TokenProvider;
+
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -56,7 +58,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**"
-                        ).permitAll()
+                            ).permitAll()
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )

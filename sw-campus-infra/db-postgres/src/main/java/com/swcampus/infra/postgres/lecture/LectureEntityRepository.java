@@ -1,6 +1,7 @@
 package com.swcampus.infra.postgres.lecture;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -115,5 +116,18 @@ public class LectureEntityRepository implements LectureRepository {
 				.collect(java.util.stream.Collectors.toMap(
 						row -> (Long) row[0],
 						row -> (Long) row[1]));
+	}
+
+	@Override
+	public List<Lecture> findAllByIds(List<Long> lectureIds) {
+		if (lectureIds == null || lectureIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return jpaRepository.findIdAndNameByIdIn(lectureIds).stream()
+				.map(row -> Lecture.builder()
+						.lectureId((Long) row[0])
+						.lectureName((String) row[1])
+						.build())
+				.toList();
 	}
 }

@@ -23,4 +23,6 @@ public interface LectureRepository {
     List<Lecture> findAllByOrgId(Long orgId);
 
     Map<Long, Long> countLecturesByStatusAndOrgIdIn(LectureStatus status, List<Long> orgIds);
+
+    List<Lecture> findAllByIds(List<Long> lectureIds);
 }
