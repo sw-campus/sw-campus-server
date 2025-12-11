@@ -10,6 +10,7 @@ dependencies {
     runtimeOnly project(':sw-campus-infra:db-postgres') // write
     runtimeOnly project(':sw-campus-infra:s3')          // s3 file storage
     implementation project(':sw-campus-infra:oauth')    // oauth client
+    implementation project(':sw-campus-infra:ocr')      // ocr client
 //    runtimeOnly project(':sw-campus-infra:db-mongodb')  // read
     
     // Spring Batch
