@@ -11,6 +11,7 @@ import com.swcampus.domain.auth.exception.MailSendException;
 import com.swcampus.domain.auth.exception.TokenExpiredException;
 import com.swcampus.domain.certificate.exception.CertificateAlreadyExistsException;
 import com.swcampus.domain.certificate.exception.CertificateLectureMismatchException;
+import com.swcampus.domain.certificate.exception.CertificateNotFoundException;
 import com.swcampus.domain.certificate.exception.CertificateNotVerifiedException;
 import com.swcampus.domain.member.exception.MemberNotFoundException;
 import com.swcampus.domain.review.exception.ReviewAlreadyExistsException;
@@ -130,6 +131,13 @@ public class GlobalExceptionHandler {
         log.warn("수료증 중복 인증: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of(HttpStatus.CONFLICT.value(), "이미 인증된 수료증입니다"));
+    }
+
+    @ExceptionHandler(CertificateNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCertificateNotFoundException(CertificateNotFoundException e) {
+        log.warn("수료증 조회 실패: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(HttpStatus.NOT_FOUND.value(), e.getMessage()));
     }
 
     // === Review 관련 예외 ===
