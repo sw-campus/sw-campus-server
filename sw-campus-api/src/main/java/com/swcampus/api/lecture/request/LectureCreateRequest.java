@@ -1,19 +1,19 @@
 package com.swcampus.api.lecture.request;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureAdd;
 import com.swcampus.domain.lecture.LectureCurriculum;
 import com.swcampus.domain.lecture.LectureQual;
 import com.swcampus.domain.lecture.LectureStep;
 import com.swcampus.domain.teacher.Teacher;
-
-import java.math.BigDecimal;
-import java.time.LocalTime;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Set;
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 public record LectureCreateRequest(
 		Long orgId,
@@ -38,14 +38,14 @@ public record LectureCreateRequest(
 		Integer afterCompletion,
 		String url,
 		String lectureImageUrl,
-		
+
 		// Project
 		Integer projectNum,
 		Integer projectTime,
 		String projectTeam,
 		String projectTool,
 		Boolean projectMentor,
-		
+
 		String startAt,
 		String endAt,
 		String deadline,
@@ -63,8 +63,8 @@ public record LectureCreateRequest(
 		return Lecture.builder()
 				.orgId(orgId)
 				.lectureName(lectureName)
-				.days(days != null 
-						? days.stream().map(com.swcampus.domain.lecture.LectureDay::valueOf).collect(Collectors.toSet()) 
+				.days(days != null
+						? days.stream().map(com.swcampus.domain.lecture.LectureDay::valueOf).collect(Collectors.toSet())
 						: Collections.emptySet())
 				.startTime(startTime)
 				.endTime(endTime)
@@ -86,21 +86,21 @@ public record LectureCreateRequest(
 				.url(url)
 				.lectureImageUrl(lectureImageUrl)
 				.status(com.swcampus.domain.lecture.LectureStatus.RECRUITING) // 초기 상태
-				.lectureAuthStatus(false) // 관리자 승인시 true
-				
+				.lectureAuthStatus(com.swcampus.domain.lecture.LectureAuthStatus.PENDING) // 관리자 승인시 APPROVED
+
 				// Project
 				.projectNum(projectNum)
 				.projectTime(projectTime)
 				.projectTeam(projectTeam)
 				.projectTool(projectTool)
 				.projectMentor(projectMentor)
-				
+
 				.startAt(LocalDate.parse(startAt).atStartOfDay())
 				.endAt(LocalDate.parse(endAt).atStartOfDay())
 				.deadline(deadline != null ? LocalDate.parse(deadline).atStartOfDay() : null)
 				.totalDays(totalDays)
 				.totalTimes(totalTimes)
-				
+
 				// 선발절차(Steps) 변환
 				.steps(steps != null
 						? steps.stream().map(StepRequest::toDomain).toList()
