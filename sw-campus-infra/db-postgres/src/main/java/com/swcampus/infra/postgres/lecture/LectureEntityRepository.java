@@ -2,11 +2,11 @@ package com.swcampus.infra.postgres.lecture;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import com.swcampus.domain.lecture.Lecture;
@@ -52,7 +52,8 @@ public class LectureEntityRepository implements LectureRepository {
 		// N:M Relationships (Curriculums)
 		if (lecture.getLectureCurriculums() != null) {
 			lecture.getLectureCurriculums().forEach(lc -> {
-				CurriculumEntity curriculumRef = entityManager.getReference(CurriculumEntity.class, lc.getCurriculumId());
+				CurriculumEntity curriculumRef = entityManager.getReference(CurriculumEntity.class,
+						lc.getCurriculumId());
 				entity.getLectureCurriculums().add(LectureCurriculumEntity.builder()
 						.lecture(entity)
 						.curriculum(curriculumRef)
@@ -62,6 +63,14 @@ public class LectureEntityRepository implements LectureRepository {
 		}
 
 		return jpaRepository.save(entity).toDomain();
+	}
+
+	@Override
+	public void saveAll(List<Lecture> lectures) {
+		List<LectureEntity> entities = lectures.stream()
+				.map(LectureEntity::from)
+				.toList();
+		jpaRepository.saveAll(entities);
 	}
 
 	@Override
@@ -76,16 +85,8 @@ public class LectureEntityRepository implements LectureRepository {
 				.toList();
 
 		long total = lectureMapper.countLectures(condition);
-		
-		int page = (condition.getLimit() != null && condition.getLimit() > 0
-			&& condition.getOffset() != null)
-			? (int) (condition.getOffset() / condition.getLimit())
-			: 0;
-		int size = (condition.getLimit() != null && condition.getLimit() > 0)
-			? condition.getLimit()
-			: content.size() + 1; // avoid /0
 
-		return new PageImpl<>(content, PageRequest.of(page, size), total);
+		return new PageImpl<>(content, condition.getPageable(), total);
 	}
 
 	@Override
@@ -94,5 +95,25 @@ public class LectureEntityRepository implements LectureRepository {
 				.stream()
 				.map(LectureEntity::toDomain)
 				.toList();
+	}
+
+	@Override
+	public List<Lecture> findAllByOrgId(Long orgId) {
+		return jpaRepository.findAllByOrgId(orgId)
+				.stream()
+				.map(LectureEntity::toDomain)
+				.toList();
+	}
+
+	@Override
+	public Map<Long, Long> countLecturesByStatusAndOrgIdIn(LectureStatus status, List<Long> orgIds) {
+		if (orgIds == null || orgIds.isEmpty()) {
+			return Map.of();
+		}
+		List<Object[]> results = jpaRepository.countByStatusAndOrgIdInGroupByOrgId(status, orgIds);
+		return results.stream()
+				.collect(java.util.stream.Collectors.toMap(
+						row -> (Long) row[0],
+						row -> (Long) row[1]));
 	}
 }
