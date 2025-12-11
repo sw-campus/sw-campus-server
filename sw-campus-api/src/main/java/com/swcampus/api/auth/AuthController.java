@@ -37,11 +37,11 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -152,11 +152,35 @@ public class AuthController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<OrganizationSignupResponse> signupOrganization(
-            @Valid @ModelAttribute OrganizationSignupRequest request,
-            @Parameter(description = "재직증명서 이미지", required = true)
-            @RequestParam("certificateImage") MultipartFile certificateImage) throws IOException {
+            @Parameter(description = "이메일", example = "org@example.com", required = true)
+            @RequestPart(name = "email") String email,
+            @Parameter(description = "비밀번호 (8자 이상, 대소문자+숫자+특수문자)", example = "Password123!", required = true)
+            @RequestPart(name = "password") String password,
+            @Parameter(description = "이름", example = "김대표", required = true)
+            @RequestPart(name = "name") String name,
+            @Parameter(description = "닉네임", example = "ABC교육원담당자", required = true)
+            @RequestPart(name = "nickname") String nickname,
+            @Parameter(description = "전화번호", example = "010-1234-5678", required = true)
+            @RequestPart(name = "phone") String phone,
+            @Parameter(description = "주소", example = "서울시 강남구 테헤란로 123", required = true)
+            @RequestPart(name = "location") String location,
+            @Parameter(description = "기관명", example = "ABC교육원", required = true)
+            @RequestPart(name = "organizationName") String organizationName,
+            @Parameter(description = "재직증명서 이미지 (jpg, png)", required = true)
+            @RequestPart(name = "certificateImage") MultipartFile certificateImage) throws IOException {
 
-        OrganizationSignupResult result = authService.signupOrganization(request.toCommand(certificateImage));
+        OrganizationSignupRequest request = OrganizationSignupRequest.builder()
+                .email(email)
+                .password(password)
+                .name(name)
+                .nickname(nickname)
+                .phone(phone)
+                .location(location)
+                .organizationName(organizationName)
+                .certificateImage(certificateImage)
+                .build();
+
+        OrganizationSignupResult result = authService.signupOrganization(request.toCommand());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(OrganizationSignupResponse.from(result));
     }
