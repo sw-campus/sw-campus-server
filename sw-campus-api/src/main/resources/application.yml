@@ -12,7 +12,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: none # 스키마를 변경하지 않음
+      ddl-auto: none # 스키마를 변경하지 않음 (Flyway로 관리)
     properties:
       hibernate:
         default_batch_fetch_size: 100 # N+1 최적화
@@ -21,6 +21,11 @@ spring:
       initialize-schema: always  # 또는 embedded, never
     job:
       enabled: false  # 애플리케이션 시작 시 자동 실행 방지
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true # 기존 DB가 있어도 마이그레이션 시작
+    validate-on-migrate: true # 마이그레이션 검증
 
 # Swagger UI 설정
 springdoc:
