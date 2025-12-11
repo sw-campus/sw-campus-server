@@ -9,7 +9,14 @@ import com.swcampus.domain.auth.exception.InvalidPasswordException;
 import com.swcampus.domain.auth.exception.InvalidTokenException;
 import com.swcampus.domain.auth.exception.MailSendException;
 import com.swcampus.domain.auth.exception.TokenExpiredException;
+import com.swcampus.domain.certificate.exception.CertificateAlreadyExistsException;
 import com.swcampus.domain.certificate.exception.CertificateLectureMismatchException;
+import com.swcampus.domain.certificate.exception.CertificateNotVerifiedException;
+import com.swcampus.domain.member.exception.MemberNotFoundException;
+import com.swcampus.domain.review.exception.ReviewAlreadyExistsException;
+import com.swcampus.domain.review.exception.ReviewNotFoundException;
+import com.swcampus.domain.review.exception.ReviewNotModifiableException;
+import com.swcampus.domain.review.exception.ReviewNotOwnerException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -83,6 +90,13 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), e.getMessage()));
     }
 
+    @ExceptionHandler(MemberNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleMemberNotFoundException(MemberNotFoundException e) {
+        log.warn("회원 조회 실패: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(HttpStatus.NOT_FOUND.value(), e.getMessage()));
+    }
+
     // === Validation 예외 ===
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -109,6 +123,50 @@ public class GlobalExceptionHandler {
         log.warn("수료증 검증 실패 - 강의명 불일치: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+    }
+
+    @ExceptionHandler(CertificateAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleCertificateAlreadyExistsException(CertificateAlreadyExistsException e) {
+        log.warn("수료증 중복 인증: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(HttpStatus.CONFLICT.value(), "이미 인증된 수료증입니다"));
+    }
+
+    // === Review 관련 예외 ===
+
+    @ExceptionHandler(ReviewNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleReviewNotFoundException(ReviewNotFoundException e) {
+        log.warn("후기 조회 실패: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(HttpStatus.NOT_FOUND.value(), e.getMessage()));
+    }
+
+    @ExceptionHandler(ReviewAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleReviewAlreadyExistsException(ReviewAlreadyExistsException e) {
+        log.warn("후기 중복: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(HttpStatus.CONFLICT.value(), e.getMessage()));
+    }
+
+    @ExceptionHandler(ReviewNotOwnerException.class)
+    public ResponseEntity<ErrorResponse> handleReviewNotOwnerException(ReviewNotOwnerException e) {
+        log.warn("후기 권한 없음: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of(HttpStatus.FORBIDDEN.value(), e.getMessage()));
+    }
+
+    @ExceptionHandler(ReviewNotModifiableException.class)
+    public ResponseEntity<ErrorResponse> handleReviewNotModifiableException(ReviewNotModifiableException e) {
+        log.warn("후기 수정 불가: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of(HttpStatus.FORBIDDEN.value(), e.getMessage()));
+    }
+
+    @ExceptionHandler(CertificateNotVerifiedException.class)
+    public ResponseEntity<ErrorResponse> handleCertificateNotVerifiedException(CertificateNotVerifiedException e) {
+        log.warn("수료증 미인증: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of(HttpStatus.FORBIDDEN.value(), e.getMessage()));
     }
 
     // === Multipart 예외 ===
