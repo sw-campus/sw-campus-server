@@ -12,7 +12,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update # 스키마를 변경하지 않음
+      ddl-auto: update # 스키마를 자동으로 업데이트함
     properties:
       hibernate:
         default_batch_fetch_size: 100 # N+1 최적화
