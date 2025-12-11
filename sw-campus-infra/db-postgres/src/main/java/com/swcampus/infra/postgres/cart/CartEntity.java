@@ -13,7 +13,9 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "cart")
+@Table(name = "cart", uniqueConstraints = {
+        @jakarta.persistence.UniqueConstraint(columnNames = { "userId", "lectureId" })
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CartEntity {
 

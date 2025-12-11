@@ -3,7 +3,11 @@ package com.swcampus.api.cart;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+
+import com.swcampus.domain.cart.exception.AlreadyInCartException;
+import com.swcampus.domain.cart.exception.CartLimitExceededException;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -60,11 +64,11 @@ class CartControllerTest {
         }
 
         @Test
-        @DisplayName("스크랩 토글 - 추가 성공 (201)")
+        @DisplayName("스크랩 추가 성공 (201)")
         void addCart_Add() throws Exception {
                 // given
                 Long lectureId = 100L;
-                when(cartService.addCart(1L, lectureId)).thenReturn(true);
+                // void method, no thenReturn needed
 
                 // when & then
                 mockMvc.perform(post("/api/v1/carts")
@@ -74,26 +78,27 @@ class CartControllerTest {
         }
 
         @Test
-        @DisplayName("스크랩 토글 - 삭제 성공 (200)")
-        void addCart_Remove() throws Exception {
+        @DisplayName("이미 스크랩된 경우 (409)")
+        void addCart_Duplicate() throws Exception {
                 // given
                 Long lectureId = 100L;
-                when(cartService.addCart(1L, lectureId)).thenReturn(false);
+                doThrow(new AlreadyInCartException("Already in cart"))
+                                .when(cartService).addCart(1L, lectureId);
 
                 // when & then
                 mockMvc.perform(post("/api/v1/carts")
                                 .param("lectureId", String.valueOf(lectureId))
                                 .with(csrf()))
-                                .andExpect(status().isOk());
+                                .andExpect(status().isConflict());
         }
 
         @Test
-        @DisplayName("스크랩 토글 - 개수 초과 (400)")
+        @DisplayName("스크랩 개수 초과 (400)")
         void addCart_LimitExceeded() throws Exception {
                 // given
                 Long lectureId = 100L;
-                when(cartService.addCart(1L, lectureId))
-                                .thenThrow(new IllegalStateException("Cart limit exceeded"));
+                doThrow(new CartLimitExceededException("Cart limit exceeded"))
+                                .when(cartService).addCart(1L, lectureId);
 
                 // when & then
                 mockMvc.perform(post("/api/v1/carts")

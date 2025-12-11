@@ -24,33 +24,29 @@ public class CartController {
 
     @PostMapping
     public ResponseEntity<Void> addCart(@RequestParam Long lectureId) {
-        Long currentUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
-        try {
-            boolean added = cartService.addCart(currentUserId, lectureId);
-            if (added) {
-                return ResponseEntity.status(HttpStatus.CREATED).build();
-            } else {
-                return ResponseEntity.ok().build();
-            }
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        Long currentUserId = getCurrentUserId();
+        cartService.addCart(currentUserId, lectureId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping
     public ResponseEntity<Void> removeCart(@RequestParam Long lectureId) {
-        Long currentUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
+        Long currentUserId = getCurrentUserId();
         cartService.removeCart(currentUserId, lectureId);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping
     public ResponseEntity<List<CartLectureResponse>> getCart() {
-        Long currentUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
+        Long currentUserId = getCurrentUserId();
         List<Lecture> lectures = cartService.getCartList(currentUserId);
         List<CartLectureResponse> response = lectures.stream()
                 .map(CartLectureResponse::from)
                 .toList();
         return ResponseEntity.ok(response);
+    }
+
+    private Long getCurrentUserId() {
+        return (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
     }
 }
