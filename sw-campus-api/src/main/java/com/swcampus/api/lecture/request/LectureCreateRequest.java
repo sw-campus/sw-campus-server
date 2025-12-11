@@ -15,48 +15,119 @@ import com.swcampus.domain.lecture.LectureQual;
 import com.swcampus.domain.lecture.LectureStep;
 import com.swcampus.domain.teacher.Teacher;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "강의 등록 요청")
 public record LectureCreateRequest(
+		@Schema(description = "기관 ID", example = "1")
 		Long orgId,
+
+		@Schema(description = "강의명", example = "웹 개발 부트캠프")
 		String lectureName,
-		Set<String> days, // MONDAY, TUESDAY ...
+
+		@Schema(description = "수업 요일 (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY)", example = "[\"MONDAY\", \"WEDNESDAY\", \"FRIDAY\"]")
+		Set<String> days,
+
+		@Schema(description = "수업 시작 시간", example = "09:00:00")
 		LocalTime startTime,
+
+		@Schema(description = "수업 종료 시간", example = "18:00:00")
 		LocalTime endTime,
+
+		@Schema(description = "수업 장소 유형 (ONLINE, OFFLINE, HYBRID)", example = "OFFLINE")
 		String lectureLoc,
+
+		@Schema(description = "수업 장소 주소", example = "서울시 강남구 테헤란로 123")
 		String location,
+
+		@Schema(description = "모집 유형 (GOVERNMENT_FUNDED, PAID)", example = "GOVERNMENT_FUNDED")
 		String recruitType,
+
+		@Schema(description = "훈련 장려금", example = "316000")
 		BigDecimal subsidy,
+
+		@Schema(description = "수강료", example = "0")
 		BigDecimal lectureFee,
+
+		@Schema(description = "교육비 지원금", example = "5000000")
 		BigDecimal eduSubsidy,
+
+		@Schema(description = "교육 목표", example = "풀스택 웹 개발자 양성")
 		String goal,
+
+		@Schema(description = "최대 수강 인원", example = "30")
 		Integer maxCapacity,
+
+		@Schema(description = "장비 제공 유형 (PROVIDED, NOT_PROVIDED, PARTIAL)", example = "PROVIDED")
 		String equipPc,
+
+		@Schema(description = "장비 지원 혜택 설명", example = "최신 노트북 제공")
 		String equipMerit,
+
+		@Schema(description = "교재 제공 여부", example = "true")
 		Boolean books,
+
+		@Schema(description = "이력서 작성 지원", example = "true")
 		Boolean resume,
+
+		@Schema(description = "모의 면접 지원", example = "true")
 		Boolean mockInterview,
+
+		@Schema(description = "취업 연계 지원", example = "true")
 		Boolean employmentHelp,
+
+		@Schema(description = "수료 후 취업률 (%)", example = "85")
 		Integer afterCompletion,
+
+		@Schema(description = "강의 상세 페이지 URL", example = "https://example.com/lecture/1")
 		String url,
+
+		@Schema(description = "강의 대표 이미지 URL", example = "https://example.com/images/lecture1.jpg")
 		String lectureImageUrl,
 
-		// Project
+		@Schema(description = "프로젝트 수", example = "5")
 		Integer projectNum,
+
+		@Schema(description = "프로젝트 총 시간", example = "200")
 		Integer projectTime,
+
+		@Schema(description = "프로젝트 팀 구성", example = "4~5인 1팀")
 		String projectTeam,
+
+		@Schema(description = "프로젝트 사용 도구", example = "Git, Jira, Slack")
 		String projectTool,
+
+		@Schema(description = "프로젝트 멘토 지원 여부", example = "true")
 		Boolean projectMentor,
 
+		@Schema(description = "교육 시작일 (yyyy-MM-dd)", example = "2025-03-01")
 		String startAt,
+
+		@Schema(description = "교육 종료일 (yyyy-MM-dd)", example = "2025-08-31")
 		String endAt,
+
+		@Schema(description = "모집 마감일 (yyyy-MM-dd)", example = "2025-02-15")
 		String deadline,
+
+		@Schema(description = "총 교육 일수", example = "120")
 		Integer totalDays,
+
+		@Schema(description = "총 교육 시간", example = "960")
 		Integer totalTimes,
 
-		// 하위 데이터
+		@Schema(description = "선발 절차 목록")
 		List<StepRequest> steps,
+
+		@Schema(description = "추가 혜택 목록")
 		List<AddRequest> adds,
+
+		@Schema(description = "지원 자격 목록")
 		List<QualRequest> quals,
+
+		@Schema(description = "강사 목록")
 		List<TeacherRequest> teachers,
+
+		@Schema(description = "커리큘럼 목록")
 		List<CurriculumRequest> curriculums) {
 
 	public Lecture toDomain() {
@@ -129,7 +200,14 @@ public record LectureCreateRequest(
 				.build();
 	}
 
-	public record StepRequest(String stepType, Integer stepOrder) {
+	@Schema(description = "선발 절차")
+	public record StepRequest(
+		@Schema(description = "절차 유형 (DOCUMENT, CODING_TEST, INTERVIEW, PRE_TASK)", example = "INTERVIEW")
+		String stepType,
+
+		@Schema(description = "절차 순서", example = "1")
+		Integer stepOrder
+	) {
 		public LectureStep toDomain() {
 			return LectureStep.builder()
 					.stepType(com.swcampus.domain.lecture.SelectionStepType.valueOf(stepType))
@@ -138,7 +216,11 @@ public record LectureCreateRequest(
 		}
 	}
 
-	public record AddRequest(String addName) {
+	@Schema(description = "추가 혜택")
+	public record AddRequest(
+		@Schema(description = "혜택명", example = "취업 연계 프로그램")
+		String addName
+	) {
 		public LectureAdd toDomain() {
 			return LectureAdd.builder()
 					.addName(addName)
@@ -146,7 +228,14 @@ public record LectureCreateRequest(
 		}
 	}
 
-	public record QualRequest(String type, String text) {
+	@Schema(description = "지원 자격")
+	public record QualRequest(
+		@Schema(description = "자격 유형 (REQUIRED, PREFERRED)", example = "REQUIRED")
+		String type,
+
+		@Schema(description = "자격 내용", example = "프로그래밍 기초 지식 보유자")
+		String text
+	) {
 		public LectureQual toDomain() {
 			return LectureQual.builder()
 					.type(com.swcampus.domain.lecture.LectureQualType.valueOf(type))
@@ -155,8 +244,20 @@ public record LectureCreateRequest(
 		}
 	}
 
-	public record TeacherRequest(Long teacherId, String teacherName, String teacherDescription,
-			String teacherImageUrl) {
+	@Schema(description = "강사 정보")
+	public record TeacherRequest(
+		@Schema(description = "강사 ID", example = "1")
+		Long teacherId,
+
+		@Schema(description = "강사명", example = "김개발")
+		String teacherName,
+
+		@Schema(description = "강사 소개", example = "10년차 백엔드 개발자")
+		String teacherDescription,
+
+		@Schema(description = "강사 이미지 URL", example = "https://example.com/teacher1.jpg")
+		String teacherImageUrl
+	) {
 		public Teacher toDomain() {
 			return Teacher.builder()
 					.teacherId(teacherId)
@@ -167,7 +268,14 @@ public record LectureCreateRequest(
 		}
 	}
 
-	public record CurriculumRequest(Long curriculumId, String level) {
+	@Schema(description = "커리큘럼 연결 정보")
+	public record CurriculumRequest(
+		@Schema(description = "커리큘럼 ID", example = "1")
+		Long curriculumId,
+
+		@Schema(description = "난이도 (BEGINNER, INTERMEDIATE, ADVANCED)", example = "INTERMEDIATE")
+		String level
+	) {
 		// 커리큘럼은 연결 정보(Info) 객체로 변환
 		public LectureCurriculum toDomainInfo() {
 			return LectureCurriculum.builder()

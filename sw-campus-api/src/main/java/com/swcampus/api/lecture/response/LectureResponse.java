@@ -9,52 +9,131 @@ import java.util.stream.Collectors;
 
 import com.swcampus.domain.lecture.Lecture;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "강의 정보 응답")
 public record LectureResponse(
+		@Schema(description = "강의 ID", example = "1")
 		Long lectureId,
+
+		@Schema(description = "기관 ID", example = "1")
 		Long orgId,
+
+		@Schema(description = "기관명", example = "패스트캠퍼스")
 		String orgName,
+
+		@Schema(description = "강의명", example = "웹 개발 부트캠프")
 		String lectureName,
+
+		@Schema(description = "수업 요일", example = "[\"MONDAY\", \"WEDNESDAY\", \"FRIDAY\"]")
 		Set<String> days,
+
+		@Schema(description = "수업 시작 시간", example = "09:00:00")
 		LocalTime startTime,
+
+		@Schema(description = "수업 종료 시간", example = "18:00:00")
 		LocalTime endTime,
+
+		@Schema(description = "수업 장소 유형", example = "OFFLINE")
 		String lectureLoc,
+
+		@Schema(description = "수업 장소 주소", example = "서울시 강남구 테헤란로 123")
 		String location,
+
+		@Schema(description = "모집 유형", example = "GOVERNMENT_FUNDED")
 		String recruitType,
+
+		@Schema(description = "훈련 장려금", example = "316000")
 		BigDecimal subsidy,
+
+		@Schema(description = "수강료", example = "0")
 		BigDecimal lectureFee,
+
+		@Schema(description = "교육비 지원금", example = "5000000")
 		BigDecimal eduSubsidy,
+
+		@Schema(description = "교육 목표", example = "풀스택 웹 개발자 양성")
 		String goal,
+
+		@Schema(description = "최대 수강 인원", example = "30")
 		Integer maxCapacity,
+
+		@Schema(description = "장비 제공 유형", example = "PROVIDED")
 		String equipPc,
+
+		@Schema(description = "장비 지원 혜택 설명", example = "최신 노트북 제공")
 		String equipMerit,
+
+		@Schema(description = "교재 제공 여부", example = "true")
 		Boolean books,
+
+		@Schema(description = "이력서 작성 지원", example = "true")
 		Boolean resume,
+
+		@Schema(description = "모의 면접 지원", example = "true")
 		Boolean mockInterview,
+
+		@Schema(description = "취업 연계 지원", example = "true")
 		Boolean employmentHelp,
+
+		@Schema(description = "수료 후 취업률 (%)", example = "85")
 		Integer afterCompletion,
+
+		@Schema(description = "강의 상세 페이지 URL", example = "https://example.com/lecture/1")
 		String url,
+
+		@Schema(description = "강의 대표 이미지 URL", example = "https://example.com/images/lecture1.jpg")
 		String lectureImageUrl,
+
+		@Schema(description = "강의 상태 (RECRUITING, FINISHED)", example = "RECRUITING")
 		String status,
+
+		@Schema(description = "관리자 승인 상태 (PENDING, APPROVED, REJECTED)", example = "APPROVED")
 		String lectureAuthStatus,
 		
-		// Project
+		@Schema(description = "프로젝트 수", example = "5")
 		Integer projectNum,
+
+		@Schema(description = "프로젝트 총 시간", example = "200")
 		Integer projectTime,
+
+		@Schema(description = "프로젝트 팀 구성", example = "4~5인 1팀")
 		String projectTeam,
+
+		@Schema(description = "프로젝트 사용 도구", example = "Git, Jira, Slack")
 		String projectTool,
+
+		@Schema(description = "프로젝트 멘토 지원 여부", example = "true")
 		Boolean projectMentor,
 		
+		@Schema(description = "교육 시작일", example = "2025-03-01T00:00:00")
 		String startAt,
+
+		@Schema(description = "교육 종료일", example = "2025-08-31T00:00:00")
 		String endAt,
+
+		@Schema(description = "모집 마감일", example = "2025-02-15T00:00:00")
 		String deadline,
+
+		@Schema(description = "총 교육 일수", example = "120")
 		Integer totalDays,
+
+		@Schema(description = "총 교육 시간", example = "960")
 		Integer totalTimes,
 
-		// 하위 응답
+		@Schema(description = "선발 절차 목록")
 		List<StepResponse> steps,
+
+		@Schema(description = "추가 혜택 목록")
 		List<AddResponse> adds,
+
+		@Schema(description = "지원 자격 목록")
 		List<QualResponse> quals,
+
+		@Schema(description = "강사 목록")
 		List<TeacherResponse> teachers,
+
+		@Schema(description = "커리큘럼 목록")
 		List<CurriculumResponse> curriculums) {
 	public static LectureResponse from(Lecture lecture) {
 		return new LectureResponse(
@@ -108,31 +187,78 @@ public record LectureResponse(
 						: List.of());
 	}
 
-	public record StepResponse(Long stepId, String stepType, Integer stepOrder) {
+	@Schema(description = "선발 절차 응답")
+	public record StepResponse(
+		@Schema(description = "절차 ID", example = "1")
+		Long stepId,
+
+		@Schema(description = "절차 유형", example = "INTERVIEW")
+		String stepType,
+
+		@Schema(description = "절차 순서", example = "1")
+		Integer stepOrder
+	) {
 		public static StepResponse from(com.swcampus.domain.lecture.LectureStep s) {
 			return new StepResponse(s.getStepId(), s.getStepType() != null ? s.getStepType().name() : null, s.getStepOrder());
 		}
 	}
 
-	public record AddResponse(Long addId, String addName) {
+	@Schema(description = "추가 혜택 응답")
+	public record AddResponse(
+		@Schema(description = "혜택 ID", example = "1")
+		Long addId,
+
+		@Schema(description = "혜택명", example = "취업 연계 프로그램")
+		String addName
+	) {
 		public static AddResponse from(com.swcampus.domain.lecture.LectureAdd a) {
 			return new AddResponse(a.getAddId(), a.getAddName());
 		}
 	}
 
-	public record QualResponse(Long qualId, String type, String text) {
+	@Schema(description = "지원 자격 응답")
+	public record QualResponse(
+		@Schema(description = "자격 ID", example = "1")
+		Long qualId,
+
+		@Schema(description = "자격 유형", example = "REQUIRED")
+		String type,
+
+		@Schema(description = "자격 내용", example = "프로그래밍 기초 지식 보유자")
+		String text
+	) {
 		public static QualResponse from(com.swcampus.domain.lecture.LectureQual q) {
 			return new QualResponse(q.getQualId(), q.getType().name(), q.getText());
 		}
 	}
 
-	public record TeacherResponse(Long teacherId, String teacherName, String teacherImageUrl) {
+	@Schema(description = "강사 응답")
+	public record TeacherResponse(
+		@Schema(description = "강사 ID", example = "1")
+		Long teacherId,
+
+		@Schema(description = "강사명", example = "김개발")
+		String teacherName,
+
+		@Schema(description = "강사 이미지 URL", example = "https://example.com/teacher1.jpg")
+		String teacherImageUrl
+	) {
 		public static TeacherResponse from(com.swcampus.domain.teacher.Teacher t) {
 			return new TeacherResponse(t.getTeacherId(), t.getTeacherName(), t.getTeacherImageUrl());
 		}
 	}
 
-	public record CurriculumResponse(Long curriculumId, String curriculumName, String level) {
+	@Schema(description = "커리큘럼 응답")
+	public record CurriculumResponse(
+		@Schema(description = "커리큘럼 ID", example = "1")
+		Long curriculumId,
+
+		@Schema(description = "커리큘럼명", example = "Java 기초")
+		String curriculumName,
+
+		@Schema(description = "난이도", example = "INTERMEDIATE")
+		String level
+	) {
 		public static CurriculumResponse from(com.swcampus.domain.lecture.LectureCurriculum lc) {
 			return new CurriculumResponse(
 					lc.getCurriculumId(),
