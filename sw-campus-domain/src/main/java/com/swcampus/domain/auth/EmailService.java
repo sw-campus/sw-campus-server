@@ -22,6 +22,10 @@ public class EmailService {
     private String frontendUrl;
 
     public void sendVerificationEmail(String email) {
+        sendVerificationEmail(email, "personal");
+    }
+
+    public void sendVerificationEmail(String email, String signupType) {
         // 이미 가입된 이메일 확인
         if (memberRepository.existsByEmail(email)) {
             throw new DuplicateEmailException(email);
@@ -34,8 +38,8 @@ public class EmailService {
         EmailVerification verification = EmailVerification.create(email);
         emailVerificationRepository.save(verification);
 
-        // 이메일 발송
-        String verifyUrl = frontendUrl + "/auth/verify?token=" + verification.getToken();
+        // 이메일 발송 (signupType을 쿼리 파라미터로 포함)
+        String verifyUrl = frontendUrl + "/auth/verify?token=" + verification.getToken() + "&type=" + signupType;
         String subject = "[SW Campus] 이메일 인증";
         String content = buildEmailContent(verifyUrl);
 

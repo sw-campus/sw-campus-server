@@ -17,4 +17,12 @@ public class EmailSendRequest {
     @NotBlank(message = "이메일은 필수입니다")
     @Email(message = "올바른 이메일 형식이 아닙니다")
     private String email;
+
+    @Schema(description = "가입 유형 (personal: 일반, organization: 기관)", example = "personal", defaultValue = "personal")
+    private String signupType = "personal";
+
+    public EmailSendRequest(String email) {
+        this.email = email;
+        this.signupType = "personal";
+    }
 }
