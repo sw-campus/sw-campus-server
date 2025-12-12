@@ -20,7 +20,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        submodules: recursive
+        submodules: false  # submodule 체크아웃 비활성화 (명시적으로 checkout 단계에서 처리)
     
     - name: Checkout config repository
       uses: actions/checkout@v4
