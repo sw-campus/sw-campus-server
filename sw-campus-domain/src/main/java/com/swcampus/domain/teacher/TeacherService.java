@@ -26,9 +26,7 @@ public class TeacherService {
             imageUrl = fileStorageService.upload(imageContent, "teachers", imageName, contentType);
         }
 
-        Teacher newTeacher = Teacher.builder()
-                .teacherName(teacher.getTeacherName())
-                .teacherDescription(teacher.getTeacherDescription())
+        Teacher newTeacher = teacher.toBuilder()
                 .teacherImageUrl(imageUrl)
                 .build();
 

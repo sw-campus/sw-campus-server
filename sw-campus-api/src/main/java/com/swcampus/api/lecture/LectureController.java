@@ -3,6 +3,7 @@ package com.swcampus.api.lecture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -45,6 +48,7 @@ public class LectureController {
 	private final LectureService lectureService;
 	private final OrganizationService organizationService;
 	private final ObjectMapper objectMapper;
+	private final jakarta.validation.Validator validator;
 
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(summary = "강의 등록", description = "새로운 강의를 등록합니다. 기관 회원만 가능하며, 관리자 승인 후 노출됩니다.")
@@ -57,10 +61,16 @@ public class LectureController {
 	public ResponseEntity<LectureResponse> createLecture(
 			@Parameter(description = "강의 정보 (JSON string)", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = LectureCreateRequest.class)) @RequestPart("lecture") String lectureJson,
 			@Parameter(description = "강의 대표 이미지 파일") @RequestPart(value = "image", required = false) MultipartFile image,
-			@Parameter(description = "강사 이미지 파일 목록 (신규 강사 순서대로 매핑)") @RequestPart(value = "teacherImages", required = false) java.util.List<MultipartFile> teacherImages)
+			@Parameter(description = "강사 이미지 파일 목록 (신규 강사의 수와 일치해야 함)") @RequestPart(value = "teacherImages", required = false) java.util.List<MultipartFile> teacherImages)
 			throws IOException {
 
 		LectureCreateRequest request = objectMapper.readValue(lectureJson, LectureCreateRequest.class);
+
+		Set<ConstraintViolation<LectureCreateRequest>> violations = validator
+				.validate(request);
+		if (!violations.isEmpty()) {
+			throw new ConstraintViolationException(violations);
+		}
 
 		// 현재 로그인한 사용자 ID 가져오기
 		Long currentUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
@@ -71,14 +81,20 @@ public class LectureController {
 				.orgId(organization.getId())
 				.build();
 
-		byte[] imageContent = (image != null && !image.isEmpty()) ? image.getBytes() : null;
-		String imageName = (image != null && !image.isEmpty()) ? image.getOriginalFilename() : null;
-		String contentType = (image != null && !image.isEmpty()) ? image.getContentType() : null;
+		byte[] imageContent = null;
+		String imageName = null;
+		String contentType = null;
+		if (image != null && !image.isEmpty()) {
+			imageContent = image.getBytes();
+			imageName = image.getOriginalFilename();
+			contentType = image.getContentType();
+		}
 
 		List<LectureService.ImageContent> teacherImageContents = new ArrayList<>();
 		if (teacherImages != null) {
 			for (MultipartFile file : teacherImages) {
-				if (file != null && !file.isEmpty()) {
+				// 빈 파일이라도 리스트에 추가하여 인덱스 순서를 보장함 (Service에서 빈 파일은 업로드 스킵됨)
+				if (file != null) {
 					teacherImageContents.add(new LectureService.ImageContent(file.getBytes(),
 							file.getOriginalFilename(), file.getContentType()));
 				}

@@ -103,6 +103,17 @@ public class GlobalExceptionHandler {
 
         // === Validation 예외 ===
 
+        @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+        public ResponseEntity<ErrorResponse> handleConstraintViolationException(
+                        jakarta.validation.ConstraintViolationException e) {
+                String message = e.getConstraintViolations().stream()
+                                .map(violation -> violation.getMessage())
+                                .collect(Collectors.joining(", "));
+                log.warn("Validation 실패: {}", message);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), message));
+        }
+
         @ExceptionHandler(MethodArgumentNotValidException.class)
         public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
                 String message = e.getBindingResult().getFieldErrors().stream()
@@ -210,6 +221,13 @@ public class GlobalExceptionHandler {
                 log.warn("필수 파일 누락: {}", partName);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), message));
+        }
+
+        @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
+                log.warn("잘못된 요청: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
         }
 
         // === 기타 예외 ===

@@ -2,6 +2,7 @@ package com.swcampus.api.teacher;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +23,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 @Tag(name = "Teacher", description = "강사 관리 API")
 @RestController
 @RequestMapping("/api/v1/teachers")
@@ -40,19 +45,28 @@ public class TeacherController {
     }
 
     @Operation(summary = "강사 등록", description = "새로운 강사를 등록합니다. (이미지 포함)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "등록 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청")
+    })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<TeacherResponse> createTeacher(
-            @Parameter(description = "강사 정보 (JSON)") @RequestPart("teacher") TeacherCreateRequest request,
+            @Parameter(description = "강사 정보 (JSON)") @Valid @RequestPart("teacher") TeacherCreateRequest request,
             @Parameter(description = "강사 이미지 파일") @RequestPart(value = "image", required = false) MultipartFile image)
             throws java.io.IOException {
 
-        byte[] imageContent = (image != null && !image.isEmpty()) ? image.getBytes() : null;
-        String imageName = (image != null && !image.isEmpty()) ? image.getOriginalFilename() : null;
-        String contentType = (image != null && !image.isEmpty()) ? image.getContentType() : null;
+        byte[] imageContent = null;
+        String imageName = null;
+        String contentType = null;
+        if (image != null && !image.isEmpty()) {
+            imageContent = image.getBytes();
+            imageName = image.getOriginalFilename();
+            contentType = image.getContentType();
+        }
 
         Teacher savedTeacher = teacherService.createTeacher(request.toDomain(),
                 imageContent, imageName, contentType);
 
-        return ResponseEntity.ok(TeacherResponse.from(savedTeacher));
+        return ResponseEntity.status(HttpStatus.CREATED).body(TeacherResponse.from(savedTeacher));
     }
 }

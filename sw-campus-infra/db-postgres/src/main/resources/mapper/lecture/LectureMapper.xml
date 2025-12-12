@@ -50,8 +50,8 @@
         <result property="totalDays" column="total_days"/>
         <result property="totalTimes" column="total_times"/>
 
-        <!-- Nested Select for Steps to avoid N+1 problem with paging -->
-        <collection property="steps" column="lecture_id" select="selectSteps"/>
+        <!-- Steps를 LEFT JOIN으로 한 번에 조회하여 N+1 문제 해결 -->
+        <collection property="steps" ofType="com.swcampus.infra.postgres.lecture.LectureStepEntity" resultMap="LectureStepResultMap" columnPrefix="step_"/>
     </resultMap>
 
     <!-- 공통 JOIN 구문 정의 -->

@@ -41,6 +41,29 @@ public class LectureService {
 			imageUrl = fileStorageService.upload(imageContent, "lectures", imageName, contentType);
 		}
 
+		// 신규 강사 수 계산
+		long newTeacherCount = 0;
+		if (lecture.getTeachers() != null) {
+			newTeacherCount = lecture.getTeachers().stream()
+					.filter(t -> t.getTeacherId() == null)
+					.count();
+		}
+
+		// 이미지 수 계산
+		int imageCount = (teacherImages != null) ? teacherImages.size() : 0;
+
+		// 유효성 검사: 신규 강사 수와 이미지 수가 일치해야 함 (이미지가 없는 경우는 허용?)
+		// 사용자의 요청: "신규 강사만 카운트하기 때문에... 불일치할 수 있습니다" -> 엄격한 매핑 요구
+		// 정책: 신규 강사가 있으면 그 수만큼의 이미지가 "있거나" 아니면 "아예 없거나" (모두 이미지 없음)가 아니라,
+		// 리스트로 넘어오는 images는 순서대로 매핑되므로, images가 존재한다면 개수가 정확해야 함.
+		// 만약 teacherImages가 null이거나 empty면? -> 이미지를 안 올리는 경우로 간주 (허용).
+		// 하지만 teacherImages가 있다면, newTeacherCount와 정확히 일치해야 1:1 매핑 보장.
+
+		if (imageCount > 0 && imageCount != newTeacherCount) {
+			throw new IllegalArgumentException("신규 강사 수(" + newTeacherCount + ")와 업로드된 이미지 수(" + imageCount
+					+ ")가 일치하지 않습니다. 신규 강사 등록 시 이미지를 순서대로 모두 첨부하거나, 아예 첨부하지 않아야 합니다.");
+		}
+
 		List<com.swcampus.domain.teacher.Teacher> updatedTeachers = new ArrayList<>();
 		int imageIndex = 0;
 		if (lecture.getTeachers() != null) {
