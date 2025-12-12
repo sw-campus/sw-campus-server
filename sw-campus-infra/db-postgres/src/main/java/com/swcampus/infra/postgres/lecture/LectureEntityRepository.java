@@ -19,6 +19,7 @@ import com.swcampus.infra.postgres.lecture.mapper.LectureMapper;
 import com.swcampus.infra.postgres.teacher.TeacherEntity;
 
 import jakarta.persistence.EntityManager;
+import com.swcampus.domain.common.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Repository
@@ -31,9 +32,72 @@ public class LectureEntityRepository implements LectureRepository {
 
 	@Override
 	public Lecture save(Lecture lecture) {
-		LectureEntity entity = LectureEntity.from(lecture);
+		LectureEntity entity;
+		if (lecture.getLectureId() != null) {
+			// Update: Fetch existing entity
+			entity = jpaRepository.findById(lecture.getLectureId())
+					.orElseThrow(() -> new ResourceNotFoundException(
+							"Lecture not found with id: " + lecture.getLectureId()));
 
-		// N:M Relationships (Teachers)
+			// Update scalar fields
+			updateEntityFields(entity, lecture);
+
+			// Update Collections (Clear and Add)
+			updateCollections(entity, lecture);
+		} else {
+			// Create: New entity
+			entity = LectureEntity.from(lecture);
+			updateCollections(entity, lecture);
+		}
+
+		return jpaRepository.save(entity).toDomain();
+	}
+
+	private void updateEntityFields(LectureEntity entity, Lecture lecture) {
+		entity.updateFields(lecture);
+	}
+
+	private void updateCollections(LectureEntity entity, Lecture lecture) {
+		// 1:N Steps
+		entity.getSteps().clear();
+		if (lecture.getSteps() != null) {
+			entity.getSteps().addAll(lecture.getSteps().stream()
+					.map(s -> LectureStepEntity.builder()
+							.lecture(entity)
+							.stepType(s.getStepType())
+							.stepOrder(s.getStepOrder())
+							.build())
+					.toList());
+		}
+
+		// 1:N Adds
+		entity.getAdds().clear();
+		if (lecture.getAdds() != null) {
+			entity.getAdds().addAll(lecture.getAdds().stream()
+					.map(a -> LectureAddEntity.builder()
+							.lecture(entity)
+							.addName(a.getAddName())
+							.build())
+					.toList());
+		}
+
+		// 1:N Quals
+		entity.getQuals().clear();
+		if (lecture.getQuals() != null) {
+			entity.getQuals().addAll(lecture.getQuals().stream()
+					.map(q -> LectureQualEntity.builder()
+							.lecture(entity)
+							.type(q.getType())
+							.text(q.getText())
+							.build())
+					.toList());
+		}
+
+		// N:M Teachers
+		entity.getLectureTeachers().clear();
+		// Force flush to execute deletes before inserts (prevents UK violation)
+		entityManager.flush();
+
 		if (lecture.getTeachers() != null) {
 			lecture.getTeachers().forEach(t -> {
 				TeacherEntity teacherRef;
@@ -50,7 +114,11 @@ public class LectureEntityRepository implements LectureRepository {
 			});
 		}
 
-		// N:M Relationships (Curriculums)
+		// N:M Curriculums
+		entity.getLectureCurriculums().clear();
+		// Force flush to execute deletes before inserts (prevents UK violation)
+		entityManager.flush();
+
 		if (lecture.getLectureCurriculums() != null) {
 			lecture.getLectureCurriculums().forEach(lc -> {
 				CurriculumEntity curriculumRef = entityManager.getReference(CurriculumEntity.class,
@@ -62,8 +130,6 @@ public class LectureEntityRepository implements LectureRepository {
 						.build());
 			});
 		}
-
-		return jpaRepository.save(entity).toDomain();
 	}
 
 	@Override
