@@ -21,6 +21,37 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
+    
+    - name: Checkout config repository
+      uses: actions/checkout@v4
+      with:
+        repository: sw-campus/config
+        token: ${{ secrets.CONFIG_REPO_TOKEN }}
+        path: config
+        
+    - name: Copy config files based on branch
+      run: |
+        # 브랜치에 따라 적절한 환경 파일 선택
+        if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+          # develop 브랜치: staging 환경
+          CONFIG_FILE="application-staging.yml"
+          SPRING_PROFILE="staging"
+        elif [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.event_name }}" == "release" ]; then
+          # main 브랜치 또는 release: production 환경
+          CONFIG_FILE="application-prod.yml"
+          SPRING_PROFILE="prod"
+        else
+          # 기본값: local 환경
+          CONFIG_FILE="application-local.yml"
+          SPRING_PROFILE="local"
+        fi
+        
+        # Config 파일을 서버 레포의 resources 디렉토리로 복사
+        cp ./config/$CONFIG_FILE ./sw-campus-api/src/main/resources/application.yml
+        
+        echo "Using config file: $CONFIG_FILE"
+        echo "Spring profile: $SPRING_PROFILE"
+        ls -la ./sw-campus-api/src/main/resources/
         
     - name: Set up JDK
       uses: actions/setup-java@v4
