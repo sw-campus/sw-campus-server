@@ -1,17 +1,25 @@
 package com.swcampus.api.lecture;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swcampus.api.lecture.request.LectureCreateRequest;
 import com.swcampus.api.lecture.request.LectureSearchRequest;
 import com.swcampus.api.lecture.response.LectureResponse;
@@ -26,8 +34,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import jakarta.validation.Validator;
 
 @RestController
 @RequestMapping("/api/v1/lectures")
@@ -37,17 +49,31 @@ public class LectureController {
 
 	private final LectureService lectureService;
 	private final OrganizationService organizationService;
+	private final ObjectMapper objectMapper;
+	private final Validator validator;
 
-	@PostMapping
+	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(summary = "강의 등록", description = "새로운 강의를 등록합니다. 기관 회원만 가능하며, 관리자 승인 후 노출됩니다.")
 	@SecurityRequirement(name = "cookieAuth")
 	@ApiResponses({
-		@ApiResponse(responseCode = "201", description = "등록 성공 (승인 대기)"),
-		@ApiResponse(responseCode = "401", description = "인증 필요"),
-		@ApiResponse(responseCode = "403", description = "기관 회원만 가능")
+			@ApiResponse(responseCode = "201", description = "등록 성공 (승인 대기)"),
+			@ApiResponse(responseCode = "401", description = "인증 필요"),
+			@ApiResponse(responseCode = "403", description = "기관 회원만 가능")
 	})
 	public ResponseEntity<LectureResponse> createLecture(
-			@Valid @RequestBody LectureCreateRequest request) {
+			@Parameter(description = "강의 정보 (JSON string)", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = LectureCreateRequest.class)) @RequestPart("lecture") String lectureJson,
+			@Parameter(description = "강의 대표 이미지 파일") @RequestPart(value = "image", required = false) MultipartFile image,
+			@Parameter(description = "강사 이미지 파일 목록 (신규 강사의 수와 일치해야 함)") @RequestPart(value = "teacherImages", required = false) java.util.List<MultipartFile> teacherImages)
+			throws IOException {
+
+		LectureCreateRequest request = objectMapper.readValue(lectureJson, LectureCreateRequest.class);
+
+		Set<ConstraintViolation<LectureCreateRequest>> violations = validator
+				.validate(request);
+		if (!violations.isEmpty()) {
+			throw new ConstraintViolationException(violations);
+		}
+
 		// 현재 로그인한 사용자 ID 가져오기
 		Long currentUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
 
@@ -57,7 +83,28 @@ public class LectureController {
 				.orgId(organization.getId())
 				.build();
 
-		Lecture savedLecture = lectureService.registerLecture(lectureDomain);
+		byte[] imageContent = null;
+		String imageName = null;
+		String contentType = null;
+		if (image != null && !image.isEmpty()) {
+			imageContent = image.getBytes();
+			imageName = image.getOriginalFilename();
+			contentType = image.getContentType();
+		}
+
+		List<LectureService.ImageContent> teacherImageContents = new ArrayList<>();
+		if (teacherImages != null) {
+			for (MultipartFile file : teacherImages) {
+				// 빈 파일이라도 리스트에 추가하여 인덱스 순서를 보장함 (Service에서 빈 파일은 업로드 스킵됨)
+				if (file != null) {
+					teacherImageContents.add(new LectureService.ImageContent(file.getBytes(),
+							file.getOriginalFilename(), file.getContentType()));
+				}
+			}
+		}
+
+		Lecture savedLecture = lectureService.registerLecture(lectureDomain, imageContent, imageName, contentType,
+				teacherImageContents);
 
 		return ResponseEntity.status(HttpStatus.CREATED).body(LectureResponse.from(savedLecture));
 	}
@@ -65,12 +112,11 @@ public class LectureController {
 	@GetMapping("/{lectureId}")
 	@Operation(summary = "강의 상세 조회", description = "강의의 상세 정보를 조회합니다.")
 	@ApiResponses({
-		@ApiResponse(responseCode = "200", description = "조회 성공"),
-		@ApiResponse(responseCode = "404", description = "강의 없음")
+			@ApiResponse(responseCode = "200", description = "조회 성공"),
+			@ApiResponse(responseCode = "404", description = "강의 없음")
 	})
 	public ResponseEntity<LectureResponse> getLecture(
-			@Parameter(description = "강의 ID", example = "1", required = true)
-			@PathVariable Long lectureId) {
+			@Parameter(description = "강의 ID", example = "1", required = true) @PathVariable Long lectureId) {
 		Lecture lecture = lectureService.getLecture(lectureId);
 		return ResponseEntity.ok(LectureResponse.from(lecture));
 	}
@@ -78,7 +124,7 @@ public class LectureController {
 	@GetMapping("/search")
 	@Operation(summary = "강의 검색", description = "다양한 조건으로 강의를 검색합니다. 키워드, 지역, 카테고리, 비용, 선발절차 등으로 필터링할 수 있습니다.")
 	@ApiResponses({
-		@ApiResponse(responseCode = "200", description = "검색 성공")
+			@ApiResponse(responseCode = "200", description = "검색 성공")
 	})
 	public ResponseEntity<Page<LectureResponse>> searchLectures(
 			@Valid @ModelAttribute LectureSearchRequest request) {

@@ -26,8 +26,8 @@ public class S3FileStorageService implements FileStorageService {
     private String region;
 
     @Override
-    public String upload(byte[] content, String fileName, String contentType) {
-        String key = generateKey(fileName);
+    public String upload(byte[] content, String directory, String fileName, String contentType) {
+        String key = generateKey(directory, fileName);
 
         PutObjectRequest request = PutObjectRequest.builder()
                 .bucket(bucketName)
@@ -52,12 +52,12 @@ public class S3FileStorageService implements FileStorageService {
         s3Client.deleteObject(request);
     }
 
-    private String generateKey(String fileName) {
+    private String generateKey(String directory, String fileName) {
         String extension = getExtension(fileName);
         String uuid = UUID.randomUUID().toString();
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
 
-        return String.format("certificates/%s/%s%s", date, uuid, extension);
+        return String.format("%s/%s/%s%s", directory, date, uuid, extension);
     }
 
     private String getExtension(String fileName) {

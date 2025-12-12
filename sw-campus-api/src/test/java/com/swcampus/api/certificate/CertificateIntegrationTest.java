@@ -134,7 +134,7 @@ class CertificateIntegrationTest {
                     .willReturn(List.of("수료증", "Spring Boot 실전 강의", "수료를 증명합니다"));
             
             // Mock 설정: S3 업로드 성공
-            given(fileStorageService.upload(any(byte[].class), anyString(), anyString()))
+            given(fileStorageService.upload(any(byte[].class),"certificates", anyString(), anyString()))
                     .willReturn("https://s3.example.com/certificate/test.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(
@@ -185,7 +185,7 @@ class CertificateIntegrationTest {
             // 중복 인증 시도
             given(ocrClient.extractText(any(byte[].class), anyString()))
                     .willReturn(List.of("수료증", "Spring Boot 실전 강의"));
-            given(fileStorageService.upload(any(byte[].class), anyString(), anyString()))
+            given(fileStorageService.upload(any(byte[].class),"certificates", anyString(), anyString()))
                     .willReturn("https://s3.example.com/new-certificate.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(
@@ -280,7 +280,7 @@ class CertificateIntegrationTest {
             given(ocrClient.extractText(any(byte[].class), anyString()))
                     .willReturn(List.of("수료증", "SpringBoot실전강의", "2024년 수료"));
             
-            given(fileStorageService.upload(any(byte[].class), anyString(), anyString()))
+            given(fileStorageService.upload(any(byte[].class), "certificates", anyString(), anyString()))
                     .willReturn("https://s3.example.com/certificate/test.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(
@@ -316,7 +316,7 @@ class CertificateIntegrationTest {
                             "수료를 증명합니다"
                     ));
             
-            given(fileStorageService.upload(any(byte[].class), anyString(), anyString()))
+            given(fileStorageService.upload(any(byte[].class), "certificates", anyString(), anyString()))
                     .willReturn("https://s3.example.com/certificate/test.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(

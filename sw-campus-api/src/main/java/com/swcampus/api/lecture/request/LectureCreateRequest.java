@@ -7,6 +7,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+
 import com.swcampus.domain.lecture.CurriculumLevel;
 import com.swcampus.domain.lecture.EquipmentType;
 import com.swcampus.domain.lecture.Lecture;
@@ -25,9 +28,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "강의 등록 요청")
 public record LectureCreateRequest(
-		@Schema(description = "기관 ID", example = "1") Long orgId,
+		@NotNull(message = "기관 ID는 필수입니다") @Schema(description = "기관 ID", example = "1") Long orgId,
 
-		@Schema(description = "강의명", example = "웹 개발 부트캠프") String lectureName,
+		@NotBlank(message = "강의명은 필수입니다") @Schema(description = "강의명", example = "웹 개발 부트캠프") String lectureName,
 
 		@Schema(description = "수업 요일 (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY)", example = "[\"MONDAY\", \"WEDNESDAY\", \"FRIDAY\"]") Set<LectureDay> days,
 
@@ -63,11 +66,9 @@ public record LectureCreateRequest(
 
 		@Schema(description = "취업 연계 지원", example = "true") Boolean employmentHelp,
 
-		@Schema(description = "수료 후 취업률 (%)", example = "85") Integer afterCompletion,
+		@Schema(description = "수료 후 사후관리 지원 여부", example = "true") Boolean afterCompletion,
 
 		@Schema(description = "강의 상세 페이지 URL", example = "https://example.com/lecture/1") String url,
-
-		@Schema(description = "강의 대표 이미지 URL", example = "https://example.com/images/lecture1.jpg") String lectureImageUrl,
 
 		@Schema(description = "프로젝트 수", example = "5") Integer projectNum,
 
@@ -122,7 +123,7 @@ public record LectureCreateRequest(
 				.employmentHelp(employmentHelp)
 				.afterCompletion(afterCompletion)
 				.url(url)
-				.lectureImageUrl(lectureImageUrl)
+
 				.status(com.swcampus.domain.lecture.LectureStatus.RECRUITING) // 초기 상태
 				.lectureAuthStatus(com.swcampus.domain.lecture.LectureAuthStatus.PENDING) // 관리자 승인시 APPROVED
 
@@ -205,19 +206,14 @@ public record LectureCreateRequest(
 
 	@Schema(description = "강사 정보")
 	public record TeacherRequest(
-			@Schema(description = "강사 ID", example = "1") Long teacherId,
-
-			@Schema(description = "강사명", example = "김개발") String teacherName,
-
-			@Schema(description = "강사 소개", example = "10년차 백엔드 개발자") String teacherDescription,
-
-			@Schema(description = "강사 이미지 URL", example = "https://example.com/teacher1.jpg") String teacherImageUrl) {
+			@Schema(description = "강사 ID (기존 강사 연결 시)", hidden = true) Long teacherId,
+			@Schema(description = "강사명 (신규 강사 생성 시)", example = "김개발") String teacherName,
+			@Schema(description = "강사 소개 (신규 강사 생성 시)", example = "10년차 백엔드 개발자") String teacherDescription) {
 		public Teacher toDomain() {
 			return Teacher.builder()
 					.teacherId(teacherId)
 					.teacherName(teacherName)
 					.teacherDescription(teacherDescription)
-					.teacherImageUrl(teacherImageUrl)
 					.build();
 		}
 	}
@@ -226,12 +222,12 @@ public record LectureCreateRequest(
 	public record CurriculumRequest(
 			@Schema(description = "커리큘럼 ID", example = "1") Long curriculumId,
 
-			@Schema(description = "난이도 (BEGINNER, INTERMEDIATE, ADVANCED)", example = "INTERMEDIATE") CurriculumLevel level) {
+			@Schema(description = "난이도 (NONE, BASIC, ADVANCED)", hidden = true) CurriculumLevel level) {
 		// 커리큘럼은 연결 정보(Info) 객체로 변환
 		public LectureCurriculum toDomainInfo() {
 			return LectureCurriculum.builder()
 					.curriculumId(curriculumId)
-					.level(level)
+					.level(level != null ? level : CurriculumLevel.NONE)
 					.build();
 		}
 	}

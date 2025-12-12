@@ -50,13 +50,19 @@ public class LectureStepEntity {
 	private LocalDateTime updatedAt;
 
 	public com.swcampus.domain.lecture.LectureStep toDomain() {
+		return toDomain(null);
+	}
+
+	public com.swcampus.domain.lecture.LectureStep toDomain(Long fallbackLectureId) {
+		Long resolvedLectureId = (lecture != null) ? lecture.getLectureId() : fallbackLectureId;
+
 		return com.swcampus.domain.lecture.LectureStep.builder()
-			.stepId(stepId)
-			.lectureId(lecture.getLectureId())
-			.stepType(stepType)
-			.stepOrder(stepOrder)
-			.createdAt(createdAt)
-			.updatedAt(updatedAt)
-			.build();
+				.stepId(stepId)
+				.lectureId(resolvedLectureId)
+				.stepType(stepType)
+				.stepOrder(stepOrder)
+				.createdAt(createdAt)
+				.updatedAt(updatedAt)
+				.build();
 	}
 }
