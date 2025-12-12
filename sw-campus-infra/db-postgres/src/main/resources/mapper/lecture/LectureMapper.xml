@@ -125,26 +125,26 @@
         <!-- 선발 절차 필터 -->
         <if test="cond.hasCodingTest != null">
             <if test="cond.hasCodingTest">
-                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'CODING_TEST')
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'CODING_TEST')
             </if>
             <if test="!cond.hasCodingTest">
-                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'CODING_TEST')
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'CODING_TEST')
             </if>
         </if>
         <if test="cond.hasInterview != null">
             <if test="cond.hasInterview">
-                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'INTERVIEW')
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'INTERVIEW')
             </if>
             <if test="!cond.hasInterview">
-                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'INTERVIEW')
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'INTERVIEW')
             </if>
         </if>
         <if test="cond.hasPreTask != null">
             <if test="cond.hasPreTask">
-                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'PRE_TASK')
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'PRE_TASK')
             </if>
             <if test="!cond.hasPreTask">
-                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'PRE_TASK')
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'PRE_TASK')
             </if>
         </if>
         

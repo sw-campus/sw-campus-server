@@ -17,4 +17,7 @@ public interface LectureJpaRepository extends JpaRepository<LectureEntity, Long>
     @Query("SELECT l.orgId, COUNT(l) FROM LectureEntity l WHERE l.status = :status AND l.orgId IN :orgIds GROUP BY l.orgId")
     List<Object[]> countByStatusAndOrgIdInGroupByOrgId(@Param("status") LectureStatus status,
             @Param("orgIds") List<Long> orgIds);
+
+    @Query("SELECT l.lectureId, l.lectureName FROM LectureEntity l WHERE l.lectureId IN :ids")
+    List<Object[]> findIdAndNameByIdIn(@Param("ids") List<Long> ids);
 }

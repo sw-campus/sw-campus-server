@@ -1,5 +1,6 @@
 package com.swcampus.domain.lecture;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
