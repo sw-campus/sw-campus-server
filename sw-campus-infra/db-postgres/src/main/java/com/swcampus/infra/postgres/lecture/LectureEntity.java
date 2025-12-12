@@ -312,4 +312,45 @@ public class LectureEntity {
 						.toList())
 				.build();
 	}
+
+	public void updateFields(com.swcampus.domain.lecture.Lecture lecture) {
+		this.orgId = lecture.getOrgId();
+		this.lectureName = lecture.getLectureName();
+		this.days = lecture.getDays() != null
+				? lecture.getDays().stream().map(Enum::name).collect(java.util.stream.Collectors.joining(","))
+				: null;
+		this.startTime = lecture.getStartTime();
+		this.endTime = lecture.getEndTime();
+		this.lectureLoc = lecture.getLectureLoc();
+		this.location = lecture.getLocation();
+		this.recruitType = lecture.getRecruitType();
+		this.subsidy = lecture.getSubsidy();
+		this.lectureFee = lecture.getLectureFee();
+		this.eduSubsidy = lecture.getEduSubsidy();
+		this.goal = lecture.getGoal();
+		this.maxCapacity = lecture.getMaxCapacity();
+		this.equipPc = lecture.getEquipPc();
+		this.equipMerit = lecture.getEquipMerit();
+		this.books = lecture.getBooks();
+		this.resume = lecture.getResume();
+		this.mockInterview = lecture.getMockInterview();
+		this.employmentHelp = lecture.getEmploymentHelp();
+		this.afterCompletion = lecture.getAfterCompletion();
+		this.url = lecture.getUrl();
+		this.lectureImageUrl = lecture.getLectureImageUrl();
+		this.status = lecture.getStatus();
+		this.lectureAuthStatus = lecture.getLectureAuthStatus();
+		// Project
+		this.projectNum = lecture.getProjectNum();
+		this.projectTime = lecture.getProjectTime();
+		this.projectTeam = lecture.getProjectTeam();
+		this.projectTool = lecture.getProjectTool();
+		this.projectMentor = lecture.getProjectMentor();
+		this.startAt = lecture.getStartAt();
+		this.endAt = lecture.getEndAt();
+		this.deadline = lecture.getDeadline();
+		this.totalDays = lecture.getTotalDays();
+		this.totalTimes = lecture.getTotalTimes();
+		this.updatedAt = LocalDateTime.now();
+	}
 }

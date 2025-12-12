@@ -192,9 +192,12 @@ public record LectureResponse(
 
 			@Schema(description = "강사명", example = "김개발") String teacherName,
 
+			@Schema(description = "강사 소개", example = "10년차 백엔드 개발자") String teacherDescription,
+
 			@Schema(description = "강사 이미지 URL", example = "https://example.com/teacher1.jpg") String teacherImageUrl) {
 		public static TeacherResponse from(Teacher t) {
-			return new TeacherResponse(t.getTeacherId(), t.getTeacherName(), t.getTeacherImageUrl());
+			return new TeacherResponse(t.getTeacherId(), t.getTeacherName(), t.getTeacherDescription(),
+					t.getTeacherImageUrl());
 		}
 	}
 
