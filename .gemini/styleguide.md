@@ -1,6 +1,6 @@
 # Gemini Code Review Instructions for sw-campus-server
 
-> 이 문서는 GitHub Copilot이 PR 리뷰 및 코드 작성 시 참고하는 지침입니다.
+> 이 문서는 Gemini가 PR 리뷰 및 코드 작성 시 참고하는 지침입니다.
 
 ## ⚠️ 중요: 언어 설정
 
