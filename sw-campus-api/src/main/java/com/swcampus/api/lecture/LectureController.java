@@ -39,6 +39,8 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import jakarta.validation.Validator;
+
 @RestController
 @RequestMapping("/api/v1/lectures")
 @RequiredArgsConstructor
@@ -48,7 +50,7 @@ public class LectureController {
 	private final LectureService lectureService;
 	private final OrganizationService organizationService;
 	private final ObjectMapper objectMapper;
-	private final jakarta.validation.Validator validator;
+	private final Validator validator;
 
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(summary = "강의 등록", description = "새로운 강의를 등록합니다. 기관 회원만 가능하며, 관리자 승인 후 노출됩니다.")
