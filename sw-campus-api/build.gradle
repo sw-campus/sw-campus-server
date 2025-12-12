@@ -12,14 +12,14 @@ dependencies {
     implementation project(':sw-campus-infra:oauth')    // oauth client
     implementation project(':sw-campus-infra:ocr')      // ocr client
 //    runtimeOnly project(':sw-campus-infra:db-mongodb')  // read
-    
+
     // Spring Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+//    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
 
     // Spring Security
     implementation 'org.springframework.boot:spring-boot-starter-security'
