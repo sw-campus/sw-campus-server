@@ -6,7 +6,7 @@ public class SurveyNotFoundException extends RuntimeException {
         super("설문조사를 찾을 수 없습니다");
     }
 
-    public SurveyNotFoundException(Long userId) {
-        super(String.format("설문조사를 찾을 수 없습니다. userId: %d", userId));
+    public SurveyNotFoundException(Long memberId) {
+        super(String.format("설문조사를 찾을 수 없습니다. memberId: %d", memberId));
     }
 }

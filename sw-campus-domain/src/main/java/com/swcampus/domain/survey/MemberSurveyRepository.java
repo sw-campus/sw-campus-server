@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface MemberSurveyRepository {
     MemberSurvey save(MemberSurvey survey);
-    Optional<MemberSurvey> findByUserId(Long userId);
-    boolean existsByUserId(Long userId);
+    Optional<MemberSurvey> findByMemberId(Long memberId);
+    boolean existsByMemberId(Long memberId);
     Page<MemberSurvey> findAll(Pageable pageable);
 }

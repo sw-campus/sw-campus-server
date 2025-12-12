@@ -1,3 +1,4 @@
+
 package com.swcampus.api.survey;
 
 import com.swcampus.api.survey.request.CreateSurveyRequest;
@@ -38,10 +39,10 @@ public class SurveyController {
     })
     @PostMapping
     public ResponseEntity<SurveyResponse> createSurvey(@RequestBody CreateSurveyRequest request) {
-        Long currentUserId = getCurrentUserId();
+        Long currentMemberId = getCurrentMemberId();
 
         MemberSurvey survey = surveyService.createSurvey(
-                currentUserId,
+                currentMemberId,
                 request.getMajor(),
                 request.getBootcampCompleted(),
                 request.getWantedJobs(),
@@ -62,8 +63,8 @@ public class SurveyController {
     })
     @GetMapping
     public ResponseEntity<SurveyResponse> getMySurvey() {
-        Long currentUserId = getCurrentUserId();
-        MemberSurvey survey = surveyService.getSurveyByUserId(currentUserId);
+        Long currentMemberId = getCurrentMemberId();
+        MemberSurvey survey = surveyService.getSurveyByMemberId(currentMemberId);
         return ResponseEntity.ok(SurveyResponse.from(survey));
     }
 
@@ -75,10 +76,10 @@ public class SurveyController {
     })
     @PutMapping
     public ResponseEntity<SurveyResponse> updateMySurvey(@RequestBody UpdateSurveyRequest request) {
-        Long currentUserId = getCurrentUserId();
+        Long currentMemberId = getCurrentMemberId();
 
         MemberSurvey survey = surveyService.updateSurvey(
-                currentUserId,
+                currentMemberId,
                 request.getMajor(),
                 request.getBootcampCompleted(),
                 request.getWantedJobs(),
@@ -90,7 +91,7 @@ public class SurveyController {
         return ResponseEntity.ok(SurveyResponse.from(survey));
     }
 
-    private Long getCurrentUserId() {
+    private Long getCurrentMemberId() {
         return (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
     }
 }

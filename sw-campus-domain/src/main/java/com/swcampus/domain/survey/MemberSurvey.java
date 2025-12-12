@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberSurvey {
-    private Long userId;
+    private Long memberId;
     private String major;
     private Boolean bootcampCompleted;
     private String wantedJobs;
@@ -21,7 +21,7 @@ public class MemberSurvey {
     private LocalDateTime updatedAt;
 
     public static MemberSurvey create(
-            Long userId,
+            Long memberId,
             String major,
             Boolean bootcampCompleted,
             String wantedJobs,
@@ -30,7 +30,7 @@ public class MemberSurvey {
             BigDecimal affordableAmount
     ) {
         MemberSurvey survey = new MemberSurvey();
-        survey.userId = userId;
+        survey.memberId = memberId;
         survey.major = major;
         survey.bootcampCompleted = bootcampCompleted;
         survey.wantedJobs = wantedJobs;
@@ -41,7 +41,7 @@ public class MemberSurvey {
     }
 
     public static MemberSurvey of(
-            Long userId,
+            Long memberId,
             String major,
             Boolean bootcampCompleted,
             String wantedJobs,
@@ -52,7 +52,7 @@ public class MemberSurvey {
             LocalDateTime updatedAt
     ) {
         MemberSurvey survey = new MemberSurvey();
-        survey.userId = userId;
+        survey.memberId = memberId;
         survey.major = major;
         survey.bootcampCompleted = bootcampCompleted;
         survey.wantedJobs = wantedJobs;

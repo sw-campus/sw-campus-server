@@ -61,14 +61,14 @@ class SurveyControllerTest {
     @MockitoBean
     private TokenProvider tokenProvider;
 
-    private static final Long USER_ID = 1L;
+    private static final Long MEMBER_ID = 1L;
     private static final String BASE_URL = "/api/v1/members/me/survey";
 
     @BeforeEach
     void setUp() {
         UsernamePasswordAuthenticationToken authentication = mock(
                 UsernamePasswordAuthenticationToken.class);
-        when(authentication.getDetails()).thenReturn(USER_ID);
+        when(authentication.getDetails()).thenReturn(MEMBER_ID);
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
@@ -86,13 +86,13 @@ class SurveyControllerTest {
             );
 
             MemberSurvey survey = MemberSurvey.create(
-                    USER_ID, "컴퓨터공학", true,
+                    MEMBER_ID, "컴퓨터공학", true,
                     "백엔드 개발자", "정보처리기사",
                     true, BigDecimal.valueOf(500000)
             );
 
             when(surveyService.createSurvey(
-                    eq(USER_ID), any(), any(), any(), any(), any(), any()
+                    eq(MEMBER_ID), any(), any(), any(), any(), any(), any()
             )).thenReturn(survey);
 
             // when & then
@@ -102,7 +102,7 @@ class SurveyControllerTest {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.user_id").value(USER_ID))
+                    .andExpect(jsonPath("$.member_id").value(MEMBER_ID))
                     .andExpect(jsonPath("$.major").value("컴퓨터공학"))
                     .andExpect(jsonPath("$.bootcamp_completed").value(true))
                     .andExpect(jsonPath("$.wanted_jobs").value("백엔드 개발자"))
@@ -121,7 +121,7 @@ class SurveyControllerTest {
             );
 
             when(surveyService.createSurvey(
-                    eq(USER_ID), any(), any(), any(), any(), any(), any()
+                    eq(MEMBER_ID), any(), any(), any(), any(), any(), any()
             )).thenThrow(new SurveyAlreadyExistsException());
 
             // when & then
@@ -142,17 +142,17 @@ class SurveyControllerTest {
         void success() throws Exception {
             // given
             MemberSurvey survey = MemberSurvey.create(
-                    USER_ID, "컴퓨터공학", true,
+                    MEMBER_ID, "컴퓨터공학", true,
                     "백엔드 개발자", "정보처리기사",
                     true, BigDecimal.valueOf(500000)
             );
 
-            when(surveyService.getSurveyByUserId(USER_ID)).thenReturn(survey);
+            when(surveyService.getSurveyByMemberId(MEMBER_ID)).thenReturn(survey);
 
             // when & then
             mockMvc.perform(get(BASE_URL))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.user_id").value(USER_ID))
+                    .andExpect(jsonPath("$.member_id").value(MEMBER_ID))
                     .andExpect(jsonPath("$.major").value("컴퓨터공학"));
         }
 
@@ -160,7 +160,7 @@ class SurveyControllerTest {
         @DisplayName("설문조사 없을 때 (404)")
         void fail_notFound() throws Exception {
             // given
-            when(surveyService.getSurveyByUserId(USER_ID))
+            when(surveyService.getSurveyByMemberId(MEMBER_ID))
                     .thenThrow(new SurveyNotFoundException());
 
             // when & then
@@ -183,13 +183,13 @@ class SurveyControllerTest {
             );
 
             MemberSurvey updatedSurvey = MemberSurvey.create(
-                    USER_ID, "소프트웨어공학", false,
+                    MEMBER_ID, "소프트웨어공학", false,
                     "풀스택 개발자", "정보처리기사, SQLD",
                     false, BigDecimal.valueOf(1000000)
             );
 
             when(surveyService.updateSurvey(
-                    eq(USER_ID), any(), any(), any(), any(), any(), any()
+                    eq(MEMBER_ID), any(), any(), any(), any(), any(), any()
             )).thenReturn(updatedSurvey);
 
             // when & then
@@ -212,7 +212,7 @@ class SurveyControllerTest {
             );
 
             when(surveyService.updateSurvey(
-                    eq(USER_ID), any(), any(), any(), any(), any(), any()
+                    eq(MEMBER_ID), any(), any(), any(), any(), any(), any()
             )).thenThrow(new SurveyNotFoundException());
 
             // when & then

@@ -17,7 +17,7 @@ public class MemberSurveyEntity extends BaseEntity {
 
     @Id
     @Column(name = "user_id")
-    private Long userId;
+    private Long memberId;
 
     @Column(length = 100)
     private String major;
@@ -39,7 +39,7 @@ public class MemberSurveyEntity extends BaseEntity {
 
     public static MemberSurveyEntity from(MemberSurvey survey) {
         MemberSurveyEntity entity = new MemberSurveyEntity();
-        entity.userId = survey.getUserId();
+        entity.memberId = survey.getMemberId();
         entity.major = survey.getMajor();
         entity.bootcampCompleted = survey.getBootcampCompleted();
         entity.wantedJobs = survey.getWantedJobs();
@@ -51,7 +51,7 @@ public class MemberSurveyEntity extends BaseEntity {
 
     public MemberSurvey toDomain() {
         return MemberSurvey.of(
-                this.userId,
+                this.memberId,
                 this.major,
                 this.bootcampCompleted,
                 this.wantedJobs,

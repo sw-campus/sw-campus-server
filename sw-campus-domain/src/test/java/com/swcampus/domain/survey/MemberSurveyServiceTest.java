@@ -30,7 +30,7 @@ class MemberSurveyServiceTest {
     @InjectMocks
     private MemberSurveyService surveyService;
 
-    private final Long userId = 1L;
+    private final Long memberId = 1L;
     private final String major = "컴퓨터공학";
     private final Boolean bootcampCompleted = true;
     private final String wantedJobs = "백엔드 개발자, 데이터 엔지니어";
@@ -46,18 +46,18 @@ class MemberSurveyServiceTest {
         @DisplayName("성공 - 새 설문조사 생성")
         void success() {
             // given
-            when(surveyRepository.existsByUserId(userId)).thenReturn(false);
+            when(surveyRepository.existsByMemberId(memberId)).thenReturn(false);
             when(surveyRepository.save(any(MemberSurvey.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
             MemberSurvey result = surveyService.createSurvey(
-                    userId, major, bootcampCompleted,
+                    memberId, major, bootcampCompleted,
                     wantedJobs, licenses, hasGovCard, affordableAmount
             );
 
             // then
-            assertThat(result.getUserId()).isEqualTo(userId);
+            assertThat(result.getMemberId()).isEqualTo(memberId);
             assertThat(result.getMajor()).isEqualTo(major);
             assertThat(result.getBootcampCompleted()).isEqualTo(bootcampCompleted);
             assertThat(result.getWantedJobs()).isEqualTo(wantedJobs);
@@ -65,7 +65,7 @@ class MemberSurveyServiceTest {
             assertThat(result.getHasGovCard()).isEqualTo(hasGovCard);
             assertThat(result.getAffordableAmount()).isEqualTo(affordableAmount);
 
-            verify(surveyRepository).existsByUserId(userId);
+            verify(surveyRepository).existsByMemberId(memberId);
             verify(surveyRepository).save(any(MemberSurvey.class));
         }
 
@@ -73,57 +73,57 @@ class MemberSurveyServiceTest {
         @DisplayName("실패 - 이미 설문조사가 존재하면 예외 발생")
         void fail_alreadyExists() {
             // given
-            when(surveyRepository.existsByUserId(userId)).thenReturn(true);
+            when(surveyRepository.existsByMemberId(memberId)).thenReturn(true);
 
             // when & then
             assertThatThrownBy(() -> surveyService.createSurvey(
-                    userId, major, bootcampCompleted,
+                    memberId, major, bootcampCompleted,
                     wantedJobs, licenses, hasGovCard, affordableAmount
             ))
                     .isInstanceOf(SurveyAlreadyExistsException.class)
                     .hasMessageContaining("이미 설문조사를 작성하셨습니다");
 
-            verify(surveyRepository).existsByUserId(userId);
+            verify(surveyRepository).existsByMemberId(memberId);
             verify(surveyRepository, never()).save(any(MemberSurvey.class));
         }
     }
 
     @Nested
     @DisplayName("설문조사 조회")
-    class GetSurveyByUserId {
+    class GetSurveyByMemberId {
 
         @Test
         @DisplayName("성공 - 설문조사 조회")
         void success() {
             // given
             MemberSurvey survey = MemberSurvey.create(
-                    userId, major, bootcampCompleted,
+                    memberId, major, bootcampCompleted,
                     wantedJobs, licenses, hasGovCard, affordableAmount
             );
-            when(surveyRepository.findByUserId(userId)).thenReturn(Optional.of(survey));
+            when(surveyRepository.findByMemberId(memberId)).thenReturn(Optional.of(survey));
 
             // when
-            MemberSurvey result = surveyService.getSurveyByUserId(userId);
+            MemberSurvey result = surveyService.getSurveyByMemberId(memberId);
 
             // then
-            assertThat(result.getUserId()).isEqualTo(userId);
+            assertThat(result.getMemberId()).isEqualTo(memberId);
             assertThat(result.getMajor()).isEqualTo(major);
 
-            verify(surveyRepository).findByUserId(userId);
+            verify(surveyRepository).findByMemberId(memberId);
         }
 
         @Test
         @DisplayName("실패 - 설문조사가 없으면 예외 발생")
         void fail_notFound() {
             // given
-            when(surveyRepository.findByUserId(userId)).thenReturn(Optional.empty());
+            when(surveyRepository.findByMemberId(memberId)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> surveyService.getSurveyByUserId(userId))
+            assertThatThrownBy(() -> surveyService.getSurveyByMemberId(memberId))
                     .isInstanceOf(SurveyNotFoundException.class)
                     .hasMessageContaining("설문조사를 찾을 수 없습니다");
 
-            verify(surveyRepository).findByUserId(userId);
+            verify(surveyRepository).findByMemberId(memberId);
         }
     }
 
@@ -143,21 +143,21 @@ class MemberSurveyServiceTest {
         void success() {
             // given
             MemberSurvey existingSurvey = MemberSurvey.create(
-                    userId, major, bootcampCompleted,
+                    memberId, major, bootcampCompleted,
                     wantedJobs, licenses, hasGovCard, affordableAmount
             );
-            when(surveyRepository.findByUserId(userId)).thenReturn(Optional.of(existingSurvey));
+            when(surveyRepository.findByMemberId(memberId)).thenReturn(Optional.of(existingSurvey));
             when(surveyRepository.save(any(MemberSurvey.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
             MemberSurvey result = surveyService.updateSurvey(
-                    userId, newMajor, newBootcampCompleted,
+                    memberId, newMajor, newBootcampCompleted,
                     newWantedJobs, newLicenses, newHasGovCard, newAffordableAmount
             );
 
             // then
-            assertThat(result.getUserId()).isEqualTo(userId);
+            assertThat(result.getMemberId()).isEqualTo(memberId);
             assertThat(result.getMajor()).isEqualTo(newMajor);
             assertThat(result.getBootcampCompleted()).isEqualTo(newBootcampCompleted);
             assertThat(result.getWantedJobs()).isEqualTo(newWantedJobs);
@@ -165,7 +165,7 @@ class MemberSurveyServiceTest {
             assertThat(result.getHasGovCard()).isEqualTo(newHasGovCard);
             assertThat(result.getAffordableAmount()).isEqualTo(newAffordableAmount);
 
-            verify(surveyRepository).findByUserId(userId);
+            verify(surveyRepository).findByMemberId(memberId);
             verify(surveyRepository).save(any(MemberSurvey.class));
         }
 
@@ -173,17 +173,17 @@ class MemberSurveyServiceTest {
         @DisplayName("실패 - 설문조사가 없으면 예외 발생")
         void fail_notFound() {
             // given
-            when(surveyRepository.findByUserId(userId)).thenReturn(Optional.empty());
+            when(surveyRepository.findByMemberId(memberId)).thenReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> surveyService.updateSurvey(
-                    userId, newMajor, newBootcampCompleted,
+                    memberId, newMajor, newBootcampCompleted,
                     newWantedJobs, newLicenses, newHasGovCard, newAffordableAmount
             ))
                     .isInstanceOf(SurveyNotFoundException.class)
                     .hasMessageContaining("설문조사를 찾을 수 없습니다");
 
-            verify(surveyRepository).findByUserId(userId);
+            verify(surveyRepository).findByMemberId(memberId);
             verify(surveyRepository, never()).save(any(MemberSurvey.class));
         }
     }

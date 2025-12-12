@@ -6,7 +6,7 @@ public class SurveyAlreadyExistsException extends RuntimeException {
         super("이미 설문조사를 작성하셨습니다");
     }
 
-    public SurveyAlreadyExistsException(Long userId) {
-        super(String.format("이미 설문조사를 작성하셨습니다. userId: %d", userId));
+    public SurveyAlreadyExistsException(Long memberId) {
+        super(String.format("이미 설문조사를 작성하셨습니다. memberId: %d", memberId));
     }
 }

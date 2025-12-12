@@ -19,7 +19,7 @@ public class MemberSurveyService {
 
     @Transactional
     public MemberSurvey createSurvey(
-            Long userId,
+            Long memberId,
             String major,
             Boolean bootcampCompleted,
             String wantedJobs,
@@ -27,26 +27,26 @@ public class MemberSurveyService {
             Boolean hasGovCard,
             BigDecimal affordableAmount
     ) {
-        if (surveyRepository.existsByUserId(userId)) {
-            throw new SurveyAlreadyExistsException();
+        if (surveyRepository.existsByMemberId(memberId)) {
+            throw new SurveyAlreadyExistsException(memberId);
         }
 
         MemberSurvey survey = MemberSurvey.create(
-                userId, major, bootcampCompleted,
+                memberId, major, bootcampCompleted,
                 wantedJobs, licenses, hasGovCard, affordableAmount
         );
 
         return surveyRepository.save(survey);
     }
 
-    public MemberSurvey getSurveyByUserId(Long userId) {
-        return surveyRepository.findByUserId(userId)
-                .orElseThrow(SurveyNotFoundException::new);
+    public MemberSurvey getSurveyByMemberId(Long memberId) {
+        return surveyRepository.findByMemberId(memberId)
+                .orElseThrow(() -> new SurveyNotFoundException(memberId));
     }
 
     @Transactional
     public MemberSurvey updateSurvey(
-            Long userId,
+            Long memberId,
             String major,
             Boolean bootcampCompleted,
             String wantedJobs,
@@ -54,8 +54,8 @@ public class MemberSurveyService {
             Boolean hasGovCard,
             BigDecimal affordableAmount
     ) {
-        MemberSurvey survey = surveyRepository.findByUserId(userId)
-                .orElseThrow(SurveyNotFoundException::new);
+        MemberSurvey survey = surveyRepository.findByMemberId(memberId)
+                .orElseThrow(() -> new SurveyNotFoundException(memberId));
 
         survey.update(major, bootcampCompleted, wantedJobs,
                 licenses, hasGovCard, affordableAmount);

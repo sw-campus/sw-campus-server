@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Schema(description = "설문조사 응답")
 public record SurveyResponse(
         @Schema(description = "회원 ID", example = "1")
-        Long userId,
+        Long memberId,
 
         @Schema(description = "전공", example = "컴퓨터공학")
         String major,
@@ -37,7 +37,7 @@ public record SurveyResponse(
 ) {
     public static SurveyResponse from(MemberSurvey survey) {
         return new SurveyResponse(
-                survey.getUserId(),
+                survey.getMemberId(),
                 survey.getMajor(),
                 survey.getBootcampCompleted(),
                 survey.getWantedJobs(),

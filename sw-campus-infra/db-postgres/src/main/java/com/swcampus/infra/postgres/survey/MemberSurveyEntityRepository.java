@@ -17,25 +17,19 @@ public class MemberSurveyEntityRepository implements MemberSurveyRepository {
 
     @Override
     public MemberSurvey save(MemberSurvey survey) {
-        MemberSurveyEntity entity = jpaRepository.findById(survey.getUserId())
-                .map(existing -> {
-                    existing.update(survey);
-                    return existing;
-                })
-                .orElseGet(() -> MemberSurveyEntity.from(survey));
-        
+        MemberSurveyEntity entity = MemberSurveyEntity.from(survey);
         return jpaRepository.save(entity).toDomain();
     }
 
     @Override
-    public Optional<MemberSurvey> findByUserId(Long userId) {
-        return jpaRepository.findById(userId)
+    public Optional<MemberSurvey> findByMemberId(Long memberId) {
+        return jpaRepository.findById(memberId)
                 .map(MemberSurveyEntity::toDomain);
     }
 
     @Override
-    public boolean existsByUserId(Long userId) {
-        return jpaRepository.existsById(userId);
+    public boolean existsByMemberId(Long memberId) {
+        return jpaRepository.existsById(memberId);
     }
 
     @Override
