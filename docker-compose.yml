@@ -53,5 +53,11 @@ services:
   #     ocr:
   #       condition: service_healthy
 
+  redis:
+    image: redis:alpine
+    container_name: sw-campus-redis
+    ports:
+      - "6379:6379"
+
 volumes:
   postgres_data:
