@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
 import com.swcampus.domain.teacher.Teacher;
+import org.springframework.security.access.AccessDeniedException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,44 +43,7 @@ public class LectureService {
 			imageUrl = fileStorageService.upload(imageContent, "lectures", imageName, contentType);
 		}
 
-		// 신규 강사 수 계산
-		long newTeacherCount = 0;
-		if (lecture.getTeachers() != null) {
-			newTeacherCount = lecture.getTeachers().stream()
-					.filter(t -> t.getTeacherId() == null)
-					.count();
-		}
-
-		// 이미지 수 계산
-		int imageCount = (teacherImages != null) ? teacherImages.size() : 0;
-
-		// 유효성 검사 완화:
-		// 기존에는 "신규 강사 수 == 이미지 수"가 아니면 에러를 발생시켰으나,
-		// 클라이언트가 빈 파일(dummy)을 보내거나 일부만 업로드하는 케이스를 허용하기 위해
-		// 개수가 맞지 않아도(이미지가 부족하거나 많아도) 에러 없이 처리 가능한 만큼만 매핑하고 진행합니다.
-
-		List<com.swcampus.domain.teacher.Teacher> updatedTeachers = new ArrayList<>();
-		int imageIndex = 0;
-		if (lecture.getTeachers() != null) {
-			for (com.swcampus.domain.teacher.Teacher teacher : lecture.getTeachers()) {
-				// 신규 강사 (ID 없음)인 경우 이미지 업로드 처리
-				if (teacher.getTeacherId() == null) {
-					String teacherImgUrl = null;
-					// 사용 가능한 이미지가 있으면 업로드
-					if (teacherImages != null && imageIndex < teacherImages.size()) {
-						ImageContent img = teacherImages.get(imageIndex++);
-						if (img.content() != null && img.content().length > 0) {
-							teacherImgUrl = fileStorageService.upload(img.content(), "teachers", img.name(),
-									img.contentType());
-						}
-					}
-					updatedTeachers.add(teacher.toBuilder().teacherImageUrl(teacherImgUrl).build());
-				} else {
-					// 기존 강사 (ID 있음)는 그대로 유지
-					updatedTeachers.add(teacher);
-				}
-			}
-		}
+		List<Teacher> updatedTeachers = processNewTeachers(lecture.getTeachers(), teacherImages);
 
 		Lecture newLecture = lecture.toBuilder()
 				.lectureImageUrl(imageUrl)
@@ -93,10 +57,14 @@ public class LectureService {
 	}
 
 	@Transactional
-	public Lecture modifyLecture(Long lectureId, Lecture lecture, byte[] imageContent, String imageName,
+	public Lecture modifyLecture(Long lectureId, Long orgId, Lecture lecture, byte[] imageContent, String imageName,
 			String contentType,
 			List<ImageContent> teacherImages) {
 		Lecture existingLecture = getLecture(lectureId);
+
+		if (!existingLecture.getOrgId().equals(orgId)) {
+			throw new AccessDeniedException("해당 강의를 수정할 권한이 없습니다.");
+		}
 
 		String imageUrl = existingLecture.getLectureImageUrl();
 
@@ -104,44 +72,7 @@ public class LectureService {
 			imageUrl = fileStorageService.upload(imageContent, "lectures", imageName, contentType);
 		}
 
-		// 신규 강사 수 계산
-		long newTeacherCount = 0;
-		if (lecture.getTeachers() != null) {
-			newTeacherCount = lecture.getTeachers().stream()
-					.filter(t -> t.getTeacherId() == null)
-					.count();
-		}
-
-		// 이미지 수 계산
-		int imageCount = (teacherImages != null) ? teacherImages.size() : 0;
-
-		// 유효성 검사 완화:
-		// 기존에는 "신규 강사 수 == 이미지 수"가 아니면 에러를 발생시켰으나,
-		// 클라이언트가 빈 파일(dummy)을 보내거나 일부만 업로드하는 케이스를 허용하기 위해
-		// 개수가 맞지 않아도(이미지가 부족하거나 많아도) 에러 없이 처리 가능한 만큼만 매핑하고 진행합니다.
-
-		List<Teacher> updatedTeachers = new ArrayList<>();
-		int imageIndex = 0;
-		if (lecture.getTeachers() != null) {
-			for (Teacher teacher : lecture.getTeachers()) {
-				// 신규 강사 (ID 없음)인 경우 이미지 업로드 처리
-				if (teacher.getTeacherId() == null) {
-					String teacherImgUrl = null;
-					// 사용 가능한 이미지가 있으면 업로드
-					if (teacherImages != null && imageIndex < teacherImages.size()) {
-						ImageContent img = teacherImages.get(imageIndex++);
-						if (img.content() != null && img.content().length > 0) {
-							teacherImgUrl = fileStorageService.upload(img.content(), "teachers", img.name(),
-									img.contentType());
-						}
-					}
-					updatedTeachers.add(teacher.toBuilder().teacherImageUrl(teacherImgUrl).build());
-				} else {
-					// 기존 강사 (ID 있음)는 그대로 유지
-					updatedTeachers.add(teacher);
-				}
-			}
-		}
+		List<Teacher> updatedTeachers = processNewTeachers(lecture.getTeachers(), teacherImages);
 
 		Lecture updatedLecture = lecture.toBuilder()
 				.lectureId(lectureId)
@@ -170,6 +101,32 @@ public class LectureService {
 
 	public Map<Long, Long> getRecruitingLectureCounts(List<Long> orgIds) {
 		return lectureRepository.countLecturesByStatusAndOrgIdIn(LectureStatus.RECRUITING, orgIds);
+	}
+
+	private List<Teacher> processNewTeachers(List<Teacher> teachers, List<ImageContent> teacherImages) {
+		List<Teacher> updatedTeachers = new ArrayList<>();
+		int imageIndex = 0;
+		if (teachers != null) {
+			for (Teacher teacher : teachers) {
+				// 신규 강사 (ID 없음)인 경우 이미지 업로드 처리
+				if (teacher.getTeacherId() == null) {
+					String teacherImgUrl = null;
+					// 사용 가능한 이미지가 있으면 업로드
+					if (teacherImages != null && imageIndex < teacherImages.size()) {
+						ImageContent img = teacherImages.get(imageIndex++);
+						if (img.content() != null && img.content().length > 0) {
+							teacherImgUrl = fileStorageService.upload(img.content(), "teachers", img.name(),
+									img.contentType());
+						}
+					}
+					updatedTeachers.add(teacher.toBuilder().teacherImageUrl(teacherImgUrl).build());
+				} else {
+					// 기존 강사 (ID 있음)는 그대로 유지
+					updatedTeachers.add(teacher);
+				}
+			}
+		}
+		return updatedTeachers;
 	}
 
 }

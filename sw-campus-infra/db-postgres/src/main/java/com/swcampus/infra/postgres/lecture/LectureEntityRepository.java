@@ -19,6 +19,7 @@ import com.swcampus.infra.postgres.lecture.mapper.LectureMapper;
 import com.swcampus.infra.postgres.teacher.TeacherEntity;
 
 import jakarta.persistence.EntityManager;
+import com.swcampus.domain.common.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Repository
@@ -35,7 +36,8 @@ public class LectureEntityRepository implements LectureRepository {
 		if (lecture.getLectureId() != null) {
 			// Update: Fetch existing entity
 			entity = jpaRepository.findById(lecture.getLectureId())
-					.orElseGet(() -> LectureEntity.from(lecture)); // Fallback if not found (should be rare)
+					.orElseThrow(() -> new ResourceNotFoundException(
+							"Lecture not found with id: " + lecture.getLectureId()));
 
 			// Update scalar fields
 			updateEntityFields(entity, lecture);

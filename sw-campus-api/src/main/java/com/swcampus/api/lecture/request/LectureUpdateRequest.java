@@ -9,6 +9,7 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import com.swcampus.domain.lecture.CurriculumLevel;
 import com.swcampus.domain.lecture.EquipmentType;
@@ -80,11 +81,11 @@ public record LectureUpdateRequest(
 
         @Schema(description = "프로젝트 멘토 지원 여부", example = "true") Boolean projectMentor,
 
-        @Schema(description = "교육 시작일 (yyyy-MM-dd)", example = "2025-03-01") String startAt,
+        @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "교육 시작일은 yyyy-MM-dd 형식이어야 합니다") @Schema(description = "교육 시작일 (yyyy-MM-dd)", example = "2025-03-01") String startAt,
 
-        @Schema(description = "교육 종료일 (yyyy-MM-dd)", example = "2025-08-31") String endAt,
+        @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "교육 종료일은 yyyy-MM-dd 형식이어야 합니다") @Schema(description = "교육 종료일 (yyyy-MM-dd)", example = "2025-08-31") String endAt,
 
-        @Schema(description = "모집 마감일 (yyyy-MM-dd)", example = "2025-02-15") String deadline,
+        @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "모집 마감일은 yyyy-MM-dd 형식이어야 합니다") @Schema(description = "모집 마감일 (yyyy-MM-dd)", example = "2025-02-15") String deadline,
 
         @Schema(description = "총 교육 일수", example = "120") Integer totalDays,
 

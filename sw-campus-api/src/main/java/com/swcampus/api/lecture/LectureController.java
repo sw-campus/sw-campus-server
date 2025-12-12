@@ -94,31 +94,7 @@ public class LectureController {
 			contentType = image.getContentType();
 		}
 
-		List<LectureService.ImageContent> teacherImageContents = new ArrayList<>();
-		if (teacherImages != null) {
-			System.out.println("DEBUG: Received teacherImages size: " + teacherImages.size());
-			boolean allEmpty = true;
-			for (int i = 0; i < teacherImages.size(); i++) {
-				MultipartFile file = teacherImages.get(i);
-				System.out.println("DEBUG: Image[" + i + "] - Empty: " + (file == null || file.isEmpty()) + ", Name: "
-						+ (file != null ? file.getOriginalFilename() : "null"));
-				if (file != null && !file.isEmpty()) {
-					allEmpty = false;
-					teacherImageContents.add(new LectureService.ImageContent(file.getBytes(),
-							file.getOriginalFilename(), file.getContentType()));
-				} else {
-					// 파일이 null이거나 비어있으면 빈 객체 추가 (인덱스 유지)
-					teacherImageContents.add(new LectureService.ImageContent(null, null, null));
-				}
-			}
-			// 만약 전송된 파일이 모두 빈 파일이라면 (예: 클라이언트가 빈 값을 전송함) 리스트를 비워서
-			// Service에서 "이미지 없음(0개)"으로 처리하도록 함 -> 검증 통과
-			if (allEmpty) {
-				teacherImageContents.clear();
-			}
-		} else {
-			System.out.println("DEBUG: teacherImages is null");
-		}
+		List<LectureService.ImageContent> teacherImageContents = processTeacherImages(teacherImages);
 
 		Lecture savedLecture = lectureService.registerLecture(lectureDomain, imageContent, imageName, contentType,
 				teacherImageContents);
@@ -153,12 +129,7 @@ public class LectureController {
 
 		Organization organization = organizationService.getOrganizationByUserId(currentUserId);
 
-		// 권한 확인
-		Lecture existingLecture = lectureService.getLecture(lectureId);
-		if (!existingLecture.getOrgId().equals(organization.getId())) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-		}
-
+		// 권한 확인 및 로직 수행은 Service로 위임
 		Lecture lectureDomain = request.toDomain().toBuilder()
 				.orgId(organization.getId())
 				.build();
@@ -172,25 +143,11 @@ public class LectureController {
 			contentType = image.getContentType();
 		}
 
-		List<LectureService.ImageContent> teacherImageContents = new ArrayList<>();
-		if (teacherImages != null) {
-			boolean allEmpty = true;
-			for (MultipartFile file : teacherImages) {
-				if (file != null && !file.isEmpty()) {
-					allEmpty = false;
-					teacherImageContents.add(new LectureService.ImageContent(file.getBytes(),
-							file.getOriginalFilename(), file.getContentType()));
-				} else {
-					// 파일이 null이거나 비어있으면 빈 객체 추가 (인덱스 유지)
-					teacherImageContents.add(new LectureService.ImageContent(null, null, null));
-				}
-			}
-			if (allEmpty) {
-				teacherImageContents.clear();
-			}
-		}
+		List<LectureService.ImageContent> teacherImageContents = processTeacherImages(teacherImages);
 
-		Lecture updatedLecture = lectureService.modifyLecture(lectureId, lectureDomain, imageContent, imageName,
+		Lecture updatedLecture = lectureService.modifyLecture(lectureId, organization.getId(), lectureDomain,
+				imageContent,
+				imageName,
 				contentType,
 				teacherImageContents);
 
@@ -219,5 +176,29 @@ public class LectureController {
 		Page<Lecture> lectures = lectureService.searchLectures(request.toCondition());
 		Page<LectureResponse> response = lectures.map(LectureResponse::from);
 		return ResponseEntity.ok(response);
+	}
+
+	private List<LectureService.ImageContent> processTeacherImages(List<MultipartFile> teacherImages)
+			throws IOException {
+		List<LectureService.ImageContent> teacherImageContents = new ArrayList<>();
+		if (teacherImages != null) {
+			boolean allEmpty = true;
+			for (MultipartFile file : teacherImages) {
+				if (file != null && !file.isEmpty()) {
+					allEmpty = false;
+					teacherImageContents.add(new LectureService.ImageContent(file.getBytes(),
+							file.getOriginalFilename(), file.getContentType()));
+				} else {
+					// 파일이 null이거나 비어있으면 빈 객체 추가 (인덱스 유지)
+					teacherImageContents.add(new LectureService.ImageContent(null, null, null));
+				}
+			}
+			// 만약 전송된 파일이 모두 빈 파일이라면 (예: 클라이언트가 빈 값을 전송함) 리스트를 비워서
+			// Service에서 "이미지 없음(0개)"으로 처리하도록 함 -> 검증 통과
+			if (allEmpty) {
+				teacherImageContents.clear();
+			}
+		}
+		return teacherImageContents;
 	}
 }
