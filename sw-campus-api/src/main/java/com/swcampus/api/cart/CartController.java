@@ -15,14 +15,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/carts")
+@Tag(name = "Cart", description = "장바구니 API")
 public class CartController {
 
     private final CartService cartService;
 
     @PostMapping
+    @Operation(summary = "장바구니 추가", description = "강의를 장바구니에 추가합니다.")
     public ResponseEntity<Void> addCart(@RequestParam Long lectureId) {
         Long currentUserId = getCurrentUserId();
         cartService.addCart(currentUserId, lectureId);
@@ -30,6 +35,7 @@ public class CartController {
     }
 
     @DeleteMapping
+    @Operation(summary = "장바구니 삭제", description = "장바구니에서 강의를 제거합니다.")
     public ResponseEntity<Void> removeCart(@RequestParam Long lectureId) {
         Long currentUserId = getCurrentUserId();
         cartService.removeCart(currentUserId, lectureId);
@@ -37,6 +43,7 @@ public class CartController {
     }
 
     @GetMapping
+    @Operation(summary = "장바구니 목록 조회", description = "장바구니에 담긴 강의 목록을 조회합니다.")
     public ResponseEntity<List<CartLectureResponse>> getCart() {
         Long currentUserId = getCurrentUserId();
         List<Lecture> lectures = cartService.getCartList(currentUserId);

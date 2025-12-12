@@ -123,11 +123,9 @@ public class LectureEntityRepository implements LectureRepository {
 		if (lectureIds == null || lectureIds.isEmpty()) {
 			return Collections.emptyList();
 		}
-		return jpaRepository.findIdAndNameByIdIn(lectureIds).stream()
-				.map(row -> Lecture.builder()
-						.lectureId((Long) row[0])
-						.lectureName((String) row[1])
-						.build())
+		// Full fetch to ensure relationships (like Curriculums -> Category) are loaded
+		return jpaRepository.findAllById(lectureIds).stream()
+				.map(LectureEntity::toDomain)
 				.toList();
 	}
 }

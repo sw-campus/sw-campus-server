@@ -19,7 +19,9 @@ import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.exception.GlobalExceptionHandler;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.cart.CartService;
+import com.swcampus.domain.category.Curriculum;
 import com.swcampus.domain.lecture.Lecture;
+import com.swcampus.domain.lecture.LectureCurriculum;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -126,17 +128,33 @@ class CartControllerTest {
                 // given
                 Long dummyUserId = 1L;
                 Long dummyLectureId = 100L;
+                Long dummyCategoryId = 123L;
+
+                Curriculum curriculum = Curriculum.builder()
+                                .categoryId(dummyCategoryId)
+                                .curriculumName("Test Curriculum")
+                                .build();
+
+                LectureCurriculum lectureCurriculum = LectureCurriculum.builder()
+                                .curriculum(curriculum)
+                                .curriculumId(1L)
+                                .lectureId(dummyLectureId)
+                                .build();
 
                 Lecture lecture = Lecture.builder()
                                 .lectureId(dummyLectureId)
                                 .lectureName("Test Lecture")
+                                .lectureCurriculums(List.of(lectureCurriculum))
                                 .build();
                 when(cartService.getCartList(dummyUserId)).thenReturn(List.of(lecture));
 
                 // when & then
                 mockMvc.perform(get("/api/v1/carts")
                                 .with(csrf()))
-                                .andExpect(status().isOk());
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].lectureId").value(dummyLectureId))
+                                .andExpect(jsonPath("$[0].lectureName").value("Test Lecture"))
+                                .andExpect(jsonPath("$[0].categoryId").value(dummyCategoryId));
 
                 verify(cartService).getCartList(dummyUserId);
         }
