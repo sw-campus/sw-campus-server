@@ -75,7 +75,7 @@ class AuthControllerEmailTest {
         void success() throws Exception {
             // given
             EmailSendRequest request = new EmailSendRequest("user@example.com");
-            doNothing().when(emailService).sendVerificationEmail(anyString());
+            doNothing().when(emailService).sendVerificationEmail(anyString(), anyString());
 
             // when & then
             mockMvc.perform(post("/api/v1/auth/email/send")
@@ -84,7 +84,7 @@ class AuthControllerEmailTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message").value("인증 메일이 발송되었습니다"));
 
-            verify(emailService).sendVerificationEmail("user@example.com");
+            verify(emailService).sendVerificationEmail("user@example.com", "personal");
         }
 
         @Test
@@ -119,7 +119,7 @@ class AuthControllerEmailTest {
             // given
             EmailSendRequest request = new EmailSendRequest("user@example.com");
             doThrow(new DuplicateEmailException())
-                    .when(emailService).sendVerificationEmail(anyString());
+                    .when(emailService).sendVerificationEmail(anyString(), anyString());
 
             // when & then
             mockMvc.perform(post("/api/v1/auth/email/send")
@@ -134,8 +134,66 @@ class AuthControllerEmailTest {
     class VerifyEmail {
 
         @Test
-        @DisplayName("성공 - HttpOnly 쿠키 설정 후 프론트엔드로 리다이렉트")
-        void success() throws Exception {
+        @DisplayName("성공 - 일반 회원가입 (type=personal)")
+        void success_personal() throws Exception {
+            // given
+            String token = "valid-token-uuid";
+            String email = "user@example.com";
+            when(emailService.verifyEmail(token)).thenReturn(email);
+            
+            ResponseCookie mockCookie = ResponseCookie.from("verifiedEmail", email)
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
+                    .path("/")
+                    .maxAge(300)
+                    .build();
+            when(cookieUtil.createVerifiedEmailCookie(email)).thenReturn(mockCookie);
+
+            // when & then
+            mockMvc.perform(get("/api/v1/auth/email/verify")
+                            .param("token", token)
+                            .param("type", "personal"))
+                    .andExpect(status().isFound())  // 302 Redirect
+                    .andExpect(header().string("Location", "http://localhost:3000/signup/personal?verified=true"))
+                    .andExpect(header().exists("Set-Cookie"));
+
+            verify(emailService).verifyEmail(token);
+            verify(cookieUtil).createVerifiedEmailCookie(email);
+        }
+
+        @Test
+        @DisplayName("성공 - 기관 회원가입 (type=organization)")
+        void success_organization() throws Exception {
+            // given
+            String token = "valid-token-uuid";
+            String email = "org@example.com";
+            when(emailService.verifyEmail(token)).thenReturn(email);
+            
+            ResponseCookie mockCookie = ResponseCookie.from("verifiedEmail", email)
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
+                    .path("/")
+                    .maxAge(300)
+                    .build();
+            when(cookieUtil.createVerifiedEmailCookie(email)).thenReturn(mockCookie);
+
+            // when & then
+            mockMvc.perform(get("/api/v1/auth/email/verify")
+                            .param("token", token)
+                            .param("type", "organization"))
+                    .andExpect(status().isFound())  // 302 Redirect
+                    .andExpect(header().string("Location", "http://localhost:3000/signup/organization?verified=true"))
+                    .andExpect(header().exists("Set-Cookie"));
+
+            verify(emailService).verifyEmail(token);
+            verify(cookieUtil).createVerifiedEmailCookie(email);
+        }
+
+        @Test
+        @DisplayName("성공 - type 파라미터 없으면 기본값 personal")
+        void success_defaultType() throws Exception {
             // given
             String token = "valid-token-uuid";
             String email = "user@example.com";
@@ -171,9 +229,24 @@ class AuthControllerEmailTest {
 
             // when & then
             mockMvc.perform(get("/api/v1/auth/email/verify")
-                            .param("token", token))
+                            .param("token", token)
+                            .param("type", "personal"))
                     .andExpect(status().isFound())  // 302 Redirect
                     .andExpect(header().string("Location", "http://localhost:3000/signup/personal?error=invalid_token"));
+        }
+
+        @Test
+        @DisplayName("유효하지 않은 type - 에러 페이지로 리다이렉트")
+        void fail_invalidType() throws Exception {
+            // given
+            String token = "valid-token-uuid";
+
+            // when & then
+            mockMvc.perform(get("/api/v1/auth/email/verify")
+                            .param("token", token)
+                            .param("type", "invalid"))
+                    .andExpect(status().isFound())  // 302 Redirect
+                    .andExpect(header().string("Location", "http://localhost:3000/signup?error=invalid_type"));
         }
     }
 

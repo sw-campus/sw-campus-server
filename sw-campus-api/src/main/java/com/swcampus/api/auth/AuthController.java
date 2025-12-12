@@ -73,7 +73,7 @@ public class AuthController {
     })
     public ResponseEntity<MessageResponse> sendVerificationEmail(
             @Valid @RequestBody EmailSendRequest request) {
-        emailService.sendVerificationEmail(request.getEmail());
+        emailService.sendVerificationEmail(request.getEmail(), request.getSignupType());
         return ResponseEntity.ok(MessageResponse.of("인증 메일이 발송되었습니다"));
     }
 
@@ -85,18 +85,35 @@ public class AuthController {
     })
     public ResponseEntity<Void> verifyEmail(
             @Parameter(description = "인증 토큰", required = true)
-            @RequestParam("token") String token) {
+            @RequestParam("token") String token,
+            @Parameter(description = "가입 유형 (personal/organization)", example = "personal")
+            @RequestParam(value = "type", defaultValue = "personal") String signupType) {
+        
+        // 허용된 signupType만 처리
+        String redirectPath = switch (signupType) {
+            case "personal" -> "/signup/personal";
+            case "organization" -> "/signup/organization";
+            default -> null;
+        };
+        
+        // 잘못된 signupType인 경우 에러 페이지로 리다이렉트
+        if (redirectPath == null) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(frontendUrl + "/signup?error=invalid_type"))
+                    .build();
+        }
+        
         try {
             String email = emailService.verifyEmail(token);
             ResponseCookie emailCookie = cookieUtil.createVerifiedEmailCookie(email);
             
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header(HttpHeaders.SET_COOKIE, emailCookie.toString())
-                    .location(URI.create(frontendUrl + "/signup/personal?verified=true"))
+                    .location(URI.create(frontendUrl + redirectPath + "?verified=true"))
                     .build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(frontendUrl + "/signup/personal?error=invalid_token"))
+                    .location(URI.create(frontendUrl + redirectPath + "?error=invalid_token"))
                     .build();
         }
     }
