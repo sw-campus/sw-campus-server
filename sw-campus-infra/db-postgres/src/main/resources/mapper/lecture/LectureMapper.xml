@@ -2,6 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.swcampus.infra.postgres.lecture.mapper.LectureMapper">
 
+    <resultMap id="LectureStepResultMap" type="com.swcampus.infra.postgres.lecture.LectureStepEntity">
+        <id property="stepId" column="step_id"/>
+        <result property="stepType" column="step_type"/>
+        <result property="stepOrder" column="step_order"/>
+    </resultMap>
+
     <resultMap id="LectureResultMap" type="com.swcampus.infra.postgres.lecture.LectureEntity">
         <id property="lectureId" column="lecture_id"/>
         <result property="orgId" column="org_id"/>
@@ -43,6 +49,9 @@
         <result property="deadline" column="deadline"/>
         <result property="totalDays" column="total_days"/>
         <result property="totalTimes" column="total_times"/>
+
+        <!-- Nested Select for Steps to avoid N+1 problem with paging -->
+        <collection property="steps" column="lecture_id" select="selectSteps"/>
     </resultMap>
 
     <!-- 공통 JOIN 구문 정의 -->
@@ -203,5 +212,15 @@
         
         WHERE 1=1
         <include refid="searchConditions"/>
+    </select>
+
+    <select id="selectSteps" resultMap="LectureStepResultMap">
+        SELECT 
+            step_id, 
+            step_type, 
+            step_order
+        FROM LECTURE_STEPS
+        WHERE lecture_id = #{lectureId}
+        ORDER BY step_order ASC
     </select>
 </mapper>

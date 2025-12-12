@@ -32,18 +32,18 @@ public class Lecture {
 	private Boolean resume; // 이력서 첨삭
 	private Boolean mockInterview; // 모의면접
 	private Boolean employmentHelp; // 협력사 매칭
-	private Integer afterCompletion; // 수료 후 사후관리 (개월)
+	private Boolean afterCompletion; // 수료 후 사후관리 (개월) -> (여부)
 	private String url; // 신청 링크
 	private String lectureImageUrl; // 이미지 URL
 	private LectureStatus status; // 모집중, 모집 종료
 	private LectureAuthStatus lectureAuthStatus; // 승인 대기, 승인 완료, 승인 반려
-	
-    // 프로젝트 관련
-    private Integer projectNum;
-    private Integer projectTime;
-    private String projectTeam;
-    private String projectTool;
-    private Boolean projectMentor;
+
+	// 프로젝트 관련
+	private Integer projectNum;
+	private Integer projectTime;
+	private String projectTeam;
+	private String projectTool;
+	private Boolean projectMentor;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 
@@ -61,9 +61,10 @@ public class Lecture {
 	// N:M Relationships
 	private List<com.swcampus.domain.teacher.Teacher> teachers;
 	private List<LectureCurriculum> lectureCurriculums;
+
 	public Lecture close() {
 		return this.toBuilder()
-			.status(LectureStatus.FINISHED)
-			.build();
+				.status(LectureStatus.FINISHED)
+				.build();
 	}
 }

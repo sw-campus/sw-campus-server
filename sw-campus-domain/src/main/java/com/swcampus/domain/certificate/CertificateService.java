@@ -35,9 +35,9 @@ public class CertificateService {
      * 수료증 인증 처리
      */
     @Transactional
-    public Certificate verifyCertificate(Long memberId, Long lectureId, 
-                                          byte[] imageBytes, String fileName, 
-                                          String contentType) {
+    public Certificate verifyCertificate(Long memberId, Long lectureId,
+            byte[] imageBytes, String fileName,
+            String contentType) {
         // 1. 이미 인증했는지 확인
         if (certificateRepository.existsByMemberIdAndLectureId(memberId, lectureId)) {
             throw new CertificateAlreadyExistsException(memberId, lectureId);
@@ -57,7 +57,7 @@ public class CertificateService {
         }
 
         // 5. S3에 이미지 업로드
-        String imageUrl = fileStorageService.upload(imageBytes, fileName, contentType);
+        String imageUrl = fileStorageService.upload(imageBytes, "certificates", fileName, contentType);
 
         // 6. 수료증 저장 (OCR 검증 성공 시 status = "SUCCESS")
         Certificate certificate = Certificate.create(memberId, lectureId, imageUrl, "SUCCESS");

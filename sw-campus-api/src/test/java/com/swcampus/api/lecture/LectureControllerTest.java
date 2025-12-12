@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.List;
+import com.swcampus.domain.lecture.LectureStep;
+import com.swcampus.domain.lecture.SelectionStepType;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -82,8 +84,10 @@ class LectureControllerTest {
                 LectureCreateRequest request = new LectureCreateRequest(
                                 1L, "Java Spring 강의", null, null, null, OFFLINE, null, CARD_REQUIRED,
                                 null, null, null, null, 100, NONE, null, false, false, false, false, null, null, null,
-                                null, null, null, null, false, "2024-01-01", "2024-12-31", null, null, null,
-                                null, null, null, null, null);
+                                null, null, null, false, "2024-01-01", "2024-12-31", null, null, null,
+                                null, null, null,
+                                java.util.List.of(new LectureCreateRequest.TeacherRequest(null, "New Teacher", "Desc")),
+                                null);
 
                 Organization organization = Organization.create(1L, "Test Org", "Desc", "url");
                 // Reflection to set ID for mock
@@ -96,13 +100,33 @@ class LectureControllerTest {
                                 .lectureName("Java Spring 강의")
                                 .status(LectureStatus.RECRUITING)
                                 .build();
-                when(lectureService.registerLecture(any(Lecture.class))).thenReturn(lecture);
+
+                // Service method now takes 5 args: lecture, imageBytes, imageName, contentType,
+                // teacherImages
+                when(lectureService.registerLecture(any(Lecture.class), any(), any(), any(), anyList()))
+                                .thenReturn(lecture);
+
+                // MockMultipartFile for the JSON part
+                org.springframework.mock.web.MockMultipartFile lecturePart = new org.springframework.mock.web.MockMultipartFile(
+                                "lecture",
+                                "",
+                                "application/json",
+                                objectMapper.writeValueAsBytes(request));
+
+                // MockMultipartFile for teacher image
+                org.springframework.mock.web.MockMultipartFile teacherImage = new org.springframework.mock.web.MockMultipartFile(
+                                "teacherImages",
+                                "teacher.jpg",
+                                "image/jpeg",
+                                "image content".getBytes());
 
                 // when & then
-                mockMvc.perform(post("/api/v1/lectures")
+                mockMvc.perform(multipart("/api/v1/lectures")
+                                .file(lecturePart)
+                                .file(teacherImage)
                                 .with(csrf())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
+                                .contentType(MediaType.MULTIPART_FORM_DATA)
+                                .accept(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isCreated())
                                 .andExpect(jsonPath("$.lecture_id").value(100))
                                 .andExpect(jsonPath("$.lecture_name").value("Java Spring 강의"));
@@ -131,10 +155,17 @@ class LectureControllerTest {
         @DisplayName("강의 검색 성공")
         void searchLectures() throws Exception {
                 // given
+                LectureStep step = LectureStep.builder()
+                                .stepId(1L)
+                                .stepType(SelectionStepType.CODING_TEST)
+                                .stepOrder(1)
+                                .build();
+
                 Lecture lecture = Lecture.builder()
                                 .lectureId(100L)
                                 .lectureName("Search Result")
                                 .status(LectureStatus.RECRUITING)
+                                .steps(List.of(step))
                                 .build();
                 Page<Lecture> page = new PageImpl<>(List.of(lecture), Pageable.unpaged(), 1);
 
@@ -147,6 +178,7 @@ class LectureControllerTest {
                                 .param("size", "10"))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.content[0].lecture_id").value(100))
-                                .andExpect(jsonPath("$.content[0].lecture_name").value("Search Result"));
+                                .andExpect(jsonPath("$.content[0].lecture_name").value("Search Result"))
+                                .andExpect(jsonPath("$.content[0].steps[0].step_type").value("CODING_TEST"));
         }
 }

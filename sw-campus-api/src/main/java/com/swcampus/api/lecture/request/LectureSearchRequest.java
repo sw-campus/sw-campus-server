@@ -17,31 +17,31 @@ import lombok.ToString;
 @Setter
 @ToString
 public class LectureSearchRequest {
-    
+
     @Parameter(description = "검색 키워드 (강의명, 기관명)", example = "웹 개발")
     private String text;
 
-    @Parameter(description = "지역 목록", example = "[\"서울\", \"경기\"]")
+    @Parameter(description = "지역 목록", hidden = true)
     private List<String> regions;
 
-    @Parameter(description = "카테고리 ID 목록", example = "[1, 2, 3]")
+    @Parameter(description = "카테고리 ID 목록", hidden = true)
     private List<Long> categoryIds;
 
-    @Parameter(description = "국비지원 무료", example = "true")
+    @Parameter(description = "국비지원 무료", hidden = true)
     private Boolean isFreeKdt;
-    
+
     @Parameter(description = "비국비 무료", example = "false")
     private Boolean isFreeNoKdt;
-    
+
     @Parameter(description = "유료", example = "false")
     private Boolean isPaid;
 
-    @Parameter(description = "코딩테스트 있음", example = "false")
+    @Parameter(description = "코딩테스트 있음", hidden = true)
     private Boolean hasCodingTest;
-    
+
     @Parameter(description = "면접 있음", example = "true")
     private Boolean hasInterview;
-    
+
     @Parameter(description = "사전과제 있음", example = "false")
     private Boolean hasPreTask;
 
@@ -53,7 +53,7 @@ public class LectureSearchRequest {
 
     @Parameter(description = "페이지 번호 (1부터 시작)", example = "1")
     private Integer page;
-    
+
     @Parameter(description = "페이지 크기", example = "20")
     private Integer size;
 

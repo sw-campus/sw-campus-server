@@ -180,7 +180,7 @@ class CertificateServiceTest {
                     .willReturn(Optional.of(lecture));
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "Java 풀스택 개발자 과정", "홍길동"));
-            given(fileStorageService.upload(any(), anyString(), anyString()))
+            given(fileStorageService.upload(any(), "certificates", anyString(), anyString()))
                     .willReturn("https://s3.../certificates/test.jpg");
 
             Certificate savedCertificate = Certificate.create(memberId, lectureId, "https://s3.../certificates/test.jpg", "SUCCESS");
@@ -214,7 +214,7 @@ class CertificateServiceTest {
             // OCR 결과: 공백이 다름
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "Java풀스택개발자과정", "홍길동"));
-            given(fileStorageService.upload(any(), anyString(), anyString()))
+            given(fileStorageService.upload(any(), "certificates", anyString(), anyString()))
                     .willReturn("https://s3.../certificates/test.jpg");
 
             Certificate savedCertificate = Certificate.create(memberId, lectureId, "https://s3.../certificates/test.jpg", "SUCCESS");
@@ -246,7 +246,7 @@ class CertificateServiceTest {
             // OCR 결과: 대소문자가 다름
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "JAVA 풀스택 개발자 과정", "홍길동"));
-            given(fileStorageService.upload(any(), anyString(), anyString()))
+            given(fileStorageService.upload(any(), "certificates", anyString(), anyString()))
                     .willReturn("https://s3.../certificates/test.jpg");
 
             Certificate savedCertificate = Certificate.create(memberId, lectureId, "https://s3.../certificates/test.jpg", "SUCCESS");
