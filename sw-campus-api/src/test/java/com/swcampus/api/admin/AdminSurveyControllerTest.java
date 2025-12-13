@@ -64,7 +64,7 @@ class AdminSurveyControllerTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/admin/members/surveys")
+    @DisplayName("GET /api/v1/admin/surveys")
     class GetAllSurveys {
 
         @Test
@@ -86,13 +86,13 @@ class AdminSurveyControllerTest {
             when(surveyService.getAllSurveys(any(Pageable.class))).thenReturn(page);
 
             // when & then
-            mockMvc.perform(get("/api/v1/admin/members/surveys"))
+            mockMvc.perform(get("/api/v1/admin/surveys"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content").isArray())
                     .andExpect(jsonPath("$.content.length()").value(2))
-                    .andExpect(jsonPath("$.content[0].user_id").value(1))
+                    .andExpect(jsonPath("$.content[0].member_id").value(1))
                     .andExpect(jsonPath("$.content[0].major").value("컴퓨터공학"))
-                    .andExpect(jsonPath("$.content[1].user_id").value(2))
+                    .andExpect(jsonPath("$.content[1].member_id").value(2))
                     .andExpect(jsonPath("$.content[1].major").value("전자공학"));
         }
 
@@ -104,7 +104,7 @@ class AdminSurveyControllerTest {
             when(surveyService.getAllSurveys(any(Pageable.class))).thenReturn(emptyPage);
 
             // when & then
-            mockMvc.perform(get("/api/v1/admin/members/surveys"))
+            mockMvc.perform(get("/api/v1/admin/surveys"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content").isArray())
                     .andExpect(jsonPath("$.content.length()").value(0));
@@ -112,7 +112,7 @@ class AdminSurveyControllerTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/admin/members/{userId}/survey")
+    @DisplayName("GET /api/v1/admin/surveys/members/{memberId}")
     class GetSurveyByUserId {
 
         @Test
@@ -126,12 +126,12 @@ class AdminSurveyControllerTest {
                     true, BigDecimal.valueOf(500000)
             );
 
-            when(surveyService.getSurveyByUserId(targetUserId)).thenReturn(survey);
+            when(surveyService.getSurveyByMemberId(targetUserId)).thenReturn(survey);
 
             // when & then
-            mockMvc.perform(get("/api/v1/admin/members/{userId}/survey", targetUserId))
+            mockMvc.perform(get("/api/v1/admin/surveys/members/{memberId}", targetUserId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.user_id").value(targetUserId))
+                    .andExpect(jsonPath("$.member_id").value(targetUserId))
                     .andExpect(jsonPath("$.major").value("컴퓨터공학"))
                     .andExpect(jsonPath("$.bootcamp_completed").value(true));
         }
@@ -141,11 +141,11 @@ class AdminSurveyControllerTest {
         void fail_notFound() throws Exception {
             // given
             Long targetUserId = 999L;
-            when(surveyService.getSurveyByUserId(targetUserId))
+            when(surveyService.getSurveyByMemberId(targetUserId))
                     .thenThrow(new SurveyNotFoundException());
 
             // when & then
-            mockMvc.perform(get("/api/v1/admin/members/{userId}/survey", targetUserId))
+            mockMvc.perform(get("/api/v1/admin/surveys/members/{memberId}", targetUserId))
                     .andExpect(status().isNotFound());
         }
     }

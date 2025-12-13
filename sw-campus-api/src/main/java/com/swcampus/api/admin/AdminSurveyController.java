@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Admin Survey", description = "관리자 설문조사 관리 API")
 @RestController
-@RequestMapping("/api/v1/admin/members")
+@RequestMapping("/api/v1/admin/surveys")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "cookieAuth")
 @PreAuthorize("hasRole('ADMIN')")
@@ -36,8 +36,8 @@ public class AdminSurveyController {
             @ApiResponse(responseCode = "401", description = "인증 필요"),
             @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
     })
-    @GetMapping("/surveys")
-    public ResponseEntity<Page<SurveyResponse>> getAllSurveys(
+    @GetMapping
+    public ResponseEntity<Page<SurveyResponse>> getSurveys(
             @PageableDefault(size = 20) Pageable pageable
     ) {
         Page<MemberSurvey> surveys = surveyService.getAllSurveys(pageable);
@@ -52,12 +52,12 @@ public class AdminSurveyController {
             @ApiResponse(responseCode = "403", description = "관리자 권한 필요"),
             @ApiResponse(responseCode = "404", description = "설문조사 없음")
     })
-    @GetMapping("/{userId}/survey")
-    public ResponseEntity<SurveyResponse> getSurveyByUserId(
+    @GetMapping("/members/{memberId}")
+    public ResponseEntity<SurveyResponse> getSurvey(
             @Parameter(description = "회원 ID", example = "1")
-            @PathVariable Long userId
+            @PathVariable Long memberId
     ) {
-        MemberSurvey survey = surveyService.getSurveyByUserId(userId);
+        MemberSurvey survey = surveyService.getSurveyByMemberId(memberId);
         return ResponseEntity.ok(SurveyResponse.from(survey));
     }
 }

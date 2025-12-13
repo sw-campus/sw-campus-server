@@ -110,7 +110,7 @@ class AuthControllerSignupTest {
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
                     .andExpect(header().exists("Set-Cookie"))
-                    .andExpect(jsonPath("$.userId").value(1))
+                    .andExpect(jsonPath("$.user_id").value(1))
                     .andExpect(jsonPath("$.email").value("user@example.com"))
                     .andExpect(jsonPath("$.name").value("홍길동"))
                     .andExpect(jsonPath("$.nickname").value("길동이"))
