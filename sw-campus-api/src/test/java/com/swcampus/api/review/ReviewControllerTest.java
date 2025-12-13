@@ -124,9 +124,9 @@ class ReviewControllerTest {
                             .param("lectureId", String.valueOf(lectureId)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.eligible").value(true))
-                    .andExpect(jsonPath("$.hasNickname").value(true))
-                    .andExpect(jsonPath("$.hasCertificate").value(true))
-                    .andExpect(jsonPath("$.canWrite").value(true));
+                    .andExpect(jsonPath("$.has_nickname").value(true))
+                    .andExpect(jsonPath("$.has_certificate").value(true))
+                    .andExpect(jsonPath("$.can_write").value(true));
         }
 
         @Test
@@ -145,7 +145,7 @@ class ReviewControllerTest {
                             .param("lectureId", String.valueOf(lectureId)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.eligible").value(false))
-                    .andExpect(jsonPath("$.hasNickname").value(false));
+                    .andExpect(jsonPath("$.has_nickname").value(false));
         }
 
         @Test
@@ -164,7 +164,7 @@ class ReviewControllerTest {
                             .param("lectureId", String.valueOf(lectureId)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.eligible").value(false))
-                    .andExpect(jsonPath("$.hasCertificate").value(false));
+                    .andExpect(jsonPath("$.has_certificate").value(false));
         }
     }
 
@@ -200,10 +200,10 @@ class ReviewControllerTest {
                             .content(objectMapper.writeValueAsString(request)))
                     .andDo(print())
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.reviewId").value(1))
-                    .andExpect(jsonPath("$.lectureId").value(1))
+                    .andExpect(jsonPath("$.review_id").value(1))
+                    .andExpect(jsonPath("$.lecture_id").value(1))
                     .andExpect(jsonPath("$.nickname").value("길동이"))
-                    .andExpect(jsonPath("$.approvalStatus").value("PENDING"));
+                    .andExpect(jsonPath("$.approval_status").value("PENDING"));
         }
 
         @Test
@@ -294,7 +294,7 @@ class ReviewControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.reviewId").value(1));
+                    .andExpect(jsonPath("$.review_id").value(1));
         }
 
         @Test
@@ -384,7 +384,7 @@ class ReviewControllerTest {
             // when & then
             mockMvc.perform(get("/api/v1/reviews/{reviewId}", reviewId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.reviewId").value(1))
+                    .andExpect(jsonPath("$.review_id").value(1))
                     .andExpect(jsonPath("$.nickname").value("길동이"))
                     .andExpect(jsonPath("$.comment").value("좋은 강의였습니다"));
         }

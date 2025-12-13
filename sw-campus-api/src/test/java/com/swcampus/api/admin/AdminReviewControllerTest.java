@@ -134,7 +134,7 @@ class AdminReviewControllerTest {
             // when & then
             mockMvc.perform(get("/api/v1/admin/reviews"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalCount").value(2))
+                    .andExpect(jsonPath("$.total_count").value(2))
                     .andExpect(jsonPath("$.reviews").isArray());
         }
 
@@ -147,7 +147,7 @@ class AdminReviewControllerTest {
             // when & then
             mockMvc.perform(get("/api/v1/admin/reviews"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalCount").value(0))
+                    .andExpect(jsonPath("$.total_count").value(0))
                     .andExpect(jsonPath("$.reviews").isEmpty());
         }
     }
@@ -173,9 +173,9 @@ class AdminReviewControllerTest {
             // when & then
             mockMvc.perform(get("/api/v1/admin/certificates/{certificateId}", certificateId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.certificateId").value(1))
-                    .andExpect(jsonPath("$.lectureName").value("Java 풀스택 과정"))
-                    .andExpect(jsonPath("$.imageUrl").value("https://s3.../certificate.jpg"));
+                    .andExpect(jsonPath("$.certificate_id").value(1))
+                    .andExpect(jsonPath("$.lecture_name").value("Java 풀스택 과정"))
+                    .andExpect(jsonPath("$.image_url").value("https://s3.../certificate.jpg"));
         }
 
         @Test
@@ -207,8 +207,8 @@ class AdminReviewControllerTest {
             // when & then
             mockMvc.perform(patch("/api/v1/admin/certificates/{certificateId}/approve", certificateId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.certificateId").value(1))
-                    .andExpect(jsonPath("$.approvalStatus").value("APPROVED"))
+                    .andExpect(jsonPath("$.certificate_id").value(1))
+                    .andExpect(jsonPath("$.approval_status").value("APPROVED"))
                     .andExpect(jsonPath("$.message").exists());
         }
     }
@@ -228,8 +228,8 @@ class AdminReviewControllerTest {
             // when & then
             mockMvc.perform(patch("/api/v1/admin/certificates/{certificateId}/reject", certificateId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.certificateId").value(1))
-                    .andExpect(jsonPath("$.approvalStatus").value("REJECTED"))
+                    .andExpect(jsonPath("$.certificate_id").value(1))
+                    .andExpect(jsonPath("$.approval_status").value("REJECTED"))
                     .andExpect(jsonPath("$.message").exists());
         }
     }
@@ -259,7 +259,7 @@ class AdminReviewControllerTest {
             // when & then
             mockMvc.perform(get("/api/v1/admin/reviews/{reviewId}", reviewId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.reviewId").value(1))
+                    .andExpect(jsonPath("$.review_id").value(1))
                     .andExpect(jsonPath("$.comment").value("좋은 강의였습니다"));
         }
 
@@ -292,8 +292,8 @@ class AdminReviewControllerTest {
             // when & then
             mockMvc.perform(patch("/api/v1/admin/reviews/{reviewId}/approve", reviewId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.reviewId").value(1))
-                    .andExpect(jsonPath("$.approvalStatus").value("APPROVED"))
+                    .andExpect(jsonPath("$.review_id").value(1))
+                    .andExpect(jsonPath("$.approval_status").value("APPROVED"))
                     .andExpect(jsonPath("$.message").exists());
         }
     }
@@ -313,8 +313,8 @@ class AdminReviewControllerTest {
             // when & then
             mockMvc.perform(patch("/api/v1/admin/reviews/{reviewId}/reject", reviewId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.reviewId").value(1))
-                    .andExpect(jsonPath("$.approvalStatus").value("REJECTED"))
+                    .andExpect(jsonPath("$.review_id").value(1))
+                    .andExpect(jsonPath("$.approval_status").value("REJECTED"))
                     .andExpect(jsonPath("$.message").exists());
         }
     }
@@ -344,7 +344,7 @@ class AdminReviewControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.reviewId").value(1))
+                    .andExpect(jsonPath("$.review_id").value(1))
                     .andExpect(jsonPath("$.message").value("후기가 블라인드 처리되었습니다"));
         }
 
@@ -369,7 +369,7 @@ class AdminReviewControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.reviewId").value(1))
+                    .andExpect(jsonPath("$.review_id").value(1))
                     .andExpect(jsonPath("$.message").value("블라인드가 해제되었습니다"));
         }
     }

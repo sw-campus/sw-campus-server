@@ -134,7 +134,7 @@ class CertificateIntegrationTest {
                     .willReturn(List.of("수료증", "Spring Boot 실전 강의", "수료를 증명합니다"));
             
             // Mock 설정: S3 업로드 성공
-            given(fileStorageService.upload(any(byte[].class),"certificates", anyString(), anyString()))
+            given(fileStorageService.upload(any(byte[].class), eq("certificates"), anyString(), anyString()))
                     .willReturn("https://s3.example.com/certificate/test.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(
@@ -155,17 +155,17 @@ class CertificateIntegrationTest {
                             .file(imageFile)
                             .file(lectureIdPart))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.certificateId").exists())
-                    .andExpect(jsonPath("$.lectureId").value(testLecture.getLectureId()))
-                    .andExpect(jsonPath("$.imageUrl").value("https://s3.example.com/certificate/test.jpg"))
-                    .andExpect(jsonPath("$.approvalStatus").value("PENDING"));
+                    .andExpect(jsonPath("$.certificate_id").exists())
+                    .andExpect(jsonPath("$.lecture_id").value(testLecture.getLectureId()))
+                    .andExpect(jsonPath("$.image_url").value("https://s3.example.com/certificate/test.jpg"))
+                    .andExpect(jsonPath("$.approval_status").value("PENDING"));
 
             // === 3단계: 인증 후 - 인증 상태 확인 ===
             mockMvc.perform(get("/api/v1/certificates/check")
                             .param("lectureId", testLecture.getLectureId().toString()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.certified").value(true))
-                    .andExpect(jsonPath("$.imageUrl").value("https://s3.example.com/certificate/test.jpg"));
+                    .andExpect(jsonPath("$.image_url").value("https://s3.example.com/certificate/test.jpg"));
         }
     }
 
@@ -185,7 +185,7 @@ class CertificateIntegrationTest {
             // 중복 인증 시도
             given(ocrClient.extractText(any(byte[].class), anyString()))
                     .willReturn(List.of("수료증", "Spring Boot 실전 강의"));
-            given(fileStorageService.upload(any(byte[].class),"certificates", anyString(), anyString()))
+            given(fileStorageService.upload(any(byte[].class), eq("certificates"), anyString(), anyString()))
                     .willReturn("https://s3.example.com/new-certificate.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(
@@ -280,7 +280,7 @@ class CertificateIntegrationTest {
             given(ocrClient.extractText(any(byte[].class), anyString()))
                     .willReturn(List.of("수료증", "SpringBoot실전강의", "2024년 수료"));
             
-            given(fileStorageService.upload(any(byte[].class), "certificates", anyString(), anyString()))
+            given(fileStorageService.upload(any(byte[].class), eq("certificates"), anyString(), anyString()))
                     .willReturn("https://s3.example.com/certificate/test.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(
@@ -301,7 +301,7 @@ class CertificateIntegrationTest {
                             .file(imageFile)
                             .file(lectureIdPart))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.certificateId").exists());
+                    .andExpect(jsonPath("$.certificate_id").exists());
         }
 
         @Test
@@ -316,7 +316,7 @@ class CertificateIntegrationTest {
                             "수료를 증명합니다"
                     ));
             
-            given(fileStorageService.upload(any(byte[].class), "certificates", anyString(), anyString()))
+            given(fileStorageService.upload(any(byte[].class), eq("certificates"), anyString(), anyString()))
                     .willReturn("https://s3.example.com/certificate/test.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(
@@ -337,7 +337,7 @@ class CertificateIntegrationTest {
                             .file(imageFile)
                             .file(lectureIdPart))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.certificateId").exists());
+                    .andExpect(jsonPath("$.certificate_id").exists());
         }
     }
 }

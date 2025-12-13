@@ -20,6 +20,8 @@ import com.swcampus.domain.review.exception.ReviewNotModifiableException;
 import com.swcampus.domain.review.exception.ReviewNotOwnerException;
 import com.swcampus.domain.cart.exception.AlreadyInCartException;
 import com.swcampus.domain.cart.exception.CartLimitExceededException;
+import com.swcampus.domain.survey.exception.SurveyAlreadyExistsException;
+import com.swcampus.domain.survey.exception.SurveyNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -205,6 +207,22 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(AlreadyInCartException.class)
         public ResponseEntity<ErrorResponse> handleAlreadyInCartException(AlreadyInCartException e) {
                 log.warn("장바구니 중복: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(ErrorResponse.of(HttpStatus.CONFLICT.value(), e.getMessage()));
+        }
+
+        // === Survey 관련 예외 ===
+
+        @ExceptionHandler(SurveyNotFoundException.class)
+        public ResponseEntity<ErrorResponse> handleSurveyNotFoundException(SurveyNotFoundException e) {
+                log.warn("설문조사 조회 실패: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ErrorResponse.of(HttpStatus.NOT_FOUND.value(), e.getMessage()));
+        }
+
+        @ExceptionHandler(SurveyAlreadyExistsException.class)
+        public ResponseEntity<ErrorResponse> handleSurveyAlreadyExistsException(SurveyAlreadyExistsException e) {
+                log.warn("설문조사 중복: {}", e.getMessage());
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                                 .body(ErrorResponse.of(HttpStatus.CONFLICT.value(), e.getMessage()));
         }

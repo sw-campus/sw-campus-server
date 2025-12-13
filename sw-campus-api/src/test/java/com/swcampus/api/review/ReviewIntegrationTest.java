@@ -136,7 +136,7 @@ class ReviewIntegrationTest {
                             .param("lectureId", testLecture.getLectureId().toString()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.eligible").value(false))
-                    .andExpect(jsonPath("$.hasCertificate").value(false));
+                    .andExpect(jsonPath("$.has_certificate").value(false));
 
             // === 2단계: 수료증 인증 ===
             certificateRepository.save(
@@ -149,9 +149,9 @@ class ReviewIntegrationTest {
                             .param("lectureId", testLecture.getLectureId().toString()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.eligible").value(true))
-                    .andExpect(jsonPath("$.hasCertificate").value(true))
-                    .andExpect(jsonPath("$.hasNickname").value(true))
-                    .andExpect(jsonPath("$.canWrite").value(true));
+                    .andExpect(jsonPath("$.has_certificate").value(true))
+                    .andExpect(jsonPath("$.has_nickname").value(true))
+                    .andExpect(jsonPath("$.can_write").value(true));
 
             // === 4단계: 후기 작성 ===
             CreateReviewRequest createRequest = new CreateReviewRequest(
@@ -164,28 +164,28 @@ class ReviewIntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(createRequest)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.reviewId").exists())
-                    .andExpect(jsonPath("$.memberId").value(testMember.getId()))
-                    .andExpect(jsonPath("$.lectureId").value(testLecture.getLectureId()))
-                    .andExpect(jsonPath("$.approvalStatus").value("PENDING"))
+                    .andExpect(jsonPath("$.review_id").exists())
+                    .andExpect(jsonPath("$.member_id").value(testMember.getId()))
+                    .andExpect(jsonPath("$.lecture_id").value(testLecture.getLectureId()))
+                    .andExpect(jsonPath("$.approval_status").value("PENDING"))
                     .andReturn();
 
             // 생성된 reviewId 추출
             String responseBody = createResult.getResponse().getContentAsString();
-            Long reviewId = objectMapper.readTree(responseBody).get("reviewId").asLong();
+            Long reviewId = objectMapper.readTree(responseBody).get("review_id").asLong();
 
             // === 5단계: 작성한 후기 조회 ===
             mockMvc.perform(get("/api/v1/reviews/{reviewId}", reviewId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.reviewId").value(reviewId))
-                    .andExpect(jsonPath("$.approvalStatus").value("PENDING"));
+                    .andExpect(jsonPath("$.review_id").value(reviewId))
+                    .andExpect(jsonPath("$.approval_status").value("PENDING"));
 
             // === 6단계: 작성 후 - 중복 작성 불가 확인 ===
             mockMvc.perform(get("/api/v1/reviews/eligibility")
                             .param("lectureId", testLecture.getLectureId().toString()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.eligible").value(false))
-                    .andExpect(jsonPath("$.canWrite").value(false));
+                    .andExpect(jsonPath("$.can_write").value(false));
         }
 
         @Test
@@ -208,17 +208,17 @@ class ReviewIntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(createRequest)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.reviewId").exists())
-                    .andExpect(jsonPath("$.approvalStatus").value("PENDING"))
+                    .andExpect(jsonPath("$.review_id").exists())
+                    .andExpect(jsonPath("$.approval_status").value("PENDING"))
                     .andReturn();
 
             Long reviewId = objectMapper.readTree(createResult.getResponse().getContentAsString())
-                    .get("reviewId").asLong();
+                    .get("review_id").asLong();
 
             // === 2단계: 작성한 후기 조회 ===
             mockMvc.perform(get("/api/v1/reviews/{reviewId}", reviewId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.reviewId").value(reviewId))
+                    .andExpect(jsonPath("$.review_id").value(reviewId))
                     .andExpect(jsonPath("$.comment").value(createRequest.comment()));
         }
     }
@@ -302,7 +302,7 @@ class ReviewIntegrationTest {
                     .andReturn();
 
             Long reviewId = objectMapper.readTree(result.getResponse().getContentAsString())
-                    .get("reviewId").asLong();
+                    .get("review_id").asLong();
 
             // SecurityContext를 testMember로 다시 변경
             setAuthentication(testMember.getId());
