@@ -7,8 +7,10 @@ import com.swcampus.domain.lecture.LectureLocation;
 import com.swcampus.domain.lecture.LectureRepository;
 import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.lecture.RecruitType;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
+import com.swcampus.domain.member.Role;
 import com.swcampus.domain.ocr.OcrClient;
 import com.swcampus.domain.storage.FileStorageService;
 import org.junit.jupiter.api.BeforeEach;
@@ -109,9 +111,9 @@ class CertificateIntegrationTest {
     }
 
     private void setAuthentication(Long memberId) {
+        MemberPrincipal principal = new MemberPrincipal(memberId, "user@example.com", Role.USER);
         UsernamePasswordAuthenticationToken auth =
-                new UsernamePasswordAuthenticationToken("user", null, Collections.emptyList());
-        auth.setDetails(memberId);
+                new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 

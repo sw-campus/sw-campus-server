@@ -17,11 +17,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.exception.GlobalExceptionHandler;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.cart.CartService;
 import com.swcampus.domain.category.Curriculum;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureCurriculum;
+import com.swcampus.domain.member.Role;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -59,9 +61,9 @@ class CartControllerTest {
 
         @BeforeEach
         void setUp() {
-                UsernamePasswordAuthenticationToken authentication = mock(
-                                UsernamePasswordAuthenticationToken.class);
-                when(authentication.getDetails()).thenReturn(1L); // userId
+                MemberPrincipal principal = new MemberPrincipal(1L, "user@example.com", Role.USER);
+                UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(principal, null, java.util.Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 

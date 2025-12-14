@@ -10,7 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.exception.GlobalExceptionHandler;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.auth.TokenProvider;
+import com.swcampus.domain.member.Role;
 import com.swcampus.domain.survey.MemberSurvey;
 import com.swcampus.domain.survey.MemberSurveyService;
 import com.swcampus.domain.survey.exception.SurveyNotFoundException;
@@ -57,9 +59,9 @@ class AdminSurveyControllerTest {
 
     @BeforeEach
     void setUp() {
-        UsernamePasswordAuthenticationToken authentication = mock(
-                UsernamePasswordAuthenticationToken.class);
-        when(authentication.getDetails()).thenReturn(99L); // Admin userId
+        MemberPrincipal principal = new MemberPrincipal(99L, "admin@example.com", Role.ADMIN);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(principal, null, java.util.Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 

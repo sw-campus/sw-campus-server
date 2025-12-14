@@ -18,7 +18,9 @@ import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.exception.GlobalExceptionHandler;
 import com.swcampus.api.survey.request.CreateSurveyRequest;
 import com.swcampus.api.survey.request.UpdateSurveyRequest;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.auth.TokenProvider;
+import com.swcampus.domain.member.Role;
 import com.swcampus.domain.survey.MemberSurvey;
 import com.swcampus.domain.survey.MemberSurveyService;
 import com.swcampus.domain.survey.exception.SurveyAlreadyExistsException;
@@ -66,9 +68,9 @@ class SurveyControllerTest {
 
     @BeforeEach
     void setUp() {
-        UsernamePasswordAuthenticationToken authentication = mock(
-                UsernamePasswordAuthenticationToken.class);
-        when(authentication.getDetails()).thenReturn(MEMBER_ID);
+        MemberPrincipal principal = new MemberPrincipal(MEMBER_ID, "user@example.com", Role.USER);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(principal, null, java.util.Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
