@@ -1,13 +1,14 @@
 package com.swcampus.api.cart;
 
 import com.swcampus.api.cart.response.CartLectureResponse;
+import com.swcampus.api.security.CurrentMember;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.cart.CartService;
 import com.swcampus.domain.lecture.Lecture;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,32 +29,33 @@ public class CartController {
 
     @PostMapping
     @Operation(summary = "장바구니 추가", description = "강의를 장바구니에 추가합니다.")
-    public ResponseEntity<Void> addCart(@RequestParam Long lectureId) {
-        Long currentUserId = getCurrentUserId();
+    public ResponseEntity<Void> addCart(
+            @CurrentMember MemberPrincipal member,
+            @RequestParam Long lectureId) {
+        Long currentUserId = member.memberId();
         cartService.addCart(currentUserId, lectureId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping
     @Operation(summary = "장바구니 삭제", description = "장바구니에서 강의를 제거합니다.")
-    public ResponseEntity<Void> removeCart(@RequestParam Long lectureId) {
-        Long currentUserId = getCurrentUserId();
+    public ResponseEntity<Void> removeCart(
+            @CurrentMember MemberPrincipal member,
+            @RequestParam Long lectureId) {
+        Long currentUserId = member.memberId();
         cartService.removeCart(currentUserId, lectureId);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping
     @Operation(summary = "장바구니 목록 조회", description = "장바구니에 담긴 강의 목록을 조회합니다.")
-    public ResponseEntity<List<CartLectureResponse>> getCart() {
-        Long currentUserId = getCurrentUserId();
+    public ResponseEntity<List<CartLectureResponse>> getCart(
+            @CurrentMember MemberPrincipal member) {
+        Long currentUserId = member.memberId();
         List<Lecture> lectures = cartService.getCartList(currentUserId);
         List<CartLectureResponse> response = lectures.stream()
                 .map(CartLectureResponse::from)
                 .toList();
         return ResponseEntity.ok(response);
-    }
-
-    private Long getCurrentUserId() {
-        return (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
     }
 }

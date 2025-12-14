@@ -6,6 +6,7 @@ import com.swcampus.api.exception.GlobalExceptionHandler;
 import com.swcampus.api.review.request.CreateReviewRequest;
 import com.swcampus.api.review.request.DetailScoreRequest;
 import com.swcampus.api.review.request.UpdateReviewRequest;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.certificate.exception.CertificateNotVerifiedException;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
@@ -66,9 +67,9 @@ class ReviewControllerTest {
     private MemberRepository memberRepository;
 
     private void setAuthentication(Long memberId) {
+        MemberPrincipal principal = new MemberPrincipal(memberId, "user@example.com", Role.USER);
         UsernamePasswordAuthenticationToken authWithDetails =
-                new UsernamePasswordAuthenticationToken("user", null, Collections.emptyList());
-        authWithDetails.setDetails(memberId);
+                new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(authWithDetails);
     }
 

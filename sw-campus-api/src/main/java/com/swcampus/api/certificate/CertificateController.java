@@ -2,6 +2,8 @@ package com.swcampus.api.certificate;
 
 import com.swcampus.api.certificate.response.CertificateCheckResponse;
 import com.swcampus.api.certificate.response.CertificateVerifyResponse;
+import com.swcampus.api.security.CurrentMember;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.certificate.CertificateService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,7 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,10 +34,11 @@ public class CertificateController {
     })
     @GetMapping("/check")
     public ResponseEntity<CertificateCheckResponse> checkCertificate(
+            @CurrentMember MemberPrincipal member,
             @Parameter(description = "강의 ID", required = true)
             @RequestParam(name = "lectureId") Long lectureId) {
 
-        Long memberId = getCurrentMemberId();
+        Long memberId = member.memberId();
 
         return certificateService.checkCertificate(memberId, lectureId)
                 .map(cert -> ResponseEntity.ok(CertificateCheckResponse.certified(
@@ -57,12 +59,13 @@ public class CertificateController {
     })
     @PostMapping(value = "/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CertificateVerifyResponse> verifyCertificate(
+            @CurrentMember MemberPrincipal member,
             @Parameter(description = "강의 ID", required = true)
             @RequestPart(name = "lectureId") String lectureIdStr,
             @Parameter(description = "수료증 이미지", required = true)
             @RequestPart(name = "image") MultipartFile image) throws IOException {
 
-        Long memberId = getCurrentMemberId();
+        Long memberId = member.memberId();
         Long lectureId = Long.parseLong(lectureIdStr);
 
         Certificate certificate = certificateService.verifyCertificate(
@@ -79,9 +82,5 @@ public class CertificateController {
                 certificate.getImageUrl(),
                 certificate.getApprovalStatus().name()
         ));
-    }
-
-    private Long getCurrentMemberId() {
-        return (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
     }
 }

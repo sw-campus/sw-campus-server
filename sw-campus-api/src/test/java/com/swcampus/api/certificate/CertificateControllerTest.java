@@ -3,10 +3,12 @@ package com.swcampus.api.certificate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.exception.GlobalExceptionHandler;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.certificate.CertificateService;
 import com.swcampus.domain.certificate.exception.CertificateAlreadyExistsException;
 import com.swcampus.domain.certificate.exception.CertificateLectureMismatchException;
+import com.swcampus.domain.member.Role;
 import com.swcampus.domain.review.ApprovalStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -55,11 +57,9 @@ class CertificateControllerTest {
     private CertificateService certificateService;
 
     private void setAuthentication(Long memberId) {
-        Authentication auth = new UsernamePasswordAuthenticationToken("user", null, Collections.emptyList());
-        // details에 memberId 설정
+        MemberPrincipal principal = new MemberPrincipal(memberId, "user@example.com", Role.USER);
         UsernamePasswordAuthenticationToken authWithDetails = 
-                new UsernamePasswordAuthenticationToken(auth.getPrincipal(), auth.getCredentials(), auth.getAuthorities());
-        authWithDetails.setDetails(memberId);
+                new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(authWithDetails);
     }
 

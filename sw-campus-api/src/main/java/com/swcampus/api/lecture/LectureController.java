@@ -9,7 +9,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +24,8 @@ import com.swcampus.api.lecture.request.LectureCreateRequest;
 import com.swcampus.api.lecture.request.LectureSearchRequest;
 import com.swcampus.api.lecture.request.LectureUpdateRequest;
 import com.swcampus.api.lecture.response.LectureResponse;
+import com.swcampus.api.security.CurrentMember;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.organization.Organization;
@@ -63,6 +64,7 @@ public class LectureController {
 			@ApiResponse(responseCode = "403", description = "기관 회원만 가능")
 	})
 	public ResponseEntity<LectureResponse> createLecture(
+			@CurrentMember MemberPrincipal member,
 			@Parameter(description = "강의 정보 (JSON string)", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = LectureCreateRequest.class)) @RequestPart("lecture") String lectureJson,
 			@Parameter(description = "강의 대표 이미지 파일") @RequestPart(value = "image", required = false) MultipartFile image,
 			@Parameter(description = "강사 이미지 파일 목록 (신규 강사의 수와 일치해야 함)") @RequestPart(value = "teacherImages", required = false) java.util.List<MultipartFile> teacherImages)
@@ -77,7 +79,7 @@ public class LectureController {
 		}
 
 		// 현재 로그인한 사용자 ID 가져오기
-		Long currentUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
+		Long currentUserId = member.memberId();
 
 		Organization organization = organizationService.getOrganizationByUserId(currentUserId);
 
@@ -110,6 +112,7 @@ public class LectureController {
 			@ApiResponse(responseCode = "404", description = "강의 없음")
 	})
 	public ResponseEntity<LectureResponse> updateLecture(
+			@CurrentMember MemberPrincipal member,
 			@Parameter(description = "강의 ID", example = "1", required = true) @PathVariable Long lectureId,
 			@Parameter(description = "강의 정보 (JSON string)", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = LectureUpdateRequest.class)) @RequestPart("lecture") String lectureJson,
 			@Parameter(description = "강의 대표 이미지 파일") @RequestPart(value = "image", required = false) MultipartFile image,
@@ -125,7 +128,7 @@ public class LectureController {
 		}
 
 		// 현재 로그인한 사용자 ID 가져오기
-		Long currentUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
+		Long currentUserId = member.memberId();
 
 		Organization organization = organizationService.getOrganizationByUserId(currentUserId);
 
