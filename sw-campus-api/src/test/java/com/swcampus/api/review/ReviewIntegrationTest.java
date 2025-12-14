@@ -11,8 +11,10 @@ import com.swcampus.domain.lecture.LectureRepository;
 import com.swcampus.domain.lecture.LectureLocation;
 import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.lecture.RecruitType;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
+import com.swcampus.domain.member.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -69,9 +71,9 @@ class ReviewIntegrationTest {
     private Lecture testLecture;
 
     private void setAuthentication(Long memberId) {
+        MemberPrincipal principal = new MemberPrincipal(memberId, "user@example.com", Role.USER);
         UsernamePasswordAuthenticationToken auth =
-                new UsernamePasswordAuthenticationToken("user", null, Collections.emptyList());
-        auth.setDetails(memberId);
+                new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 

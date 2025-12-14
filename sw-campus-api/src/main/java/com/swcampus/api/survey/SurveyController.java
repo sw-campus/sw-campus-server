@@ -4,6 +4,8 @@ package com.swcampus.api.survey;
 import com.swcampus.api.survey.request.CreateSurveyRequest;
 import com.swcampus.api.survey.request.UpdateSurveyRequest;
 import com.swcampus.api.survey.response.SurveyResponse;
+import com.swcampus.api.security.CurrentMember;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.survey.MemberSurvey;
 import com.swcampus.domain.survey.MemberSurveyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,7 +16,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,8 +39,10 @@ public class SurveyController {
             @ApiResponse(responseCode = "409", description = "이미 설문조사 존재")
     })
     @PostMapping
-    public ResponseEntity<SurveyResponse> createSurvey(@RequestBody CreateSurveyRequest request) {
-        Long currentMemberId = getCurrentMemberId();
+    public ResponseEntity<SurveyResponse> createSurvey(
+            @CurrentMember MemberPrincipal member,
+            @RequestBody CreateSurveyRequest request) {
+        Long currentMemberId = member.memberId();
 
         MemberSurvey survey = surveyService.createSurvey(
                 currentMemberId,
@@ -62,8 +65,9 @@ public class SurveyController {
             @ApiResponse(responseCode = "404", description = "설문조사 없음")
     })
     @GetMapping
-    public ResponseEntity<SurveyResponse> getMySurvey() {
-        Long currentMemberId = getCurrentMemberId();
+    public ResponseEntity<SurveyResponse> getMySurvey(
+            @CurrentMember MemberPrincipal member) {
+        Long currentMemberId = member.memberId();
         MemberSurvey survey = surveyService.getSurveyByMemberId(currentMemberId);
         return ResponseEntity.ok(SurveyResponse.from(survey));
     }
@@ -75,8 +79,10 @@ public class SurveyController {
             @ApiResponse(responseCode = "404", description = "설문조사 없음")
     })
     @PutMapping
-    public ResponseEntity<SurveyResponse> updateMySurvey(@RequestBody UpdateSurveyRequest request) {
-        Long currentMemberId = getCurrentMemberId();
+    public ResponseEntity<SurveyResponse> updateMySurvey(
+            @CurrentMember MemberPrincipal member,
+            @RequestBody UpdateSurveyRequest request) {
+        Long currentMemberId = member.memberId();
 
         MemberSurvey survey = surveyService.updateSurvey(
                 currentMemberId,
@@ -89,9 +95,5 @@ public class SurveyController {
         );
 
         return ResponseEntity.ok(SurveyResponse.from(survey));
-    }
-
-    private Long getCurrentMemberId() {
-        return (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swcampus.api.admin.request.BlindReviewRequest;
 import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.exception.GlobalExceptionHandler;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.certificate.CertificateRepository;
 import com.swcampus.domain.certificate.exception.CertificateNotFoundException;
@@ -70,11 +71,11 @@ class AdminReviewControllerTest {
     private CertificateRepository certificateRepository;
 
     private void setAdminAuthentication(Long memberId) {
+        MemberPrincipal principal = new MemberPrincipal(memberId, "admin@example.com", Role.ADMIN);
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                "admin", null,
+                principal, null,
                 List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
         );
-        auth.setDetails(memberId);
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 

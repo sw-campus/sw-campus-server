@@ -4,6 +4,8 @@ import com.swcampus.api.review.request.CreateReviewRequest;
 import com.swcampus.api.review.request.UpdateReviewRequest;
 import com.swcampus.api.review.response.ReviewEligibilityResponse;
 import com.swcampus.api.review.response.ReviewResponse;
+import com.swcampus.api.security.CurrentMember;
+import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
 import com.swcampus.domain.review.Review;
@@ -21,7 +23,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,10 +45,11 @@ public class ReviewController {
     })
     @GetMapping("/eligibility")
     public ResponseEntity<ReviewEligibilityResponse> checkEligibility(
+            @CurrentMember MemberPrincipal member,
             @Parameter(description = "강의 ID", required = true)
             @RequestParam Long lectureId) {
 
-        Long memberId = getCurrentMemberId();
+        Long memberId = member.memberId();
         ReviewEligibility eligibility = reviewService.checkEligibility(memberId, lectureId);
 
         return ResponseEntity.ok(ReviewEligibilityResponse.from(eligibility));
@@ -64,9 +66,10 @@ public class ReviewController {
     })
     @PostMapping
     public ResponseEntity<ReviewResponse> createReview(
+            @CurrentMember MemberPrincipal member,
             @Valid @RequestBody CreateReviewRequest request) {
 
-        Long memberId = getCurrentMemberId();
+        Long memberId = member.memberId();
 
         List<ReviewDetail> details = request.detailScores().stream()
                 .map(d -> ReviewDetail.create(
@@ -99,11 +102,12 @@ public class ReviewController {
     })
     @PutMapping("/{reviewId}")
     public ResponseEntity<ReviewResponse> updateReview(
+            @CurrentMember MemberPrincipal member,
             @Parameter(description = "후기 ID", required = true, name = "reviewId")
             @PathVariable("reviewId") Long reviewId,
             @Valid @RequestBody UpdateReviewRequest request) {
 
-        Long memberId = getCurrentMemberId();
+        Long memberId = member.memberId();
 
         List<ReviewDetail> details = request.detailScores().stream()
                 .map(d -> ReviewDetail.create(
@@ -138,10 +142,6 @@ public class ReviewController {
         String nickname = getNickname(review.getMemberId());
 
         return ResponseEntity.ok(ReviewResponse.from(review, nickname));
-    }
-
-    private Long getCurrentMemberId() {
-        return (Long) SecurityContextHolder.getContext().getAuthentication().getDetails();
     }
 
     private String getNickname(Long memberId) {
