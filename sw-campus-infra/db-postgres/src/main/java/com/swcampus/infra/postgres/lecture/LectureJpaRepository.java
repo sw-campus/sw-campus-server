@@ -2,6 +2,7 @@ package com.swcampus.infra.postgres.lecture;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,4 +21,25 @@ public interface LectureJpaRepository extends JpaRepository<LectureEntity, Long>
 
     @Query("SELECT l.lectureId, l.lectureName FROM LectureEntity l WHERE l.lectureId IN :ids")
     List<Object[]> findIdAndNameByIdIn(@Param("ids") List<Long> ids);
+
+    /**
+     * Lecture 상세 조회 시 Curriculum → Category까지 함께 fetch
+     * (기존 관계들은 LAZY 로딩으로 트랜잭션 내에서 정상 동작)
+     */
+    @Query("SELECT DISTINCT l FROM LectureEntity l " +
+            "LEFT JOIN FETCH l.lectureCurriculums lc " +
+            "LEFT JOIN FETCH lc.curriculum c " +
+            "LEFT JOIN FETCH c.category " +
+            "WHERE l.lectureId = :id")
+    Optional<LectureEntity> findByIdWithCategory(@Param("id") Long id);
+
+    /**
+     * 여러 Lecture를 ID 목록으로 조회 시 Curriculum → Category까지 함께 fetch
+     */
+    @Query("SELECT DISTINCT l FROM LectureEntity l " +
+            "LEFT JOIN FETCH l.lectureCurriculums lc " +
+            "LEFT JOIN FETCH lc.curriculum c " +
+            "LEFT JOIN FETCH c.category " +
+            "WHERE l.lectureId IN :ids")
+    List<LectureEntity> findAllByIdInWithCurriculums(@Param("ids") List<Long> ids);
 }

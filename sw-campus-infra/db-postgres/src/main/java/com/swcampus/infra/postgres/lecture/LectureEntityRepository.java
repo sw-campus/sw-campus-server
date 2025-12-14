@@ -142,7 +142,7 @@ public class LectureEntityRepository implements LectureRepository {
 
 	@Override
 	public Optional<Lecture> findById(Long id) {
-		return jpaRepository.findById(id).map(LectureEntity::toDomain);
+		return jpaRepository.findByIdWithCategory(id).map(LectureEntity::toDomain);
 	}
 
 	@Override
@@ -190,7 +190,7 @@ public class LectureEntityRepository implements LectureRepository {
 			return Collections.emptyList();
 		}
 		// Full fetch to ensure relationships (like Curriculums -> Category) are loaded
-		return jpaRepository.findAllById(lectureIds).stream()
+		return jpaRepository.findAllByIdInWithCurriculums(lectureIds).stream()
 				.map(LectureEntity::toDomain)
 				.toList();
 	}

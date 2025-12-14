@@ -98,6 +98,8 @@ public record LectureResponse(
 
 		@Schema(description = "강사 목록") List<TeacherResponse> teachers,
 
+		@Schema(description = "카테고리명", example = "백엔드") String categoryName,
+
 		@Schema(description = "커리큘럼 목록") List<CurriculumResponse> curriculums) {
 	public static LectureResponse from(Lecture lecture) {
 		return new LectureResponse(
@@ -146,9 +148,21 @@ public record LectureResponse(
 				lecture.getQuals() != null ? lecture.getQuals().stream().map(QualResponse::from).toList() : List.of(),
 				lecture.getTeachers() != null ? lecture.getTeachers().stream().map(TeacherResponse::from).toList()
 						: List.of(),
+				extractCategoryName(lecture),
 				lecture.getLectureCurriculums() != null
 						? lecture.getLectureCurriculums().stream().map(CurriculumResponse::from).toList()
 						: List.of());
+	}
+
+	private static String extractCategoryName(Lecture lecture) {
+		if (lecture.getLectureCurriculums() == null || lecture.getLectureCurriculums().isEmpty()) {
+			return null;
+		}
+		var firstCurriculum = lecture.getLectureCurriculums().get(0).getCurriculum();
+		if (firstCurriculum == null || firstCurriculum.getCategory() == null) {
+			return null;
+		}
+		return firstCurriculum.getCategory().getCategoryName();
 	}
 
 	@Schema(description = "선발 절차 응답")
