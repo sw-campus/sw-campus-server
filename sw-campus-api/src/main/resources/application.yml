@@ -3,7 +3,7 @@ spring:
     name: sw-campus
 
   profiles:
-    default: staging
+    default: local
     group:
       local: local
       staging: staging
