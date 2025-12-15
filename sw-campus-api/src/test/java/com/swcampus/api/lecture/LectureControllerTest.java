@@ -86,7 +86,7 @@ class LectureControllerTest {
                 // given
                 // LectureCreateRequest의 모든 필드를 null로 설정하되 필수값만 채움
                 LectureCreateRequest request = new LectureCreateRequest(
-                                1L, "Java Spring 강의", null, null, null, OFFLINE, null, CARD_REQUIRED,
+                                "Java Spring 강의", null, null, null, OFFLINE, null, CARD_REQUIRED,
                                 null, null, null, null, 100, NONE, null, false, false, false, false, null, null, null,
                                 null, null, null, false, "2024-01-01", "2024-12-31", null, null, null,
                                 null, null, null,
