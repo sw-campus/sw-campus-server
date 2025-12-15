@@ -67,4 +67,50 @@ public class Lecture {
 				.status(LectureStatus.FINISHED)
 				.build();
 	}
+
+	/**
+	 * 첫 번째 커리큘럼에서 카테고리 ID를 안전하게 추출합니다.
+	 * 
+	 * @return 카테고리 ID, 없으면 null
+	 */
+	public Long extractCategoryId() {
+		if (lectureCurriculums == null || lectureCurriculums.isEmpty()) {
+			return null;
+		}
+
+		LectureCurriculum firstLc = lectureCurriculums.get(0);
+		if (firstLc == null) {
+			return null;
+		}
+
+		com.swcampus.domain.category.Curriculum curriculum = firstLc.getCurriculum();
+		if (curriculum == null) {
+			return null;
+		}
+
+		return curriculum.getCategoryId();
+	}
+
+	/**
+	 * 첫 번째 커리큘럼에서 커리큘럼 이름을 안전하게 추출합니다.
+	 * 
+	 * @return 커리큘럼 이름, 없으면 빈 문자열
+	 */
+	public String extractCurriculumName() {
+		if (lectureCurriculums == null || lectureCurriculums.isEmpty()) {
+			return "";
+		}
+
+		LectureCurriculum firstLc = lectureCurriculums.get(0);
+		if (firstLc == null) {
+			return "";
+		}
+
+		com.swcampus.domain.category.Curriculum curriculum = firstLc.getCurriculum();
+		if (curriculum == null) {
+			return "";
+		}
+
+		return curriculum.getCurriculumName() != null ? curriculum.getCurriculumName() : "";
+	}
 }
