@@ -141,7 +141,7 @@ class LectureControllerTest {
                                 .lectureName("Test Lecture")
                                 .status(LectureStatus.RECRUITING)
                                 .build();
-                when(lectureService.getLecture(100L)).thenReturn(lecture);
+                when(lectureService.getPublishedLecture(100L)).thenReturn(lecture);
 
                 // when & then
                 mockMvc.perform(get("/api/v1/lectures/{lectureId}", 100L)

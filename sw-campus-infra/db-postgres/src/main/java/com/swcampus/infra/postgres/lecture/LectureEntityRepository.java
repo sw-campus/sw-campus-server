@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Repository;
 
 import com.swcampus.domain.lecture.Lecture;
+import com.swcampus.domain.lecture.LectureAuthStatus;
 import com.swcampus.domain.lecture.LectureRepository;
 import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
@@ -142,7 +143,7 @@ public class LectureEntityRepository implements LectureRepository {
 
 	@Override
 	public Optional<Lecture> findById(Long id) {
-		return jpaRepository.findById(id).map(LectureEntity::toDomain);
+		return jpaRepository.findByIdWithCategory(id).map(LectureEntity::toDomain);
 	}
 
 	@Override
@@ -185,11 +186,28 @@ public class LectureEntityRepository implements LectureRepository {
 	}
 
 	@Override
-	public Map<Long, Long> countLecturesByStatusAndOrgIdIn(LectureStatus status, List<Long> orgIds) {
+	public List<Lecture> findAllByOrgId(Long orgId) {
+		return jpaRepository.findAllByOrgIdWithCurriculums(orgId)
+				.stream()
+				.map(LectureEntity::toDomain)
+				.toList();
+	}
+
+	@Override
+	public List<Lecture> findAllByOrgIdAndLectureAuthStatus(Long orgId, LectureAuthStatus status) {
+		return jpaRepository.findAllByOrgIdAndLectureAuthStatusWithCurriculums(orgId, status)
+				.stream()
+				.map(LectureEntity::toDomain)
+				.toList();
+	}
+
+	@Override
+	public Map<Long, Long> countLecturesByStatusAndAuthStatusAndOrgIdIn(LectureStatus status,
+			LectureAuthStatus authStatus, List<Long> orgIds) {
 		if (orgIds == null || orgIds.isEmpty()) {
 			return Map.of();
 		}
-		List<Object[]> results = jpaRepository.countByStatusAndOrgIdInGroupByOrgId(status, orgIds);
+		List<Object[]> results = jpaRepository.countByStatusAndOrgIdInGroupByOrgId(status, authStatus, orgIds);
 		return results.stream()
 				.collect(java.util.stream.Collectors.toMap(
 						row -> (Long) row[0],
@@ -202,7 +220,7 @@ public class LectureEntityRepository implements LectureRepository {
 			return Collections.emptyList();
 		}
 		// Full fetch to ensure relationships (like Curriculums -> Category) are loaded
-		return jpaRepository.findAllById(lectureIds).stream()
+		return jpaRepository.findAllByIdInWithCurriculums(lectureIds).stream()
 				.map(LectureEntity::toDomain)
 				.toList();
 	}

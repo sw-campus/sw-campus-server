@@ -75,7 +75,7 @@ public class OrganizationController {
     public ResponseEntity<List<LectureResponse>> getOrganizationLectureList(
             @Parameter(description = "기관 ID", example = "1", required = true)
             @PathVariable Long organizationId) {
-        List<LectureResponse> lectures = lectureService.findAllByOrgId(organizationId).stream()
+        List<LectureResponse> lectures = lectureService.getPublishedLectureListByOrgId(organizationId).stream()
                 .map(LectureResponse::from)
                 .toList();
         return ResponseEntity.ok(lectures);

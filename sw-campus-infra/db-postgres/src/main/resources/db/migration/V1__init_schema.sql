@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     facility_image_url3 TEXT,
     facility_image_url4 TEXT,
     org_logo_url TEXT,
+    homepage TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_organizations_user FOREIGN KEY (user_id) REFERENCES members(user_id)

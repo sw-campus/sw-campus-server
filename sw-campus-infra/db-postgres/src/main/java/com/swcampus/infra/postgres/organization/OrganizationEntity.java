@@ -54,14 +54,17 @@ public class OrganizationEntity extends BaseEntity {
     @Column(name = "org_logo_url", columnDefinition = "TEXT")
     private String logoUrl;
 
+    @Column(name = "homepage", columnDefinition = "TEXT")
+    private String homepage;
+
     public static OrganizationEntity from(Organization organization) {
         OrganizationEntity entity = new OrganizationEntity();
         entity.id = organization.getId();
         entity.userId = organization.getUserId();
         entity.name = organization.getName();
         entity.description = organization.getDescription();
-        entity.approvalStatus = organization.getApprovalStatus() != null 
-                ? organization.getApprovalStatus().getValue() 
+        entity.approvalStatus = organization.getApprovalStatus() != null
+                ? organization.getApprovalStatus().getValue()
                 : null;
         entity.certificateUrl = organization.getCertificateUrl();
         entity.govAuth = organization.getGovAuth();
@@ -70,6 +73,7 @@ public class OrganizationEntity extends BaseEntity {
         entity.facilityImageUrl3 = organization.getFacilityImageUrl3();
         entity.facilityImageUrl4 = organization.getFacilityImageUrl4();
         entity.logoUrl = organization.getLogoUrl();
+        entity.homepage = organization.getHomepage();
         return entity;
     }
 
@@ -87,8 +91,8 @@ public class OrganizationEntity extends BaseEntity {
                 facilityImageUrl3,
                 facilityImageUrl4,
                 logoUrl,
+                homepage,
                 getCreatedAt(),
-                getUpdatedAt()
-        );
+                getUpdatedAt());
     }
 }
