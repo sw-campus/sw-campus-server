@@ -55,7 +55,7 @@ public class OrganizationService {
             certificateUrl = fileStorageService.upload(fileContent, "certificates", fileName, contentType);
         }
         
-        organization.updateInfo(name, description != null ? description : organization.getDescription());
+        organization.updateInfo(name, description);
         if (certificateUrl != null) {
             organization.updateCertificateUrl(certificateUrl);
         }
