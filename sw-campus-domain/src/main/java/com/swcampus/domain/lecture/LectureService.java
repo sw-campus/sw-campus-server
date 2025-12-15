@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
+import com.swcampus.domain.lecture.exception.LectureNotModifiableException;
 import com.swcampus.domain.teacher.Teacher;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -66,6 +67,10 @@ public class LectureService {
 			throw new AccessDeniedException("해당 강의를 수정할 권한이 없습니다.");
 		}
 
+		if (existingLecture.getLectureAuthStatus() != LectureAuthStatus.REJECTED) {
+			throw new LectureNotModifiableException();
+		}
+
 		String imageUrl = existingLecture.getLectureImageUrl();
 
 		if (imageContent != null && imageContent.length > 0) {
@@ -78,7 +83,7 @@ public class LectureService {
 				.lectureId(lectureId)
 				.lectureImageUrl(imageUrl)
 				.status(existingLecture.getStatus())
-				.lectureAuthStatus(existingLecture.getLectureAuthStatus())
+				.lectureAuthStatus(LectureAuthStatus.PENDING)
 				.createdAt(existingLecture.getCreatedAt())
 				.teachers(updatedTeachers)
 				.build();

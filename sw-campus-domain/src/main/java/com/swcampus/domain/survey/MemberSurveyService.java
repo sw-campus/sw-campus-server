@@ -57,9 +57,39 @@ public class MemberSurveyService {
         MemberSurvey survey = surveyRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new SurveyNotFoundException(memberId));
 
-        survey.update(major, bootcampCompleted, wantedJobs,
-                licenses, hasGovCard, affordableAmount);
+        return updateSurveyInternal(survey, major, bootcampCompleted, wantedJobs, licenses, hasGovCard, affordableAmount);
+    }
 
+    @Transactional
+    public MemberSurvey upsertSurvey(
+            Long memberId,
+            String major,
+            Boolean bootcampCompleted,
+            String wantedJobs,
+            String licenses,
+            Boolean hasGovCard,
+            BigDecimal affordableAmount
+    ) {
+        return surveyRepository.findByMemberId(memberId)
+                .map(survey -> updateSurveyInternal(survey, major, bootcampCompleted, wantedJobs, licenses, hasGovCard, affordableAmount))
+                .orElseGet(() -> {
+                    MemberSurvey newSurvey = MemberSurvey.create(
+                            memberId, major, bootcampCompleted, wantedJobs, licenses, hasGovCard, affordableAmount
+                    );
+                    return surveyRepository.save(newSurvey);
+                });
+    }
+
+    private MemberSurvey updateSurveyInternal(
+            MemberSurvey survey,
+            String major,
+            Boolean bootcampCompleted,
+            String wantedJobs,
+            String licenses,
+            Boolean hasGovCard,
+            BigDecimal affordableAmount
+    ) {
+        survey.update(major, bootcampCompleted, wantedJobs, licenses, hasGovCard, affordableAmount);
         return surveyRepository.save(survey);
     }
 

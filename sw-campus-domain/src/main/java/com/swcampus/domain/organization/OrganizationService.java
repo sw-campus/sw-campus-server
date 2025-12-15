@@ -6,6 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.swcampus.domain.common.ResourceNotFoundException;
+import com.swcampus.domain.organization.dto.UpdateOrganizationParams;
+import com.swcampus.domain.storage.FileStorageService;
+import org.springframework.security.access.AccessDeniedException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
+    private final FileStorageService fileStorageService;
 
     public Organization getOrganizationByUserId(Long userId) {
         return organizationRepository.findByUserId(userId)
@@ -35,5 +39,27 @@ public class OrganizationService {
             return organizationRepository.findByNameContaining(keyword);
         }
         return organizationRepository.findAll();
+    }
+
+    @Transactional
+    public Organization updateOrganization(Long orgId, Long userId, UpdateOrganizationParams params, 
+                                           byte[] fileContent, String fileName, String contentType) {
+        Organization organization = getOrganization(orgId);
+        
+        if (!organization.getUserId().equals(userId)) {
+            throw new AccessDeniedException("해당 업체를 수정할 권한이 없습니다.");
+        }
+        
+        String logoUrl = organization.getLogoUrl();
+        if (fileContent != null && fileContent.length > 0) {
+            logoUrl = fileStorageService.upload(fileContent, "organizations", fileName, contentType);
+        }
+        
+        organization.updateInfo(params.name(), params.description());
+        if (logoUrl != null) {
+            organization.updateLogoUrl(logoUrl);
+        }
+        
+        return organizationRepository.save(organization);
     }
 }

@@ -255,8 +255,8 @@ class ReviewServiceTest {
     class UpdateReviewTest {
 
         @Test
-        @DisplayName("정상적으로 후기 수정 성공")
-        void updateReview_success() {
+        @DisplayName("반려된 후기 수정 성공 및 상태 변경(PENDING)")
+        void updateReview_rejected_success() {
             // given
             Long memberId = 1L;
             Long reviewId = 1L;
@@ -264,6 +264,7 @@ class ReviewServiceTest {
             List<ReviewDetail> newDetails = createDefaultDetails();
 
             Review review = Review.create(memberId, 1L, 1L, "원래 후기", createDefaultDetails());
+            review.reject(); // REJECTED 상태로 설정
 
             given(reviewRepository.findById(reviewId))
                     .willReturn(Optional.of(review));
@@ -275,6 +276,7 @@ class ReviewServiceTest {
 
             // then
             assertThat(result.getComment()).isEqualTo(newComment);
+            assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
         }
 
         @Test
@@ -321,6 +323,25 @@ class ReviewServiceTest {
 
             Review review = Review.create(memberId, 1L, 1L, "후기", createDefaultDetails());
             review.approve(); // 승인 처리
+
+            given(reviewRepository.findById(reviewId))
+                    .willReturn(Optional.of(review));
+
+            // when & then
+            assertThatThrownBy(() -> reviewService.updateReview(
+                    memberId, reviewId, "테스트", List.of()
+            )).isInstanceOf(ReviewNotModifiableException.class);
+        }
+
+        @Test
+        @DisplayName("대기중(PENDING)인 후기 수정 시 예외 발생")
+        void updateReview_pending_throwsException() {
+            // given
+            Long memberId = 1L;
+            Long reviewId = 1L;
+
+            Review review = Review.create(memberId, 1L, 1L, "후기", createDefaultDetails());
+            // Default is PENDING
 
             given(reviewRepository.findById(reviewId))
                     .willReturn(Optional.of(review));
