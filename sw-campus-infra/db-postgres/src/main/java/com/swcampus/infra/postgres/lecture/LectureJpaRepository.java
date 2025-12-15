@@ -13,8 +13,6 @@ import com.swcampus.domain.lecture.LectureStatus;
 public interface LectureJpaRepository extends JpaRepository<LectureEntity, Long> {
         List<LectureEntity> findAllByDeadlineBeforeAndStatus(LocalDateTime now, LectureStatus status);
 
-        List<LectureEntity> findAllByOrgId(Long orgId);
-
         /**
          * 기관별 강의 조회 시 Curriculum → Category까지 함께 fetch
          */
