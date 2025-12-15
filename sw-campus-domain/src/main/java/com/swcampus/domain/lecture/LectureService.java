@@ -113,7 +113,8 @@ public class LectureService {
 	}
 
 	public Map<Long, Long> getRecruitingLectureCounts(List<Long> orgIds) {
-		return lectureRepository.countLecturesByStatusAndOrgIdIn(LectureStatus.RECRUITING, orgIds);
+		return lectureRepository.countLecturesByStatusAndAuthStatusAndOrgIdIn(LectureStatus.RECRUITING,
+				LectureAuthStatus.APPROVED, orgIds);
 	}
 
 	private List<Teacher> processNewTeachers(List<Teacher> teachers, List<ImageContent> teacherImages) {
