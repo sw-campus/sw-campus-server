@@ -24,8 +24,6 @@ public interface LectureRepository {
 
     List<Lecture> findAllExpiredAndRecruiting(LocalDateTime now);
 
-    List<Lecture> findAllByOrgId(Long orgId);
-
     List<Lecture> findAllByOrgIdAndLectureAuthStatus(Long orgId, LectureAuthStatus status);
 
     Map<Long, Long> countLecturesByStatusAndAuthStatusAndOrgIdIn(LectureStatus status, LectureAuthStatus authStatus,
