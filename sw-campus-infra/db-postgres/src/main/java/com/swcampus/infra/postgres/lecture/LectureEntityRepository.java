@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Repository;
 
 import com.swcampus.domain.lecture.Lecture;
+import com.swcampus.domain.lecture.LectureAuthStatus;
 import com.swcampus.domain.lecture.LectureRepository;
 import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
@@ -167,6 +168,14 @@ public class LectureEntityRepository implements LectureRepository {
 	@Override
 	public List<Lecture> findAllByOrgId(Long orgId) {
 		return jpaRepository.findAllByOrgIdWithCurriculums(orgId)
+				.stream()
+				.map(LectureEntity::toDomain)
+				.toList();
+	}
+
+	@Override
+	public List<Lecture> findAllByOrgIdAndLectureAuthStatus(Long orgId, LectureAuthStatus status) {
+		return jpaRepository.findAllByOrgIdAndLectureAuthStatusWithCurriculums(orgId, status)
 				.stream()
 				.map(LectureEntity::toDomain)
 				.toList();

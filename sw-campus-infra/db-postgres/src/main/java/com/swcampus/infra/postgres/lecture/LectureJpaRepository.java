@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.swcampus.domain.lecture.LectureAuthStatus;
 import com.swcampus.domain.lecture.LectureStatus;
 
 public interface LectureJpaRepository extends JpaRepository<LectureEntity, Long> {
@@ -22,6 +23,17 @@ public interface LectureJpaRepository extends JpaRepository<LectureEntity, Long>
                         "LEFT JOIN FETCH c.category " +
                         "WHERE l.orgId = :orgId")
         List<LectureEntity> findAllByOrgIdWithCurriculums(@Param("orgId") Long orgId);
+
+        /**
+         * 기관별 강의 조회 시 - 승인 상태 필터링 포함
+         */
+        @Query("SELECT DISTINCT l FROM LectureEntity l " +
+                        "LEFT JOIN FETCH l.lectureCurriculums lc " +
+                        "LEFT JOIN FETCH lc.curriculum c " +
+                        "LEFT JOIN FETCH c.category " +
+                        "WHERE l.orgId = :orgId AND l.lectureAuthStatus = :authStatus")
+        List<LectureEntity> findAllByOrgIdAndLectureAuthStatusWithCurriculums(@Param("orgId") Long orgId,
+                        @Param("authStatus") LectureAuthStatus authStatus);
 
         @Query("SELECT l.orgId, COUNT(l) FROM LectureEntity l WHERE l.status = :status AND l.orgId IN :orgIds GROUP BY l.orgId")
         List<Object[]> countByStatusAndOrgIdInGroupByOrgId(@Param("status") LectureStatus status,

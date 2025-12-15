@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 
+import com.swcampus.domain.lecture.LectureAuthStatus;
 import com.swcampus.domain.lecture.LectureStatus;
 
 import lombok.Builder;
@@ -26,8 +27,9 @@ public class LectureSearchCondition {
     private Boolean hasInterview;
     private Boolean hasPreTask;
 
-    // 상태 (RECRUITING, ONGOING, FINISHED)
+    // 상태 (RECRUITING, FINISHED)
     private LectureStatus status;
+    private LectureAuthStatus lectureAuthStatus;
 
     private LectureSortType sort; // 정렬 순서
 
