@@ -147,13 +147,6 @@ public class LectureEntityRepository implements LectureRepository {
 	}
 
 	@Override
-	public List<Lecture> findAllByOrgId(Long orgId) {
-		return jpaRepository.findAllByOrgId(orgId).stream()
-				.map(LectureEntity::toDomain)
-				.toList();
-	}
-
-	@Override
 	public Map<Long, String> findLectureNamesByIds(List<Long> lectureIds) {
 		if (lectureIds == null || lectureIds.isEmpty()) {
 			return Collections.emptyMap();

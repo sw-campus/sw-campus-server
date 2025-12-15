@@ -97,6 +97,8 @@ public class LectureService {
 
 	public List<Lecture> findAllByOrgId(Long orgId) {
 		return lectureRepository.findAllByOrgId(orgId);
+	}
+
 	public Lecture getPublishedLecture(Long lectureId) {
 		Lecture lecture = getLecture(lectureId);
 		if (lecture.getLectureAuthStatus() != LectureAuthStatus.APPROVED) {

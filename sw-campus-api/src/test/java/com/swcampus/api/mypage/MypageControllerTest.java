@@ -219,7 +219,7 @@ class MypageControllerTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(orgPrincipal, null, List.of(new SimpleGrantedAuthority("ROLE_ORGANIZATION")));
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        Organization org = Organization.of(100L, 1L, "Test Org", "Desc", com.swcampus.domain.organization.ApprovalStatus.APPROVED, "cert.jpg", null, null, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
+        Organization org = Organization.of(100L, 1L, "Test Org", "Desc", com.swcampus.domain.organization.ApprovalStatus.APPROVED, "cert.jpg", null, null, null, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
         
         given(organizationService.getOrganizationByUserId(1L)).willReturn(org);
         given(lectureService.findAllByOrgId(100L)).willReturn(List.of());
@@ -242,7 +242,7 @@ class MypageControllerTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(orgPrincipal, null, List.of(new SimpleGrantedAuthority("ROLE_ORGANIZATION")));
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        Organization org = Organization.of(100L, 1L, "Test Org", "Desc", com.swcampus.domain.organization.ApprovalStatus.APPROVED, "cert.jpg", null, null, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
+        Organization org = Organization.of(100L, 1L, "Test Org", "Desc", com.swcampus.domain.organization.ApprovalStatus.APPROVED, "cert.jpg", null, null, null, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
         Member member = createTestMember();
         
         given(organizationService.getOrganizationByUserId(1L)).willReturn(org);
@@ -267,7 +267,7 @@ class MypageControllerTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(orgPrincipal, null, List.of(new SimpleGrantedAuthority("ROLE_ORGANIZATION")));
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        Organization org = Organization.of(100L, 1L, "Test Org", "Desc", com.swcampus.domain.organization.ApprovalStatus.APPROVED, "cert.jpg", null, null, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
+        Organization org = Organization.of(100L, 1L, "Test Org", "Desc", com.swcampus.domain.organization.ApprovalStatus.APPROVED, "cert.jpg", null, null, null, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
         
         given(organizationService.getOrganizationByUserId(1L)).willReturn(org);
 
