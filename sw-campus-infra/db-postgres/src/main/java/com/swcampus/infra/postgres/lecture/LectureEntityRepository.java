@@ -186,7 +186,8 @@ public class LectureEntityRepository implements LectureRepository {
 		if (orgIds == null || orgIds.isEmpty()) {
 			return Map.of();
 		}
-		List<Object[]> results = jpaRepository.countByStatusAndOrgIdInGroupByOrgId(status, orgIds);
+		List<Object[]> results = jpaRepository.countByStatusAndOrgIdInGroupByOrgId(status, LectureAuthStatus.APPROVED,
+				orgIds);
 		return results.stream()
 				.collect(java.util.stream.Collectors.toMap(
 						row -> (Long) row[0],
