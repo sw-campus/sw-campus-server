@@ -102,7 +102,7 @@ public class Member {
     }
 
     public void updateProfile(String nickname, String phone, String location) {
-        if (nickname != null) this.nickname = nickname;
+        if (nickname != null && !nickname.isBlank()) this.nickname = nickname;
         if (phone != null) this.phone = phone;
         if (location != null) this.location = location;
         this.updatedAt = LocalDateTime.now();
