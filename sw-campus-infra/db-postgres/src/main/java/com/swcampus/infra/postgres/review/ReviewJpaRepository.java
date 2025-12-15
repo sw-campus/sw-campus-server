@@ -16,11 +16,16 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
     Optional<ReviewEntity> findByIdWithDetails(@Param("id") Long id);
 
     @Query("SELECT r FROM ReviewEntity r LEFT JOIN FETCH r.details WHERE r.memberId = :memberId AND r.lectureId = :lectureId")
-    Optional<ReviewEntity> findByMemberIdAndLectureIdWithDetails(@Param("memberId") Long memberId, @Param("lectureId") Long lectureId);
+    Optional<ReviewEntity> findByMemberIdAndLectureIdWithDetails(@Param("memberId") Long memberId,
+            @Param("lectureId") Long lectureId);
 
     @Query("SELECT r FROM ReviewEntity r LEFT JOIN FETCH r.details WHERE r.lectureId = :lectureId AND r.approvalStatus = :status")
-    List<ReviewEntity> findByLectureIdAndApprovalStatusWithDetails(@Param("lectureId") Long lectureId, @Param("status") ApprovalStatus status);
+    List<ReviewEntity> findByLectureIdAndApprovalStatusWithDetails(@Param("lectureId") Long lectureId,
+            @Param("status") ApprovalStatus status);
 
     @Query("SELECT r FROM ReviewEntity r LEFT JOIN FETCH r.details WHERE r.approvalStatus = :status")
     List<ReviewEntity> findByApprovalStatusWithDetails(@Param("status") ApprovalStatus status);
+
+    @Query("SELECT AVG(r.score) FROM ReviewEntity r WHERE r.lectureId = :lectureId AND r.approvalStatus = 'APPROVED'")
+    Double findAverageScoreByLectureId(@Param("lectureId") Long lectureId);
 }

@@ -16,6 +16,7 @@ import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.review.ReviewRepository;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -51,6 +52,9 @@ class OrganizationControllerTest {
 
     @MockitoBean
     private TokenProvider tokenProvider;
+
+    @MockitoBean
+    private ReviewRepository reviewRepository;
 
     @Test
     @DisplayName("기관 목록 조회 성공")
@@ -96,11 +100,13 @@ class OrganizationControllerTest {
                 .status(LectureStatus.RECRUITING)
                 .build();
         when(lectureService.getPublishedLectureListByOrgId(10L)).thenReturn(List.of(lecture));
+        when(reviewRepository.getAverageScoreByLectureId(100L)).thenReturn(4.3);
 
         // when & then
         mockMvc.perform(get("/api/v1/organizations/{organizationId}/lectures", 10L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].lecture_id").value(100))
-                .andExpect(jsonPath("$[0].lecture_name").value("Org Lecture"));
+                .andExpect(jsonPath("$[0].lecture_name").value("Org Lecture"))
+                .andExpect(jsonPath("$[0].average_score").value(4.3));
     }
 }

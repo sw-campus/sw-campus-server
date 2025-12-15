@@ -16,6 +16,7 @@ import com.swcampus.api.organization.response.OrganizationSummaryResponse;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.review.ReviewRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,15 +33,15 @@ public class OrganizationController {
 
     private final OrganizationService organizationService;
     private final LectureService lectureService;
+    private final ReviewRepository reviewRepository;
 
     @GetMapping
     @Operation(summary = "기관 목록 조회", description = "모집 중인 강의 수와 함께 기관 목록을 조회합니다. 키워드로 검색할 수 있습니다.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "조회 성공")
+            @ApiResponse(responseCode = "200", description = "조회 성공")
     })
     public ResponseEntity<List<OrganizationSummaryResponse>> getOrganizationList(
-            @Parameter(description = "검색 키워드 (기관명)", example = "패스트캠퍼스")
-            @RequestParam(required = false) String keyword) {
+            @Parameter(description = "검색 키워드 (기관명)", example = "패스트캠퍼스") @RequestParam(required = false) String keyword) {
 
         List<Organization> result = organizationService.getOrganizationList(keyword);
 
@@ -56,12 +57,11 @@ public class OrganizationController {
     @GetMapping("/{organizationId}")
     @Operation(summary = "기관 상세 조회", description = "기관의 상세 정보를 조회합니다.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "조회 성공"),
-        @ApiResponse(responseCode = "404", description = "기관 없음")
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "기관 없음")
     })
     public ResponseEntity<OrganizationResponse> getOrganization(
-            @Parameter(description = "기관 ID", example = "1", required = true)
-            @PathVariable Long organizationId) {
+            @Parameter(description = "기관 ID", example = "1", required = true) @PathVariable Long organizationId) {
         Organization organization = organizationService.getOrganization(organizationId);
         return ResponseEntity.ok(OrganizationResponse.from(organization));
     }
@@ -69,14 +69,16 @@ public class OrganizationController {
     @GetMapping("/{organizationId}/lectures")
     @Operation(summary = "기관별 강의 목록 조회", description = "특정 기관의 강의 목록을 조회합니다.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "조회 성공"),
-        @ApiResponse(responseCode = "404", description = "기관 없음")
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "기관 없음")
     })
     public ResponseEntity<List<LectureResponse>> getOrganizationLectureList(
-            @Parameter(description = "기관 ID", example = "1", required = true)
-            @PathVariable Long organizationId) {
+            @Parameter(description = "기관 ID", example = "1", required = true) @PathVariable Long organizationId) {
         List<LectureResponse> lectures = lectureService.getPublishedLectureListByOrgId(organizationId).stream()
-                .map(LectureResponse::from)
+                .map(lecture -> {
+                    Double averageScore = reviewRepository.getAverageScoreByLectureId(lecture.getLectureId());
+                    return LectureResponse.from(lecture, null, averageScore);
+                })
                 .toList();
         return ResponseEntity.ok(lectures);
     }

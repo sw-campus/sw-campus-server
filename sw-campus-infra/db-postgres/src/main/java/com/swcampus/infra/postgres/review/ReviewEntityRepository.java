@@ -25,13 +25,13 @@ public class ReviewEntityRepository implements ReviewRepository {
     @Override
     public Optional<Review> findById(Long id) {
         return jpaRepository.findByIdWithDetails(id)
-            .map(ReviewEntity::toDomain);
+                .map(ReviewEntity::toDomain);
     }
 
     @Override
     public Optional<Review> findByMemberIdAndLectureId(Long memberId, Long lectureId) {
         return jpaRepository.findByMemberIdAndLectureIdWithDetails(memberId, lectureId)
-            .map(ReviewEntity::toDomain);
+                .map(ReviewEntity::toDomain);
     }
 
     @Override
@@ -42,21 +42,26 @@ public class ReviewEntityRepository implements ReviewRepository {
     @Override
     public List<Review> findByLectureIdAndApprovalStatus(Long lectureId, ApprovalStatus status) {
         return jpaRepository.findByLectureIdAndApprovalStatusWithDetails(lectureId, status).stream()
-            .map(ReviewEntity::toDomain)
-            .toList();
+                .map(ReviewEntity::toDomain)
+                .toList();
     }
 
     @Override
     public List<Review> findByApprovalStatus(ApprovalStatus status) {
         return jpaRepository.findByApprovalStatusWithDetails(status).stream()
-            .map(ReviewEntity::toDomain)
-            .toList();
+                .map(ReviewEntity::toDomain)
+                .toList();
     }
 
     @Override
     public List<Review> findPendingReviews() {
         return jpaRepository.findByApprovalStatusWithDetails(ApprovalStatus.PENDING).stream()
-            .map(ReviewEntity::toDomain)
-            .toList();
+                .map(ReviewEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public Double getAverageScoreByLectureId(Long lectureId) {
+        return jpaRepository.findAverageScoreByLectureId(lectureId);
     }
 }

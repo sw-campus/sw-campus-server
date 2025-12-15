@@ -44,6 +44,7 @@ import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.review.ReviewRepository;
 
 @WebMvcTest(controllers = LectureController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @AutoConfigureMockMvc(addFilters = false)
@@ -66,6 +67,9 @@ class LectureControllerTest {
 
         @MockitoBean
         private TokenProvider tokenProvider;
+
+        @MockitoBean
+        private ReviewRepository reviewRepository;
 
         @BeforeEach
         void setUp() {
@@ -142,13 +146,15 @@ class LectureControllerTest {
                                 .status(LectureStatus.RECRUITING)
                                 .build();
                 when(lectureService.getPublishedLecture(100L)).thenReturn(lecture);
+                when(reviewRepository.getAverageScoreByLectureId(100L)).thenReturn(4.5);
 
                 // when & then
                 mockMvc.perform(get("/api/v1/lectures/{lectureId}", 100L)
                                 .with(csrf()))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.lecture_id").value(100))
-                                .andExpect(jsonPath("$.lecture_name").value("Test Lecture"));
+                                .andExpect(jsonPath("$.lecture_name").value("Test Lecture"))
+                                .andExpect(jsonPath("$.average_score").value(4.5));
         }
 
         @Test
@@ -170,6 +176,7 @@ class LectureControllerTest {
                 Page<Lecture> page = new PageImpl<>(List.of(lecture), Pageable.unpaged(), 1);
 
                 when(lectureService.searchLectures(any(LectureSearchCondition.class))).thenReturn(page);
+                when(reviewRepository.getAverageScoreByLectureId(100L)).thenReturn(4.2);
 
                 // when & then
                 mockMvc.perform(get("/api/v1/lectures/search")
@@ -179,6 +186,7 @@ class LectureControllerTest {
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.content[0].lecture_id").value(100))
                                 .andExpect(jsonPath("$.content[0].lecture_name").value("Search Result"))
-                                .andExpect(jsonPath("$.content[0].steps[0].step_type").value("CODING_TEST"));
+                                .andExpect(jsonPath("$.content[0].steps[0].step_type").value("CODING_TEST"))
+                                .andExpect(jsonPath("$.content[0].average_score").value(4.2));
         }
 }

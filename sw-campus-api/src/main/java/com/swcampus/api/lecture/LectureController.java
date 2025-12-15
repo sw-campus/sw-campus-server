@@ -30,6 +30,7 @@ import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.review.ReviewRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -52,6 +53,7 @@ public class LectureController {
 
 	private final LectureService lectureService;
 	private final OrganizationService organizationService;
+	private final ReviewRepository reviewRepository;
 	private final ObjectMapper objectMapper;
 	private final Validator validator;
 
@@ -170,7 +172,8 @@ public class LectureController {
 		if (lecture.getOrgId() != null) {
 			organization = organizationService.getOrganization(lecture.getOrgId());
 		}
-		return ResponseEntity.ok(LectureResponse.from(lecture, organization));
+		Double averageScore = reviewRepository.getAverageScoreByLectureId(lectureId);
+		return ResponseEntity.ok(LectureResponse.from(lecture, organization, averageScore));
 	}
 
 	@GetMapping("/search")
@@ -181,7 +184,10 @@ public class LectureController {
 	public ResponseEntity<Page<LectureResponse>> searchLectures(
 			@Valid @ModelAttribute LectureSearchRequest request) {
 		Page<Lecture> lectures = lectureService.searchLectures(request.toCondition());
-		Page<LectureResponse> response = lectures.map(LectureResponse::from);
+		Page<LectureResponse> response = lectures.map(lecture -> {
+			Double averageScore = reviewRepository.getAverageScoreByLectureId(lecture.getLectureId());
+			return LectureResponse.from(lecture, null, averageScore);
+		});
 		return ResponseEntity.ok(response);
 	}
 
