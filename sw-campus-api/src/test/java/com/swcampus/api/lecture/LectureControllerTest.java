@@ -146,7 +146,7 @@ class LectureControllerTest {
                                 .status(LectureStatus.RECRUITING)
                                 .build();
                 when(lectureService.getPublishedLecture(100L)).thenReturn(lecture);
-                when(reviewRepository.getAverageScoreByLectureId(100L)).thenReturn(4.5);
+                when(lectureService.getAverageScoresByLectureIds(List.of(100L))).thenReturn(java.util.Map.of(100L, 4.5));
 
                 // when & then
                 mockMvc.perform(get("/api/v1/lectures/{lectureId}", 100L)
@@ -176,7 +176,7 @@ class LectureControllerTest {
                 Page<Lecture> page = new PageImpl<>(List.of(lecture), Pageable.unpaged(), 1);
 
                 when(lectureService.searchLectures(any(LectureSearchCondition.class))).thenReturn(page);
-                when(reviewRepository.getAverageScoreByLectureId(100L)).thenReturn(4.2);
+                when(lectureService.getAverageScoresByLectureIds(anyList())).thenReturn(java.util.Map.of(100L, 4.2));
 
                 // when & then
                 mockMvc.perform(get("/api/v1/lectures/search")

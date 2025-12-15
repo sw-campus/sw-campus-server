@@ -100,7 +100,7 @@ class OrganizationControllerTest {
                 .status(LectureStatus.RECRUITING)
                 .build();
         when(lectureService.getPublishedLectureListByOrgId(10L)).thenReturn(List.of(lecture));
-        when(reviewRepository.getAverageScoreByLectureId(100L)).thenReturn(4.3);
+        when(lectureService.getAverageScoresByLectureIds(anyList())).thenReturn(java.util.Map.of(100L, 4.3));
 
         // when & then
         mockMvc.perform(get("/api/v1/organizations/{organizationId}/lectures", 10L))

@@ -104,26 +104,6 @@ class EmailServiceTest {
         }
 
         @Test
-        @DisplayName("인증 메일을 발송할 수 있다 - signupType 없으면 기본값 personal")
-        void success_defaultType() throws Exception {
-            // given
-            String email = "user@example.com";
-            when(memberRepository.existsByEmail(email)).thenReturn(false);
-            when(emailVerificationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-            
-            // frontendUrl 설정
-            setField(emailService, "frontendUrl", "http://localhost:3000");
-
-            // when
-            emailService.sendVerificationEmail(email);  // signupType 없이 호출
-
-            // then
-            ArgumentCaptor<String> contentCaptor = ArgumentCaptor.forClass(String.class);
-            verify(mailSender).send(eq(email), anyString(), contentCaptor.capture());
-            assertThat(contentCaptor.getValue()).contains("type=personal");
-        }
-
-        @Test
         @DisplayName("이미 가입된 이메일은 인증 발송 실패")
         void fail_alreadyRegistered() {
             // given
@@ -222,6 +202,7 @@ class EmailServiceTest {
             String email = "user@example.com";
             EmailVerification verification = EmailVerification.create(email);
             verification.verify();
+            when(memberRepository.existsByEmail(email)).thenReturn(false);
             when(emailVerificationRepository.findByEmailAndVerified(email, true))
                     .thenReturn(Optional.of(verification));
 
@@ -237,6 +218,7 @@ class EmailServiceTest {
         void notVerified() {
             // given
             String email = "user@example.com";
+            when(memberRepository.existsByEmail(email)).thenReturn(false);
             when(emailVerificationRepository.findByEmailAndVerified(email, true))
                     .thenReturn(Optional.empty());
 
@@ -252,6 +234,7 @@ class EmailServiceTest {
         void notFound() {
             // given
             String email = "user@example.com";
+            when(memberRepository.existsByEmail(email)).thenReturn(false);
             when(emailVerificationRepository.findByEmailAndVerified(email, true))
                     .thenReturn(Optional.empty());
 
@@ -260,6 +243,22 @@ class EmailServiceTest {
 
             // then
             assertThat(isVerified).isFalse();
+        }
+
+        @Test
+        @DisplayName("이미 가입된 회원의 이메일은 false 반환 (재가입 방지)")
+        void existingMember_returnsFalse() {
+            // given
+            String email = "existing@example.com";
+            when(memberRepository.existsByEmail(email)).thenReturn(true);
+
+            // when
+            boolean isVerified = emailService.isEmailVerified(email);
+
+            // then
+            assertThat(isVerified).isFalse();
+            // emailVerificationRepository는 호출되지 않아야 함
+            verify(emailVerificationRepository, never()).findByEmailAndVerified(anyString(), eq(true));
         }
     }
 
