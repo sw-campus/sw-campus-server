@@ -35,8 +35,9 @@ public interface LectureJpaRepository extends JpaRepository<LectureEntity, Long>
         List<LectureEntity> findAllByOrgIdAndLectureAuthStatusWithCurriculums(@Param("orgId") Long orgId,
                         @Param("authStatus") LectureAuthStatus authStatus);
 
-        @Query("SELECT l.orgId, COUNT(l) FROM LectureEntity l WHERE l.status = :status AND l.orgId IN :orgIds GROUP BY l.orgId")
+        @Query("SELECT l.orgId, COUNT(l) FROM LectureEntity l WHERE l.status = :status AND l.lectureAuthStatus = :authStatus AND l.orgId IN :orgIds GROUP BY l.orgId")
         List<Object[]> countByStatusAndOrgIdInGroupByOrgId(@Param("status") LectureStatus status,
+                        @Param("authStatus") LectureAuthStatus authStatus,
                         @Param("orgIds") List<Long> orgIds);
 
         @Query("SELECT l.lectureId, l.lectureName FROM LectureEntity l WHERE l.lectureId IN :ids")

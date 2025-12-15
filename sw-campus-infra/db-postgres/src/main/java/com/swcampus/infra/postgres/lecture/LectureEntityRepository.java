@@ -147,6 +147,19 @@ public class LectureEntityRepository implements LectureRepository {
 	}
 
 	@Override
+	public Map<Long, String> findLectureNamesByIds(List<Long> lectureIds) {
+		if (lectureIds == null || lectureIds.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		List<Object[]> results = jpaRepository.findIdAndNameByIdIn(lectureIds);
+		return results.stream()
+				.collect(java.util.stream.Collectors.toMap(
+						row -> (Long) row[0],
+						row -> (String) row[1]
+				));
+	}
+
+	@Override
 	public Page<Lecture> searchLectures(LectureSearchCondition condition) {
 		List<Lecture> content = lectureMapper.selectLectures(condition).stream()
 				.map(LectureEntity::toDomain)
@@ -182,11 +195,12 @@ public class LectureEntityRepository implements LectureRepository {
 	}
 
 	@Override
-	public Map<Long, Long> countLecturesByStatusAndOrgIdIn(LectureStatus status, List<Long> orgIds) {
+	public Map<Long, Long> countLecturesByStatusAndAuthStatusAndOrgIdIn(LectureStatus status,
+			LectureAuthStatus authStatus, List<Long> orgIds) {
 		if (orgIds == null || orgIds.isEmpty()) {
 			return Map.of();
 		}
-		List<Object[]> results = jpaRepository.countByStatusAndOrgIdInGroupByOrgId(status, orgIds);
+		List<Object[]> results = jpaRepository.countByStatusAndOrgIdInGroupByOrgId(status, authStatus, orgIds);
 		return results.stream()
 				.collect(java.util.stream.Collectors.toMap(
 						row -> (Long) row[0],

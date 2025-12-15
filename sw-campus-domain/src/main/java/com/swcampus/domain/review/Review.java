@@ -65,6 +65,13 @@ public class Review {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void resubmit() {
+        if (this.approvalStatus != ApprovalStatus.REJECTED) {
+            throw new IllegalStateException("반려된 후기만 재제출할 수 있습니다.");
+        }
+        this.approvalStatus = ApprovalStatus.PENDING;
+    }
+
     public void approve() {
         this.approvalStatus = ApprovalStatus.APPROVED;
     }

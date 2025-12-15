@@ -44,6 +44,7 @@ import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.review.ReviewRepository;
 
 @WebMvcTest(controllers = LectureController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @AutoConfigureMockMvc(addFilters = false)
@@ -67,6 +68,9 @@ class LectureControllerTest {
         @MockitoBean
         private TokenProvider tokenProvider;
 
+        @MockitoBean
+        private ReviewRepository reviewRepository;
+
         @BeforeEach
         void setUp() {
                 UsernamePasswordAuthenticationToken authentication = mock(
@@ -82,7 +86,7 @@ class LectureControllerTest {
                 // given
                 // LectureCreateRequest의 모든 필드를 null로 설정하되 필수값만 채움
                 LectureCreateRequest request = new LectureCreateRequest(
-                                1L, "Java Spring 강의", null, null, null, OFFLINE, null, CARD_REQUIRED,
+                                "Java Spring 강의", null, null, null, OFFLINE, null, CARD_REQUIRED,
                                 null, null, null, null, 100, NONE, null, false, false, false, false, null, null, null,
                                 null, null, null, false, "2024-01-01", "2024-12-31", null, null, null,
                                 null, null, null,
@@ -141,14 +145,16 @@ class LectureControllerTest {
                                 .lectureName("Test Lecture")
                                 .status(LectureStatus.RECRUITING)
                                 .build();
-                when(lectureService.getLecture(100L)).thenReturn(lecture);
+                when(lectureService.getPublishedLecture(100L)).thenReturn(lecture);
+                when(reviewRepository.getAverageScoreByLectureId(100L)).thenReturn(4.5);
 
                 // when & then
                 mockMvc.perform(get("/api/v1/lectures/{lectureId}", 100L)
                                 .with(csrf()))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.lecture_id").value(100))
-                                .andExpect(jsonPath("$.lecture_name").value("Test Lecture"));
+                                .andExpect(jsonPath("$.lecture_name").value("Test Lecture"))
+                                .andExpect(jsonPath("$.average_score").value(4.5));
         }
 
         @Test
@@ -170,6 +176,7 @@ class LectureControllerTest {
                 Page<Lecture> page = new PageImpl<>(List.of(lecture), Pageable.unpaged(), 1);
 
                 when(lectureService.searchLectures(any(LectureSearchCondition.class))).thenReturn(page);
+                when(reviewRepository.getAverageScoreByLectureId(100L)).thenReturn(4.2);
 
                 // when & then
                 mockMvc.perform(get("/api/v1/lectures/search")
@@ -179,6 +186,7 @@ class LectureControllerTest {
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.content[0].lecture_id").value(100))
                                 .andExpect(jsonPath("$.content[0].lecture_name").value("Search Result"))
-                                .andExpect(jsonPath("$.content[0].steps[0].step_type").value("CODING_TEST"));
+                                .andExpect(jsonPath("$.content[0].steps[0].step_type").value("CODING_TEST"))
+                                .andExpect(jsonPath("$.content[0].average_score").value(4.2));
         }
 }

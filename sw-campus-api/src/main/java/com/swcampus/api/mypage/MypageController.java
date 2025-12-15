@@ -1,0 +1,254 @@
+package com.swcampus.api.mypage;
+
+import com.swcampus.api.mypage.request.UpsertSurveyRequest;
+import com.swcampus.api.mypage.request.UpdateProfileRequest;
+import com.swcampus.api.mypage.response.MyLectureListResponse;
+import com.swcampus.api.mypage.response.MyReviewListResponse;
+import com.swcampus.api.mypage.response.MypageProfileResponse;
+import com.swcampus.api.mypage.response.OrganizationInfoResponse;
+import com.swcampus.api.mypage.response.SurveyResponse;
+import com.swcampus.api.exception.FileProcessingException;
+import com.swcampus.api.security.CurrentMember;
+import com.swcampus.domain.auth.MemberPrincipal;
+import com.swcampus.domain.lecture.Lecture;
+import com.swcampus.domain.lecture.LectureService;
+import com.swcampus.domain.member.Member;
+import com.swcampus.domain.member.MemberService;
+import com.swcampus.domain.member.Role;
+import com.swcampus.domain.organization.Organization;
+import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.review.Review;
+import com.swcampus.domain.review.ReviewService;
+import com.swcampus.domain.survey.MemberSurveyService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import java.util.List;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import io.swagger.v3.oas.annotations.Parameter;
+
+@Tag(name = "마이페이지", description = "마이페이지 관련 API")
+@RestController
+@RequestMapping("/api/v1/mypage")
+@RequiredArgsConstructor
+@SecurityRequirement(name = "cookieAuth")
+public class MypageController {
+
+    private final MemberService memberService;
+    private final ReviewService reviewService;
+    private final LectureService lectureService;
+    private final MemberSurveyService memberSurveyService;
+    private final OrganizationService organizationService;
+
+    @Operation(summary = "내 정보 조회", description = "로그인한 사용자의 프로필 정보를 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @GetMapping("/profile")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MypageProfileResponse> getProfile(@CurrentMember MemberPrincipal member) {
+        Member memberEntity = memberService.getMember(member.memberId());
+        boolean hasSurvey = false;
+        if (member.role() == Role.USER) {
+            hasSurvey = memberSurveyService.existsByMemberId(member.memberId());
+        }
+        return ResponseEntity.ok(MypageProfileResponse.from(memberEntity, hasSurvey));
+    }
+
+    @Operation(summary = "내 정보 수정", description = "로그인한 사용자의 프로필 정보를 수정합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "수정 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @PatchMapping("/profile")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> updateProfile(
+        @CurrentMember MemberPrincipal member,
+        @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        memberService.updateProfile(member.memberId(), request.nickname(), request.phone(), request.location());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "내 후기 목록 조회", description = "내가 작성한 후기 목록을 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공 (없을 경우 빈 배열)"),
+        @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @GetMapping("/reviews")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<MyReviewListResponse>> getMyReviews(@CurrentMember MemberPrincipal member) {
+        List<Review> reviews = reviewService.findAllByMemberId(member.memberId());
+        List<Long> lectureIds = reviews.stream().map(Review::getLectureId).toList();
+        
+        // Note: lectureService.getLectureNames uses 'IN' clause, so N+1 problem is avoided here.
+        // However, be careful not to change this to individual queries in the future.
+        Map<Long, String> lectureNames = lectureService.getLectureNames(lectureIds);
+
+        List<MyReviewListResponse> response = reviews.stream()
+            .map(review -> MyReviewListResponse.from(review, lectureNames.getOrDefault(review.getLectureId(), "Unknown")))
+            .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "설문조사 조회", description = "나의 설문조사 정보를 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @GetMapping("/survey")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<SurveyResponse> getSurvey(@CurrentMember MemberPrincipal member) {
+        return memberSurveyService.findSurveyByMemberId(member.memberId())
+            .map(SurveyResponse::from)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.ok(SurveyResponse.empty()));
+    }
+
+    @Operation(summary = "설문조사 등록/수정", description = "설문조사 정보를 등록하거나 수정합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "저장 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @PutMapping("/survey")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> saveSurvey(
+        @CurrentMember MemberPrincipal member,
+        @Valid @RequestBody UpsertSurveyRequest request
+    ) {
+        memberSurveyService.upsertSurvey(
+            member.memberId(),
+            request.major(),
+            request.bootcampCompleted(),
+            request.wantedJobs(),
+            request.licenses(),
+            request.hasGovCard(),
+            request.affordableAmount()
+        );
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "내 강의 목록 조회", description = "내가 등록한(기관) 강의 목록을 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "기관 회원이 아님")
+    })
+    @GetMapping("/lectures")
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ResponseEntity<List<MyLectureListResponse>> getMyLectures(@CurrentMember MemberPrincipal member) {
+        Organization org = organizationService.getOrganizationByUserId(member.memberId());
+        List<Lecture> lectures = lectureService.findAllByOrgId(org.getId());
+
+        List<MyLectureListResponse> response = lectures.stream()
+            .map(MyLectureListResponse::from)
+            .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "기관 정보 조회", description = "나의 기관 정보를 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "기관 회원이 아님")
+    })
+    @GetMapping("/organization")
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ResponseEntity<OrganizationInfoResponse> getOrganization(@CurrentMember MemberPrincipal member) {
+        Organization org = organizationService.getOrganizationByUserId(member.memberId());
+        Member memberEntity = memberService.getMember(member.memberId());
+        return ResponseEntity.ok(OrganizationInfoResponse.from(org, memberEntity));
+    }
+
+    @Operation(summary = "기관 정보 수정", description = "기관 정보를 수정합니다. (파일 업로드 포함)")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "수정 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "기관 회원이 아님")
+    })
+    @PatchMapping(value = "/organization", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ResponseEntity<Void> updateOrganization(
+        @CurrentMember MemberPrincipal member,
+        @Parameter(description = "기관명", example = "SW Campus")
+        @RequestPart(name = "organizationName") String organizationName,
+        @Parameter(description = "기관 설명")
+        @RequestPart(name = "description", required = false) String description,
+        @Parameter(description = "전화번호", example = "02-1234-5678")
+        @RequestPart(name = "phone", required = false) String phone,
+        @Parameter(description = "주소", example = "서울시 강남구 테헤란로 123")
+        @RequestPart(name = "location") String location,
+        @Parameter(description = "홈페이지 URL", example = "https://example.com")
+        @RequestPart(name = "homepage", required = false) String homepage,
+        @Parameter(description = "정부 인증 정보", example = "HRD-Net 인증")
+        @RequestPart(name = "govAuth", required = false) String govAuth,
+        @Parameter(description = "사업자등록증 파일")
+        @RequestPart(name = "businessRegistration", required = false) MultipartFile businessRegistration,
+        @Parameter(description = "기관 로고 이미지")
+        @RequestPart(name = "logo", required = false) MultipartFile logo,
+        @Parameter(description = "시설 이미지 1")
+        @RequestPart(name = "facilityImage1", required = false) MultipartFile facilityImage1,
+        @Parameter(description = "시설 이미지 2")
+        @RequestPart(name = "facilityImage2", required = false) MultipartFile facilityImage2,
+        @Parameter(description = "시설 이미지 3")
+        @RequestPart(name = "facilityImage3", required = false) MultipartFile facilityImage3,
+        @Parameter(description = "시설 이미지 4")
+        @RequestPart(name = "facilityImage4", required = false) MultipartFile facilityImage4
+    ) {
+        // Update Member Info (Phone, Address)
+        memberService.updateProfile(member.memberId(), null, phone, location);
+
+        // Update Organization Info
+        Organization org = organizationService.getOrganizationByUserId(member.memberId());
+
+        try {
+            var params = new com.swcampus.domain.organization.dto.UpdateOrganizationParams(
+                organizationName,
+                description,
+                homepage,
+                govAuth,
+                toFileUploadData(businessRegistration),
+                toFileUploadData(logo),
+                toFileUploadData(facilityImage1),
+                toFileUploadData(facilityImage2),
+                toFileUploadData(facilityImage3),
+                toFileUploadData(facilityImage4)
+            );
+            organizationService.updateOrganization(org.getId(), member.memberId(), params);
+        } catch (java.io.IOException e) {
+            throw new FileProcessingException("파일 처리 중 오류가 발생했습니다.", e);
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    private com.swcampus.domain.organization.dto.UpdateOrganizationParams.FileUploadData toFileUploadData(
+            MultipartFile file) throws java.io.IOException {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+        return new com.swcampus.domain.organization.dto.UpdateOrganizationParams.FileUploadData(
+            file.getBytes(), file.getOriginalFilename(), file.getContentType());
+    }
+}
