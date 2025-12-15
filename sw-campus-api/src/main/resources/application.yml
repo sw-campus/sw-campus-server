@@ -23,9 +23,9 @@ spring:
   # Spring Batch
   batch:
     jdbc:
-      initialize-schema: always  # 또는 embedded, never
-      job:
-        enabled: false  # 애플리케이션 시작 시 자동 실행 방지
+      initialize-schema: never  # 또는 embedded, never
+    job:
+      enabled: false  # 애플리케이션 시작 시 자동 실행 방지
 
   # Mail (SMTP)
   mail:
