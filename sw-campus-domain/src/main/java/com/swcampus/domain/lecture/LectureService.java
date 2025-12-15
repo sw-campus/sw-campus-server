@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
+import com.swcampus.domain.lecture.exception.LectureNotModifiableException;
 import com.swcampus.domain.teacher.Teacher;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -67,6 +68,10 @@ public class LectureService {
 			throw new AccessDeniedException("해당 강의를 수정할 권한이 없습니다.");
 		}
 
+		if (existingLecture.getLectureAuthStatus() != LectureAuthStatus.REJECTED) {
+			throw new LectureNotModifiableException();
+		}
+
 		String imageUrl = existingLecture.getLectureImageUrl();
 
 		if (imageContent != null && imageContent.length > 0) {
@@ -79,7 +84,7 @@ public class LectureService {
 				.lectureId(lectureId)
 				.lectureImageUrl(imageUrl)
 				.status(existingLecture.getStatus())
-				.lectureAuthStatus(existingLecture.getLectureAuthStatus())
+				.lectureAuthStatus(LectureAuthStatus.PENDING)
 				.createdAt(existingLecture.getCreatedAt())
 				.teachers(updatedTeachers)
 				.build();
@@ -89,6 +94,10 @@ public class LectureService {
 	public Lecture getLecture(Long lectureId) {
 		return lectureRepository.findById(lectureId)
 				.orElseThrow(() -> new ResourceNotFoundException("Lecture not found with id: " + lectureId));
+	}
+
+	public List<Lecture> findAllByOrgId(Long orgId) {
+		return lectureRepository.findAllByOrgId(orgId);
 	}
 
 	public Lecture getPublishedLecture(Long lectureId) {
@@ -103,9 +112,8 @@ public class LectureService {
 		return lectureRepository.searchLectures(condition);
 	}
 
-	@Transactional(readOnly = true)
-	public List<Lecture> getLectureListByOrgId(Long orgId) {
-		return lectureRepository.findAllByOrgId(orgId);
+	public Map<Long, String> getLectureNames(List<Long> lectureIds) {
+		return lectureRepository.findLectureNamesByIds(lectureIds);
 	}
 
 	@Transactional(readOnly = true)

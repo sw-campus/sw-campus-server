@@ -101,19 +101,14 @@ public class Member {
         return "사용자_" + randomSuffix;
     }
 
-    /**
-     * 프로필 수정 (선택적 필드)
-     */
     public void updateProfile(String nickname, String phone, String location) {
-        if (nickname != null && !nickname.isBlank()) {
-            this.nickname = nickname;
-        }
-        if (phone != null) {
-            this.phone = phone;
-        }
-        if (location != null) {
-            this.location = location;
-        }
+        if (nickname != null && !nickname.isBlank()) this.nickname = nickname;
+        if (phone != null) this.phone = phone;
+        if (location != null) this.location = location;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isSocialUser() {
+        return this.password == null || this.password.isBlank();
     }
 }

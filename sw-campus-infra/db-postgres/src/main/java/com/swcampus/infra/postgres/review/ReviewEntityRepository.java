@@ -77,4 +77,11 @@ public class ReviewEntityRepository implements ReviewRepository {
                         row -> (Long) row[0],
                         row -> (Double) row[1]));
     }
+
+    @Override
+    public List<Review> findAllByMemberId(Long memberId) {
+        return jpaRepository.findAllByMemberIdWithDetails(memberId).stream()
+            .map(ReviewEntity::toDomain)
+            .toList();
+    }
 }

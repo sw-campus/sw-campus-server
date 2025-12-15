@@ -91,8 +91,18 @@ public class Organization {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void updateCertificateUrl(String certificateUrl) {
+        this.certificateUrl = certificateUrl;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void setGovAuth(String govAuth) {
         this.govAuth = govAuth;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateHomepage(String homepage) {
+        this.homepage = homepage;
         this.updatedAt = LocalDateTime.now();
     }
 }

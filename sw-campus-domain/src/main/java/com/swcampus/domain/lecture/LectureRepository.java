@@ -16,11 +16,13 @@ public interface LectureRepository {
 
     Optional<Lecture> findById(Long id);
 
+    List<Lecture> findAllByOrgId(Long orgId);
+
+    Map<Long, String> findLectureNamesByIds(List<Long> lectureIds);
+
     Page<Lecture> searchLectures(LectureSearchCondition condition);
 
     List<Lecture> findAllExpiredAndRecruiting(LocalDateTime now);
-
-    List<Lecture> findAllByOrgId(Long orgId);
 
     List<Lecture> findAllByOrgIdAndLectureAuthStatus(Long orgId, LectureAuthStatus status);
 

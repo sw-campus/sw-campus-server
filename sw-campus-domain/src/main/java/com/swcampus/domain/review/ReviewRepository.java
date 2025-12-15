@@ -19,6 +19,8 @@ public interface ReviewRepository {
 
     List<Review> findPendingReviews();
 
+    List<Review> findAllByMemberId(Long memberId);
+
     Double getAverageScoreByLectureId(Long lectureId);
 
     Map<Long, Double> getAverageScoresByLectureIds(List<Long> lectureIds);
