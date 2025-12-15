@@ -166,7 +166,7 @@ public class LectureEntityRepository implements LectureRepository {
 
 	@Override
 	public List<Lecture> findAllByOrgId(Long orgId) {
-		return jpaRepository.findAllByOrgId(orgId)
+		return jpaRepository.findAllByOrgIdWithCurriculums(orgId)
 				.stream()
 				.map(LectureEntity::toDomain)
 				.toList();
