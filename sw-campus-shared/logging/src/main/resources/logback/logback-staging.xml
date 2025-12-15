@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+
+    <!-- Spring Boot 기본 로깅 설정 상속 -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- 로그 경로 -->
+    <!--    <property name="LOG_PATH" value="/var/log/swcampus/staging"/>-->
+    <!--    <property name="LOG_FILE" value="${LOG_PATH}/application.log"/>-->
+
+    <!-- 콘솔 로깅 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %clr(%d{HH:mm:ss.SSS}){faint} | %clr(%-5level){highlight} | %logger{36} - %msg%n
+            </pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 파일 로그 (Rolling) -->
+    <!--    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+    <!--        <file>${LOG_FILE}</file>-->
+
+    <!--        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
+    <!--            &lt;!&ndash; 하루 단위 롤링 &ndash;&gt;-->
+    <!--            <fileNamePattern>${LOG_PATH}/application.%d{yyyy-MM-dd}.log</fileNamePattern>-->
+    <!--            &lt;!&ndash; 14일 보관 &ndash;&gt;-->
+    <!--            <maxHistory>14</maxHistory>-->
+    <!--        </rollingPolicy>-->
+
+    <!--        <encoder>-->
+    <!--            <pattern>-->
+    <!--                %d{yyyy-MM-dd HH:mm:ss.SSS} | %-5level | %mdc{traceId:-} | %logger{36} - %msg%n-->
+    <!--            </pattern>-->
+    <!--            <charset>UTF-8</charset>-->
+    <!--        </encoder>-->
+    <!--    </appender>-->
+
+    <!-- 패키지별 로그 레벨 -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.hibernate.SQL" level="INFO"/>
+    <logger name="org.hibernate.type.descriptor.sql" level="WARN"/>
+    <logger name="com.swcampus" level="INFO"/>
+
+    <root level="INFO">
+        <!--        <appender-ref ref="FILE"/>-->
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
