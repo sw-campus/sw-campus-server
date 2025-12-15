@@ -11,4 +11,5 @@ public interface ReviewRepository {
     List<Review> findByLectureIdAndApprovalStatus(Long lectureId, ApprovalStatus status);
     List<Review> findByApprovalStatus(ApprovalStatus status);
     List<Review> findPendingReviews();
+    List<Review> findAllByMemberId(Long memberId);
 }

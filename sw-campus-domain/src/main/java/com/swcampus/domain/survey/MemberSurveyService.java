@@ -44,6 +44,14 @@ public class MemberSurveyService {
                 .orElseThrow(() -> new SurveyNotFoundException(memberId));
     }
 
+    public java.util.Optional<MemberSurvey> findSurveyByMemberId(Long memberId) {
+        return surveyRepository.findByMemberId(memberId);
+    }
+
+    public boolean existsByMemberId(Long memberId) {
+        return surveyRepository.existsByMemberId(memberId);
+    }
+
     @Transactional
     public MemberSurvey updateSurvey(
             Long memberId,

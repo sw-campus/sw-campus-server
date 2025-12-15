@@ -95,13 +95,16 @@ public class LectureService {
 				.orElseThrow(() -> new ResourceNotFoundException("Lecture not found with id: " + lectureId));
 	}
 
-	public Page<Lecture> searchLectures(LectureSearchCondition condition) {
-		return lectureRepository.searchLectures(condition);
+	public List<Lecture> findAllByOrgId(Long orgId) {
+		return lectureRepository.findAllByOrgId(orgId);
 	}
 
-	@Transactional(readOnly = true)
-	public List<Lecture> getLectureListByOrgId(Long orgId) {
-		return lectureRepository.findAllByOrgId(orgId);
+	public Map<Long, String> getLectureNames(List<Long> lectureIds) {
+		return lectureRepository.findLectureNamesByIds(lectureIds);
+	}
+
+	public Page<Lecture> searchLectures(LectureSearchCondition condition) {
+		return lectureRepository.searchLectures(condition);
 	}
 
 	public Map<Long, Long> getRecruitingLectureCounts(List<Long> orgIds) {

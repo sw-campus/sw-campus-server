@@ -17,7 +17,7 @@ public record MyReviewListResponse(
     String lectureName,
 
     @Schema(description = "평점")
-    Double rating,
+    Double score,
 
     @Schema(description = "내용")
     String content,

@@ -248,6 +248,13 @@ public class GlobalExceptionHandler {
                                 .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
         }
 
+        @ExceptionHandler(FileProcessingException.class)
+        public ResponseEntity<ErrorResponse> handleFileProcessingException(FileProcessingException e) {
+                log.error("파일 처리 오류: {}", e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "파일 처리 중 오류가 발생했습니다"));
+        }
+
         // === 기타 예외 ===
 
         @ExceptionHandler(Exception.class)

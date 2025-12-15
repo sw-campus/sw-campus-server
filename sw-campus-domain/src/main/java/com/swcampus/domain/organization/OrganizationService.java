@@ -42,7 +42,7 @@ public class OrganizationService {
     }
 
     @Transactional
-    public Organization updateOrganization(Long orgId, Long userId, UpdateOrganizationParams params, 
+    public Organization updateOrganization(Long orgId, Long userId, String name, String description, 
                                            byte[] fileContent, String fileName, String contentType) {
         Organization organization = getOrganization(orgId);
         
@@ -50,14 +50,14 @@ public class OrganizationService {
             throw new AccessDeniedException("해당 업체를 수정할 권한이 없습니다.");
         }
         
-        String logoUrl = organization.getLogoUrl();
+        String certificateUrl = organization.getCertificateUrl();
         if (fileContent != null && fileContent.length > 0) {
-            logoUrl = fileStorageService.upload(fileContent, "organizations", fileName, contentType);
+            certificateUrl = fileStorageService.upload(fileContent, "certificates", fileName, contentType);
         }
         
-        organization.updateInfo(params.name(), params.description());
-        if (logoUrl != null) {
-            organization.updateLogoUrl(logoUrl);
+        organization.updateInfo(name, description != null ? description : organization.getDescription());
+        if (certificateUrl != null) {
+            organization.updateCertificateUrl(certificateUrl);
         }
         
         return organizationRepository.save(organization);

@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 @Schema(description = "설문조사 응답")
 public record SurveyResponse(
-    @Schema(description = "설문조사 ID (Member ID)")
+    @Schema(description = "설문조사 ID (= Member ID)")
     Long surveyId,
 
     @Schema(description = "전공")

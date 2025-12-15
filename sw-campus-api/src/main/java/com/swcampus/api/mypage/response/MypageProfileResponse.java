@@ -18,10 +18,7 @@ public record MypageProfileResponse(
     String phone,
 
     @Schema(description = "주소", example = "서울시 강남구 테헤란로 123")
-    String address,
-
-    @Schema(description = "프로필 이미지 URL")
-    String profileImageUrl,
+    String location,
 
     @Schema(description = "가입 경로", example = "LOCAL")
     String provider,
@@ -39,8 +36,7 @@ public record MypageProfileResponse(
             member.getNickname(),
             member.getPhone(),
             member.getLocation(),
-            null, // TODO: 프로필 이미지 URL 추가 필요
-            member.getPassword() == null ? "OAUTH" : "LOCAL",
+            member.isSocialUser() ? "OAUTH" : "LOCAL",
             member.getRole().name(),
             hasSurvey
         );

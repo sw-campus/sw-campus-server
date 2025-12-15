@@ -20,7 +20,7 @@ public record OrganizationInfoResponse(
     String phone,
 
     @Schema(description = "주소")
-    String address,
+    String location,
 
     @Schema(description = "승인 상태")
     ApprovalStatus approvalStatus

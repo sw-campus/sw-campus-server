@@ -16,4 +16,11 @@ public class MemberService {
         return memberRepository.findById(memberId)
                 .orElseThrow(MemberNotFoundException::new);
     }
+
+    @Transactional
+    public void updateProfile(Long memberId, String nickname, String phone, String address) {
+        Member member = getMember(memberId);
+        member.updateProfile(nickname, phone, address);
+        memberRepository.save(member);
+    }
 }

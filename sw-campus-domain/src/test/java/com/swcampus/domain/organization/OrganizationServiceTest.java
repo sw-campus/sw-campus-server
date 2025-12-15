@@ -1,6 +1,5 @@
 package com.swcampus.domain.organization;
 
-import com.swcampus.domain.organization.dto.UpdateOrganizationParams;
 import com.swcampus.domain.storage.FileStorageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,30 +37,31 @@ class OrganizationServiceTest {
     class UpdateOrganizationTest {
 
         @Test
-        @DisplayName("정보와 로고 이미지를 함께 수정한다")
+        @DisplayName("정보와 사업자등록증을 함께 수정한다")
         void updateOrganization_withImage() {
             // given
             Long orgId = 1L;
             Long userId = 1L;
-            Organization org = Organization.create(userId, "Old Name", "Old Desc", "cert.jpg");
-            UpdateOrganizationParams params = new UpdateOrganizationParams("New Name", "New Desc");
+            Organization org = Organization.create(userId, "Old Name", "Old Desc", "old_cert.jpg");
+            String newName = "New Name";
+            String newDesc = "New Desc";
             byte[] fileContent = "image data".getBytes();
-            String fileName = "logo.jpg";
+            String fileName = "new_cert.jpg";
             String contentType = "image/jpeg";
-            String newLogoUrl = "http://s3/logo.jpg";
+            String newCertUrl = "http://s3/new_cert.jpg";
 
             given(organizationRepository.findById(orgId)).willReturn(Optional.of(org));
-            given(fileStorageService.upload(any(), anyString(), anyString(), anyString())).willReturn(newLogoUrl);
+            given(fileStorageService.upload(any(), anyString(), anyString(), anyString())).willReturn(newCertUrl);
             given(organizationRepository.save(any(Organization.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            Organization result = organizationService.updateOrganization(orgId, userId, params, fileContent, fileName, contentType);
+            Organization result = organizationService.updateOrganization(orgId, userId, newName, newDesc, fileContent, fileName, contentType);
 
             // then
             assertThat(result.getName()).isEqualTo("New Name");
             assertThat(result.getDescription()).isEqualTo("New Desc");
-            assertThat(result.getLogoUrl()).isEqualTo(newLogoUrl);
-            verify(fileStorageService).upload(eq(fileContent), eq("organizations"), eq(fileName), eq(contentType));
+            assertThat(result.getCertificateUrl()).isEqualTo(newCertUrl);
+            verify(fileStorageService).upload(eq(fileContent), eq("certificates"), eq(fileName), eq(contentType));
         }
 
         @Test
@@ -71,18 +71,19 @@ class OrganizationServiceTest {
             Long orgId = 1L;
             Long userId = 1L;
             Organization org = Organization.create(userId, "Old Name", "Old Desc", "cert.jpg");
-            UpdateOrganizationParams params = new UpdateOrganizationParams("New Name", "New Desc");
+            String newName = "New Name";
+            String newDesc = "New Desc";
 
             given(organizationRepository.findById(orgId)).willReturn(Optional.of(org));
             given(organizationRepository.save(any(Organization.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            Organization result = organizationService.updateOrganization(orgId, userId, params, null, null, null);
+            Organization result = organizationService.updateOrganization(orgId, userId, newName, newDesc, null, null, null);
 
             // then
             assertThat(result.getName()).isEqualTo("New Name");
             assertThat(result.getDescription()).isEqualTo("New Desc");
-            assertThat(result.getLogoUrl()).isNull(); // 기존 로고 유지 (null이었음)
+            assertThat(result.getCertificateUrl()).isEqualTo("cert.jpg"); // 기존 인증서 유지
         }
 
         @Test
@@ -93,12 +94,13 @@ class OrganizationServiceTest {
             Long userId = 1L;
             Long otherUserId = 2L;
             Organization org = Organization.create(userId, "Old Name", "Old Desc", "cert.jpg");
-            UpdateOrganizationParams params = new UpdateOrganizationParams("New Name", "New Desc");
+            String newName = "New Name";
+            String newDesc = "New Desc";
 
             given(organizationRepository.findById(orgId)).willReturn(Optional.of(org));
 
             // when & then
-            assertThatThrownBy(() -> organizationService.updateOrganization(orgId, otherUserId, params, null, null, null))
+            assertThatThrownBy(() -> organizationService.updateOrganization(orgId, otherUserId, newName, newDesc, null, null, null))
                     .isInstanceOf(AccessDeniedException.class);
         }
 
@@ -108,12 +110,13 @@ class OrganizationServiceTest {
             // given
             Long orgId = 999L;
             Long userId = 1L;
-            UpdateOrganizationParams params = new UpdateOrganizationParams("New Name", "New Desc");
+            String newName = "New Name";
+            String newDesc = "New Desc";
 
             given(organizationRepository.findById(orgId)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> organizationService.updateOrganization(orgId, userId, params, null, null, null))
+            assertThatThrownBy(() -> organizationService.updateOrganization(orgId, userId, newName, newDesc, null, null, null))
                     .isInstanceOf(com.swcampus.domain.common.ResourceNotFoundException.class);
         }
     }

@@ -11,17 +11,13 @@ public record UpdateOrganizationRequest(
     @NotBlank(message = "기관명은 필수입니다.")
     String organizationName,
 
-    @Schema(description = "대표자명", example = "홍길동")
-    @NotBlank(message = "대표자명은 필수입니다.")
-    String representativeName,
-
     @Schema(description = "전화번호", example = "02-1234-5678")
-    @Pattern(regexp = "^\\d{2,3}-\\d{3,4}-\\d{4}$", message = "전화번호 형식이 올바르지 않습니다.")
+    @Pattern(regexp = "^(\\d{2,3}-\\d{3,4}-\\d{4})?$", message = "전화번호 형식이 올바르지 않습니다.")
     String phone,
 
     @Schema(description = "주소", example = "서울시 강남구 테헤란로 123")
     @NotBlank(message = "주소는 필수입니다.")
-    String address,
+    String location,
 
     @Schema(description = "재직증명서 파일")
     MultipartFile businessRegistration

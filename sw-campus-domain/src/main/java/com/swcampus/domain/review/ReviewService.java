@@ -99,8 +99,11 @@ public class ReviewService {
         // 4. 후기 수정
         review.update(comment, details);
         review.resubmit();
-
         return reviewRepository.save(review);
+    }
+
+    public List<Review> findAllByMemberId(Long memberId) {
+        return reviewRepository.findAllByMemberId(memberId);
     }
 
     /**
