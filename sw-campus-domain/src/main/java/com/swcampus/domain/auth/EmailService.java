@@ -21,10 +21,6 @@ public class EmailService {
     @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;
 
-    public void sendVerificationEmail(String email) {
-        sendVerificationEmail(email, "personal");
-    }
-
     public void sendVerificationEmail(String email, String signupType) {
         // 이미 가입된 이메일 확인
         if (memberRepository.existsByEmail(email)) {
@@ -63,6 +59,10 @@ public class EmailService {
 
     @Transactional(readOnly = true)
     public boolean isEmailVerified(String email) {
+        // 이미 가입된 회원이면 인증 불가 (재가입 방지)
+        if (memberRepository.existsByEmail(email)) {
+            return false;
+        }
         return emailVerificationRepository.findByEmailAndVerified(email, true).isPresent();
     }
 

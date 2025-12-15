@@ -4,7 +4,7 @@ services:
     image: postgres:16
     container_name: sw-campus-postgres
     environment:
-      POSTGRES_DB: sw-campus
+      POSTGRES_DB: swcampus
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:

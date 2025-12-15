@@ -90,11 +90,11 @@ class CategoryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].curriculumId").value(1))
-                .andExpect(jsonPath("$[0].categoryId").value(categoryId))
-                .andExpect(jsonPath("$[0].curriculumName").value("React 기초"))
-                .andExpect(jsonPath("$[1].curriculumId").value(2))
-                .andExpect(jsonPath("$[1].curriculumName").value("React Hooks 마스터"));
+                .andExpect(jsonPath("$[0].curriculum_id").value(1))
+                .andExpect(jsonPath("$[0].category_id").value(categoryId))
+                .andExpect(jsonPath("$[0].curriculum_name").value("React 기초"))
+                .andExpect(jsonPath("$[1].curriculum_id").value(2))
+                .andExpect(jsonPath("$[1].curriculum_name").value("React Hooks 마스터"));
     }
 
     @Test

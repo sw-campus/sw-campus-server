@@ -3,8 +3,11 @@ package com.swcampus.infra.postgres.organization;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import com.swcampus.domain.organization.ApprovalStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationRepository;
 
@@ -56,5 +59,11 @@ public class OrganizationEntityRepository implements OrganizationRepository {
         return jpaRepository.findByNameContaining(keyword).stream()
                 .map(OrganizationEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Page<Organization> findByApprovalStatus(ApprovalStatus status, Pageable pageable) {
+        return jpaRepository.findByApprovalStatus(status, pageable)
+                .map(OrganizationEntity::toDomain);
     }
 }
