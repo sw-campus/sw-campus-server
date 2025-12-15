@@ -12,6 +12,7 @@ import com.swcampus.domain.lecture.LectureAdd;
 import com.swcampus.domain.lecture.LectureCurriculum;
 import com.swcampus.domain.lecture.LectureQual;
 import com.swcampus.domain.lecture.LectureStep;
+import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.teacher.Teacher;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -100,7 +101,11 @@ public record LectureResponse(
 
 		@Schema(description = "카테고리명", example = "백엔드") String categoryName,
 
-		@Schema(description = "커리큘럼 목록") List<CurriculumResponse> curriculums) {
+		@Schema(description = "커리큘럼 목록") List<CurriculumResponse> curriculums,
+
+		@Schema(description = "기관 로고 이미지 URL", example = "https://example.com/logo.jpg") String orgLogoUrl,
+
+		@Schema(description = "기관 시설 이미지 URL 목록") List<String> orgFacilityImageUrls) {
 	public static LectureResponse from(Lecture lecture) {
 		return new LectureResponse(
 				lecture.getLectureId(),
@@ -151,7 +156,77 @@ public record LectureResponse(
 				extractCategoryName(lecture),
 				lecture.getLectureCurriculums() != null
 						? lecture.getLectureCurriculums().stream().map(CurriculumResponse::from).toList()
-						: List.of());
+						: List.of(),
+				null,
+				List.of());
+	}
+
+	public static LectureResponse from(Lecture lecture, Organization organization) {
+		return new LectureResponse(
+				lecture.getLectureId(),
+				lecture.getOrgId(),
+				lecture.getOrgName(),
+				lecture.getLectureName(),
+				lecture.getDays() != null
+						? lecture.getDays().stream().map(Enum::name).collect(Collectors.toSet())
+						: Collections.emptySet(),
+				lecture.getStartTime(),
+				lecture.getEndTime(),
+				lecture.getLectureLoc() != null ? lecture.getLectureLoc().name() : null,
+				lecture.getLocation(),
+				lecture.getRecruitType() != null ? lecture.getRecruitType().name() : null,
+				lecture.getSubsidy(),
+				lecture.getLectureFee(),
+				lecture.getEduSubsidy(),
+				lecture.getGoal(),
+				lecture.getMaxCapacity(),
+				lecture.getEquipPc() != null ? lecture.getEquipPc().name() : null,
+				lecture.getEquipMerit(),
+				lecture.getBooks(),
+				lecture.getResume(),
+				lecture.getMockInterview(),
+				lecture.getEmploymentHelp(),
+				lecture.getAfterCompletion(),
+				lecture.getUrl(),
+				lecture.getLectureImageUrl(),
+				lecture.getStatus().name(),
+				lecture.getLectureAuthStatus() != null ? lecture.getLectureAuthStatus().name() : null,
+
+				lecture.getProjectNum(),
+				lecture.getProjectTime(),
+				lecture.getProjectTeam(),
+				lecture.getProjectTool(),
+				lecture.getProjectMentor(),
+
+				lecture.getStartAt() != null ? lecture.getStartAt().toString() : null,
+				lecture.getEndAt() != null ? lecture.getEndAt().toString() : null,
+				lecture.getDeadline() != null ? lecture.getDeadline().toString() : null,
+				lecture.getTotalDays(),
+				lecture.getTotalTimes(),
+				lecture.getSteps() != null ? lecture.getSteps().stream().map(StepResponse::from).toList() : List.of(),
+				lecture.getAdds() != null ? lecture.getAdds().stream().map(AddResponse::from).toList() : List.of(),
+				lecture.getQuals() != null ? lecture.getQuals().stream().map(QualResponse::from).toList() : List.of(),
+				lecture.getTeachers() != null ? lecture.getTeachers().stream().map(TeacherResponse::from).toList()
+						: List.of(),
+				extractCategoryName(lecture),
+				lecture.getLectureCurriculums() != null
+						? lecture.getLectureCurriculums().stream().map(CurriculumResponse::from).toList()
+						: List.of(),
+				organization != null ? organization.getLogoUrl() : null,
+				extractFacilityImageUrls(organization));
+	}
+
+	private static List<String> extractFacilityImageUrls(Organization organization) {
+		if (organization == null) {
+			return List.of();
+		}
+		return java.util.stream.Stream.of(
+				organization.getFacilityImageUrl(),
+				organization.getFacilityImageUrl2(),
+				organization.getFacilityImageUrl3(),
+				organization.getFacilityImageUrl4())
+				.filter(url -> url != null && !url.isBlank())
+				.toList();
 	}
 
 	private static String extractCategoryName(Lecture lecture) {
