@@ -24,6 +24,7 @@ public class LectureService {
 
 	private final LectureRepository lectureRepository;
 	private final com.swcampus.domain.storage.FileStorageService fileStorageService;
+	private final com.swcampus.domain.review.ReviewRepository reviewRepository;
 
 	@Transactional
 	public Lecture registerLecture(Lecture lecture) {
@@ -123,6 +124,13 @@ public class LectureService {
 	public Map<Long, Long> getRecruitingLectureCounts(List<Long> orgIds) {
 		return lectureRepository.countLecturesByStatusAndAuthStatusAndOrgIdIn(LectureStatus.RECRUITING,
 				LectureAuthStatus.APPROVED, orgIds);
+	}
+
+	public Map<Long, Double> getAverageScoresByLectureIds(List<Long> lectureIds) {
+		if (lectureIds == null || lectureIds.isEmpty()) {
+			return java.util.Collections.emptyMap();
+		}
+		return reviewRepository.getAverageScoresByLectureIds(lectureIds);
 	}
 
 	private List<Teacher> processNewTeachers(List<Teacher> teachers, List<ImageContent> teacherImages) {

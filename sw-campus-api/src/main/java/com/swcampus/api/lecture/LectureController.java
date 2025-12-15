@@ -3,6 +3,7 @@ package com.swcampus.api.lecture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -170,7 +171,9 @@ public class LectureController {
 		if (lecture.getOrgId() != null) {
 			organization = organizationService.getOrganization(lecture.getOrgId());
 		}
-		return ResponseEntity.ok(LectureResponse.from(lecture, organization));
+		Double averageScore = lectureService.getAverageScoresByLectureIds(List.of(lectureId))
+				.getOrDefault(lectureId, null);
+		return ResponseEntity.ok(LectureResponse.from(lecture, organization, averageScore));
 	}
 
 	@GetMapping("/search")
@@ -181,7 +184,17 @@ public class LectureController {
 	public ResponseEntity<Page<LectureResponse>> searchLectures(
 			@Valid @ModelAttribute LectureSearchRequest request) {
 		Page<Lecture> lectures = lectureService.searchLectures(request.toCondition());
-		Page<LectureResponse> response = lectures.map(LectureResponse::from);
+
+		// 배치로 평균 점수 조회 (N+1 문제 해결)
+		List<Long> lectureIds = lectures.getContent().stream()
+				.map(Lecture::getLectureId)
+				.toList();
+		Map<Long, Double> averageScores = lectureService.getAverageScoresByLectureIds(lectureIds);
+
+		Page<LectureResponse> response = lectures.map(lecture -> {
+			Double averageScore = averageScores.get(lecture.getLectureId());
+			return LectureResponse.from(lecture, null, averageScore);
+		});
 		return ResponseEntity.ok(response);
 	}
 
