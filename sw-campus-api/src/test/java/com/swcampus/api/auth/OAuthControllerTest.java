@@ -89,7 +89,7 @@ class OAuthControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.memberId").value(1))
+                    .andExpect(jsonPath("$.member_id").value(1))
                     .andExpect(jsonPath("$.email").value("user@gmail.com"))
                     .andExpect(jsonPath("$.name").value("홍길동"))
                     .andExpect(jsonPath("$.nickname").value("사용자_a1b2c3d4"))
@@ -124,7 +124,7 @@ class OAuthControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.memberId").value(1))
+                    .andExpect(jsonPath("$.member_id").value(1))
                     .andExpect(jsonPath("$.nickname").value("사용자_b2c3d4e5"));
         }
 
@@ -142,7 +142,7 @@ class OAuthControllerTest {
         }
 
         @Test
-        @DisplayName("지원하지 않는 provider면 500 에러")
+        @DisplayName("지원하지 않는 provider면 400 에러")
         void unsupportedProvider() throws Exception {
             // given
             OAuthCallbackRequest request = new OAuthCallbackRequest("some-code");
@@ -151,7 +151,7 @@ class OAuthControllerTest {
             mockMvc.perform(post("/api/v1/auth/oauth/kakao")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
         }
     }
 }

@@ -7,8 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum LectureStatus {
     RECRUITING("모집중"),
-    ONGOING("진행중"),
-    FINISHED("종료");
+    FINISHED("모집 종료");
 
     private final String description;
 }

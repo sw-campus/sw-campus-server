@@ -4,6 +4,7 @@ import com.swcampus.domain.auth.OrganizationSignupCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -50,7 +51,11 @@ public class OrganizationSignupRequest {
     @NotBlank(message = "기관명은 필수입니다")
     private String organizationName;
 
-    public OrganizationSignupCommand toCommand(MultipartFile certificateImage) throws IOException {
+    @Schema(description = "재직증명서 이미지", type = "string", format = "binary", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "재직증명서는 필수입니다")
+    private MultipartFile certificateImage;
+
+    public OrganizationSignupCommand toCommand() throws IOException {
         var builder = OrganizationSignupCommand.builder()
                 .email(email)
                 .password(password)
@@ -60,7 +65,7 @@ public class OrganizationSignupRequest {
                 .location(location)
                 .organizationName(organizationName);
 
-        if (certificateImage != null) {
+        if (certificateImage != null && !certificateImage.isEmpty()) {
             builder.certificateImage(certificateImage.getBytes())
                     .certificateFileName(certificateImage.getOriginalFilename())
                     .certificateContentType(certificateImage.getContentType());

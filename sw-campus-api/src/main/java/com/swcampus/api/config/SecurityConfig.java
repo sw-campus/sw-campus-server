@@ -1,9 +1,7 @@
 package com.swcampus.api.config;
 
-import com.swcampus.api.security.JwtAuthenticationFilter;
-import com.swcampus.domain.auth.TokenProvider;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,11 +12,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.swcampus.api.security.JwtAuthenticationFilter;
+import com.swcampus.domain.auth.TokenProvider;
+
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -57,6 +60,12 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**"
                         ).permitAll()
+                        // 공개 API (조회)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reviews/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/lectures/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/organizations/**").permitAll()
+                        // 관리자 API (인증 필요, 추후 ROLE_ADMIN 추가 가능)
+                        .requestMatchers("/api/v1/admin/**").authenticated()
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )

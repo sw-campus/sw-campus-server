@@ -47,8 +47,8 @@ class EmailServiceTest {
     class SendVerificationEmail {
 
         @Test
-        @DisplayName("인증 메일을 발송할 수 있다")
-        void success() throws Exception {
+        @DisplayName("인증 메일을 발송할 수 있다 - 일반 회원가입")
+        void success_personal() throws Exception {
             // given
             String email = "user@example.com";
             when(memberRepository.existsByEmail(email)).thenReturn(false);
@@ -58,7 +58,7 @@ class EmailServiceTest {
             setField(emailService, "frontendUrl", "http://localhost:3000");
 
             // when
-            emailService.sendVerificationEmail(email);
+            emailService.sendVerificationEmail(email, "personal");
 
             // then
             ArgumentCaptor<EmailVerification> captor = ArgumentCaptor.forClass(EmailVerification.class);
@@ -70,7 +70,57 @@ class EmailServiceTest {
             assertThat(saved.getToken()).hasSize(36); // UUID
             assertThat(saved.isVerified()).isFalse();
             
-            verify(mailSender).send(eq(email), anyString(), anyString());
+            // 인증 링크에 type=personal 포함 확인
+            ArgumentCaptor<String> contentCaptor = ArgumentCaptor.forClass(String.class);
+            verify(mailSender).send(eq(email), anyString(), contentCaptor.capture());
+            assertThat(contentCaptor.getValue()).contains("type=personal");
+        }
+
+        @Test
+        @DisplayName("인증 메일을 발송할 수 있다 - 기관 회원가입")
+        void success_organization() throws Exception {
+            // given
+            String email = "org@example.com";
+            when(memberRepository.existsByEmail(email)).thenReturn(false);
+            when(emailVerificationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+            
+            // frontendUrl 설정
+            setField(emailService, "frontendUrl", "http://localhost:3000");
+
+            // when
+            emailService.sendVerificationEmail(email, "organization");
+
+            // then
+            ArgumentCaptor<EmailVerification> captor = ArgumentCaptor.forClass(EmailVerification.class);
+            verify(emailVerificationRepository).save(captor.capture());
+            
+            EmailVerification saved = captor.getValue();
+            assertThat(saved.getEmail()).isEqualTo(email);
+            
+            // 인증 링크에 type=organization 포함 확인
+            ArgumentCaptor<String> contentCaptor = ArgumentCaptor.forClass(String.class);
+            verify(mailSender).send(eq(email), anyString(), contentCaptor.capture());
+            assertThat(contentCaptor.getValue()).contains("type=organization");
+        }
+
+        @Test
+        @DisplayName("인증 메일을 발송할 수 있다 - signupType 없으면 기본값 personal")
+        void success_defaultType() throws Exception {
+            // given
+            String email = "user@example.com";
+            when(memberRepository.existsByEmail(email)).thenReturn(false);
+            when(emailVerificationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+            
+            // frontendUrl 설정
+            setField(emailService, "frontendUrl", "http://localhost:3000");
+
+            // when
+            emailService.sendVerificationEmail(email);  // signupType 없이 호출
+
+            // then
+            ArgumentCaptor<String> contentCaptor = ArgumentCaptor.forClass(String.class);
+            verify(mailSender).send(eq(email), anyString(), contentCaptor.capture());
+            assertThat(contentCaptor.getValue()).contains("type=personal");
         }
 
         @Test
@@ -81,7 +131,7 @@ class EmailServiceTest {
             when(memberRepository.existsByEmail(email)).thenReturn(true);
 
             // when & then
-            assertThatThrownBy(() -> emailService.sendVerificationEmail(email))
+            assertThatThrownBy(() -> emailService.sendVerificationEmail(email, "personal"))
                     .isInstanceOf(DuplicateEmailException.class);
             
             verify(emailVerificationRepository, never()).save(any());
@@ -98,7 +148,7 @@ class EmailServiceTest {
             setField(emailService, "frontendUrl", "http://localhost:3000");
 
             // when
-            emailService.sendVerificationEmail(email);
+            emailService.sendVerificationEmail(email, "personal");
 
             // then
             verify(emailVerificationRepository).deleteByEmail(email);

@@ -100,11 +100,11 @@ class AuthControllerLoginTest {
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
                     .andExpect(header().exists("Set-Cookie"))
-                    .andExpect(jsonPath("$.userId").value(1))
+                    .andExpect(jsonPath("$.user_id").value(1))
                     .andExpect(jsonPath("$.email").value("user@example.com"))
                     .andExpect(jsonPath("$.name").value("홍길동"))
                     .andExpect(jsonPath("$.role").value("USER"))
-                    .andExpect(jsonPath("$.organizationId").doesNotExist());
+                    .andExpect(jsonPath("$.organization_id").doesNotExist());
         }
 
         @Test
@@ -141,11 +141,11 @@ class AuthControllerLoginTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.userId").value(1))
+                    .andExpect(jsonPath("$.user_id").value(1))
                     .andExpect(jsonPath("$.role").value("ORGANIZATION"))
-                    .andExpect(jsonPath("$.organizationId").value(10))
-                    .andExpect(jsonPath("$.organizationName").value("테스트교육기관"))
-                    .andExpect(jsonPath("$.approvalStatus").value("PENDING"));
+                    .andExpect(jsonPath("$.organization_id").value(10))
+                    .andExpect(jsonPath("$.organization_name").value("테스트교육기관"))
+                    .andExpect(jsonPath("$.approval_status").value("PENDING"));
         }
 
         @Test

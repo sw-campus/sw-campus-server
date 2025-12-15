@@ -33,12 +33,10 @@ public class SignupRequest {
     @NotBlank(message = "닉네임은 필수입니다")
     private String nickname;
 
-    @Schema(description = "전화번호", example = "010-1234-5678", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "전화번호는 필수입니다")
+    @Schema(description = "전화번호", example = "010-1234-5678", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String phone;
 
-    @Schema(description = "주소", example = "서울시 강남구", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "주소는 필수입니다")
+    @Schema(description = "주소", example = "서울시 강남구", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String location;
 
     public SignupCommand toCommand() {

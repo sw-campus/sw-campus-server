@@ -2,9 +2,13 @@ package com.swcampus.api.lecture.request;
 
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
+
+import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
 import com.swcampus.domain.lecture.dto.LectureSortType;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -13,30 +17,44 @@ import lombok.ToString;
 @Setter
 @ToString
 public class LectureSearchRequest {
-    private String text; // 제목, 내용, 기관명 검색
-    
-    private List<String> regions; // 지역 (서울 등)
-    
-    private List<Long> categoryIds; // 선택된 카테고리 ID 목록
 
-    // 비용
+    @Parameter(description = "검색 키워드 (강의명, 기관명)", example = "웹 개발")
+    private String text;
+
+    @Parameter(description = "지역 목록", hidden = true)
+    private List<String> regions;
+
+    @Parameter(description = "카테고리 ID 목록", hidden = true)
+    private List<Long> categoryIds;
+
+    @Parameter(description = "국비지원 무료", hidden = true)
     private Boolean isFreeKdt;
+
+    @Parameter(description = "비국비 무료", example = "false")
     private Boolean isFreeNoKdt;
+
+    @Parameter(description = "유료", example = "false")
     private Boolean isPaid;
 
-    // 선발절차
+    @Parameter(description = "코딩테스트 있음", hidden = true)
     private Boolean hasCodingTest;
+
+    @Parameter(description = "면접 있음", example = "true")
     private Boolean hasInterview;
-    private Boolean hasNoSelection;
-    
-    // 상태 (RECRUITING, ONGOING, FINISHED)
+
+    @Parameter(description = "사전과제 있음", example = "false")
+    private Boolean hasPreTask;
+
+    @Parameter(description = "모집 상태 (RECRUITING: 모집중, FINISHED: 마감)", example = "RECRUITING")
     private String status;
-    
-    // 정렬 (LATEST, FEE_ASC, START_SOON)
+
+    @Parameter(description = "정렬 기준 (LATEST: 최신순, FEE_ASC: 비용낮은순, START_SOON: 시작임박순)", example = "LATEST")
     private LectureSortType sort;
 
-    // 페이지네이션
+    @Parameter(description = "페이지 번호 (1부터 시작)", example = "1")
     private Integer page;
+
+    @Parameter(description = "페이지 크기", example = "20")
     private Integer size;
 
     private static final int DEFAULT_PAGE_SIZE = 20;
@@ -45,7 +63,6 @@ public class LectureSearchRequest {
     public LectureSearchCondition toCondition() {
         int pageNum = (this.page == null || this.page < MIN_PAGE_NUMBER) ? MIN_PAGE_NUMBER : this.page;
         int pageSize = (this.size == null || this.size < 1) ? DEFAULT_PAGE_SIZE : this.size;
-        long offset = (long) (pageNum - 1) * pageSize;
 
         return LectureSearchCondition.builder()
                 .text((this.text != null && !this.text.trim().isEmpty()) ? this.text : null)
@@ -56,11 +73,10 @@ public class LectureSearchRequest {
                 .isPaid(this.isPaid)
                 .hasCodingTest(this.hasCodingTest)
                 .hasInterview(this.hasInterview)
-                .hasNoSelection(this.hasNoSelection)
-                .status(this.status != null ? com.swcampus.domain.lecture.LectureStatus.valueOf(this.status) : null)
+                .hasPreTask(this.hasPreTask)
+                .status(this.status != null ? LectureStatus.valueOf(this.status) : null)
                 .sort(this.sort != null ? this.sort : LectureSortType.LATEST)
-                .limit(pageSize)
-                .offset(offset)
+                .pageable(PageRequest.of(pageNum - 1, pageSize))
                 .build();
     }
 }

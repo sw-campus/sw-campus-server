@@ -1,0 +1,14 @@
+# 무시할 파일을 지정하는 등 사용 설정하거나 사용 중지할 수 있는 다양한 구성 가능한 기능이 포함된 파일
+have_fun: false
+memory_config:
+  disabled: false
+code_review:
+  disable: false
+  comment_severity_threshold: MEDIUM
+  max_review_comments: -1
+  pull_request_opened:
+    help: false
+    summary: true
+    code_review: true
+    include_drafts: true
+ignore_patterns: []

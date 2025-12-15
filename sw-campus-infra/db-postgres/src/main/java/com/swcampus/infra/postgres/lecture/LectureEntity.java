@@ -32,7 +32,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"steps", "adds", "quals", "lectureTeachers", "lectureCurriculums"})
+@ToString(exclude = { "steps", "adds", "quals", "lectureTeachers", "lectureCurriculums" })
 public class LectureEntity {
 
 	@Id
@@ -47,8 +47,10 @@ public class LectureEntity {
 	/**
 	 * Organization name for search result display.
 	 * <p>
-	 * This field is only used for MyBatis result mapping to avoid an N+1 query problem
-	 * when fetching organization names during search results. It should NOT be set or used
+	 * This field is only used for MyBatis result mapping to avoid an N+1 query
+	 * problem
+	 * when fetching organization names during search results. It should NOT be set
+	 * or used
 	 * in JPA operations, as it is not persisted in the database.
 	 */
 	private String orgName;
@@ -111,7 +113,7 @@ public class LectureEntity {
 	private Boolean employmentHelp;
 
 	@Column(name = "AFTER_COMPLETION")
-	private Integer afterCompletion;
+	private Boolean afterCompletion;
 
 	@Column(name = "URL")
 	private String url;
@@ -124,23 +126,24 @@ public class LectureEntity {
 	private com.swcampus.domain.lecture.LectureStatus status;
 
 	@Column(name = "LECTURE_AUTH_STATUS")
-	private Boolean lectureAuthStatus;
-	
-    // Project Related (New)
-    @Column(name = "PROJECT_NUM")
-    private Integer projectNum;
+	@Enumerated(EnumType.STRING)
+	private com.swcampus.domain.lecture.LectureAuthStatus lectureAuthStatus;
 
-    @Column(name = "PROJECT_TIME")
-    private Integer projectTime;
+	// Project Related (New)
+	@Column(name = "PROJECT_NUM")
+	private Integer projectNum;
 
-    @Column(name = "PROJECT_TEAM")
-    private String projectTeam;
+	@Column(name = "PROJECT_TIME")
+	private Integer projectTime;
 
-    @Column(name = "PROJECT_TOOL")
-    private String projectTool;
+	@Column(name = "PROJECT_TEAM")
+	private String projectTeam;
 
-    @Column(name = "PROJECT_MENTOR")
-    private Boolean projectMentor;
+	@Column(name = "PROJECT_TOOL")
+	private String projectTool;
+
+	@Column(name = "PROJECT_MENTOR")
+	private Boolean projectMentor;
 
 	@Column(name = "START_DATE", nullable = false)
 	private LocalDateTime startAt;
@@ -161,7 +164,7 @@ public class LectureEntity {
 	@Column(name = "CREATED_AT")
 	private LocalDateTime createdAt;
 
-	//@UpdateTimestamp // 하위 데이터 변경 시에도 갱신을 위해 수동 관리
+	// @UpdateTimestamp // 하위 데이터 변경 시에도 갱신을 위해 수동 관리
 	@Column(name = "UPDATED_AT")
 	private LocalDateTime updatedAt;
 
@@ -197,7 +200,9 @@ public class LectureEntity {
 				.lectureId(lecture.getLectureId())
 				.orgId(lecture.getOrgId())
 				.lectureName(lecture.getLectureName())
-				.days(lecture.getDays() != null ? lecture.getDays().stream().map(Enum::name).collect(java.util.stream.Collectors.joining(",")) : null)
+				.days(lecture.getDays() != null
+						? lecture.getDays().stream().map(Enum::name).collect(java.util.stream.Collectors.joining(","))
+						: null)
 				.startTime(lecture.getStartTime())
 				.endTime(lecture.getEndTime())
 				.lectureLoc(lecture.getLectureLoc())
@@ -221,7 +226,7 @@ public class LectureEntity {
 				.lectureAuthStatus(lecture.getLectureAuthStatus())
 				.createdAt(lecture.getCreatedAt())
 				// 하위 데이터 변경 시에도 강제로 업데이트 시간 갱신
-				.updatedAt(LocalDateTime.now()) 
+				.updatedAt(LocalDateTime.now())
 				// Project
 				.projectNum(lecture.getProjectNum())
 				.projectTime(lecture.getProjectTime())
@@ -276,7 +281,10 @@ public class LectureEntity {
 	public com.swcampus.domain.lecture.Lecture toDomain() {
 		return com.swcampus.domain.lecture.Lecture.builder()
 				.lectureId(lectureId).orgId(orgId).orgName(orgName).lectureName(lectureName)
-				.days(days != null && !days.isEmpty() ? java.util.Arrays.stream(days.split(",")).map(com.swcampus.domain.lecture.LectureDay::valueOf).collect(java.util.stream.Collectors.toSet()) : java.util.Collections.emptySet())
+				.days(days != null && !days.isEmpty()
+						? java.util.Arrays.stream(days.split(",")).map(com.swcampus.domain.lecture.LectureDay::valueOf)
+								.collect(java.util.stream.Collectors.toSet())
+						: java.util.Collections.emptySet())
 				.startTime(startTime).endTime(endTime)
 				.lectureLoc(lectureLoc).location(location).recruitType(recruitType)
 				.subsidy(subsidy).lectureFee(lectureFee).eduSubsidy(eduSubsidy)
@@ -287,11 +295,12 @@ public class LectureEntity {
 				.url(url).lectureImageUrl(lectureImageUrl)
 				.status(status).lectureAuthStatus(lectureAuthStatus)
 				// Project
-				.projectNum(projectNum).projectTime(projectTime).projectTeam(projectTeam).projectTool(projectTool).projectMentor(projectMentor)
+				.projectNum(projectNum).projectTime(projectTime).projectTeam(projectTeam).projectTool(projectTool)
+				.projectMentor(projectMentor)
 				.startAt(startAt).endAt(endAt).deadline(deadline).totalDays(totalDays).totalTimes(totalTimes)
 				.createdAt(createdAt).updatedAt(updatedAt)
 				// Lists mapping
-				.steps(steps.stream().map(LectureStepEntity::toDomain).toList())
+				.steps(steps.stream().map(s -> s.toDomain(this.lectureId)).toList())
 				.adds(adds.stream().map(LectureAddEntity::toDomain).toList())
 				.quals(quals.stream().map(LectureQualEntity::toDomain).toList())
 				// N:M mapping (Entity -> Domain)
@@ -302,5 +311,46 @@ public class LectureEntity {
 						.map(LectureCurriculumEntity::toDomain)
 						.toList())
 				.build();
+	}
+
+	public void updateFields(com.swcampus.domain.lecture.Lecture lecture) {
+		this.orgId = lecture.getOrgId();
+		this.lectureName = lecture.getLectureName();
+		this.days = lecture.getDays() != null
+				? lecture.getDays().stream().map(Enum::name).collect(java.util.stream.Collectors.joining(","))
+				: null;
+		this.startTime = lecture.getStartTime();
+		this.endTime = lecture.getEndTime();
+		this.lectureLoc = lecture.getLectureLoc();
+		this.location = lecture.getLocation();
+		this.recruitType = lecture.getRecruitType();
+		this.subsidy = lecture.getSubsidy();
+		this.lectureFee = lecture.getLectureFee();
+		this.eduSubsidy = lecture.getEduSubsidy();
+		this.goal = lecture.getGoal();
+		this.maxCapacity = lecture.getMaxCapacity();
+		this.equipPc = lecture.getEquipPc();
+		this.equipMerit = lecture.getEquipMerit();
+		this.books = lecture.getBooks();
+		this.resume = lecture.getResume();
+		this.mockInterview = lecture.getMockInterview();
+		this.employmentHelp = lecture.getEmploymentHelp();
+		this.afterCompletion = lecture.getAfterCompletion();
+		this.url = lecture.getUrl();
+		this.lectureImageUrl = lecture.getLectureImageUrl();
+		this.status = lecture.getStatus();
+		this.lectureAuthStatus = lecture.getLectureAuthStatus();
+		// Project
+		this.projectNum = lecture.getProjectNum();
+		this.projectTime = lecture.getProjectTime();
+		this.projectTeam = lecture.getProjectTeam();
+		this.projectTool = lecture.getProjectTool();
+		this.projectMentor = lecture.getProjectMentor();
+		this.startAt = lecture.getStartAt();
+		this.endAt = lecture.getEndAt();
+		this.deadline = lecture.getDeadline();
+		this.totalDays = lecture.getTotalDays();
+		this.totalTimes = lecture.getTotalTimes();
+		this.updatedAt = LocalDateTime.now();
 	}
 }

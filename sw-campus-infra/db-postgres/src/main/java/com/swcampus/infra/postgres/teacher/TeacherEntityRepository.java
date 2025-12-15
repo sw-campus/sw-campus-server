@@ -1,5 +1,6 @@
 package com.swcampus.infra.postgres.teacher;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -25,5 +26,12 @@ public class TeacherEntityRepository implements TeacherRepository {
 	@Override
 	public Optional<Teacher> findById(Long id) {
 		return jpaRepository.findById(id).map(TeacherEntity::toDomain);
+	}
+
+	@Override
+	public List<Teacher> searchTeachers(String name) {
+		return jpaRepository.findAllByTeacherNameContaining(name).stream()
+				.map(TeacherEntity::toDomain)
+				.toList();
 	}
 }

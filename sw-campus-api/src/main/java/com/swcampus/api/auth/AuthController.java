@@ -9,6 +9,7 @@ import com.swcampus.api.auth.response.LoginResponse;
 import com.swcampus.api.auth.response.MessageResponse;
 import com.swcampus.api.auth.response.OrganizationSignupResponse;
 import com.swcampus.api.auth.response.SignupResponse;
+import com.swcampus.api.auth.response.VerifiedEmailResponse;
 import com.swcampus.api.config.CookieUtil;
 import com.swcampus.api.exception.ErrorResponse;
 import com.swcampus.domain.auth.AuthService;
@@ -36,11 +37,11 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -72,7 +73,7 @@ public class AuthController {
     })
     public ResponseEntity<MessageResponse> sendVerificationEmail(
             @Valid @RequestBody EmailSendRequest request) {
-        emailService.sendVerificationEmail(request.getEmail());
+        emailService.sendVerificationEmail(request.getEmail(), request.getSignupType());
         return ResponseEntity.ok(MessageResponse.of("인증 메일이 발송되었습니다"));
     }
 
@@ -84,15 +85,35 @@ public class AuthController {
     })
     public ResponseEntity<Void> verifyEmail(
             @Parameter(description = "인증 토큰", required = true)
-            @RequestParam("token") String token) {
-        try {
-            emailService.verifyEmail(token);
+            @RequestParam("token") String token,
+            @Parameter(description = "가입 유형 (personal/organization)", example = "personal")
+            @RequestParam(value = "type", defaultValue = "personal") String signupType) {
+        
+        // 허용된 signupType만 처리
+        String redirectPath = switch (signupType) {
+            case "personal" -> "/signup/personal";
+            case "organization" -> "/signup/organization";
+            default -> null;
+        };
+        
+        // 잘못된 signupType인 경우 에러 페이지로 리다이렉트
+        if (redirectPath == null) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(frontendUrl + "/signup/personal?verified=true"))
+                    .location(URI.create(frontendUrl + "/signup?error=invalid_type"))
+                    .build();
+        }
+        
+        try {
+            String email = emailService.verifyEmail(token);
+            ResponseCookie emailCookie = cookieUtil.createVerifiedEmailCookie(email);
+            
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header(HttpHeaders.SET_COOKIE, emailCookie.toString())
+                    .location(URI.create(frontendUrl + redirectPath + "?verified=true"))
                     .build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(frontendUrl + "/signup/personal?error=invalid_token"))
+                    .location(URI.create(frontendUrl + redirectPath + "?error=invalid_token"))
                     .build();
         }
     }
@@ -107,6 +128,20 @@ public class AuthController {
         return ResponseEntity.ok(EmailStatusResponse.of(email, verified));
     }
 
+    @GetMapping("/email/verified")
+    @Operation(summary = "인증된 이메일 조회", description = "HttpOnly 쿠키에 저장된 인증된 이메일을 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "404", description = "인증된 이메일 없음")
+    })
+    public ResponseEntity<VerifiedEmailResponse> getVerifiedEmail(
+            @CookieValue(name = "verifiedEmail", required = false) String verifiedEmail) {
+        if (verifiedEmail == null || verifiedEmail.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(VerifiedEmailResponse.of(verifiedEmail));
+    }
+
     @PostMapping("/signup")
     @Operation(summary = "일반 회원가입", description = "이메일 인증 완료 후 일반 사용자로 회원가입합니다.")
     @ApiResponses({
@@ -119,7 +154,10 @@ public class AuthController {
     public ResponseEntity<SignupResponse> signup(
             @Valid @RequestBody SignupRequest request) {
         Member member = authService.signup(request.toCommand());
+        ResponseCookie deleteEmailCookie = cookieUtil.deleteVerifiedEmailCookie();
+        
         return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, deleteEmailCookie.toString())
                 .body(SignupResponse.from(member));
     }
 
@@ -131,11 +169,35 @@ public class AuthController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<OrganizationSignupResponse> signupOrganization(
-            @Valid @ModelAttribute OrganizationSignupRequest request,
-            @Parameter(description = "재직증명서 이미지", required = true)
-            @RequestParam("certificateImage") MultipartFile certificateImage) throws IOException {
+            @Parameter(description = "이메일", example = "org@example.com", required = true)
+            @RequestPart(name = "email") String email,
+            @Parameter(description = "비밀번호 (8자 이상, 대소문자+숫자+특수문자)", example = "Password123!", required = true)
+            @RequestPart(name = "password") String password,
+            @Parameter(description = "이름", example = "김대표", required = true)
+            @RequestPart(name = "name") String name,
+            @Parameter(description = "닉네임", example = "ABC교육원담당자", required = true)
+            @RequestPart(name = "nickname") String nickname,
+            @Parameter(description = "전화번호", example = "010-1234-5678", required = true)
+            @RequestPart(name = "phone") String phone,
+            @Parameter(description = "주소", example = "서울시 강남구 테헤란로 123", required = true)
+            @RequestPart(name = "location") String location,
+            @Parameter(description = "기관명", example = "ABC교육원", required = true)
+            @RequestPart(name = "organizationName") String organizationName,
+            @Parameter(description = "재직증명서 이미지 (jpg, png)", required = true)
+            @RequestPart(name = "certificateImage") MultipartFile certificateImage) throws IOException {
 
-        OrganizationSignupResult result = authService.signupOrganization(request.toCommand(certificateImage));
+        OrganizationSignupRequest request = OrganizationSignupRequest.builder()
+                .email(email)
+                .password(password)
+                .name(name)
+                .nickname(nickname)
+                .phone(phone)
+                .location(location)
+                .organizationName(organizationName)
+                .certificateImage(certificateImage)
+                .build();
+
+        OrganizationSignupResult result = authService.signupOrganization(request.toCommand());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(OrganizationSignupResponse.from(result));
     }

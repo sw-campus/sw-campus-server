@@ -84,6 +84,7 @@ public class AuthService {
         // 6. 재직증명서 S3 업로드
         String certificateUrl = fileStorageService.upload(
                 command.getCertificateImage(),
+                "organizations",
                 command.getCertificateFileName(),
                 command.getCertificateContentType()
         );

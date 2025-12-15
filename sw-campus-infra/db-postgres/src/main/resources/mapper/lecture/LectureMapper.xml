@@ -2,6 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.swcampus.infra.postgres.lecture.mapper.LectureMapper">
 
+    <resultMap id="LectureStepResultMap" type="com.swcampus.infra.postgres.lecture.LectureStepEntity">
+        <id property="stepId" column="step_id"/>
+        <result property="stepType" column="step_type"/>
+        <result property="stepOrder" column="step_order"/>
+    </resultMap>
+
     <resultMap id="LectureResultMap" type="com.swcampus.infra.postgres.lecture.LectureEntity">
         <id property="lectureId" column="lecture_id"/>
         <result property="orgId" column="org_id"/>
@@ -43,8 +49,12 @@
         <result property="deadline" column="deadline"/>
         <result property="totalDays" column="total_days"/>
         <result property="totalTimes" column="total_times"/>
+
+        <!-- Steps를 LEFT JOIN으로 한 번에 조회하여 N+1 문제 해결 -->
+        <collection property="steps" ofType="com.swcampus.infra.postgres.lecture.LectureStepEntity" resultMap="LectureStepResultMap" columnPrefix="step_"/>
     </resultMap>
 
+    <!-- 공통 JOIN 구문 정의 -->
     <sql id="lectureJoins">
         LEFT JOIN organizations o ON l.org_id = o.org_id
         LEFT JOIN LECTURE_CURRICULUMS lc ON l.lecture_id = lc.lecture_id
@@ -52,7 +62,7 @@
     </sql>
 
     <sql id="searchConditions">
-        <!-- 텍스트 검색 (제목, 목표, 기관명) -->
+        <!-- 텍스트 검색 -->
         <if test="cond.text != null and cond.text != ''">
             AND (
                 l.lecture_name LIKE CONCAT('%', #{cond.text}, '%')
@@ -61,7 +71,7 @@
             )
         </if>
 
-        <!-- 지역 검색 (다중 선택) -->
+        <!-- 지역 검색 -->
         <if test="cond.regions != null and !cond.regions.isEmpty()">
             AND (
                 <foreach item="region" collection="cond.regions" separator=" OR ">
@@ -70,16 +80,16 @@
             )
         </if>
 
-        <!-- 카테고리 검색 -->
+        <!-- 카테고리 검색 (3단계 계층 구조) -->
         <if test="cond.categoryIds != null and !cond.categoryIds.isEmpty()">
             AND (
-                <!-- 1. 본인 일치 (소분류 선택 시) -->
+                <!-- 1. 본인 일치 -->
                 c.category_id IN 
                 <foreach item="catId" collection="cond.categoryIds" open="(" separator="," close=")">
                     #{catId}
                 </foreach>
                 
-                <!-- 2. 자식 일치 (중분류 선택 시 -> 소분류 검색) -->
+                <!-- 2. 자식 일치 -->
                 OR c.category_id IN (
                     SELECT sub.category_id 
                     FROM CATEGORIES sub 
@@ -89,7 +99,7 @@
                     </foreach>
                 )
 
-                <!-- 3. 손자 일치 (대분류 선택 시 -> 소분류 검색) -->
+                <!-- 3. 손자 일치 -->
                 OR c.category_id IN (
                     SELECT grand.category_id 
                     FROM CATEGORIES grand 
@@ -124,26 +134,26 @@
         <!-- 선발 절차 필터 -->
         <if test="cond.hasCodingTest != null">
             <if test="cond.hasCodingTest">
-                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'CODING_TEST')
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'CODING_TEST')
             </if>
             <if test="!cond.hasCodingTest">
-                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'CODING_TEST')
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'CODING_TEST')
             </if>
         </if>
         <if test="cond.hasInterview != null">
             <if test="cond.hasInterview">
-                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'INTERVIEW')
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'INTERVIEW')
             </if>
             <if test="!cond.hasInterview">
-                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'INTERVIEW')
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'INTERVIEW')
             </if>
         </if>
         <if test="cond.hasPreTask != null">
             <if test="cond.hasPreTask">
-                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'PRE_TASK')
+                AND EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'PRE_TASK')
             </if>
             <if test="!cond.hasPreTask">
-                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_name = 'PRE_TASK')
+                AND NOT EXISTS (SELECT 1 FROM LECTURE_STEPS s WHERE s.lecture_id = l.lecture_id AND s.step_type = 'PRE_TASK')
             </if>
         </if>
         
@@ -155,27 +165,18 @@
 
     <!-- 메인 조회 쿼리 -->
     <select id="selectLectures" resultMap="LectureResultMap">
-        SELECT 
+        SELECT DISTINCT
             l.*, 
             o.org_name
         FROM LECTURES l
-        LEFT JOIN organizations o ON l.org_id = o.org_id
+        <!-- 공통 JOIN 구문 사용 -->
+        <include refid="lectureJoins"/>
         
         WHERE 1=1
-
-        <!-- 카테고리 필터가 있을 때만 서브쿼리로 LECTURE_CURRICULUMS, CURRICULUMS 사용 -->
-        <if test="cond.categoryId != null">
-            AND l.lecture_id IN (
-                SELECT lc.lecture_id
-                FROM LECTURE_CURRICULUMS lc
-                LEFT JOIN CURRICULUMS c ON lc.curriculum_id = c.curriculum_id
-                WHERE c.category_id = #{cond.categoryId}
-            )
-        </if>
-        <!-- 가격순, 마감 임박순 정렬  
-            추후 후기순 정렬 추가 -->
+        <!-- 공통 검색 조건 사용 -->
         <include refid="searchConditions"/>
         
+        <!-- 정렬 로직 -->
         <choose>
             <when test="cond.sort.name() == 'FEE_ASC'">
                 ORDER BY l.lecture_fee ASC, l.updated_at DESC
@@ -187,21 +188,23 @@
                 ORDER BY l.deadline ASC NULLS LAST, l.updated_at DESC
             </when>
             <when test="cond.sort.name() == 'DURATION_ASC'">
-                 ORDER BY l.total_days ASC NULLS LAST, l.updated_at DESC
+                ORDER BY l.total_days ASC NULLS LAST, l.updated_at DESC
             </when>
             <when test="cond.sort.name() == 'DURATION_DESC'">
-                 ORDER BY l.total_days DESC NULLS LAST, l.updated_at DESC
+                ORDER BY l.total_days DESC NULLS LAST, l.updated_at DESC
             </when>
             <otherwise>
                 ORDER BY l.updated_at DESC
             </otherwise>
         </choose>
+        
+        <!-- 페이징 -->
         <if test="cond.limit != null and cond.offset != null">
             LIMIT #{cond.limit} OFFSET #{cond.offset}
         </if>
     </select>
 
-    <!-- 카운트 쿼리 (페이징용) -->
+    <!-- 카운트 쿼리 -->
     <select id="countLectures" resultType="long">
         SELECT COUNT(DISTINCT l.lecture_id)
         FROM LECTURES l
@@ -209,5 +212,15 @@
         
         WHERE 1=1
         <include refid="searchConditions"/>
+    </select>
+
+    <select id="selectSteps" resultMap="LectureStepResultMap">
+        SELECT 
+            step_id, 
+            step_type, 
+            step_order
+        FROM LECTURE_STEPS
+        WHERE lecture_id = #{lectureId}
+        ORDER BY step_order ASC
     </select>
 </mapper>
