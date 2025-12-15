@@ -24,6 +24,7 @@ import com.swcampus.api.exception.GlobalExceptionHandler;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.category.Category;
 import com.swcampus.domain.category.CategoryService;
+import com.swcampus.domain.category.Curriculum;
 
 @WebMvcTest(controllers = CategoryController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @AutoConfigureMockMvc(addFilters = false)
@@ -63,5 +64,50 @@ class CategoryControllerTest {
                 .andExpect(jsonPath("$[0].category_id").value(1))
                 .andExpect(jsonPath("$[0].category_name").value("Development"))
                 .andExpect(jsonPath("$[0].children[0].category_name").value("Backend"));
+    }
+
+    @Test
+    @DisplayName("카테고리별 커리큘럼 조회 성공")
+    void getCurriculumsByCategoryId() throws Exception {
+        // given
+        Long categoryId = 111L;
+        List<Curriculum> curriculums = List.of(
+                Curriculum.builder()
+                        .curriculumId(1L)
+                        .categoryId(categoryId)
+                        .curriculumName("React 기초")
+                        .build(),
+                Curriculum.builder()
+                        .curriculumId(2L)
+                        .categoryId(categoryId)
+                        .curriculumName("React Hooks 마스터")
+                        .build());
+
+        when(categoryService.getCurriculumsByCategoryId(categoryId)).thenReturn(curriculums);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/categories/{categoryId}/curriculums", categoryId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].curriculumId").value(1))
+                .andExpect(jsonPath("$[0].categoryId").value(categoryId))
+                .andExpect(jsonPath("$[0].curriculumName").value("React 기초"))
+                .andExpect(jsonPath("$[1].curriculumId").value(2))
+                .andExpect(jsonPath("$[1].curriculumName").value("React Hooks 마스터"));
+    }
+
+    @Test
+    @DisplayName("카테고리별 커리큘럼 조회 - 빈 결과")
+    void getCurriculumsByCategoryId_empty() throws Exception {
+        // given
+        Long categoryId = 999L;
+        when(categoryService.getCurriculumsByCategoryId(categoryId)).thenReturn(List.of());
+
+        // when & then
+        mockMvc.perform(get("/api/v1/categories/{categoryId}/curriculums", categoryId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 }

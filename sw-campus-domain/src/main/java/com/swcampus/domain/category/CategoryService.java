@@ -15,13 +15,19 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CategoryService {
 	private final CategoryRepository categoryRepository;
+	private final CurriculumRepository curriculumRepository;
+
+	@Transactional(readOnly = true)
+	public List<Curriculum> getCurriculumsByCategoryId(Long categoryId) {
+		return curriculumRepository.findByCategoryId(categoryId);
+	}
 
 	@Transactional(readOnly = true)
 	public List<Category> getCategoryTree() {
 		List<Category> allCategories = categoryRepository.findAll();
 
 		Map<Long, Category> categoryMap = allCategories.stream()
-			.collect(Collectors.toMap(Category::getCategoryId, Function.identity()));
+				.collect(Collectors.toMap(Category::getCategoryId, Function.identity()));
 
 		List<Category> roots = new ArrayList<>();
 
