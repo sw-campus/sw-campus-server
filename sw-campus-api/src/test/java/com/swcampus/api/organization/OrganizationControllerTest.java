@@ -95,7 +95,7 @@ class OrganizationControllerTest {
                 .lectureName("Org Lecture")
                 .status(LectureStatus.RECRUITING)
                 .build();
-        when(lectureService.getLectureListByOrgId(10L)).thenReturn(List.of(lecture));
+        when(lectureService.getPublishedLectureListByOrgId(10L)).thenReturn(List.of(lecture));
 
         // when & then
         mockMvc.perform(get("/api/v1/organizations/{organizationId}/lectures", 10L))
