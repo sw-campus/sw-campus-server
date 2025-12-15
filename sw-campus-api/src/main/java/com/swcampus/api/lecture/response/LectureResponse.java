@@ -179,6 +179,12 @@ public record LectureResponse(
 	}
 
 	private static String extractCategoryName(Lecture lecture) {
+		// If categoryName is already set (from MyBatis search result), use it
+		if (lecture.getCategoryName() != null && !lecture.getCategoryName().isBlank()) {
+			return lecture.getCategoryName();
+		}
+
+		// Otherwise, extract from lectureCurriculums (for JPA detail query)
 		if (lecture.getLectureCurriculums() == null || lecture.getLectureCurriculums().isEmpty()) {
 			return null;
 		}

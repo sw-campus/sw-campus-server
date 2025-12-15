@@ -7,7 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OrganizationJpaRepository extends JpaRepository<OrganizationEntity, Long> {
     Optional<OrganizationEntity> findByUserId(Long userId);
+
     boolean existsByUserId(Long userId);
-    
+
     List<OrganizationEntity> findByNameContaining(String name);
 }

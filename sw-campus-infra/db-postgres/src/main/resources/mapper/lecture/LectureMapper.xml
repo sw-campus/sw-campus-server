@@ -12,6 +12,7 @@
         <id property="lectureId" column="lecture_id"/>
         <result property="orgId" column="org_id"/>
         <result property="orgName" column="org_name"/>
+        <result property="categoryName" column="category_name"/>
         <result property="lectureName" column="lecture_name"/>
         <result property="startTime" column="start_time"/>
         <result property="endTime" column="end_time"/>
@@ -59,6 +60,7 @@
         LEFT JOIN organizations o ON l.org_id = o.org_id
         LEFT JOIN LECTURE_CURRICULUMS lc ON l.lecture_id = lc.lecture_id
         LEFT JOIN CURRICULUMS c ON lc.curriculum_id = c.curriculum_id
+        LEFT JOIN CATEGORIES cat ON c.category_id = cat.category_id
     </sql>
 
     <sql id="searchConditions">
@@ -167,7 +169,8 @@
     <select id="selectLectures" resultMap="LectureResultMap">
         SELECT DISTINCT
             l.*, 
-            o.org_name
+            o.org_name,
+            cat.category_name
         FROM LECTURES l
         <!-- 공통 JOIN 구문 사용 -->
         <include refid="lectureJoins"/>

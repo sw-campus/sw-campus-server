@@ -14,6 +14,7 @@ public class Lecture {
 	private Long lectureId;
 	private Long orgId;
 	private String orgName; // 검색 결과용
+	private String categoryName; // 검색 결과용
 	private String lectureName;
 	private Set<LectureDay> days; // 월,수,금 등
 	private LocalTime startTime;
