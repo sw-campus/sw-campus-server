@@ -100,4 +100,9 @@ public class Organization {
         this.govAuth = govAuth;
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void updateHomepage(String homepage) {
+        this.homepage = homepage;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

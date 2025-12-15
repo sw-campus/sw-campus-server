@@ -1,7 +1,6 @@
 package com.swcampus.api.mypage;
 
 import com.swcampus.api.mypage.request.UpsertSurveyRequest;
-import com.swcampus.api.mypage.request.UpdateOrganizationRequest;
 import com.swcampus.api.mypage.request.UpdateProfileRequest;
 import com.swcampus.api.mypage.response.MyLectureListResponse;
 import com.swcampus.api.mypage.response.MyReviewListResponse;
@@ -20,7 +19,6 @@ import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewService;
-import com.swcampus.domain.survey.MemberSurvey;
 import com.swcampus.domain.survey.MemberSurveyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -35,12 +33,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import io.swagger.v3.oas.annotations.Parameter;
 
 @Tag(name = "마이페이지", description = "마이페이지 관련 API")
 @RestController
@@ -180,7 +180,7 @@ public class MypageController {
         return ResponseEntity.ok(OrganizationInfoResponse.from(org, memberEntity));
     }
 
-    @Operation(summary = "기관 정보 수정", description = "기관 정보를 수정합니다. (재직증명서 파일 포함)")
+    @Operation(summary = "기관 정보 수정", description = "기관 정보를 수정합니다. (파일 업로드 포함)")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "수정 성공"),
         @ApiResponse(responseCode = "400", description = "잘못된 요청"),
@@ -191,38 +191,64 @@ public class MypageController {
     @PreAuthorize("hasRole('ORGANIZATION')")
     public ResponseEntity<Void> updateOrganization(
         @CurrentMember MemberPrincipal member,
-        @Valid @ModelAttribute UpdateOrganizationRequest request
+        @Parameter(description = "기관명", example = "SW Campus")
+        @RequestPart(name = "organizationName") String organizationName,
+        @Parameter(description = "기관 설명")
+        @RequestPart(name = "description", required = false) String description,
+        @Parameter(description = "전화번호", example = "02-1234-5678")
+        @RequestPart(name = "phone", required = false) String phone,
+        @Parameter(description = "주소", example = "서울시 강남구 테헤란로 123")
+        @RequestPart(name = "location") String location,
+        @Parameter(description = "홈페이지 URL", example = "https://example.com")
+        @RequestPart(name = "homepage", required = false) String homepage,
+        @Parameter(description = "정부 인증 정보", example = "HRD-Net 인증")
+        @RequestPart(name = "govAuth", required = false) String govAuth,
+        @Parameter(description = "사업자등록증 파일")
+        @RequestPart(name = "businessRegistration", required = false) MultipartFile businessRegistration,
+        @Parameter(description = "기관 로고 이미지")
+        @RequestPart(name = "logo", required = false) MultipartFile logo,
+        @Parameter(description = "시설 이미지 1")
+        @RequestPart(name = "facilityImage1", required = false) MultipartFile facilityImage1,
+        @Parameter(description = "시설 이미지 2")
+        @RequestPart(name = "facilityImage2", required = false) MultipartFile facilityImage2,
+        @Parameter(description = "시설 이미지 3")
+        @RequestPart(name = "facilityImage3", required = false) MultipartFile facilityImage3,
+        @Parameter(description = "시설 이미지 4")
+        @RequestPart(name = "facilityImage4", required = false) MultipartFile facilityImage4
     ) {
         // Update Member Info (Phone, Address)
-        memberService.updateProfile(member.memberId(), null, request.phone(), request.location());
+        memberService.updateProfile(member.memberId(), null, phone, location);
 
         // Update Organization Info
         Organization org = organizationService.getOrganizationByUserId(member.memberId());
 
-        byte[] fileContent = null;
-        String fileName = null;
-        String contentType = null;
-        
         try {
-            if (request.businessRegistration() != null && !request.businessRegistration().isEmpty()) {
-                fileContent = request.businessRegistration().getBytes();
-                fileName = request.businessRegistration().getOriginalFilename();
-                contentType = request.businessRegistration().getContentType();
-            }
+            var params = new com.swcampus.domain.organization.dto.UpdateOrganizationParams(
+                organizationName,
+                description,
+                homepage,
+                govAuth,
+                toFileUploadData(businessRegistration),
+                toFileUploadData(logo),
+                toFileUploadData(facilityImage1),
+                toFileUploadData(facilityImage2),
+                toFileUploadData(facilityImage3),
+                toFileUploadData(facilityImage4)
+            );
+            organizationService.updateOrganization(org.getId(), member.memberId(), params);
         } catch (java.io.IOException e) {
             throw new FileProcessingException("파일 처리 중 오류가 발생했습니다.", e);
         }
 
-        organizationService.updateOrganization(
-            org.getId(),
-            member.memberId(),
-            request.organizationName(),
-            null, // Description is not in request
-            fileContent,
-            fileName,
-            contentType
-        );
-
         return ResponseEntity.ok().build();
+    }
+
+    private com.swcampus.domain.organization.dto.UpdateOrganizationParams.FileUploadData toFileUploadData(
+            MultipartFile file) throws java.io.IOException {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+        return new com.swcampus.domain.organization.dto.UpdateOrganizationParams.FileUploadData(
+            file.getBytes(), file.getOriginalFilename(), file.getContentType());
     }
 }

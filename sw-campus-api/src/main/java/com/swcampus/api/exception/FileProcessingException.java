@@ -7,6 +7,11 @@ package com.swcampus.api.exception;
  * 비즈니스 로직 위반이 아니므로 BusinessException을 상속하지 않고 RuntimeException을 상속합니다.
  * 추후 공통 예외 처리 구조가 확립되면 리팩토링될 수 있습니다.
  * </p>
+ * <p>
+ * TODO: 현재 api 모듈에서만 사용 중이므로 여기에 위치함.
+ *       추후 infra 등 다른 모듈에서 동일한 예외가 필요해지면
+ *       sw-campus-shared 모듈로 이동 검토 필요 (YAGNI 원칙 적용).
+ * </p>
  */
 public class FileProcessingException extends RuntimeException {
     public FileProcessingException(String message) {

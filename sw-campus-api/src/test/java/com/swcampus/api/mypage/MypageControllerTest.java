@@ -272,20 +272,23 @@ class MypageControllerTest {
         given(organizationService.getOrganizationByUserId(1L)).willReturn(org);
 
         MockMultipartFile file = new MockMultipartFile("businessRegistration", "cert.jpg", "image/jpeg", "content".getBytes());
+        MockMultipartFile organizationNamePart = new MockMultipartFile("organizationName", "", "text/plain", "Updated Org".getBytes());
+        MockMultipartFile phonePart = new MockMultipartFile("phone", "", "text/plain", "02-1234-5678".getBytes());
+        MockMultipartFile locationPart = new MockMultipartFile("location", "", "text/plain", "New Address".getBytes());
 
         // when & then
         mockMvc.perform(MockMvcRequestBuilders.multipart(HttpMethod.PATCH, "/api/v1/mypage/organization")
                         .file(file)
-                        .param("organizationName", "Updated Org")
-                        .param("phone", "02-1234-5678")
-                        .param("location", "New Address")
+                        .file(organizationNamePart)
+                        .file(phonePart)
+                        .file(locationPart)
                         .with(csrf())
                         .principal(auth))
                 .andDo(print())
                 .andExpect(status().isOk());
         
         verify(memberService).updateProfile(1L, null, "02-1234-5678", "New Address");
-        verify(organizationService).updateOrganization(eq(100L), eq(1L), eq("Updated Org"), eq(null), any(), eq("cert.jpg"), eq("image/jpeg"));
+        verify(organizationService).updateOrganization(eq(100L), eq(1L), any(com.swcampus.domain.organization.dto.UpdateOrganizationParams.class));
     }
 
     /*
