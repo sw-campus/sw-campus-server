@@ -1,26 +1,42 @@
-app:
-  cookie:
-    secure: true  # 기본값: HTTPS (운영 환경 기준). local 프로필에서 false로 override
-
 spring:
+  application:
+    name: sw-campus
+
   profiles:
-    active: local # 기본 실행 프로필
+    default: local
+    group:
+      local: local
+      staging: staging
+      prod: prod
+
   config:
     import:
       - optional:classpath:logging.yml # 공통 로깅 설정 불러오기
-      - optional:classpath:config/application-${spring.profiles.active}.yml # Submodule 설정
+      - optional:classpath:config/application-${spring.profiles.active}.yml
+
   jpa:
     open-in-view: false
-    hibernate:
-      ddl-auto: update # 스키마를 자동으로 업데이트함
     properties:
       hibernate:
         default_batch_fetch_size: 100 # N+1 최적화
+
+  # Spring Batch
   batch:
     jdbc:
       initialize-schema: always  # 또는 embedded, never
-    job:
-      enabled: false  # 애플리케이션 시작 시 자동 실행 방지
+      job:
+        enabled: false  # 애플리케이션 시작 시 자동 실행 방지
+
+  # Mail (SMTP)
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 # Swagger UI 설정
 springdoc:
