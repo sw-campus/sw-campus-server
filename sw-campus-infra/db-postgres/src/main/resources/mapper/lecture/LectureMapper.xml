@@ -163,6 +163,11 @@
         <if test="cond.status != null">
             AND l.status = #{cond.status}
         </if>
+        
+        <!-- 승인 상태 검색 -->
+        <if test="cond.lectureAuthStatus != null">
+            AND l.lecture_auth_status = #{cond.lectureAuthStatus}
+        </if>
     </sql>
 
     <!-- 메인 조회 쿼리 -->

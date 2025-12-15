@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
 
+import com.swcampus.domain.lecture.LectureAuthStatus;
 import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
 import com.swcampus.domain.lecture.dto.LectureSortType;
@@ -75,6 +76,7 @@ public class LectureSearchRequest {
                 .hasInterview(this.hasInterview)
                 .hasPreTask(this.hasPreTask)
                 .status(this.status != null ? LectureStatus.valueOf(this.status) : null)
+                .lectureAuthStatus(LectureAuthStatus.APPROVED)
                 .sort(this.sort != null ? this.sort : LectureSortType.LATEST)
                 .pageable(PageRequest.of(pageNum - 1, pageSize))
                 .build();

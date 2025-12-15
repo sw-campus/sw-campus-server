@@ -90,6 +90,14 @@ public class LectureService {
 				.orElseThrow(() -> new ResourceNotFoundException("Lecture not found with id: " + lectureId));
 	}
 
+	public Lecture getPublishedLecture(Long lectureId) {
+		Lecture lecture = getLecture(lectureId);
+		if (lecture.getLectureAuthStatus() != LectureAuthStatus.APPROVED) {
+			throw new ResourceNotFoundException("Lecture not found with id: " + lectureId);
+		}
+		return lecture;
+	}
+
 	public Page<Lecture> searchLectures(LectureSearchCondition condition) {
 		return lectureRepository.searchLectures(condition);
 	}
@@ -97,6 +105,11 @@ public class LectureService {
 	@Transactional(readOnly = true)
 	public List<Lecture> getLectureListByOrgId(Long orgId) {
 		return lectureRepository.findAllByOrgId(orgId);
+	}
+
+	@Transactional(readOnly = true)
+	public List<Lecture> getPublishedLectureListByOrgId(Long orgId) {
+		return lectureRepository.findAllByOrgIdAndLectureAuthStatus(orgId, LectureAuthStatus.APPROVED);
 	}
 
 	public Map<Long, Long> getRecruitingLectureCounts(List<Long> orgIds) {

@@ -165,7 +165,7 @@ public class LectureController {
 	})
 	public ResponseEntity<LectureResponse> getLecture(
 			@Parameter(description = "강의 ID", example = "1", required = true) @PathVariable Long lectureId) {
-		Lecture lecture = lectureService.getLecture(lectureId);
+		Lecture lecture = lectureService.getPublishedLecture(lectureId);
 		Organization organization = null;
 		if (lecture.getOrgId() != null) {
 			organization = organizationService.getOrganization(lecture.getOrgId());
