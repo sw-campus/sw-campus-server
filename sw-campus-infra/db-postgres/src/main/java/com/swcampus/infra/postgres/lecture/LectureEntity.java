@@ -55,6 +55,18 @@ public class LectureEntity {
 	 */
 	private String orgName;
 
+	@Transient
+	/**
+	 * Category name for search result display.
+	 * <p>
+	 * This field is only used for MyBatis result mapping to avoid an N+1 query
+	 * problem
+	 * when fetching category names during search results. It should NOT be set
+	 * or used
+	 * in JPA operations, as it is not persisted in the database.
+	 */
+	private String categoryName;
+
 	@Column(name = "LECTURE_NAME", nullable = false)
 	private String lectureName;
 
@@ -280,7 +292,7 @@ public class LectureEntity {
 
 	public com.swcampus.domain.lecture.Lecture toDomain() {
 		return com.swcampus.domain.lecture.Lecture.builder()
-				.lectureId(lectureId).orgId(orgId).orgName(orgName).lectureName(lectureName)
+				.lectureId(lectureId).orgId(orgId).orgName(orgName).categoryName(categoryName).lectureName(lectureName)
 				.days(days != null && !days.isEmpty()
 						? java.util.Arrays.stream(days.split(",")).map(com.swcampus.domain.lecture.LectureDay::valueOf)
 								.collect(java.util.stream.Collectors.toSet())

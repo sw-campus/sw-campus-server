@@ -44,6 +44,9 @@ public class OrganizationResponse {
     @Schema(description = "기관 로고 URL", example = "https://example.com/logo.png")
     private String logoUrl;
 
+    @Schema(description = "기관 홈페이지 URL", example = "https://example.com")
+    private String homepage;
+
     public static OrganizationResponse from(Organization organization) {
         return OrganizationResponse.builder()
                 .id(organization.getId())
@@ -57,6 +60,7 @@ public class OrganizationResponse {
                 .facilityImageUrl3(organization.getFacilityImageUrl3())
                 .facilityImageUrl4(organization.getFacilityImageUrl4())
                 .logoUrl(organization.getLogoUrl())
+                .homepage(organization.getHomepage())
                 .build();
     }
 }

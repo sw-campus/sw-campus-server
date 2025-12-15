@@ -4,4 +4,4 @@ management:
       probability: 1.0
 
 logging:
-  config: classpath:logback/logback-${spring.profiles.active}.xml
+  config: classpath:logback/logback-init.xml

@@ -12,6 +12,7 @@ import com.swcampus.domain.lecture.LectureAdd;
 import com.swcampus.domain.lecture.LectureCurriculum;
 import com.swcampus.domain.lecture.LectureQual;
 import com.swcampus.domain.lecture.LectureStep;
+import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.teacher.Teacher;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -98,8 +99,18 @@ public record LectureResponse(
 
 		@Schema(description = "강사 목록") List<TeacherResponse> teachers,
 
-		@Schema(description = "커리큘럼 목록") List<CurriculumResponse> curriculums) {
+		@Schema(description = "카테고리명", example = "백엔드") String categoryName,
+
+		@Schema(description = "커리큘럼 목록") List<CurriculumResponse> curriculums,
+
+		@Schema(description = "기관 로고 이미지 URL", example = "https://example.com/logo.jpg") String orgLogoUrl,
+
+		@Schema(description = "기관 시설 이미지 URL 목록") List<String> orgFacilityImageUrls) {
 	public static LectureResponse from(Lecture lecture) {
+		return from(lecture, null);
+	}
+
+	public static LectureResponse from(Lecture lecture, Organization organization) {
 		return new LectureResponse(
 				lecture.getLectureId(),
 				lecture.getOrgId(),
@@ -146,9 +157,42 @@ public record LectureResponse(
 				lecture.getQuals() != null ? lecture.getQuals().stream().map(QualResponse::from).toList() : List.of(),
 				lecture.getTeachers() != null ? lecture.getTeachers().stream().map(TeacherResponse::from).toList()
 						: List.of(),
+				extractCategoryName(lecture),
 				lecture.getLectureCurriculums() != null
 						? lecture.getLectureCurriculums().stream().map(CurriculumResponse::from).toList()
-						: List.of());
+						: List.of(),
+				organization != null ? organization.getLogoUrl() : null,
+				extractFacilityImageUrls(organization));
+	}
+
+	private static List<String> extractFacilityImageUrls(Organization organization) {
+		if (organization == null) {
+			return List.of();
+		}
+		return java.util.stream.Stream.of(
+				organization.getFacilityImageUrl(),
+				organization.getFacilityImageUrl2(),
+				organization.getFacilityImageUrl3(),
+				organization.getFacilityImageUrl4())
+				.filter(url -> url != null && !url.isBlank())
+				.toList();
+	}
+
+	private static String extractCategoryName(Lecture lecture) {
+		// If categoryName is already set (from MyBatis search result), use it
+		if (lecture.getCategoryName() != null && !lecture.getCategoryName().isBlank()) {
+			return lecture.getCategoryName();
+		}
+
+		// Otherwise, extract from lectureCurriculums (for JPA detail query)
+		if (lecture.getLectureCurriculums() == null || lecture.getLectureCurriculums().isEmpty()) {
+			return null;
+		}
+		var firstCurriculum = lecture.getLectureCurriculums().get(0).getCurriculum();
+		if (firstCurriculum == null || firstCurriculum.getCategory() == null) {
+			return null;
+		}
+		return firstCurriculum.getCategory().getCategoryName();
 	}
 
 	@Schema(description = "선발 절차 응답")

@@ -21,6 +21,7 @@ public class Organization {
     private String facilityImageUrl3;
     private String facilityImageUrl4;
     private String logoUrl;
+    private String homepage;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -37,11 +38,11 @@ public class Organization {
     }
 
     public static Organization of(Long id, Long userId, String name, String description,
-                                  ApprovalStatus approvalStatus, String certificateUrl,
-                                  String govAuth, String facilityImageUrl,
-                                  String facilityImageUrl2, String facilityImageUrl3,
-                                  String facilityImageUrl4, String logoUrl,
-                                  LocalDateTime createdAt, LocalDateTime updatedAt) {
+            ApprovalStatus approvalStatus, String certificateUrl,
+            String govAuth, String facilityImageUrl,
+            String facilityImageUrl2, String facilityImageUrl3,
+            String facilityImageUrl4, String logoUrl, String homepage,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
         Organization org = new Organization();
         org.id = id;
         org.userId = userId;
@@ -55,6 +56,7 @@ public class Organization {
         org.facilityImageUrl3 = facilityImageUrl3;
         org.facilityImageUrl4 = facilityImageUrl4;
         org.logoUrl = logoUrl;
+        org.homepage = homepage;
         org.createdAt = createdAt;
         org.updatedAt = updatedAt;
         return org;
