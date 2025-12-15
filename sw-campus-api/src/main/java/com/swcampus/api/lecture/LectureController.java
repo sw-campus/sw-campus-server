@@ -3,6 +3,7 @@ package com.swcampus.api.lecture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -30,7 +31,6 @@ import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
-import com.swcampus.domain.review.ReviewRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -53,7 +53,6 @@ public class LectureController {
 
 	private final LectureService lectureService;
 	private final OrganizationService organizationService;
-	private final ReviewRepository reviewRepository;
 	private final ObjectMapper objectMapper;
 	private final Validator validator;
 
@@ -172,7 +171,8 @@ public class LectureController {
 		if (lecture.getOrgId() != null) {
 			organization = organizationService.getOrganization(lecture.getOrgId());
 		}
-		Double averageScore = reviewRepository.getAverageScoreByLectureId(lectureId);
+		Double averageScore = lectureService.getAverageScoresByLectureIds(List.of(lectureId))
+				.getOrDefault(lectureId, null);
 		return ResponseEntity.ok(LectureResponse.from(lecture, organization, averageScore));
 	}
 
@@ -184,8 +184,15 @@ public class LectureController {
 	public ResponseEntity<Page<LectureResponse>> searchLectures(
 			@Valid @ModelAttribute LectureSearchRequest request) {
 		Page<Lecture> lectures = lectureService.searchLectures(request.toCondition());
+
+		// 배치로 평균 점수 조회 (N+1 문제 해결)
+		List<Long> lectureIds = lectures.getContent().stream()
+				.map(Lecture::getLectureId)
+				.toList();
+		Map<Long, Double> averageScores = lectureService.getAverageScoresByLectureIds(lectureIds);
+
 		Page<LectureResponse> response = lectures.map(lecture -> {
-			Double averageScore = reviewRepository.getAverageScoreByLectureId(lecture.getLectureId());
+			Double averageScore = averageScores.get(lecture.getLectureId());
 			return LectureResponse.from(lecture, null, averageScore);
 		});
 		return ResponseEntity.ok(response);

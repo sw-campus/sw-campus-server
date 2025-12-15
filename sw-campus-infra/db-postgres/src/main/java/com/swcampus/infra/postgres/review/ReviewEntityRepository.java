@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -62,6 +63,18 @@ public class ReviewEntityRepository implements ReviewRepository {
 
     @Override
     public Double getAverageScoreByLectureId(Long lectureId) {
-        return jpaRepository.findAverageScoreByLectureId(lectureId);
+        return jpaRepository.findAverageScoreByLectureId(lectureId, ApprovalStatus.APPROVED);
+    }
+
+    @Override
+    public Map<Long, Double> getAverageScoresByLectureIds(List<Long> lectureIds) {
+        if (lectureIds == null || lectureIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        List<Object[]> results = jpaRepository.findAverageScoresByLectureIds(lectureIds, ApprovalStatus.APPROVED);
+        return results.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Double) row[1]));
     }
 }
