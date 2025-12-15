@@ -107,58 +107,7 @@ public record LectureResponse(
 
 		@Schema(description = "기관 시설 이미지 URL 목록") List<String> orgFacilityImageUrls) {
 	public static LectureResponse from(Lecture lecture) {
-		return new LectureResponse(
-				lecture.getLectureId(),
-				lecture.getOrgId(),
-				lecture.getOrgName(),
-				lecture.getLectureName(),
-				lecture.getDays() != null
-						? lecture.getDays().stream().map(Enum::name).collect(Collectors.toSet())
-						: Collections.emptySet(),
-				lecture.getStartTime(),
-				lecture.getEndTime(),
-				lecture.getLectureLoc() != null ? lecture.getLectureLoc().name() : null,
-				lecture.getLocation(),
-				lecture.getRecruitType() != null ? lecture.getRecruitType().name() : null,
-				lecture.getSubsidy(),
-				lecture.getLectureFee(),
-				lecture.getEduSubsidy(),
-				lecture.getGoal(),
-				lecture.getMaxCapacity(),
-				lecture.getEquipPc() != null ? lecture.getEquipPc().name() : null,
-				lecture.getEquipMerit(),
-				lecture.getBooks(),
-				lecture.getResume(),
-				lecture.getMockInterview(),
-				lecture.getEmploymentHelp(),
-				lecture.getAfterCompletion(),
-				lecture.getUrl(),
-				lecture.getLectureImageUrl(),
-				lecture.getStatus().name(),
-				lecture.getLectureAuthStatus() != null ? lecture.getLectureAuthStatus().name() : null,
-
-				lecture.getProjectNum(),
-				lecture.getProjectTime(),
-				lecture.getProjectTeam(),
-				lecture.getProjectTool(),
-				lecture.getProjectMentor(),
-
-				lecture.getStartAt() != null ? lecture.getStartAt().toString() : null,
-				lecture.getEndAt() != null ? lecture.getEndAt().toString() : null,
-				lecture.getDeadline() != null ? lecture.getDeadline().toString() : null,
-				lecture.getTotalDays(),
-				lecture.getTotalTimes(),
-				lecture.getSteps() != null ? lecture.getSteps().stream().map(StepResponse::from).toList() : List.of(),
-				lecture.getAdds() != null ? lecture.getAdds().stream().map(AddResponse::from).toList() : List.of(),
-				lecture.getQuals() != null ? lecture.getQuals().stream().map(QualResponse::from).toList() : List.of(),
-				lecture.getTeachers() != null ? lecture.getTeachers().stream().map(TeacherResponse::from).toList()
-						: List.of(),
-				extractCategoryName(lecture),
-				lecture.getLectureCurriculums() != null
-						? lecture.getLectureCurriculums().stream().map(CurriculumResponse::from).toList()
-						: List.of(),
-				null,
-				List.of());
+		return from(lecture, null);
 	}
 
 	public static LectureResponse from(Lecture lecture, Organization organization) {
