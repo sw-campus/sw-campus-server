@@ -230,12 +230,12 @@ public class LectureEntityRepository implements LectureRepository {
 		}
 
 		Map<Long, Double> avgScores = reviewRepository.getAverageScoresByLectureIds(lectureIds);
-		Map<Long, Long> linkCounts = reviewRepository.countReviewsByLectureIds(lectureIds);
+		Map<Long, Long> reviewCounts = reviewRepository.countReviewsByLectureIds(lectureIds);
 
 		return lectures.stream()
 				.map(l -> {
 					Double avg = avgScores.getOrDefault(l.getLectureId(), 0.0);
-					Long count = linkCounts.getOrDefault(l.getLectureId(), 0L);
+					Long count = reviewCounts.getOrDefault(l.getLectureId(), 0L);
 					return l.toBuilder()
 							.averageScore(avg)
 							.reviewCount(count)

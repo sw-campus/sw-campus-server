@@ -157,9 +157,8 @@
             l.*, 
             o.org_name,
             cat.category_name,
-            (SELECT COUNT(*) FROM REVIEWS r WHERE r.lecture_id = l.lecture_id) as review_count,
-            (SELECT COUNT(*) FROM REVIEWS r WHERE r.lecture_id = l.lecture_id) as review_count,
-            (SELECT COALESCE(AVG(r.score), 0) FROM REVIEWS r WHERE r.lecture_id = l.lecture_id) as average_score,
+            (SELECT COUNT(*) FROM REVIEWS r WHERE r.lecture_id = l.lecture_id AND r.approval_status = 'APPROVED') as review_count,
+            (SELECT COALESCE(AVG(r.score), 0) FROM REVIEWS r WHERE r.lecture_id = l.lecture_id AND r.approval_status = 'APPROVED') as average_score,
             s_steps.step_id as step_step_id,
             s_steps.step_type as step_step_type,
             s_steps.step_order as step_step_order
