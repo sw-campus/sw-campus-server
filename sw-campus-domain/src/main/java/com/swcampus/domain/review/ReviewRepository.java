@@ -24,4 +24,8 @@ public interface ReviewRepository {
     Double getAverageScoreByLectureId(Long lectureId);
 
     Map<Long, Double> getAverageScoresByLectureIds(List<Long> lectureIds);
+
+    Long countReviewsByLectureId(Long lectureId);
+
+    Map<Long, Long> countReviewsByLectureIds(List<Long> lectureIds);
 }

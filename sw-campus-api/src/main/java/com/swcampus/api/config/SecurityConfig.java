@@ -66,6 +66,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/reviews/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/lectures/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/organizations/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
                         // 관리자 API (인증 필요, 추후 ROLE_ADMIN 추가 가능)
                         .requestMatchers("/api/v1/admin/**").authenticated()
                         // 나머지는 인증 필요

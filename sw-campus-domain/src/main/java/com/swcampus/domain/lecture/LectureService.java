@@ -119,6 +119,8 @@ public class LectureService {
 	@Transactional(readOnly = true)
 	public List<Lecture> getPublishedLectureListByOrgId(Long orgId) {
 		return lectureRepository.findAllByOrgIdAndLectureAuthStatus(orgId, LectureAuthStatus.APPROVED);
+		// return lectureRepository.findAllByOrgIdAndLectureAuthStatus(orgId,
+		// LectureAuthStatus.PENDING);
 	}
 
 	public Map<Long, Long> getRecruitingLectureCounts(List<Long> orgIds) {
@@ -131,6 +133,13 @@ public class LectureService {
 			return java.util.Collections.emptyMap();
 		}
 		return reviewRepository.getAverageScoresByLectureIds(lectureIds);
+	}
+
+	public Map<Long, Long> getReviewCountsByLectureIds(List<Long> lectureIds) {
+		if (lectureIds == null || lectureIds.isEmpty()) {
+			return java.util.Collections.emptyMap();
+		}
+		return reviewRepository.countReviewsByLectureIds(lectureIds);
 	}
 
 	private List<Teacher> processNewTeachers(List<Teacher> teachers, List<ImageContent> teacherImages) {

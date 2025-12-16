@@ -4,10 +4,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+
+import com.swcampus.domain.lecture.Lecture;
+import com.swcampus.domain.lecture.LectureDay;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -66,6 +71,12 @@ public class LectureEntity {
 	 * in JPA operations, as it is not persisted in the database.
 	 */
 	private String categoryName;
+
+	@Transient
+	private Double averageScore;
+
+	@Transient
+	private Long reviewCount;
 
 	@Column(name = "LECTURE_NAME", nullable = false)
 	private String lectureName;
@@ -250,6 +261,9 @@ public class LectureEntity {
 				.deadline(lecture.getDeadline())
 				.totalDays(lecture.getTotalDays())
 				.totalTimes(lecture.getTotalTimes())
+
+				.averageScore(lecture.getAverageScore())
+				.reviewCount(lecture.getReviewCount())
 				.build();
 
 		// 1:N Relationships (Steps)
@@ -290,13 +304,13 @@ public class LectureEntity {
 		return entity;
 	}
 
-	public com.swcampus.domain.lecture.Lecture toDomain() {
-		return com.swcampus.domain.lecture.Lecture.builder()
+	public Lecture toDomain() {
+		return Lecture.builder()
 				.lectureId(lectureId).orgId(orgId).orgName(orgName).categoryName(categoryName).lectureName(lectureName)
 				.days(days != null && !days.isEmpty()
-						? java.util.Arrays.stream(days.split(",")).map(com.swcampus.domain.lecture.LectureDay::valueOf)
-								.collect(java.util.stream.Collectors.toSet())
-						: java.util.Collections.emptySet())
+						? Arrays.stream(days.split(",")).map(LectureDay::valueOf)
+								.collect(Collectors.toSet())
+						: Collections.emptySet())
 				.startTime(startTime).endTime(endTime)
 				.lectureLoc(lectureLoc).location(location).recruitType(recruitType)
 				.subsidy(subsidy).lectureFee(lectureFee).eduSubsidy(eduSubsidy)
@@ -310,6 +324,8 @@ public class LectureEntity {
 				.projectNum(projectNum).projectTime(projectTime).projectTeam(projectTeam).projectTool(projectTool)
 				.projectMentor(projectMentor)
 				.startAt(startAt).endAt(endAt).deadline(deadline).totalDays(totalDays).totalTimes(totalTimes)
+
+				.averageScore(averageScore).reviewCount(reviewCount)
 				.createdAt(createdAt).updatedAt(updatedAt)
 				// Lists mapping
 				.steps(steps.stream().map(s -> s.toDomain(this.lectureId)).toList())
@@ -325,11 +341,11 @@ public class LectureEntity {
 				.build();
 	}
 
-	public void updateFields(com.swcampus.domain.lecture.Lecture lecture) {
+	public void updateFields(Lecture lecture) {
 		this.orgId = lecture.getOrgId();
 		this.lectureName = lecture.getLectureName();
 		this.days = lecture.getDays() != null
-				? lecture.getDays().stream().map(Enum::name).collect(java.util.stream.Collectors.joining(","))
+				? lecture.getDays().stream().map(Enum::name).collect(Collectors.joining(","))
 				: null;
 		this.startTime = lecture.getStartTime();
 		this.endTime = lecture.getEndTime();
