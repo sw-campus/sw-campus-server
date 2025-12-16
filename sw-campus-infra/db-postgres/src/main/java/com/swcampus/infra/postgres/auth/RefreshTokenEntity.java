@@ -15,7 +15,8 @@ import java.time.LocalDateTime;
 public class RefreshTokenEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "refresh_tokens_seq")
+    @SequenceGenerator(name = "refresh_tokens_seq", sequenceName = "refresh_tokens_id_seq", allocationSize = 1)
     private Long id;
 
     @Column(name = "user_id", nullable = false, unique = true)

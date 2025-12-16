@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.*;
@@ -26,7 +27,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 @ToString(exclude = "lecture")
 public class LectureStepEntity {
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "lecture_steps_seq")
+	@SequenceGenerator(name = "lecture_steps_seq", sequenceName = "lecture_steps_step_id_seq", allocationSize = 1)
 	@Column(name = "STEP_ID")
 	private Long stepId;
 

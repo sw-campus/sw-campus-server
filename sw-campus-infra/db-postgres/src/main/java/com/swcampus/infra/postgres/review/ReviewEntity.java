@@ -19,7 +19,8 @@ import java.util.List;
 public class ReviewEntity extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "reviews_seq")
+    @SequenceGenerator(name = "reviews_seq", sequenceName = "reviews_review_id_seq", allocationSize = 1)
     @Column(name = "review_id")
     private Long id;
 

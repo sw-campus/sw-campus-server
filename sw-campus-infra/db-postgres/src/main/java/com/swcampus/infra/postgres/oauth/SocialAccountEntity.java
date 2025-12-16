@@ -18,7 +18,8 @@ import java.time.LocalDateTime;
 public class SocialAccountEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "social_accounts_seq")
+    @SequenceGenerator(name = "social_accounts_seq", sequenceName = "social_accounts_id_seq", allocationSize = 1)
     private Long id;
 
     @Column(name = "member_id", nullable = false)
