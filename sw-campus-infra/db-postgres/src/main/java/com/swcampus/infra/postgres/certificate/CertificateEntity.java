@@ -15,7 +15,8 @@ import lombok.NoArgsConstructor;
 public class CertificateEntity extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "certificates_seq")
+    @SequenceGenerator(name = "certificates_seq", sequenceName = "certificates_certificate_id_seq", allocationSize = 1)
     @Column(name = "certificate_id")
     private Long id;
 

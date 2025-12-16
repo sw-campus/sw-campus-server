@@ -13,7 +13,8 @@ import lombok.*;
 public class CurriculumEntity {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "curriculums_seq")
+	@SequenceGenerator(name = "curriculums_seq", sequenceName = "curriculums_curriculum_id_seq", allocationSize = 1)
 	@Column(name = "CURRICULUM_ID")
 	private Long curriculumId;
 

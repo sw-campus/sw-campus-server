@@ -14,7 +14,8 @@ import lombok.*;
 @ToString(exclude = {"lecture", "teacher"})
 public class LectureTeacherEntity {
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "lecture_teachers_seq")
+	@SequenceGenerator(name = "lecture_teachers_seq", sequenceName = "lecture_teachers_id_seq", allocationSize = 1)
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
