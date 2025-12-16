@@ -24,7 +24,6 @@ MIGRATION_DIR="$PROJECT_ROOT/sw-campus-infra/db-postgres/src/main/resources/db/m
 CREATE_SQL_PATH="$PROJECT_ROOT/sw-campus-api/create.sql"
 SCHEMA_NAME="swcampus"
 POSTGRES_VERSION="15"
-ATLAS_VERSION="0.38.0"  # 버전 고정 (https://github.com/ariga/atlas/releases)
 LOG_FILE="$PROJECT_ROOT/migration-gen.log"
 
 # 로깅 함수
