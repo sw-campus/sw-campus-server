@@ -107,16 +107,19 @@ public record LectureResponse(
 
 		@Schema(description = "기관 시설 이미지 URL 목록") List<String> orgFacilityImageUrls,
 
-		@Schema(description = "리뷰 평균 점수", example = "4.5") Double averageScore) {
+		@Schema(description = "리뷰 평균 점수", example = "4.5") Double averageScore,
+
+		@Schema(description = "리뷰 수", example = "10") Long reviewCount) {
 	public static LectureResponse from(Lecture lecture) {
-		return from(lecture, null, null);
+		return from(lecture, null, null, null);
 	}
 
 	public static LectureResponse from(Lecture lecture, Organization organization) {
-		return from(lecture, organization, null);
+		return from(lecture, organization, null, null);
 	}
 
-	public static LectureResponse from(Lecture lecture, Organization organization, Double averageScore) {
+	public static LectureResponse from(Lecture lecture, Organization organization, Double averageScore,
+			Long reviewCount) {
 		return new LectureResponse(
 				lecture.getLectureId(),
 				lecture.getOrgId(),
@@ -169,7 +172,9 @@ public record LectureResponse(
 						: List.of(),
 				organization != null ? organization.getLogoUrl() : null,
 				extractFacilityImageUrls(organization),
-				averageScore);
+
+				averageScore != null ? averageScore : lecture.getAverageScore(),
+				reviewCount != null ? reviewCount : lecture.getReviewCount());
 	}
 
 	private static List<String> extractFacilityImageUrls(Organization organization) {

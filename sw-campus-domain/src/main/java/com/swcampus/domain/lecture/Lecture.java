@@ -38,6 +38,8 @@ public class Lecture {
 	private String lectureImageUrl; // 이미지 URL
 	private LectureStatus status; // 모집중, 모집 종료
 	private LectureAuthStatus lectureAuthStatus; // 승인 대기, 승인 완료, 승인 반려
+	private Double averageScore; // 평균 평점
+	private Long reviewCount; // 리뷰 수
 
 	// 프로젝트 관련
 	private Integer projectNum;

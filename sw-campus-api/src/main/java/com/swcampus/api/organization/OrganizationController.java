@@ -10,9 +10,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.swcampus.api.lecture.response.LectureResponse;
+import com.swcampus.api.lecture.response.LectureSummaryResponse;
 import com.swcampus.api.organization.response.OrganizationResponse;
 import com.swcampus.api.organization.response.OrganizationSummaryResponse;
+import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
@@ -70,21 +71,26 @@ public class OrganizationController {
                         @ApiResponse(responseCode = "200", description = "조회 성공"),
                         @ApiResponse(responseCode = "404", description = "기관 없음")
         })
-        public ResponseEntity<List<LectureResponse>> getOrganizationLectureList(
+        public ResponseEntity<List<LectureSummaryResponse>> getOrganizationLectureList(
                         @Parameter(description = "기관 ID", example = "1", required = true) @PathVariable Long organizationId) {
-                List<com.swcampus.domain.lecture.Lecture> lectures = lectureService
+                List<Lecture> lectures = lectureService
                                 .getPublishedLectureListByOrgId(organizationId);
 
                 // 배치로 평균 점수 조회 (N+1 문제 해결)
                 List<Long> lectureIds = lectures.stream()
-                                .map(com.swcampus.domain.lecture.Lecture::getLectureId)
+                                .map(Lecture::getLectureId)
                                 .toList();
                 Map<Long, Double> averageScores = lectureService.getAverageScoresByLectureIds(lectureIds);
+                Map<Long, Long> reviewCounts = lectureService.getReviewCountsByLectureIds(lectureIds);
 
-                List<LectureResponse> response = lectures.stream()
+                Organization organization = organizationService.getOrganization(organizationId);
+                String orgName = organization.getName();
+
+                List<LectureSummaryResponse> response = lectures.stream()
                                 .map(lecture -> {
                                         Double averageScore = averageScores.get(lecture.getLectureId());
-                                        return LectureResponse.from(lecture, null, averageScore);
+                                        Long reviewCount = reviewCounts.get(lecture.getLectureId());
+                                        return LectureSummaryResponse.from(lecture, orgName, averageScore, reviewCount);
                                 })
                                 .toList();
                 return ResponseEntity.ok(response);

@@ -37,4 +37,13 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         "GROUP BY r.lectureId")
         List<Object[]> findAverageScoresByLectureIds(@Param("lectureIds") List<Long> lectureIds,
                         @Param("status") ApprovalStatus status);
+
+        @Query("SELECT COUNT(r) FROM ReviewEntity r WHERE r.lectureId = :lectureId AND r.approvalStatus = :status")
+        Long countReviewsByLectureId(@Param("lectureId") Long lectureId, @Param("status") ApprovalStatus status);
+
+        @Query("SELECT r.lectureId, COUNT(r) FROM ReviewEntity r " +
+                        "WHERE r.lectureId IN :lectureIds AND r.approvalStatus = :status " +
+                        "GROUP BY r.lectureId")
+        List<Object[]> countReviewsByLectureIds(@Param("lectureIds") List<Long> lectureIds,
+                        @Param("status") ApprovalStatus status);
 }

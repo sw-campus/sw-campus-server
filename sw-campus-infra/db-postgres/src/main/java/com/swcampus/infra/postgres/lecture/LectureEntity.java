@@ -67,6 +67,12 @@ public class LectureEntity {
 	 */
 	private String categoryName;
 
+	@Transient
+	private Double averageScore;
+
+	@Transient
+	private Long reviewCount;
+
 	@Column(name = "LECTURE_NAME", nullable = false)
 	private String lectureName;
 
@@ -250,6 +256,10 @@ public class LectureEntity {
 				.deadline(lecture.getDeadline())
 				.totalDays(lecture.getTotalDays())
 				.totalTimes(lecture.getTotalTimes())
+				.totalDays(lecture.getTotalDays())
+				.totalTimes(lecture.getTotalTimes())
+				.averageScore(lecture.getAverageScore())
+				.reviewCount(lecture.getReviewCount())
 				.build();
 
 		// 1:N Relationships (Steps)
@@ -310,6 +320,8 @@ public class LectureEntity {
 				.projectNum(projectNum).projectTime(projectTime).projectTeam(projectTeam).projectTool(projectTool)
 				.projectMentor(projectMentor)
 				.startAt(startAt).endAt(endAt).deadline(deadline).totalDays(totalDays).totalTimes(totalTimes)
+				.startAt(startAt).endAt(endAt).deadline(deadline).totalDays(totalDays).totalTimes(totalTimes)
+				.averageScore(averageScore).reviewCount(reviewCount)
 				.createdAt(createdAt).updatedAt(updatedAt)
 				// Lists mapping
 				.steps(steps.stream().map(s -> s.toDomain(this.lectureId)).toList())

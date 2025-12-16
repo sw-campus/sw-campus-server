@@ -25,6 +25,7 @@ import com.swcampus.api.lecture.request.LectureCreateRequest;
 import com.swcampus.api.lecture.request.LectureSearchRequest;
 import com.swcampus.api.lecture.request.LectureUpdateRequest;
 import com.swcampus.api.lecture.response.LectureResponse;
+import com.swcampus.api.lecture.response.LectureSummaryResponse;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.lecture.Lecture;
@@ -173,7 +174,9 @@ public class LectureController {
 		}
 		Double averageScore = lectureService.getAverageScoresByLectureIds(List.of(lectureId))
 				.getOrDefault(lectureId, null);
-		return ResponseEntity.ok(LectureResponse.from(lecture, organization, averageScore));
+		Long reviewCount = lectureService.getReviewCountsByLectureIds(List.of(lectureId))
+				.getOrDefault(lectureId, null);
+		return ResponseEntity.ok(LectureResponse.from(lecture, organization, averageScore, reviewCount));
 	}
 
 	@GetMapping("/search")
@@ -181,7 +184,7 @@ public class LectureController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "검색 성공")
 	})
-	public ResponseEntity<Page<LectureResponse>> searchLectures(
+	public ResponseEntity<Page<LectureSummaryResponse>> searchLectures(
 			@Valid @ModelAttribute LectureSearchRequest request) {
 		Page<Lecture> lectures = lectureService.searchLectures(request.toCondition());
 
@@ -190,10 +193,12 @@ public class LectureController {
 				.map(Lecture::getLectureId)
 				.toList();
 		Map<Long, Double> averageScores = lectureService.getAverageScoresByLectureIds(lectureIds);
+		Map<Long, Long> reviewCounts = lectureService.getReviewCountsByLectureIds(lectureIds);
 
-		Page<LectureResponse> response = lectures.map(lecture -> {
+		Page<LectureSummaryResponse> response = lectures.map(lecture -> {
 			Double averageScore = averageScores.get(lecture.getLectureId());
-			return LectureResponse.from(lecture, null, averageScore);
+			Long reviewCount = reviewCounts.get(lecture.getLectureId());
+			return LectureSummaryResponse.from(lecture, averageScore, reviewCount);
 		});
 		return ResponseEntity.ok(response);
 	}

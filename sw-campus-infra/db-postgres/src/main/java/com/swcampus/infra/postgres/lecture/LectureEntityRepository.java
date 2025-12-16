@@ -30,6 +30,7 @@ public class LectureEntityRepository implements LectureRepository {
 	private final LectureJpaRepository jpaRepository;
 	private final EntityManager entityManager;
 	private final LectureMapper lectureMapper;
+	private final com.swcampus.domain.review.ReviewRepository reviewRepository;
 
 	@Override
 	public Lecture save(Lecture lecture) {
@@ -143,7 +144,15 @@ public class LectureEntityRepository implements LectureRepository {
 
 	@Override
 	public Optional<Lecture> findById(Long id) {
-		return jpaRepository.findByIdWithCategory(id).map(LectureEntity::toDomain);
+		return jpaRepository.findByIdWithCategory(id)
+				.map(entity -> {
+					Double avgScore = reviewRepository.getAverageScoreByLectureId(id);
+					Long reviewCount = reviewRepository.countReviewsByLectureId(id);
+					return entity.toDomain().toBuilder()
+							.averageScore(avgScore != null ? avgScore : 0.0)
+							.reviewCount(reviewCount != null ? reviewCount : 0L)
+							.build();
+				});
 	}
 
 	@Override
@@ -155,8 +164,7 @@ public class LectureEntityRepository implements LectureRepository {
 		return results.stream()
 				.collect(java.util.stream.Collectors.toMap(
 						row -> (Long) row[0],
-						row -> (String) row[1]
-				));
+						row -> (String) row[1]));
 	}
 
 	@Override
@@ -213,8 +221,26 @@ public class LectureEntityRepository implements LectureRepository {
 			return Collections.emptyList();
 		}
 		// Full fetch to ensure relationships (like Curriculums -> Category) are loaded
-		return jpaRepository.findAllByIdInWithCurriculums(lectureIds).stream()
+		List<Lecture> lectures = jpaRepository.findAllByIdInWithCurriculums(lectureIds).stream()
 				.map(LectureEntity::toDomain)
+				.toList();
+
+		if (lectures.isEmpty()) {
+			return lectures;
+		}
+
+		Map<Long, Double> avgScores = reviewRepository.getAverageScoresByLectureIds(lectureIds);
+		Map<Long, Long> linkCounts = reviewRepository.countReviewsByLectureIds(lectureIds);
+
+		return lectures.stream()
+				.map(l -> {
+					Double avg = avgScores.getOrDefault(l.getLectureId(), 0.0);
+					Long count = linkCounts.getOrDefault(l.getLectureId(), 0L);
+					return l.toBuilder()
+							.averageScore(avg)
+							.reviewCount(count)
+							.build();
+				})
 				.toList();
 	}
 }

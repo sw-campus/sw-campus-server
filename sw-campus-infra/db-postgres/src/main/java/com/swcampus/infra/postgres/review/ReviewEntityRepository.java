@@ -81,7 +81,24 @@ public class ReviewEntityRepository implements ReviewRepository {
     @Override
     public List<Review> findAllByMemberId(Long memberId) {
         return jpaRepository.findAllByMemberIdWithDetails(memberId).stream()
-            .map(ReviewEntity::toDomain)
-            .toList();
+                .map(ReviewEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public Long countReviewsByLectureId(Long lectureId) {
+        return jpaRepository.countReviewsByLectureId(lectureId, ApprovalStatus.APPROVED);
+    }
+
+    @Override
+    public Map<Long, Long> countReviewsByLectureIds(List<Long> lectureIds) {
+        if (lectureIds == null || lectureIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        List<Object[]> results = jpaRepository.countReviewsByLectureIds(lectureIds, ApprovalStatus.APPROVED);
+        return results.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]));
     }
 }
