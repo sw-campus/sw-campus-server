@@ -10,6 +10,9 @@ spring:
       ddl-auto: create-drop
     show-sql: true
 
+  flyway:
+    enabled: false
+
   mail:
     host: localhost
     port: 3025

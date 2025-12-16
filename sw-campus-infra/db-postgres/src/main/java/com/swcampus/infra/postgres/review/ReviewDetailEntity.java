@@ -15,7 +15,8 @@ import lombok.Setter;
 public class ReviewDetailEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "reviews_details_seq")
+    @SequenceGenerator(name = "reviews_details_seq", sequenceName = "reviews_details_review_detail_id_seq", allocationSize = 1)
     @Column(name = "review_detail_id")
     private Long id;
 

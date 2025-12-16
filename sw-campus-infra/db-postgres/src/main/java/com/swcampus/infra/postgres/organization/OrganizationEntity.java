@@ -17,7 +17,8 @@ import lombok.ToString;
 public class OrganizationEntity extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "organizations_seq")
+    @SequenceGenerator(name = "organizations_seq", sequenceName = "organizations_org_id_seq", allocationSize = 1)
     @Column(name = "org_id")
     private Long id;
 

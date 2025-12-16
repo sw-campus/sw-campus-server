@@ -4,6 +4,10 @@
         <include resource="logback/logback-local.xml"/>
     </springProfile>
 
+    <springProfile name="ddl-gen">
+        <include resource="logback/logback-ddl-gen.xml"/>
+    </springProfile>
+
     <springProfile name="staging">
         <include resource="logback/logback-staging.xml"/>
     </springProfile>

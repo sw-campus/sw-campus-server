@@ -12,7 +12,8 @@ import lombok.*;
 @ToString(exclude = "lecture")
 public class LectureQualEntity {
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "lecture_quals_seq")
+	@SequenceGenerator(name = "lecture_quals_seq", sequenceName = "lecture_quals_qual_id_seq", allocationSize = 1)
 	@Column(name = "QUAL_ID")
 	private Long qualId;
 

@@ -42,9 +42,11 @@ dependencies {
     // Swagger UI + OpenAPI 3.0
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
 
+    // H2 for DDL generation (ddl-gen profile)
+    runtimeOnly 'com.h2database:h2'
+
     // Test (모듈 전용)
     testImplementation 'org.springframework.security:spring-security-test'
-    testRuntimeOnly 'com.h2database:h2'
 }
 
 bootJar.enabled = true
