@@ -168,20 +168,28 @@ docker run -d --name migration-db-gen \
   -e POSTGRES_PASSWORD=password \
   postgres:$POSTGRES_VERSION > /dev/null 2>&1
 
-# DB 대기
-attempt=0
-while [ $attempt -lt 30 ]; do
-    if docker exec migration-db-gen pg_isready -U postgres > /dev/null 2>&1; then
-        break
-    fi
-    attempt=$((attempt + 1))
-    sleep 1
-done
+# DB 대기 (스피너 사용)
+(
+    attempt=0
+    while [ $attempt -lt 30 ]; do
+        if docker exec migration-db-gen pg_isready -U postgres > /dev/null 2>&1; then
+            exit 0
+        fi
+        attempt=$((attempt + 1))
+        sleep 1
+    done
+    exit 1
+) &
+DB_WAIT_PID=$!
+spinner $DB_WAIT_PID "DB 준비 대기 중..."
+wait $DB_WAIT_PID
+DB_WAIT_RESULT=$?
 
-if [ $attempt -eq 30 ]; then
+if [ $DB_WAIT_RESULT -ne 0 ]; then
     log_error "DB 시작 시간 초과"
     exit 1
 fi
+log_success "DB 준비 완료"
 
 # 2. JPA 엔티티 기반 create.sql 생성 (Real Postgres 연결)
 log_info "2. 최신 엔티티 기반 스키마 추출 중 (using Real Postgres)..."
@@ -195,29 +203,29 @@ rm -f "$CREATE_SQL_PATH"
 ./gradlew :sw-campus-api:bootRun --args="--spring.profiles.active=ddl-gen --spring.datasource.url=jdbc:postgresql://localhost:15432/postgres --spring.datasource.username=postgres --spring.datasource.password=password --spring.datasource.driver-class-name=org.postgresql.Driver" > "$LOG_FILE" 2>&1 &
 GRADLE_PID=$!
 
-# create.sql 파일이 생성될 때까지 대기 (최대 60초)
-local_attempt=0
-while [ $local_attempt -lt 60 ]; do
-    if [ -f "$CREATE_SQL_PATH" ] && [ -s "$CREATE_SQL_PATH" ]; then
-        # 파일이 생성되고 내용이 있으면 Gradle 종료
-        sleep 1  # 파일 쓰기 완료 대기
-        kill $GRADLE_PID 2>/dev/null || true
-        wait $GRADLE_PID 2>/dev/null || true
-        break
-    fi
-    printf "\r${BLUE}[INFO]${NC} 2. Gradle 빌드 및 스키마 추출 중... (%ds) " "$local_attempt"
-    local_attempt=$((local_attempt + 1))
-    sleep 1
-done
-printf "\r\033[K"  # 라인 클리어
+# create.sql 파일이 생성될 때까지 대기 (최대 60초, 스피너 사용)
+(
+    local_attempt=0
+    while [ $local_attempt -lt 60 ]; do
+        if [ -f "$CREATE_SQL_PATH" ] && [ -s "$CREATE_SQL_PATH" ]; then
+            sleep 1  # 파일 쓰기 완료 대기
+            exit 0
+        fi
+        local_attempt=$((local_attempt + 1))
+        sleep 1
+    done
+    exit 1
+) &
+WAIT_PID=$!
+spinner $WAIT_PID "Gradle 빌드 및 스키마 추출 중..."
+wait $WAIT_PID
+WAIT_RESULT=$?
 
-# Gradle이 아직 살아있으면 강제 종료
-if kill -0 $GRADLE_PID 2>/dev/null; then
-    kill $GRADLE_PID 2>/dev/null || true
-    wait $GRADLE_PID 2>/dev/null || true
-fi
+# Gradle 종료
+kill $GRADLE_PID 2>/dev/null || true
+wait $GRADLE_PID 2>/dev/null || true
 
-if [ ! -f "$CREATE_SQL_PATH" ]; then
+if [ $WAIT_RESULT -ne 0 ]; then
     log_error "create.sql 생성 실패. 로그: $LOG_FILE"
     exit 1
 fi
@@ -239,7 +247,8 @@ if [ "$IS_FIRST_RUN" = true ]; then
     log_info "4. Baseline DB 구성 생략 (초기 생성)"
 else
     log_info "4. Baseline DB에 기존 마이그레이션 적용 중..."
-    if ! docker run --rm --network migration-net \
+    (
+    docker run --rm --network migration-net \
       -v "$MIGRATION_DIR":/flyway/sql \
       flyway/flyway \
       -url=jdbc:postgresql://migration-db-gen:5432/baseline \
@@ -247,11 +256,19 @@ else
       -schemas=$SCHEMA_NAME \
       -defaultSchema=$SCHEMA_NAME \
       -connectRetries=60 \
-      migrate >> "$LOG_FILE" 2>&1; then
+      migrate >> "$LOG_FILE" 2>&1
+    ) &
+    FLYWAY_PID=$!
+    spinner $FLYWAY_PID "Flyway 마이그레이션 적용 중..."
+    wait $FLYWAY_PID
+    FLYWAY_RESULT=$?
+    
+    if [ $FLYWAY_RESULT -ne 0 ]; then
         log_error "Flyway 마이그레이션 적용 실패. 기존 SQL 파일에 문제가 있을 수 있습니다."
         log_error "로그: $LOG_FILE"
         exit 1
     fi
+    log_success "Flyway 마이그레이션 적용 완료"
 fi
 
 # 5. Target 구성
@@ -267,7 +284,8 @@ fi
 # 6. Diff 생성 (임시 파일로)
 log_info "6. 스키마 차이(Diff) 계산 중..."
 
-# migra를 사용한 스키마 비교 (PostgreSQL 전용, IDENTITY 문제 없음)
+# migra를 사용한 스키마 비교 (PostgreSQL 전용, 스피너 적용)
+(
 docker run --rm --network migration-net \
   python:3.11-slim bash -c "
     pip install migra psycopg2-binary -q 2>/dev/null
@@ -276,6 +294,10 @@ docker run --rm --network migration-net \
       'postgresql://postgres:password@migration-db-gen:5432/target?options=-csearch_path%3D$SCHEMA_NAME' \
       2>/dev/null || true
   " > "$TEMP_OUTPUT_FILE" 2>> "$LOG_FILE"
+) &
+MIGRA_PID=$!
+spinner $MIGRA_PID "스키마 차이 계산 중..."
+wait $MIGRA_PID
 
 # 7. 결과 처리
 if [ -f "$TEMP_OUTPUT_FILE" ]; then

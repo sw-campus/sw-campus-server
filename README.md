@@ -123,8 +123,8 @@ JPA 엔티티 변경 사항을 기반으로 Flyway 마이그레이션 SQL 파일
 2. Docker로 임시 PostgreSQL 컨테이너 실행
 3. **Baseline DB**: 기존 Flyway 마이그레이션(V1~Vn) 적용
 4. **Target DB**: 최신 엔티티 스키마 적용
-5. Atlas를 사용하여 두 DB 간의 차이(Diff)를 SQL로 추출
-6. `V{n+1}__auto_generated.sql` 파일 생성
+5. migra를 사용하여 두 DB 간의 차이(Diff)를 SQL로 추출
+6. `V{n+1}__{변경내용}.sql` 파일 생성
 
 ### 주의사항
 
