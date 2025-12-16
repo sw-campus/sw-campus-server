@@ -1,6 +1,5 @@
 package com.swcampus.api.lecture.response;
 
-import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +48,12 @@ public record LectureSummaryResponse(
 
         @Schema(description = "총 교육 시간", example = "960") Integer totalTimes,
 
+        @Schema(description = "강의료 (자부담금)", example = "500000") java.math.BigDecimal lectureFee,
+
+        @Schema(description = "정부 지원금", example = "3000000") java.math.BigDecimal subsidy,
+
+        @Schema(description = "훈련 수당", example = "100000") java.math.BigDecimal eduSubsidy,
+
         @Schema(description = "선발 절차 목록") List<StepResponse> steps) {
 
     public static LectureSummaryResponse from(Lecture lecture, Double averageScore, Long reviewCount) {
@@ -77,6 +82,9 @@ public record LectureSummaryResponse(
                 reviewCount != null ? reviewCount : lecture.getReviewCount(),
                 lecture.getTotalDays(),
                 lecture.getTotalTimes(),
+                lecture.getLectureFee(),
+                lecture.getSubsidy(),
+                lecture.getEduSubsidy(),
                 lecture.getSteps() != null ? lecture.getSteps().stream().map(StepResponse::from).toList() : List.of());
     }
 

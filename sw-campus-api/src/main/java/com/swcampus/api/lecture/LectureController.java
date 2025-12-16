@@ -203,6 +203,31 @@ public class LectureController {
 		return ResponseEntity.ok(response);
 	}
 
+	@GetMapping("/category/{categoryId}/top-rated")
+	@Operation(summary = "카테고리별 평점 높은 강의 조회", description = "특정 카테고리의 강의를 평점 높은 순으로 4개 조회합니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "조회 성공")
+	})
+	public ResponseEntity<List<LectureSummaryResponse>> getTopRatedLecturesByCategory(
+			@Parameter(description = "카테고리 ID", example = "1", required = true) @PathVariable Long categoryId) {
+		List<Lecture> lectures = lectureService.getTopRatedLecturesByCategory(categoryId, 4);
+
+		// 배치로 평균 점수 조회
+		List<Long> lectureIds = lectures.stream()
+				.map(Lecture::getLectureId)
+				.toList();
+		Map<Long, Double> averageScores = lectureService.getAverageScoresByLectureIds(lectureIds);
+		Map<Long, Long> reviewCounts = lectureService.getReviewCountsByLectureIds(lectureIds);
+
+		List<LectureSummaryResponse> response = lectures.stream().map(lecture -> {
+			Double averageScore = averageScores.get(lecture.getLectureId());
+			Long reviewCount = reviewCounts.get(lecture.getLectureId());
+			return LectureSummaryResponse.from(lecture, averageScore, reviewCount);
+		}).toList();
+
+		return ResponseEntity.ok(response);
+	}
+
 	private List<LectureService.ImageContent> processTeacherImages(List<MultipartFile> teacherImages)
 			throws IOException {
 		List<LectureService.ImageContent> teacherImageContents = new ArrayList<>();

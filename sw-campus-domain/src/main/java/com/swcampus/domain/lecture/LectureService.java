@@ -112,6 +112,17 @@ public class LectureService {
 		return lectureRepository.searchLectures(condition);
 	}
 
+	public List<Lecture> getTopRatedLecturesByCategory(Long categoryId, int limit) {
+		LectureSearchCondition condition = LectureSearchCondition.builder()
+				.categoryIds(Collections.singletonList(categoryId))
+				.status(LectureStatus.RECRUITING)
+				.sort(com.swcampus.domain.lecture.dto.LectureSortType.SCORE_DESC)
+				.pageable(org.springframework.data.domain.PageRequest.of(0, limit))
+				.build();
+
+		return searchLectures(condition).getContent();
+	}
+
 	public Map<Long, String> getLectureNames(List<Long> lectureIds) {
 		return lectureRepository.findLectureNamesByIds(lectureIds);
 	}
