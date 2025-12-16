@@ -15,7 +15,8 @@ import java.time.LocalDateTime;
 public class EmailVerificationEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "email_verifications_seq")
+    @SequenceGenerator(name = "email_verifications_seq", sequenceName = "email_verifications_id_seq", allocationSize = 1)
     private Long id;
 
     @Column(nullable = false)
