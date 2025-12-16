@@ -23,6 +23,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
@@ -41,7 +42,8 @@ import lombok.ToString;
 public class LectureEntity {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "lectures_seq")
+	@SequenceGenerator(name = "lectures_seq", sequenceName = "lectures_lecture_id_seq", allocationSize = 1)
 	@Column(name = "LECTURE_ID")
 	private Long lectureId;
 

@@ -43,8 +43,8 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
 
     // Test (모듈 전용)
+    testRuntimeOnly 'com.h2database:h2' // H2 for test (in-memory database with PostgreSQL mode)
     testImplementation 'org.springframework.security:spring-security-test'
-    testRuntimeOnly 'com.h2database:h2'
 }
 
 bootJar.enabled = true

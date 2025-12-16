@@ -94,13 +94,19 @@ class OrganizationControllerTest {
     @DisplayName("기관별 강의 목록 조회 성공")
     void getOrganizationLectureList() throws Exception {
         // given
+        Organization organization = Organization.create(1L, "Test Org", "Desc", "url");
+        org.springframework.test.util.ReflectionTestUtils.setField(organization, "id", 10L);
+
         Lecture lecture = Lecture.builder()
                 .lectureId(100L)
                 .lectureName("Org Lecture")
                 .status(LectureStatus.RECRUITING)
                 .build();
+        
+        when(organizationService.getOrganization(10L)).thenReturn(organization);
         when(lectureService.getPublishedLectureListByOrgId(10L)).thenReturn(List.of(lecture));
         when(lectureService.getAverageScoresByLectureIds(anyList())).thenReturn(java.util.Map.of(100L, 4.3));
+        when(lectureService.getReviewCountsByLectureIds(anyList())).thenReturn(java.util.Map.of(100L, 10L));
 
         // when & then
         mockMvc.perform(get("/api/v1/organizations/{organizationId}/lectures", 10L))
