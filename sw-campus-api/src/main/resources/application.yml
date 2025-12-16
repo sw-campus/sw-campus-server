@@ -1,6 +1,6 @@
 spring:
   application:
-    name: sw-campus
+    name: sw-campus-server
 
   profiles:
     default: local
