@@ -40,3 +40,6 @@ out/
 migration-gen.log
 skipped_constraints.log
 
+.venv/
+scripts/output/
+scripts/data-migration/output/
