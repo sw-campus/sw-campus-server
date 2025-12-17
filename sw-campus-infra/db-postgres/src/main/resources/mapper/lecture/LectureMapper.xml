@@ -18,6 +18,9 @@
         <result property="lectureLoc" column="lecture_loc"/>
         <result property="location" column="location"/>
         <result property="recruitType" column="recruit_type"/>
+        <result property="lectureFee" column="lecture_fee"/>
+        <result property="subsidy" column="subsidy"/>
+        <result property="eduSubsidy" column="edu_subsidy"/>
         <result property="status" column="status"/>
         <result property="lectureAuthStatus" column="lecture_auth_status"/>
         
@@ -112,6 +115,11 @@
                     OR (l.lecture_fee > 0)
                 </if>
             </trim>
+        </if>
+
+        <!-- 자기부담금 상한 -->
+        <if test="cond.maxFee != null">
+            AND l.lecture_fee &lt;= #{cond.maxFee}
         </if>
 
         <!-- 선발 절차 필터 -->

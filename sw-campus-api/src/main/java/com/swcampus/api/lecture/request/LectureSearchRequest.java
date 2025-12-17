@@ -37,6 +37,12 @@ public class LectureSearchRequest {
     @Parameter(description = "유료", example = "false")
     private Boolean isPaid;
 
+    @Parameter(description = "자부담 상한액 (원)", example = "100000")
+    private Integer maxFee;
+
+    @Parameter(description = "자부담금", example = "500000")
+    private Integer lectureFee;
+
     @Parameter(description = "코딩테스트 있음", hidden = true)
     private Boolean hasCodingTest;
 
@@ -72,6 +78,8 @@ public class LectureSearchRequest {
                 .isFreeKdt(this.isFreeKdt)
                 .isFreeNoKdt(this.isFreeNoKdt)
                 .isPaid(this.isPaid)
+
+                .maxFee(this.maxFee)
                 .hasCodingTest(this.hasCodingTest)
                 .hasInterview(this.hasInterview)
                 .hasPreTask(this.hasPreTask)

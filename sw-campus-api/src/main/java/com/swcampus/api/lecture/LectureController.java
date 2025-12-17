@@ -3,7 +3,6 @@ package com.swcampus.api.lecture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -54,6 +53,8 @@ import jakarta.validation.Validator;
 @RequiredArgsConstructor
 @Tag(name = "Lecture", description = "강의 관리 API")
 public class LectureController {
+
+	private static final int TOP_RATED_LECTURE_COUNT = 4;
 
 	private final LectureService lectureService;
 	private final OrganizationService organizationService;
@@ -171,16 +172,16 @@ public class LectureController {
 	})
 	public ResponseEntity<LectureResponse> getLecture(
 			@Parameter(description = "강의 ID", example = "1", required = true) @PathVariable Long lectureId) {
-		Lecture lecture = lectureService.getPublishedLecture(lectureId);
+		var lectureSummary = lectureService.getLectureWithStats(lectureId);
 		Organization organization = null;
-		if (lecture.getOrgId() != null) {
-			organization = organizationService.getOrganization(lecture.getOrgId());
+		if (lectureSummary.lecture().getOrgId() != null) {
+			organization = organizationService.getOrganization(lectureSummary.lecture().getOrgId());
 		}
-		Double averageScore = lectureService.getAverageScoresByLectureIds(List.of(lectureId))
-				.getOrDefault(lectureId, null);
-		Long reviewCount = lectureService.getReviewCountsByLectureIds(List.of(lectureId))
-				.getOrDefault(lectureId, null);
-		return ResponseEntity.ok(LectureResponse.from(lecture, organization, averageScore, reviewCount));
+		return ResponseEntity.ok(LectureResponse.from(
+				lectureSummary.lecture(),
+				organization,
+				lectureSummary.averageScore(),
+				lectureSummary.reviewCount()));
 	}
 
 	@GetMapping("/search")
@@ -190,20 +191,23 @@ public class LectureController {
 	})
 	public ResponseEntity<Page<LectureSummaryResponse>> searchLectures(
 			@Valid @ModelAttribute LectureSearchRequest request) {
-		Page<Lecture> lectures = lectureService.searchLectures(request.toCondition());
+		var lectures = lectureService.searchLecturesWithStats(request.toCondition());
+		Page<LectureSummaryResponse> response = lectures
+				.map(dto -> LectureSummaryResponse.from(dto.lecture(), dto.averageScore(), dto.reviewCount()));
+		return ResponseEntity.ok(response);
+	}
 
-		// 배치로 평균 점수 조회 (N+1 문제 해결)
-		List<Long> lectureIds = lectures.getContent().stream()
-				.map(Lecture::getLectureId)
+	@GetMapping("/category/{categoryId}/top-rated")
+	@Operation(summary = "카테고리별 평점 높은 강의 조회", description = "특정 카테고리의 강의를 평점 높은 순으로 4개 조회합니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "조회 성공")
+	})
+	public ResponseEntity<List<LectureSummaryResponse>> getTopRatedLecturesByCategory(
+			@Parameter(description = "카테고리 ID", example = "1", required = true) @PathVariable Long categoryId) {
+		var lectures = lectureService.getTopRatedLecturesByCategoryWithStats(categoryId, TOP_RATED_LECTURE_COUNT);
+		List<LectureSummaryResponse> response = lectures.stream()
+				.map(dto -> LectureSummaryResponse.from(dto.lecture(), dto.averageScore(), dto.reviewCount()))
 				.toList();
-		Map<Long, Double> averageScores = lectureService.getAverageScoresByLectureIds(lectureIds);
-		Map<Long, Long> reviewCounts = lectureService.getReviewCountsByLectureIds(lectureIds);
-
-		Page<LectureSummaryResponse> response = lectures.map(lecture -> {
-			Double averageScore = averageScores.get(lecture.getLectureId());
-			Long reviewCount = reviewCounts.get(lecture.getLectureId());
-			return LectureSummaryResponse.from(lecture, averageScore, reviewCount);
-		});
 		return ResponseEntity.ok(response);
 	}
 

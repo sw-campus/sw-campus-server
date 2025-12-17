@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
+import com.swcampus.domain.lecture.dto.LectureSummaryDto;
 import com.swcampus.domain.lecture.exception.LectureNotModifiableException;
 import com.swcampus.domain.teacher.Teacher;
 import org.springframework.security.access.AccessDeniedException;
@@ -110,6 +111,67 @@ public class LectureService {
 
 	public Page<Lecture> searchLectures(LectureSearchCondition condition) {
 		return lectureRepository.searchLectures(condition);
+	}
+
+	public List<Lecture> getTopRatedLecturesByCategory(Long categoryId, int limit) {
+		LectureSearchCondition condition = LectureSearchCondition.builder()
+				.categoryIds(Collections.singletonList(categoryId))
+				.status(LectureStatus.RECRUITING)
+				.sort(com.swcampus.domain.lecture.dto.LectureSortType.SCORE_DESC)
+				.pageable(org.springframework.data.domain.PageRequest.of(0, limit))
+				.build();
+
+		return searchLectures(condition).getContent();
+	}
+
+	/**
+	 * 강의 상세 조회 (평점/리뷰 수 포함)
+	 */
+	public LectureSummaryDto getLectureWithStats(Long lectureId) {
+		Lecture lecture = getPublishedLecture(lectureId);
+		Double averageScore = getAverageScoresByLectureIds(List.of(lectureId))
+				.getOrDefault(lectureId, null);
+		Long reviewCount = getReviewCountsByLectureIds(List.of(lectureId))
+				.getOrDefault(lectureId, null);
+		return LectureSummaryDto.from(lecture, averageScore, reviewCount);
+	}
+
+	/**
+	 * 강의 검색 (평점/리뷰 통계 포함)
+	 */
+	public Page<LectureSummaryDto> searchLecturesWithStats(LectureSearchCondition condition) {
+		Page<Lecture> lectures = searchLectures(condition);
+
+		List<Long> lectureIds = lectures.getContent().stream()
+				.map(Lecture::getLectureId)
+				.toList();
+		Map<Long, Double> averageScores = getAverageScoresByLectureIds(lectureIds);
+		Map<Long, Long> reviewCounts = getReviewCountsByLectureIds(lectureIds);
+
+		return lectures.map(lecture -> LectureSummaryDto.from(
+				lecture,
+				averageScores.get(lecture.getLectureId()),
+				reviewCounts.get(lecture.getLectureId())));
+	}
+
+	/**
+	 * 카테고리별 평점 높은 강의 조회 (평점/리뷰 통계 포함)
+	 */
+	public List<LectureSummaryDto> getTopRatedLecturesByCategoryWithStats(Long categoryId, int limit) {
+		List<Lecture> lectures = getTopRatedLecturesByCategory(categoryId, limit);
+
+		List<Long> lectureIds = lectures.stream()
+				.map(Lecture::getLectureId)
+				.toList();
+		Map<Long, Double> averageScores = getAverageScoresByLectureIds(lectureIds);
+		Map<Long, Long> reviewCounts = getReviewCountsByLectureIds(lectureIds);
+
+		return lectures.stream()
+				.map(lecture -> LectureSummaryDto.from(
+						lecture,
+						averageScores.get(lecture.getLectureId()),
+						reviewCounts.get(lecture.getLectureId())))
+				.toList();
 	}
 
 	public Map<Long, String> getLectureNames(List<Long> lectureIds) {

@@ -21,6 +21,7 @@ public class LectureSearchCondition {
     private Boolean isFreeKdt; // 내배카 필요 (무료)
     private Boolean isFreeNoKdt; // 내배카 불필요 (무료)
     private Boolean isPaid; // 유료 (자부담 발생)
+    private Integer maxFee; // 자부담 상한액
 
     // 선발 절차 필터
     private Boolean hasCodingTest;
