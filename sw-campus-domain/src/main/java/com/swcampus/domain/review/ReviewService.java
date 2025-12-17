@@ -124,6 +124,15 @@ public class ReviewService {
     }
 
     /**
+     * 기관별 승인된 후기 목록 조회
+     */
+    public List<Review> getApprovedReviewsByOrganization(Long organizationId) {
+        return reviewRepository.findByOrganizationIdAndApprovalStatus(
+                organizationId, ApprovalStatus.APPROVED
+        );
+    }
+
+    /**
      * 내가 작성한 후기 조회 (lectureId 기준)
      */
     public Review getMyReviewByLecture(Long memberId, Long lectureId) {

@@ -48,6 +48,13 @@ public class ReviewEntityRepository implements ReviewRepository {
     }
 
     @Override
+    public List<Review> findByOrganizationIdAndApprovalStatus(Long organizationId, ApprovalStatus status) {
+        return jpaRepository.findByOrganizationIdAndApprovalStatusWithDetails(organizationId, status).stream()
+                .map(ReviewEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<Review> findByApprovalStatus(ApprovalStatus status) {
         return jpaRepository.findByApprovalStatusWithDetails(status).stream()
                 .map(ReviewEntity::toDomain)
