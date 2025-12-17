@@ -32,7 +32,7 @@ public class OrganizationEntity extends BaseEntity {
     private String description;
 
     @Column(name = "approval_status")
-    private Integer approvalStatus;
+    private String approvalStatus;
 
     @Column(name = "certificate_url", columnDefinition = "TEXT")
     private String certificateUrl;
@@ -65,7 +65,7 @@ public class OrganizationEntity extends BaseEntity {
         entity.name = organization.getName();
         entity.description = organization.getDescription();
         entity.approvalStatus = organization.getApprovalStatus() != null
-                ? organization.getApprovalStatus().getValue()
+                ? organization.getApprovalStatus().name()
                 : null;
         entity.certificateUrl = organization.getCertificateUrl();
         entity.govAuth = organization.getGovAuth();
@@ -84,7 +84,7 @@ public class OrganizationEntity extends BaseEntity {
                 userId,
                 name,
                 description,
-                approvalStatus != null ? ApprovalStatus.fromValue(approvalStatus) : null,
+                approvalStatus != null ? ApprovalStatus.fromName(approvalStatus) : null,
                 certificateUrl,
                 govAuth,
                 facilityImageUrl,
