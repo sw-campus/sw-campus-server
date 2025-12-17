@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -124,6 +126,14 @@ public class ReviewService {
     }
 
     /**
+     * 강의별 승인된 후기 목록 조회 (닉네임 포함)
+     */
+    public List<ReviewWithNickname> getApprovedReviewsWithNicknameByLecture(Long lectureId) {
+        List<Review> reviews = getApprovedReviewsByLecture(lectureId);
+        return toReviewsWithNicknames(reviews);
+    }
+
+    /**
      * 기관별 승인된 후기 목록 조회
      */
     public List<Review> getApprovedReviewsByOrganization(Long organizationId) {
@@ -133,10 +143,47 @@ public class ReviewService {
     }
 
     /**
+     * 기관별 승인된 후기 목록 조회 (닉네임 포함)
+     */
+    public List<ReviewWithNickname> getApprovedReviewsWithNicknameByOrganization(Long organizationId) {
+        List<Review> reviews = getApprovedReviewsByOrganization(organizationId);
+        return toReviewsWithNicknames(reviews);
+    }
+
+    /**
      * 내가 작성한 후기 조회 (lectureId 기준)
      */
     public Review getMyReviewByLecture(Long memberId, Long lectureId) {
         return reviewRepository.findByMemberIdAndLectureId(memberId, lectureId)
                 .orElseThrow(ReviewNotFoundException::new);
     }
+
+    /**
+     * 리뷰 목록에 닉네임을 배치로 조회하여 매핑
+     */
+    private List<ReviewWithNickname> toReviewsWithNicknames(List<Review> reviews) {
+        if (reviews.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> memberIds = reviews.stream()
+                .map(Review::getMemberId)
+                .distinct()
+                .toList();
+
+        Map<Long, String> nicknameMap = memberRepository.findAllByIds(memberIds).stream()
+                .collect(Collectors.toMap(
+                        Member::getId,
+                        member -> member.getNickname() != null ? member.getNickname() : "",
+                        (existing, replacement) -> existing
+                ));
+
+        return reviews.stream()
+                .map(review -> ReviewWithNickname.of(
+                        review,
+                        nicknameMap.get(review.getMemberId())
+                ))
+                .toList();
+    }
 }
+

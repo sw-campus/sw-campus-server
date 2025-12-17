@@ -24,7 +24,7 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
         List<ReviewEntity> findByLectureIdAndApprovalStatusWithDetails(@Param("lectureId") Long lectureId,
                         @Param("status") ApprovalStatus status);
 
-        @Query("SELECT r FROM ReviewEntity r LEFT JOIN FETCH r.details WHERE r.lectureId IN (SELECT l.lectureId FROM LectureEntity l WHERE l.orgId = :organizationId) AND r.approvalStatus = :status")
+        @Query("SELECT r FROM ReviewEntity r LEFT JOIN FETCH r.details WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId) AND r.approvalStatus = :status")
         List<ReviewEntity> findByOrganizationIdAndApprovalStatusWithDetails(@Param("organizationId") Long organizationId,
                                                                             @Param("status") ApprovalStatus status);
 

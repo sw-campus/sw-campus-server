@@ -13,10 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.swcampus.api.lecture.response.LectureSummaryResponse;
 import com.swcampus.api.organization.response.OrganizationResponse;
 import com.swcampus.api.organization.response.OrganizationSummaryResponse;
+import com.swcampus.api.review.response.ReviewResponse;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.review.ReviewService;
+import com.swcampus.domain.review.ReviewWithNickname;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,6 +36,7 @@ public class OrganizationController {
 
         private final OrganizationService organizationService;
         private final LectureService lectureService;
+        private final ReviewService reviewService;
 
         @GetMapping
         @Operation(summary = "기관 목록 조회", description = "모집 중인 강의 수와 함께 기관 목록을 조회합니다. 키워드로 검색할 수 있습니다.")
@@ -95,4 +99,19 @@ public class OrganizationController {
                                 .toList();
                 return ResponseEntity.ok(response);
         }
+
+        @GetMapping("/{organizationId}/reviews")
+        @Operation(summary = "기관별 승인된 후기 조회", description = "기관 ID로 승인된 후기 목록을 조회합니다.")
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "조회 성공")
+        })
+        public ResponseEntity<List<ReviewResponse>> getApprovedReviewsByOrganization(
+                        @Parameter(description = "기관 ID", example = "1", required = true) @PathVariable Long organizationId) {
+                List<ReviewWithNickname> reviewsWithNicknames = reviewService.getApprovedReviewsWithNicknameByOrganization(organizationId);
+                List<ReviewResponse> responses = reviewsWithNicknames.stream()
+                                .map(rwn -> ReviewResponse.from(rwn.review(), rwn.nickname()))
+                                .toList();
+                return ResponseEntity.ok(responses);
+        }
 }
+

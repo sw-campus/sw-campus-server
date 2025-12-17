@@ -128,41 +128,6 @@ public class ReviewController {
         return ResponseEntity.ok(ReviewResponse.from(review, nickname));
     }
 
-    @Operation(summary = "강의별 승인된 후기 조회", description = "강의 ID로 승인된 후기 목록을 조회합니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "조회 성공")
-    })
-    @GetMapping("/lectures/{lectureId}")
-    public ResponseEntity<List<ReviewResponse>> getApprovedReviewsByLecture(
-            @Parameter(description = "강의 ID", required = true)
-            @PathVariable Long lectureId) {
-        
-        List<Review> reviews = reviewService.getApprovedReviewsByLecture(lectureId);
-        return ResponseEntity.ok(toReviewResponses(reviews));
-    }
-
-    @Operation(summary = "기관별 승인된 후기 조회", description = "기관 ID로 승인된 후기 목록을 조회합니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "조회 성공")
-    })
-    @GetMapping("/organizations/{organizationId}")
-    public ResponseEntity<List<ReviewResponse>> getApprovedReviewsByOrganization(
-            @Parameter(description = "기관 ID", required = true)
-            @PathVariable Long organizationId) {
-
-        List<Review> reviews = reviewService.getApprovedReviewsByOrganization(organizationId);
-        return ResponseEntity.ok(toReviewResponses(reviews));
-    }
-
-    private List<ReviewResponse> toReviewResponses(List<Review> reviews) {
-        return reviews.stream()
-                .map(review -> {
-                    String nickname = getNickname(review.getMemberId());
-                    return ReviewResponse.from(review, nickname);
-                })
-                .collect(Collectors.toList());
-    }
-
     @Operation(summary = "후기 상세 조회", description = "후기 ID로 상세 정보를 조회합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
