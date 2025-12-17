@@ -1,0 +1,44 @@
+-- Auto-generated migration file: V6__seed_curriculums.sql
+-- Generated at: 2025-12-17 10:28:24
+
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (1, 1, 'Python 프로그래밍 및 AI 수학') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (2, 1, '데이터 전처리 및 핸들링') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (3, 1, '머신러닝/딥러닝 프레임워크 기초') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (4, 1, '데이터베이스 및 SQL 활용') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (5, 1, '컴퓨터 비전(CV) 및 이미지 처리') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (6, 1, '자연어 처리(NLP) 및 LLM 활용') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (7, 1, '생성형 AI 및 RAG 아키텍처') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (8, 1, '모델 성능 최적화 및 경량화') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (9, 1, 'AI 모델 서빙 및 API 개발') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (10, 1, 'MLOps 파이프라인 및 클라우드 배포') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (11, 5, '프로그래밍 언어 핵심 (C++ / C#)') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (12, 5, '자료구조 및 알고리즘') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (13, 5, '게임 수학 및 물리학 기초') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (14, 5, 'Windows API 및 시스템 프로그래밍') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (15, 5, '게임 엔진 기초 및 씬(Scene) 구성') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (16, 5, '캐릭터 제어 및 FSM(유한상태머신)') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (17, 5, '2D/3D 그래픽스 및 셰이더') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (18, 5, 'UI/UX 시스템 및 사운드 미들웨어') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (19, 5, '네트워크 및 멀티플레이어 구현') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (20, 5, '게임 최적화 및 상용화 프로젝트') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (21, 13, '웹 기초 & UI 구현') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (22, 13, '프론트엔드 프레임워크') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (23, 13, '백엔드 언어 & 서버') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (24, 13, '데이터베이스 & 모델링') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (25, 13, 'API 설계 및 통신') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (26, 13, '인증 & 보안') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (27, 13, '상태 관리 및 데이터 캐싱') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (28, 13, '배포 & 데브옵스') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (29, 13, '심화 아키텍처') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (30, 13, '협업 배포 & 실무 프로젝트') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (31, 17, '웹 기초 & UI 구현') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (32, 17, '프론트엔드 프레임워크') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (33, 17, '백엔드 언어 & 서버') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (34, 17, '데이터베이스 & 모델링') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (35, 17, 'API 설계 및 통신') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (36, 17, '인증 & 보안') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (37, 17, '상태 관리 및 데이터 캐싱') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (38, 17, '배포 & 데브옵스') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (39, 17, '심화 아키텍처') ON CONFLICT DO NOTHING;
+INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name) VALUES (40, 17, '협업 배포 & 실무 프로젝트') ON CONFLICT DO NOTHING;
+SELECT setval('swcampus.curriculums_curriculum_id_seq', (SELECT COALESCE(MAX(curriculum_id), 1) FROM swcampus.curriculums));
