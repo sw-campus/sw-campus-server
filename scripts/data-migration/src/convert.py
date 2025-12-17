@@ -9,9 +9,9 @@ AUTH_APPROVED = 'APPROVED'
 LOC_OFFLINE = 'OFFLINE'
 
 
-# 데이터 디렉토리 설정 (src/../../csv)
+# 데이터 디렉토리 설정 (src/../data)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '../../csv'))
+DATA_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '../data'))
 
 def process_admin_user():
     """Step 0: Admin User 생성"""
