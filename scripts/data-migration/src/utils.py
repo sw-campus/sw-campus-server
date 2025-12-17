@@ -11,7 +11,7 @@ def load_csv(path):
         return None
         
     try:
-        return pd.read_csv(path, encoding='utf-8')
+        return pd.read_csv(path, encoding='utf-8-sig')
     except UnicodeDecodeError:
         try:
             return pd.read_csv(path, encoding='cp949')
