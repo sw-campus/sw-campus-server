@@ -6,23 +6,13 @@ import java.util.Arrays;
  * 기관 승인 상태
  */
 public enum ApprovalStatus {
-    PENDING(0), // 승인 대기
-    APPROVED(1), // 승인됨
-    REJECTED(2); // 반려됨
+    PENDING, // 승인 대기
+    APPROVED, // 승인됨
+    REJECTED; // 반려됨
 
-    private final int value;
-
-    ApprovalStatus(int value) {
-        this.value = value;
-    }
-
-    public int getValue() {
-        return value;
-    }
-
-    public static ApprovalStatus fromValue(int value) {
+    public static ApprovalStatus fromName(String name) {
         return Arrays.stream(values())
-                .filter(s -> s.value == value)
+                .filter(s -> s.name().equalsIgnoreCase(name))
                 .findFirst()
                 .orElse(PENDING);
     }

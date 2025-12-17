@@ -1,6 +1,7 @@
 package com.swcampus.infra.postgres.review;
 
 import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.infra.postgres.lecture.LectureEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,6 +23,10 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
         @Query("SELECT r FROM ReviewEntity r LEFT JOIN FETCH r.details WHERE r.lectureId = :lectureId AND r.approvalStatus = :status")
         List<ReviewEntity> findByLectureIdAndApprovalStatusWithDetails(@Param("lectureId") Long lectureId,
                         @Param("status") ApprovalStatus status);
+
+        @Query("SELECT r FROM ReviewEntity r LEFT JOIN FETCH r.details WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId) AND r.approvalStatus = :status")
+        List<ReviewEntity> findByOrganizationIdAndApprovalStatusWithDetails(@Param("organizationId") Long organizationId,
+                                                                            @Param("status") ApprovalStatus status);
 
         @Query("SELECT r FROM ReviewEntity r LEFT JOIN FETCH r.details WHERE r.approvalStatus = :status")
         List<ReviewEntity> findByApprovalStatusWithDetails(@Param("status") ApprovalStatus status);

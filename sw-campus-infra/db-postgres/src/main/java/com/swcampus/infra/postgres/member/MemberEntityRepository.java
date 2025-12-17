@@ -5,6 +5,7 @@ import com.swcampus.domain.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -23,6 +24,16 @@ public class MemberEntityRepository implements MemberRepository {
     @Override
     public Optional<Member> findById(Long id) {
         return jpaRepository.findById(id).map(MemberEntity::toDomain);
+    }
+
+    @Override
+    public List<Member> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return jpaRepository.findAllById(ids).stream()
+                .map(MemberEntity::toDomain)
+                .toList();
     }
 
     @Override
