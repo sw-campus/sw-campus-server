@@ -1,5 +1,5 @@
 -- Auto-generated migration file: V8__seed_lecture_steps.sql
--- Generated at: 2025-12-17 09:24:27
+-- Generated at: 2025-12-17 10:28:24
 
 INSERT INTO swcampus.lecture_steps (step_id, lecture_id, step_type, step_order, created_at, updated_at) VALUES (1, 1, 'DOCUMENT', 1, NOW(), NOW()) ON CONFLICT DO NOTHING;
 INSERT INTO swcampus.lecture_steps (step_id, lecture_id, step_type, step_order, created_at, updated_at) VALUES (2, 1, 'INTERVIEW', 2, NOW(), NOW()) ON CONFLICT DO NOTHING;

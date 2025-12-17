@@ -1,5 +1,5 @@
 -- Auto-generated migration file: V7__seed_lectures.sql
--- Generated at: 2025-12-17 09:24:27
+-- Generated at: 2025-12-17 10:28:24
 
 INSERT INTO swcampus.lectures (lecture_id, org_id, lecture_name, lecture_loc, recruit_type, start_date, end_date, total_days, total_times, start_time, end_time, lecture_fee, subsidy, edu_subsidy, books, employment_help, equip_pc, status, lecture_auth_status, created_at, updated_at, goal, equip_merit, project_num, project_time, project_team, project_tool, project_mentor, resume, mock_interview, after_completion, location) VALUES (1, 14, '기업요구 Vue, Spring & Cloud 활용 풀스택 개발자 양성과정', 'OFFLINE', 'CARD_REQUIRED', '2025-11-27'::timestamp, '2026-06-15'::timestamp, 130, 1040, '09:00:00', '18:00:00', 9872720, 316000, 9872720, TRUE, TRUE, 'PC', 'RECRUITING', 'APPROVED', NOW(), NOW(), '1.프론트엔드(Vue.js)와 백엔드(Spring Boot) 기술을 습득하여 기업이 요구하는 웹 애플리케이션을 구현
 2.AWS 클라우드 환경에서의 배포 및 운영 능력을 갖춘 실무형 풀스택 개발자 양성', '', 3, 2, '자율구성', 'Git/GitHub', TRUE, TRUE, TRUE, TRUE, '대구 중구') ON CONFLICT DO NOTHING;

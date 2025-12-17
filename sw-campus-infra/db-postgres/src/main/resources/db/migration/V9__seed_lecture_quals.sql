@@ -1,5 +1,5 @@
 -- Auto-generated migration file: V9__seed_lecture_quals.sql
--- Generated at: 2025-12-17 09:24:27
+-- Generated at: 2025-12-17 10:28:24
 
 INSERT INTO swcampus.lecture_quals (qual_id, lecture_id, type, text) VALUES (1, 1, 'REQUIRED', '국민내일배움카드 발급 가능자') ON CONFLICT DO NOTHING;
 INSERT INTO swcampus.lecture_quals (qual_id, lecture_id, type, text) VALUES (2, 1, 'REQUIRED', '수료 후 즉시 취업이 가능한 미취업자(실업자)') ON CONFLICT DO NOTHING;

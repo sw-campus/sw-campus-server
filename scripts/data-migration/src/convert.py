@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import bcrypt
 from utils import load_csv, clean_str, clean_int, parse_date
 from sql_gen import write_sql, generate_insert_sql, generate_sequence_reset_sql
 
@@ -13,18 +14,27 @@ LOC_OFFLINE = 'OFFLINE'
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '../data'))
 
+def hash_password(plain_password: str) -> str:
+    """bcrypt를 사용하여 비밀번호 해싱 (Spring Security BCryptPasswordEncoder 호환)"""
+    salt = bcrypt.gensalt(rounds=10)
+    hashed = bcrypt.hashpw(plain_password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
+
+
 def process_admin_user():
     """Step 0: Admin User 생성"""
     print("Processing Step 0: Admin User...")
     sqls = []
     
-    # admin_password = os.getenv('MIGRATION_ADMIN_PASSWORD', '$2a$10$dummyHashValueForMigrationOnly')
     admin_password = os.getenv('MIGRATION_ADMIN_PASSWORD')
     if not admin_password:
         raise ValueError("MIGRATION_ADMIN_PASSWORD environment variable is required")
     
+    # 평문 비밀번호를 bcrypt로 해싱
+    hashed_password = hash_password(admin_password)
+    
     cols = ['user_id', 'email', 'name', 'role', 'created_at', 'updated_at', 'password']
-    vals = [1, 'admin@swcampus.com', 'Admin', 'ADMIN', 'NOW()', 'NOW()', admin_password]
+    vals = [1, 'admin@swcampus.com', 'Admin', 'ADMIN', 'NOW()', 'NOW()', hashed_password]
     
     sqls.append(generate_insert_sql('members', cols, vals))
     sqls.append(generate_sequence_reset_sql('members', 'user_id'))
@@ -32,17 +42,19 @@ def process_admin_user():
     write_sql('V2__seed_admin_user.sql', sqls)
     print(f"  -> Generated {len(sqls)} SQL statements for Admin User.")
 
-def process_categories():
-    """Step 1: Categories 생성"""
+def process_categories(df_main):
+    """Step 1: Categories 생성
+    
+    Args:
+        df_main: 통합데이터.csv DataFrame (중복 읽기 방지를 위해 외부에서 전달)
+    """
     print("Processing Step 1: Categories...")
     sqls = []
     categories = set()
     
     # 1. 통합데이터.csv에서 대분류 추출
-    main_csv_path = os.path.join(DATA_DIR, '통합데이터.csv')
-    df = load_csv(main_csv_path)
-    if df is not None and '대분류' in df.columns:
-        for cat in df['대분류'].dropna().unique():
+    if df_main is not None and '대분류' in df_main.columns:
+        for cat in df_main['대분류'].dropna().unique():
             categories.add(clean_str(cat))
     
     # 2. DATA_DIR 내의 csv 파일명에서 추출 (통합데이터, 과정정보 제외)
@@ -166,7 +178,10 @@ def process_curriculums(category_list):
     curr_map = {} # name -> id
     cat_curr_list_map = {} # category_name -> [curr_name1, curr_name2, ...]
     
-    # Category name to filename mapping (for mismatches)
+    # 카테고리명과 파일명이 불일치하는 경우만 매핑
+    # 매핑에 없는 카테고리는 cat_file_map.get(cat_name, cat_name)에서 
+    # cat_name 그대로 파일명으로 사용됨
+    # 예: '보안' -> '보안.csv', '기획' -> '기획.csv'
     cat_file_map = {
         '데이터 분석': '데이터분석가',
         '데이터 엔지니어': '데이터엔지니어',
@@ -185,8 +200,8 @@ def process_curriculums(category_list):
             continue
             
         try:
-            # Read without header to inspect row 0 (index 0)
-            df_raw = pd.read_csv(csv_path, header=None, encoding='utf-8')
+            # utf-8-sig로 BOM 처리, header=None으로 전체 행 읽기
+            df_raw = pd.read_csv(csv_path, header=None, encoding='utf-8-sig')
         except UnicodeDecodeError:
             try:
                 df_raw = pd.read_csv(csv_path, header=None, encoding='cp949')
@@ -197,20 +212,39 @@ def process_curriculums(category_list):
             print(f"Error reading {csv_path}: {e}")
             continue
         
-        if len(df_raw) < 1:
-            print(f"Warning: {csv_path} is empty")
+        if len(df_raw) < 2:
+            print(f"Warning: {csv_path} has insufficient rows")
             continue
-            
-        # Row 0 (index 0) contains curriculum names, starting from col 3
+        
+        # CSV 구조 자동 감지:
+        # Type A/B (정상): Row 0 = 메타헤더("분 류", "커리큘럼"), Row 1 = 커리큘럼 이름들
+        # Type C (비정상): Row 0 = 컬럼헤더("훈련기관명"...), 커리큘럼 이름 행 없음
+        first_cell = clean_str(df_raw.iloc[0][0]) if not pd.isna(df_raw.iloc[0][0]) else ''
+        
         curriculum_names = []
-        # Check if row 0 has enough columns
-        if df_raw.shape[1] > 3:
-            for val in df_raw.iloc[0][3:]:
-                if pd.isna(val): continue
-                val_str = clean_str(val)
-                # Filter invalid names
-                if val_str and val_str not in ['훈련기관명', '훈련과정명', '대분류', '분 류', '분류'] and not val_str.isdigit():
-                    curriculum_names.append(val_str)
+        if first_cell == '훈련기관명':
+            # Type C: 비정상 CSV (데이터엔지니어.csv 등)
+            # Row 0에 컬럼 헤더가 바로 있음 - 커리큘럼 이름 추출 불가
+            # col 3부터 커리큘럼 컬럼 헤더들이 있음 (예: "프로그래밍 언어 핵심", "자료구조 및 알고리즘")
+            print(f"  Warning: {fname}.csv has non-standard structure (no curriculum name row)")
+            if df_raw.shape[1] > 3:
+                for val in df_raw.iloc[0][3:]:  # Row 0의 col 3부터 컬럼 헤더 추출
+                    if pd.isna(val): continue
+                    val_str = clean_str(val)
+                    if val_str and val_str not in ['훈련기관명', '훈련과정명', '대분류', '분 류', '분류', '프로젝트'] and not val_str.isdigit():
+                        curriculum_names.append(val_str)
+        else:
+            # Type A/B: 정상 CSV 구조
+            # Row 0: 메타 헤더 (예: "분 류", "커리큘럼")
+            # Row 1: 실제 커리큘럼 이름들 (col 3부터)
+            # Row 2: 컬럼 헤더 (훈련기관명, 훈련과정명, 대분류, 1, 2, ...)
+            if df_raw.shape[1] > 3:
+                for val in df_raw.iloc[1][3:]:  # Row 1에서 커리큘럼 이름 추출
+                    if pd.isna(val): continue
+                    val_str = clean_str(val)
+                    # Filter invalid names
+                    if val_str and val_str not in ['훈련기관명', '훈련과정명', '대분류', '분 류', '분류', '프로젝트'] and not val_str.isdigit():
+                        curriculum_names.append(val_str)
         
         cat_curr_list_map[cat_name] = curriculum_names
         
@@ -226,8 +260,12 @@ def process_curriculums(category_list):
     write_sql('V6__seed_curriculums.sql', sqls)
     return curr_map, cat_curr_list_map
 
-def process_lectures(org_map, teacher_map, curr_map, cat_curr_list_map, cat_map):
-    """Step 5: Lectures & Related Tables 생성"""
+def process_lectures(org_map, teacher_map, curr_map, cat_curr_list_map, cat_map, df_main):
+    """Step 5: Lectures & Related Tables 생성
+    
+    Args:
+        df_main: 통합데이터.csv DataFrame (중복 읽기 방지를 위해 외부에서 전달)
+    """
     print("Processing Step 5: Lectures & Relations...")
     
     source_csv = os.path.join(DATA_DIR, '소프트웨어캠퍼스과정정보.csv')
@@ -418,10 +456,7 @@ def process_lectures(org_map, teacher_map, curr_map, cat_curr_list_map, cat_map)
         lecture_id += 1
 
     # Lecture Curriculums
-    # Load 통합데이터.csv
-    main_csv_path = os.path.join(DATA_DIR, '통합데이터.csv')
-    df_main = load_csv(main_csv_path)
-    
+    # df_main은 외부에서 전달받음 (중복 읽기 방지)
     if df_main is not None:
         for _, row in df_main.iterrows():
             l_name = clean_str(row.get('훈련과정명'))
@@ -485,12 +520,17 @@ def process_lectures(org_map, teacher_map, curr_map, cat_curr_list_map, cat_map)
 
 if __name__ == "__main__":
     print("Starting convert.py...")
+    
+    # 통합데이터.csv를 한 번만 읽어서 재사용
+    main_csv_path = os.path.join(DATA_DIR, '통합데이터.csv')
+    df_main = load_csv(main_csv_path)
+    
     process_admin_user()
-    categories, cat_map = process_categories()
+    categories, cat_map = process_categories(df_main)
     org_map = process_organizations()
     teacher_map = process_teachers()
     if categories:
         curr_map, cat_curr_list_map = process_curriculums(categories)
-        process_lectures(org_map, teacher_map, curr_map, cat_curr_list_map, cat_map)
+        process_lectures(org_map, teacher_map, curr_map, cat_curr_list_map, cat_map, df_main)
     else:
         print("Skipping Step 4 & 5 due to no categories found.")

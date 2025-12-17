@@ -1,5 +1,5 @@
 -- Auto-generated migration file: V4__seed_organizations.sql
--- Generated at: 2025-12-17 09:24:26
+-- Generated at: 2025-12-17 10:28:23
 
 INSERT INTO swcampus.organizations (org_id, org_name, user_id, approval_status, created_at, updated_at) VALUES (1, '(사)한국능률협회', 1, 1, NOW(), NOW()) ON CONFLICT DO NOTHING;
 INSERT INTO swcampus.organizations (org_id, org_name, user_id, approval_status, created_at, updated_at) VALUES (2, '(재)대덕인재개발원', 1, 1, NOW(), NOW()) ON CONFLICT DO NOTHING;
