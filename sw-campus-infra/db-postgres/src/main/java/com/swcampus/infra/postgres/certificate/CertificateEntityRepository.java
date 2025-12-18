@@ -35,4 +35,12 @@ public class CertificateEntityRepository implements CertificateRepository {
     public boolean existsByMemberIdAndLectureId(Long memberId, Long lectureId) {
         return jpaRepository.existsByMemberIdAndLectureId(memberId, lectureId);
     }
+
+    @Override
+    public java.util.List<com.swcampus.domain.certificate.Certificate> findAllByMemberId(Long memberId) {
+        return jpaRepository.findAllByMemberIdAndApprovalStatus(memberId, com.swcampus.domain.review.ApprovalStatus.APPROVED)
+            .stream()
+            .map(CertificateEntity::toDomain)
+            .toList();
+    }
 }

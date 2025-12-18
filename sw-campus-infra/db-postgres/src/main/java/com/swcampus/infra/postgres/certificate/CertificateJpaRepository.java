@@ -1,7 +1,9 @@
 package com.swcampus.infra.postgres.certificate;
 
+import com.swcampus.domain.review.ApprovalStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CertificateJpaRepository extends JpaRepository<CertificateEntity, Long> {
@@ -9,4 +11,6 @@ public interface CertificateJpaRepository extends JpaRepository<CertificateEntit
     Optional<CertificateEntity> findByMemberIdAndLectureId(Long memberId, Long lectureId);
 
     boolean existsByMemberIdAndLectureId(Long memberId, Long lectureId);
+
+    List<CertificateEntity> findAllByMemberIdAndApprovalStatus(Long memberId, ApprovalStatus approvalStatus);
 }

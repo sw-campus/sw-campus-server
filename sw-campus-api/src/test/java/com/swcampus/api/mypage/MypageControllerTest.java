@@ -18,6 +18,9 @@ import com.swcampus.api.mypage.request.UpdateProfileRequest;
 import com.swcampus.api.mypage.request.UpsertSurveyRequest;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.auth.TokenProvider;
+import com.swcampus.domain.certificate.Certificate;
+import com.swcampus.domain.certificate.CertificateService;
+import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberService;
@@ -30,6 +33,7 @@ import com.swcampus.domain.survey.MemberSurveyService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -75,6 +79,9 @@ class MypageControllerTest {
 
     @MockitoBean
     private OrganizationService organizationService;
+
+    @MockitoBean
+    private CertificateService certificateService;
 
     private MemberPrincipal memberPrincipal;
     private static final String TEST_PASSWORD = "password";
@@ -160,6 +167,53 @@ class MypageControllerTest {
                 .andExpect(status().isOk());
         
         verify(reviewService).findAllByMemberId(1L);
+    }
+
+    @Test
+    @DisplayName("내 수강 완료 강의 조회 - 성공")
+    void getMyCompletedLectures_Success() throws Exception {
+        // given
+        Certificate certificate = Certificate.of(1L, 1L, 100L, "image.jpg", "SUCCESS", 
+            com.swcampus.domain.review.ApprovalStatus.APPROVED, LocalDateTime.now());
+        Lecture lecture = Lecture.builder()
+            .lectureId(100L)
+            .lectureName("Test Lecture")
+            .orgId(10L)
+            .build();
+        
+        given(certificateService.findAllByMemberId(1L)).willReturn(List.of(certificate));
+        given(lectureService.getLecturesByIds(List.of(100L))).willReturn(Map.of(100L, lecture));
+        given(organizationService.getOrganizationNames(List.of(10L))).willReturn(Map.of(10L, "Test Org"));
+        given(reviewService.findAllByMemberId(1L)).willReturn(List.of());
+
+        // when & then
+        mockMvc.perform(get("/api/v1/mypage/completed-lectures")
+                        .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].lectureId").value(100))
+                .andExpect(jsonPath("$[0].lectureName").value("Test Lecture"))
+                .andExpect(jsonPath("$[0].organizationName").value("Test Org"))
+                .andExpect(jsonPath("$[0].canWriteReview").value(true));
+        
+        verify(certificateService).findAllByMemberId(1L);
+    }
+
+    @Test
+    @DisplayName("내 수강 완료 강의 조회 - 빈 목록")
+    void getMyCompletedLectures_Empty() throws Exception {
+        // given
+        given(certificateService.findAllByMemberId(1L)).willReturn(List.of());
+
+        // when & then
+        mockMvc.perform(get("/api/v1/mypage/completed-lectures")
+                        .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+        
+        verify(certificateService).findAllByMemberId(1L);
     }
 
     @Test

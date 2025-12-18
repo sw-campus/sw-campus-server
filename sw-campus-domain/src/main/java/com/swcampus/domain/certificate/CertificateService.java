@@ -88,4 +88,11 @@ public class CertificateService {
         }
         return text.replaceAll("\\s+", "").toLowerCase();
     }
+
+    /**
+     * 회원의 승인된 수료증 목록 조회
+     */
+    public List<Certificate> findAllByMemberId(Long memberId) {
+        return certificateRepository.findAllByMemberId(memberId);
+    }
 }

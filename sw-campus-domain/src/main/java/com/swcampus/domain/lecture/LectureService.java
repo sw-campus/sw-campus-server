@@ -179,6 +179,14 @@ public class LectureService {
 		return lectureRepository.findLectureNamesByIds(lectureIds);
 	}
 
+	public Map<Long, Lecture> getLecturesByIds(List<Long> lectureIds) {
+		if (lectureIds == null || lectureIds.isEmpty()) {
+			return java.util.Collections.emptyMap();
+		}
+		return lectureRepository.findAllByIds(lectureIds).stream()
+			.collect(java.util.stream.Collectors.toMap(Lecture::getLectureId, lecture -> lecture));
+	}
+
 	@Transactional(readOnly = true)
 	public List<Lecture> getPublishedLectureListByOrgId(Long orgId) {
 		return lectureRepository.findAllByOrgIdAndLectureAuthStatus(orgId, LectureAuthStatus.APPROVED);
