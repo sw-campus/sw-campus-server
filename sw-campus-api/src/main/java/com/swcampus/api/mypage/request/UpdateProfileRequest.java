@@ -10,8 +10,8 @@ public record UpdateProfileRequest(
     @Size(max = 20, message = "닉네임은 20자 이내여야 합니다.")
     String nickname,
 
-    @Schema(description = "전화번호", example = "010-1234-5678")
-    @Pattern(regexp = "^(\\d{2,3}-\\d{3,4}-\\d{4})?$", message = "전화번호 형식이 올바르지 않습니다.")
+    @Schema(description = "전화번호", example = "01012345678")
+    @Pattern(regexp = "^(\\d{10,11})?$", message = "전화번호 형식이 올바르지 않습니다. (하이픈 없이 10~11자리 숫자)")
     String phone,
 
     @Schema(description = "주소", example = "서울시 강남구 테헤란로 123")
