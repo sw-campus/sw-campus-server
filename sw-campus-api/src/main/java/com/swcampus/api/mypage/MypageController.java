@@ -11,17 +11,14 @@ import com.swcampus.api.mypage.response.SurveyResponse;
 import com.swcampus.api.exception.FileProcessingException;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
-import com.swcampus.domain.certificate.Certificate;
-import com.swcampus.domain.certificate.CertificateService;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.member.Role;
+import com.swcampus.domain.mypage.MypageService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
-import com.swcampus.domain.review.Review;
-import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.survey.MemberSurveyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,7 +27,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -53,11 +49,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 public class MypageController {
 
     private final MemberService memberService;
-    private final ReviewService reviewService;
     private final LectureService lectureService;
     private final MemberSurveyService memberSurveyService;
     private final OrganizationService organizationService;
-    private final CertificateService certificateService;
+    private final MypageService mypageService;
 
     @Operation(summary = "[공통] 내 정보 조회", description = "[공통] 로그인한 사용자의 프로필 정보를 조회합니다. 일반 사용자와 기관 모두 사용 가능합니다.")
     @ApiResponses({
@@ -100,17 +95,10 @@ public class MypageController {
     @GetMapping("/reviews")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<MyReviewListResponse>> getMyReviews(@CurrentMember MemberPrincipal member) {
-        List<Review> reviews = reviewService.findAllByMemberId(member.memberId());
-        List<Long> lectureIds = reviews.stream().map(Review::getLectureId).toList();
-        
-        // Note: lectureService.getLectureNames uses 'IN' clause, so N+1 problem is avoided here.
-        // However, be careful not to change this to individual queries in the future.
-        Map<Long, String> lectureNames = lectureService.getLectureNames(lectureIds);
-
-        List<MyReviewListResponse> response = reviews.stream()
-            .map(review -> MyReviewListResponse.from(review, lectureNames.getOrDefault(review.getLectureId(), "Unknown")))
+        var reviewInfos = mypageService.getMyReviews(member.memberId());
+        var response = reviewInfos.stream()
+            .map(MyReviewListResponse::from)
             .toList();
-
         return ResponseEntity.ok(response);
     }
 
@@ -123,40 +111,10 @@ public class MypageController {
     @GetMapping("/completed-lectures")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<MyCompletedLectureResponse>> getMyCompletedLectures(@CurrentMember MemberPrincipal member) {
-        // 승인된 수료증 목록 조회
-        List<Certificate> certificates = certificateService.findAllByMemberId(member.memberId());
-        
-        if (certificates.isEmpty()) {
-            return ResponseEntity.ok(List.of());
-        }
-
-        // 강의 정보 조회 (N+1 방지를 위해 IN 절 사용)
-        List<Long> lectureIds = certificates.stream().map(Certificate::getLectureId).toList();
-        Map<Long, Lecture> lectureMap = lectureService.getLecturesByIds(lectureIds);
-        
-        // 기관명 조회를 위한 orgId 수집
-        List<Long> orgIds = lectureMap.values().stream()
-            .map(Lecture::getOrgId)
-            .distinct()
+        var completedLectures = mypageService.getCompletedLectures(member.memberId());
+        var response = completedLectures.stream()
+            .map(MyCompletedLectureResponse::from)
             .toList();
-        Map<Long, String> orgNames = organizationService.getOrganizationNames(orgIds);
-        
-        // 후기 작성 여부 확인
-        List<Review> reviews = reviewService.findAllByMemberId(member.memberId());
-        Set<Long> reviewedLectureIds = reviews.stream()
-            .map(Review::getLectureId)
-            .collect(Collectors.toSet());
-
-        List<MyCompletedLectureResponse> response = certificates.stream()
-            .filter(cert -> lectureMap.containsKey(cert.getLectureId()))
-            .map(cert -> {
-                Lecture lecture = lectureMap.get(cert.getLectureId());
-                String orgName = orgNames.getOrDefault(lecture.getOrgId(), "Unknown");
-                boolean hasReview = reviewedLectureIds.contains(cert.getLectureId());
-                return MyCompletedLectureResponse.of(cert, lecture, orgName, hasReview);
-            })
-            .toList();
-
         return ResponseEntity.ok(response);
     }
 

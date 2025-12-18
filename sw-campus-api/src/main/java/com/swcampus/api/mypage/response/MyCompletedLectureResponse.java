@@ -1,7 +1,6 @@
 package com.swcampus.api.mypage.response;
 
-import com.swcampus.domain.certificate.Certificate;
-import com.swcampus.domain.lecture.Lecture;
+import com.swcampus.domain.mypage.dto.CompletedLectureInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
@@ -28,20 +27,15 @@ public record MyCompletedLectureResponse(
     @Schema(description = "후기 작성 가능 여부")
     Boolean canWriteReview
 ) {
-    public static MyCompletedLectureResponse of(
-            Certificate certificate,
-            Lecture lecture,
-            String organizationName,
-            boolean hasReview
-    ) {
+    public static MyCompletedLectureResponse from(CompletedLectureInfo info) {
         return new MyCompletedLectureResponse(
-            certificate.getId(),
-            lecture.getLectureId(),
-            lecture.getLectureName(),
-            lecture.getLectureImageUrl(),
-            organizationName,
-            certificate.getCreatedAt(),
-            !hasReview  // 후기가 없으면 작성 가능
+            info.certificateId(),
+            info.lectureId(),
+            info.lectureName(),
+            info.lectureImageUrl(),
+            info.organizationName(),
+            info.certifiedAt(),
+            info.canWriteReview()
         );
     }
 }
