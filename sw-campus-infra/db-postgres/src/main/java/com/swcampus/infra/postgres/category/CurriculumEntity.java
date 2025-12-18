@@ -25,11 +25,15 @@ public class CurriculumEntity {
 	@Column(name = "CURRICULUM_NAME")
 	private String curriculumName;
 
+	@Column(name = "CURRICULUM_DESC")
+	private String curriculumDesc;
+
 	public com.swcampus.domain.category.Curriculum toDomain() {
 		return com.swcampus.domain.category.Curriculum.builder()
 				.curriculumId(this.curriculumId)
 				.categoryId(this.category.getCategoryId())
 				.curriculumName(this.curriculumName)
+				.curriculumDesc(this.curriculumDesc)
 				.category(this.category.toDomain())
 				.build();
 	}

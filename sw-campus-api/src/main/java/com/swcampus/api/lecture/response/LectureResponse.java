@@ -263,11 +263,14 @@ public record LectureResponse(
 
 			@Schema(description = "커리큘럼명", example = "Java 기초") String curriculumName,
 
+			@Schema(description = "커리큘럼 설명", example = "Java의 기본 문법과 객체지향 프로그래밍을 학습합니다.") String curriculumDesc,
+
 			@Schema(description = "난이도", example = "NONE") String level) {
 		public static CurriculumResponse from(LectureCurriculum lc) {
 			return new CurriculumResponse(
 					lc.getCurriculumId(),
 					lc.getCurriculum() != null ? lc.getCurriculum().getCurriculumName() : "",
+					lc.getCurriculum() != null ? lc.getCurriculum().getCurriculumDesc() : "",
 					lc.getLevel().name());
 		}
 	}

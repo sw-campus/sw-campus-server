@@ -9,5 +9,6 @@ public class Curriculum {
 	private Long curriculumId;
 	private Long categoryId;
 	private String curriculumName;
+	private String curriculumDesc;
 	private Category category;
 }
