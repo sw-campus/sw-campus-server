@@ -267,10 +267,11 @@ public record LectureResponse(
 
 			@Schema(description = "난이도", example = "NONE") String level) {
 		public static CurriculumResponse from(LectureCurriculum lc) {
+			var curriculum = lc.getCurriculum();
 			return new CurriculumResponse(
 					lc.getCurriculumId(),
-					lc.getCurriculum() != null ? lc.getCurriculum().getCurriculumName() : "",
-					lc.getCurriculum() != null ? lc.getCurriculum().getCurriculumDesc() : "",
+					curriculum != null ? curriculum.getCurriculumName() : "",
+					curriculum != null ? curriculum.getCurriculumDesc() : "",
 					lc.getLevel().name());
 		}
 	}
