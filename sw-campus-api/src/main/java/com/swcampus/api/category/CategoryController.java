@@ -49,7 +49,7 @@ public class CategoryController {
 			@ApiResponse(responseCode = "200", description = "조회 성공")
 	})
 	public ResponseEntity<List<CurriculumResponse>> getCurriculumsByCategoryId(
-			@Parameter(description = "조회할 카테고리 ID", example = "111") @PathVariable Long categoryId) {
+			@Parameter(description = "조회할 카테고리 ID", example = "111") @PathVariable("categoryId") Long categoryId) {
 		List<Curriculum> curriculums = categoryService.getCurriculumsByCategoryId(categoryId);
 		List<CurriculumResponse> response = curriculums.stream()
 				.map(CurriculumResponse::new)

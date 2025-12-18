@@ -19,12 +19,12 @@ NC='\033[0m' # No Color
 
 # 설정 - 스크립트 위치 기준으로 프로젝트 루트 계산
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 MIGRATION_DIR="$PROJECT_ROOT/sw-campus-infra/db-postgres/src/main/resources/db/migration"
 CREATE_SQL_PATH="$PROJECT_ROOT/sw-campus-api/create.sql"
 SCHEMA_NAME="swcampus"
 POSTGRES_VERSION="15"
-LOG_FILE="$PROJECT_ROOT/migration-gen.log"
+LOG_FILE="$PROJECT_ROOT/migration-gen-$(date +%Y%m%d_%H%M%S).log"
 
 # 로깅 함수
 log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
@@ -189,7 +189,10 @@ if [ $DB_WAIT_RESULT -ne 0 ]; then
     log_error "DB 시작 시간 초과"
     exit 1
 fi
-log_success "DB 준비 완료"
+
+# swcampus 스키마 생성
+docker exec migration-db-gen psql -U postgres -c "CREATE SCHEMA IF NOT EXISTS swcampus;" > /dev/null 2>&1
+log_success "DB 준비 완료 (swcampus 스키마 생성됨)"
 
 # 2. JPA 엔티티 기반 create.sql 생성 (Real Postgres 연결)
 log_info "2. 최신 엔티티 기반 스키마 추출 중 (using Real Postgres)..."

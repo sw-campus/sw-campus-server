@@ -55,7 +55,7 @@ public class AdminSurveyController {
     @GetMapping("/members/{memberId}")
     public ResponseEntity<SurveyResponse> getSurvey(
             @Parameter(description = "회원 ID", example = "1")
-            @PathVariable Long memberId
+            @PathVariable("memberId") Long memberId
     ) {
         MemberSurvey survey = surveyService.getSurveyByMemberId(memberId);
         return ResponseEntity.ok(SurveyResponse.from(survey));

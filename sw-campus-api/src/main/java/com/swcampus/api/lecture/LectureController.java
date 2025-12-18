@@ -120,7 +120,7 @@ public class LectureController {
 	})
 	public ResponseEntity<LectureResponse> updateLecture(
 			@CurrentMember MemberPrincipal member,
-			@Parameter(description = "강의 ID", example = "1", required = true) @PathVariable Long lectureId,
+			@Parameter(description = "강의 ID", example = "1", required = true) @PathVariable("lectureId") Long lectureId,
 			@Parameter(description = "강의 정보 (JSON string)", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = LectureUpdateRequest.class)) @RequestPart("lecture") String lectureJson,
 			@Parameter(description = "강의 대표 이미지 파일") @RequestPart(value = "image", required = false) MultipartFile image,
 			@Parameter(description = "강사 이미지 파일 목록 (신규 강사의 수와 일치해야 함)") @RequestPart(value = "teacherImages", required = false) java.util.List<MultipartFile> teacherImages)
@@ -171,7 +171,7 @@ public class LectureController {
 			@ApiResponse(responseCode = "404", description = "강의 없음")
 	})
 	public ResponseEntity<LectureResponse> getLecture(
-			@Parameter(description = "강의 ID", example = "1", required = true) @PathVariable Long lectureId) {
+			@Parameter(description = "강의 ID", example = "1", required = true) @PathVariable("lectureId") Long lectureId) {
 		var lectureSummary = lectureService.getLectureWithStats(lectureId);
 		Organization organization = null;
 		if (lectureSummary.lecture().getOrgId() != null) {
@@ -203,7 +203,7 @@ public class LectureController {
 			@ApiResponse(responseCode = "200", description = "조회 성공")
 	})
 	public ResponseEntity<List<LectureSummaryResponse>> getTopRatedLecturesByCategory(
-			@Parameter(description = "카테고리 ID", example = "1", required = true) @PathVariable Long categoryId) {
+			@Parameter(description = "카테고리 ID", example = "1", required = true) @PathVariable("categoryId") Long categoryId) {
 		var lectures = lectureService.getTopRatedLecturesByCategoryWithStats(categoryId, TOP_RATED_LECTURE_COUNT);
 		List<LectureSummaryResponse> response = lectures.stream()
 				.map(dto -> LectureSummaryResponse.from(dto.lecture(), dto.averageScore(), dto.reviewCount()))
@@ -217,7 +217,7 @@ public class LectureController {
 			@ApiResponse(responseCode = "200", description = "조회 성공")
 	})
 	public ResponseEntity<List<ReviewResponse>> getApprovedReviewsByLecture(
-			@Parameter(description = "강의 ID", example = "1", required = true) @PathVariable Long lectureId) {
+			@Parameter(description = "강의 ID", example = "1", required = true) @PathVariable("lectureId") Long lectureId) {
 		List<ReviewWithNickname> reviewsWithNicknames = reviewService.getApprovedReviewsWithNicknameByLecture(lectureId);
 		List<ReviewResponse> responses = reviewsWithNicknames.stream()
 				.map(rwn -> ReviewResponse.from(rwn.review(), rwn.nickname()))
