@@ -66,6 +66,7 @@ create table "swcampus"."certificates" (
 create table "swcampus"."curriculums" (
     "category_id" bigint not null,
     "curriculum_id" bigint not null,
+    "curriculum_desc" character varying(255),
     "curriculum_name" character varying(255)
 );
 
@@ -190,12 +191,12 @@ create table "swcampus"."members" (
 
 
 create table "swcampus"."organizations" (
-    "approval_status" integer,
     "created_at" timestamp(6) without time zone,
     "org_id" bigint not null,
     "updated_at" timestamp(6) without time zone,
     "user_id" bigint not null,
     "gov_auth" character varying(100),
+    "approval_status" character varying(255),
     "certificate_url" text,
     "description" text,
     "facility_image_url" text,

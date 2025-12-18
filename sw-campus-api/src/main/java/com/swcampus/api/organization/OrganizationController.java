@@ -64,7 +64,7 @@ public class OrganizationController {
                         @ApiResponse(responseCode = "404", description = "기관 없음")
         })
         public ResponseEntity<OrganizationResponse> getOrganization(
-                        @Parameter(description = "기관 ID", example = "1", required = true) @PathVariable Long organizationId) {
+                        @Parameter(description = "기관 ID", example = "1", required = true) @PathVariable("organizationId") Long organizationId) {
                 Organization organization = organizationService.getOrganization(organizationId);
                 return ResponseEntity.ok(OrganizationResponse.from(organization));
         }
@@ -76,7 +76,7 @@ public class OrganizationController {
                         @ApiResponse(responseCode = "404", description = "기관 없음")
         })
         public ResponseEntity<List<LectureSummaryResponse>> getOrganizationLectureList(
-                        @Parameter(description = "기관 ID", example = "1", required = true) @PathVariable Long organizationId) {
+                        @Parameter(description = "기관 ID", example = "1", required = true) @PathVariable("organizationId") Long organizationId) {
                 List<Lecture> lectures = lectureService
                                 .getPublishedLectureListByOrgId(organizationId);
 
@@ -106,7 +106,7 @@ public class OrganizationController {
                         @ApiResponse(responseCode = "200", description = "조회 성공")
         })
         public ResponseEntity<List<ReviewResponse>> getApprovedReviewsByOrganization(
-                        @Parameter(description = "기관 ID", example = "1", required = true) @PathVariable Long organizationId) {
+                        @Parameter(description = "기관 ID", example = "1", required = true) @PathVariable("organizationId") Long organizationId) {
                 List<ReviewWithNickname> reviewsWithNicknames = reviewService.getApprovedReviewsWithNicknameByOrganization(organizationId);
                 List<ReviewResponse> responses = reviewsWithNicknames.stream()
                                 .map(rwn -> ReviewResponse.from(rwn.review(), rwn.nickname()))

@@ -3,11 +3,12 @@ spring:
     name: sw-campus-server
 
   profiles:
-    default: staging
+    default: local
     group:
       local: local
       staging: staging
       prod: prod
+      ddl-gen: ddl-gen
 
   config:
     import:

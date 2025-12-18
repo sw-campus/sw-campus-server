@@ -62,7 +62,7 @@ public class AdminOrganizationController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<AdminOrganizationDetailResponse> getOrganization(
-            @Parameter(description = "기관 ID") @PathVariable Long id) {
+            @Parameter(description = "기관 ID") @PathVariable("id") Long id) {
         Organization organization = adminOrganizationService.getOrganizationDetail(id);
         return ResponseEntity.ok(AdminOrganizationDetailResponse.from(organization));
     }
@@ -74,7 +74,7 @@ public class AdminOrganizationController {
     })
     @PatchMapping("/{id}/approve")
     public ResponseEntity<AdminOrganizationApprovalResponse> approveOrganization(
-            @Parameter(description = "기관 ID") @PathVariable Long id) {
+            @Parameter(description = "기관 ID") @PathVariable("id") Long id) {
         Organization organization = adminOrganizationService.approveOrganization(id);
         return ResponseEntity.ok(AdminOrganizationApprovalResponse.of(organization, "기관이 승인되었습니다."));
     }
@@ -89,7 +89,7 @@ public class AdminOrganizationController {
     })
     @PatchMapping("/{id}/reject")
     public ResponseEntity<AdminOrganizationApprovalResponse> rejectOrganization(
-            @Parameter(description = "기관 ID") @PathVariable Long id) {
+            @Parameter(description = "기관 ID") @PathVariable("id") Long id) {
         Organization organization = adminOrganizationService.rejectOrganization(id);
         return ResponseEntity.ok(AdminOrganizationApprovalResponse.of(organization, "기관이 반려되었습니다."));
     }

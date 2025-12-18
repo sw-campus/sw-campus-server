@@ -1,4 +1,4 @@
 -- Auto-generated migration file: V5__seed_teachers.sql
--- Generated at: 2025-12-17 10:28:23
+-- Generated at: 2025-12-18 20:20:35
 
 SELECT setval('swcampus.teachers_teacher_id_seq', (SELECT COALESCE(MAX(teacher_id), 1) FROM swcampus.teachers));

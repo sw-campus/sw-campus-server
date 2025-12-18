@@ -47,7 +47,7 @@ public class ReviewController {
     public ResponseEntity<ReviewEligibilityResponse> checkEligibility(
             @CurrentMember MemberPrincipal member,
             @Parameter(description = "강의 ID", required = true)
-            @RequestParam Long lectureId) {
+            @RequestParam(name = "lectureId") Long lectureId) {
 
         Long memberId = member.memberId();
         ReviewEligibility eligibility = reviewService.checkEligibility(memberId, lectureId);

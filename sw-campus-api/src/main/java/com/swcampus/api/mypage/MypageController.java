@@ -21,6 +21,11 @@ import com.swcampus.domain.member.Role;
 import com.swcampus.domain.mypage.MypageService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
+<<<<<<< Updated upstream
+=======
+import com.swcampus.domain.review.Review;
+import com.swcampus.domain.review.ReviewService;
+>>>>>>> Stashed changes
 import com.swcampus.domain.survey.MemberSurveyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -209,7 +214,11 @@ public class MypageController {
         return ResponseEntity.ok(OrganizationInfoResponse.from(org, memberEntity));
     }
 
+<<<<<<< Updated upstream
     @Operation(summary = "[기관 전용] 기관 정보 수정", description = "[기관 전용] 우리 기관의 정보를 수정합니다. 기관명, 설명, 로고, 시설 이미지, 사업자등록증 등을 업로드할 수 있습니다.")
+=======
+    @Operation(summary = "기관 정보 수정", description = "기관 정보를 수정합니다. (파일 업로드 포함)")
+>>>>>>> Stashed changes
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "수정 성공"),
         @ApiResponse(responseCode = "400", description = "잘못된 요청"),
