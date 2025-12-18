@@ -42,12 +42,12 @@ public class OrganizationService {
         return organizationRepository.findAll();
     }
 
-    public java.util.Map<Long, String> getOrganizationNames(List<Long> orgIds) {
+    public Map<Long, String> getOrganizationNames(List<Long> orgIds) {
         if (orgIds == null || orgIds.isEmpty()) {
-            return java.util.Collections.emptyMap();
+            return Collections.emptyMap();
         }
         return organizationRepository.findAllByIds(orgIds).stream()
-            .collect(java.util.stream.Collectors.toMap(Organization::getId, Organization::getName));
+            .collect(Collectors.toMap(Organization::getId, Organization::getName));
     }
 
     @Transactional
