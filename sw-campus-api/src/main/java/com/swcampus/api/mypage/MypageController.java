@@ -143,9 +143,9 @@ public class MypageController {
         
         // 후기 작성 여부 확인
         List<Review> reviews = reviewService.findAllByMemberId(member.memberId());
-        java.util.Set<Long> reviewedLectureIds = reviews.stream()
+        Set<Long> reviewedLectureIds = reviews.stream()
             .map(Review::getLectureId)
-            .collect(java.util.stream.Collectors.toSet());
+            .collect(Collectors.toSet());
 
         List<MyCompletedLectureResponse> response = certificates.stream()
             .filter(cert -> lectureMap.containsKey(cert.getLectureId()))
