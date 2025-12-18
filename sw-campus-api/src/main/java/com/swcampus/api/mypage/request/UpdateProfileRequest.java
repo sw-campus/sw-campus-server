@@ -11,7 +11,7 @@ public record UpdateProfileRequest(
     String nickname,
 
     @Schema(description = "전화번호", example = "01012345678")
-    @Pattern(regexp = "^(\\d{10,11})?$", message = "전화번호 형식이 올바르지 않습니다. (하이픈 없이 10~11자리 숫자)")
+    @Pattern(regexp = "^(0\\d{8,10})?$", message = "전화번호 형식이 올바르지 않습니다. (하이픈 없이 9~11자리 숫자)")
     String phone,
 
     @Schema(description = "주소", example = "서울시 강남구 테헤란로 123")
