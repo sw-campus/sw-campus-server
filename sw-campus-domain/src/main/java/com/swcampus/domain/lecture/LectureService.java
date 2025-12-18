@@ -184,7 +184,7 @@ public class LectureService {
 			return java.util.Collections.emptyMap();
 		}
 		return lectureRepository.findAllByIds(lectureIds).stream()
-			.collect(java.util.stream.Collectors.toMap(Lecture::getLectureId, lecture -> lecture));
+			.collect(Collectors.toMap(Lecture::getLectureId, lecture -> lecture));
 	}
 
 	@Transactional(readOnly = true)
