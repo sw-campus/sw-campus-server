@@ -2,12 +2,14 @@ package com.swcampus.api.mypage;
 
 import com.swcampus.api.mypage.request.UpsertSurveyRequest;
 import com.swcampus.api.mypage.request.UpdateProfileRequest;
+import com.swcampus.api.mypage.request.VerifyPasswordRequest;
 import com.swcampus.api.mypage.response.MyCompletedLectureResponse;
 import com.swcampus.api.mypage.response.MyLectureListResponse;
 import com.swcampus.api.mypage.response.MyReviewListResponse;
 import com.swcampus.api.mypage.response.MypageProfileResponse;
 import com.swcampus.api.mypage.response.OrganizationInfoResponse;
 import com.swcampus.api.mypage.response.SurveyResponse;
+import com.swcampus.api.mypage.response.VerifyPasswordResponse;
 import com.swcampus.api.exception.FileProcessingException;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
@@ -33,6 +35,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,6 +56,21 @@ public class MypageController {
     private final MemberSurveyService memberSurveyService;
     private final OrganizationService organizationService;
     private final MypageService mypageService;
+
+    @Operation(summary = "[공통] 비밀번호 확인", description = "[공통] 회원정보 수정 화면 진입 전 비밀번호를 확인합니다. 소셜 로그인 사용자는 비밀번호 검증 없이 항상 true를 반환합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "확인 완료"),
+        @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @PostMapping("/verify-password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<VerifyPasswordResponse> verifyPassword(
+        @CurrentMember MemberPrincipal member,
+        @Valid @RequestBody VerifyPasswordRequest request
+    ) {
+        boolean isValid = memberService.validatePassword(member.memberId(), request.password());
+        return ResponseEntity.ok(VerifyPasswordResponse.from(isValid));
+    }
 
     @Operation(summary = "[공통] 내 정보 조회", description = "[공통] 로그인한 사용자의 프로필 정보를 조회합니다. 일반 사용자와 기관 모두 사용 가능합니다.")
     @ApiResponses({
