@@ -120,7 +120,7 @@ class MypageControllerTest {
     @DisplayName("내 정보 수정 - 성공")
     void updateProfile_Success() throws Exception {
         // given
-        UpdateProfileRequest request = new UpdateProfileRequest("New Nickname", "010-1234-5678", "New Address");
+        UpdateProfileRequest request = new UpdateProfileRequest("New Nickname", "01012345678", "New Address");
 
         // when & then
         mockMvc.perform(patch("/api/v1/mypage/profile")
@@ -131,7 +131,7 @@ class MypageControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk());
         
-        verify(memberService).updateProfile(1L, "New Nickname", "010-1234-5678", "New Address");
+        verify(memberService).updateProfile(1L, "New Nickname", "01012345678", "New Address");
     }
 
     @Test
