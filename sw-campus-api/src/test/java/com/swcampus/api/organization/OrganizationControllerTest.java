@@ -16,7 +16,7 @@ import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
-import com.swcampus.domain.review.ReviewRepository;
+import com.swcampus.domain.review.ReviewService;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -54,7 +54,7 @@ class OrganizationControllerTest {
     private TokenProvider tokenProvider;
 
     @MockitoBean
-    private ReviewRepository reviewRepository;
+    private ReviewService reviewService;
 
     @Test
     @DisplayName("기관 목록 조회 성공")

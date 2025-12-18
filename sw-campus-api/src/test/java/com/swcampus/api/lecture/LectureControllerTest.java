@@ -42,9 +42,10 @@ import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
+import com.swcampus.domain.lecture.dto.LectureSummaryDto;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
-import com.swcampus.domain.review.ReviewRepository;
+import com.swcampus.domain.review.ReviewService;
 
 @WebMvcTest(controllers = LectureController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @AutoConfigureMockMvc(addFilters = false)
@@ -69,7 +70,7 @@ class LectureControllerTest {
         private TokenProvider tokenProvider;
 
         @MockitoBean
-        private ReviewRepository reviewRepository;
+        private ReviewService reviewService;
 
         @BeforeEach
         void setUp() {
@@ -145,8 +146,8 @@ class LectureControllerTest {
                                 .lectureName("Test Lecture")
                                 .status(LectureStatus.RECRUITING)
                                 .build();
-                when(lectureService.getPublishedLecture(100L)).thenReturn(lecture);
-                when(lectureService.getAverageScoresByLectureIds(List.of(100L))).thenReturn(java.util.Map.of(100L, 4.5));
+                LectureSummaryDto dto = LectureSummaryDto.from(lecture, 4.5, 10L);
+                when(lectureService.getLectureWithStats(100L)).thenReturn(dto);
 
                 // when & then
                 mockMvc.perform(get("/api/v1/lectures/{lectureId}", 100L)
@@ -173,10 +174,10 @@ class LectureControllerTest {
                                 .status(LectureStatus.RECRUITING)
                                 .steps(List.of(step))
                                 .build();
-                Page<Lecture> page = new PageImpl<>(List.of(lecture), Pageable.unpaged(), 1);
+                LectureSummaryDto dto = LectureSummaryDto.from(lecture, 4.2, 5L);
+                Page<LectureSummaryDto> page = new PageImpl<>(List.of(dto), Pageable.unpaged(), 1);
 
-                when(lectureService.searchLectures(any(LectureSearchCondition.class))).thenReturn(page);
-                when(lectureService.getAverageScoresByLectureIds(anyList())).thenReturn(java.util.Map.of(100L, 4.2));
+                when(lectureService.searchLecturesWithStats(any(LectureSearchCondition.class))).thenReturn(page);
 
                 // when & then
                 mockMvc.perform(get("/api/v1/lectures/search")
