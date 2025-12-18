@@ -22,9 +22,12 @@ import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.member.Role;
+import com.swcampus.domain.mypage.MypageService;
+import com.swcampus.domain.mypage.dto.CompletedLectureInfo;
+import com.swcampus.domain.mypage.dto.MyReviewInfo;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
-import com.swcampus.domain.review.ReviewService;
+import com.swcampus.domain.review.ApprovalStatus;
 import com.swcampus.domain.survey.MemberSurvey;
 import com.swcampus.domain.survey.MemberSurveyService;
 import java.math.BigDecimal;
@@ -65,9 +68,6 @@ class MypageControllerTest {
     private MemberService memberService;
 
     @MockitoBean
-    private ReviewService reviewService;
-
-    @MockitoBean
     private LectureService lectureService;
 
     @MockitoBean
@@ -75,6 +75,9 @@ class MypageControllerTest {
 
     @MockitoBean
     private OrganizationService organizationService;
+
+    @MockitoBean
+    private MypageService mypageService;
 
     private MemberPrincipal memberPrincipal;
     private static final String TEST_PASSWORD = "password";
@@ -151,15 +154,60 @@ class MypageControllerTest {
     @DisplayName("내 후기 목록 조회 - 성공")
     void getMyReviews_Success() throws Exception {
         // given
-        given(reviewService.findAllByMemberId(1L)).willReturn(List.of());
+        MyReviewInfo reviewInfo = new MyReviewInfo(
+            1L, 100L, "Test Lecture", 4.5, "Great!",
+            ApprovalStatus.APPROVED, LocalDateTime.now(), LocalDateTime.now(), false
+        );
+        given(mypageService.getMyReviews(1L)).willReturn(List.of(reviewInfo));
         
         // when & then
         mockMvc.perform(get("/api/v1/mypage/reviews")
                         .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].reviewId").value(1))
+                .andExpect(jsonPath("$[0].lectureName").value("Test Lecture"));
         
-        verify(reviewService).findAllByMemberId(1L);
+        verify(mypageService).getMyReviews(1L);
+    }
+
+    @Test
+    @DisplayName("내 수강 완료 강의 조회 - 성공")
+    void getMyCompletedLectures_Success() throws Exception {
+        // given
+        CompletedLectureInfo lectureInfo = new CompletedLectureInfo(
+            1L, 100L, "Test Lecture", "image.jpg", "Test Org", LocalDateTime.now(), true
+        );
+        given(mypageService.getCompletedLectures(1L)).willReturn(List.of(lectureInfo));
+
+        // when & then
+        mockMvc.perform(get("/api/v1/mypage/completed-lectures")
+                        .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].lectureId").value(100))
+                .andExpect(jsonPath("$[0].lectureName").value("Test Lecture"))
+                .andExpect(jsonPath("$[0].organizationName").value("Test Org"))
+                .andExpect(jsonPath("$[0].canWriteReview").value(true));
+        
+        verify(mypageService).getCompletedLectures(1L);
+    }
+
+    @Test
+    @DisplayName("내 수강 완료 강의 조회 - 빈 목록")
+    void getMyCompletedLectures_Empty() throws Exception {
+        // given
+        given(mypageService.getCompletedLectures(1L)).willReturn(List.of());
+
+        // when & then
+        mockMvc.perform(get("/api/v1/mypage/completed-lectures")
+                        .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+        
+        verify(mypageService).getCompletedLectures(1L);
     }
 
     @Test

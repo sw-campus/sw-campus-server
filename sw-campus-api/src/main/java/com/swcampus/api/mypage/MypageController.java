@@ -2,6 +2,7 @@ package com.swcampus.api.mypage;
 
 import com.swcampus.api.mypage.request.UpsertSurveyRequest;
 import com.swcampus.api.mypage.request.UpdateProfileRequest;
+import com.swcampus.api.mypage.response.MyCompletedLectureResponse;
 import com.swcampus.api.mypage.response.MyLectureListResponse;
 import com.swcampus.api.mypage.response.MyReviewListResponse;
 import com.swcampus.api.mypage.response.MypageProfileResponse;
@@ -15,10 +16,9 @@ import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.member.Role;
+import com.swcampus.domain.mypage.MypageService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
-import com.swcampus.domain.review.Review;
-import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.survey.MemberSurveyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,7 +27,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import io.swagger.v3.oas.annotations.Parameter;
 
-@Tag(name = "마이페이지", description = "마이페이지 관련 API")
+@Tag(name = "마이페이지", description = "마이페이지 관련 API - [공통]: 일반 사용자/기관 모두 사용 가능, [일반 사용자 전용]: 일반 수강생만 사용 가능, [기관 전용]: 교육 기관만 사용 가능")
 @RestController
 @RequestMapping("/api/v1/mypage")
 @RequiredArgsConstructor
@@ -50,12 +49,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 public class MypageController {
 
     private final MemberService memberService;
-    private final ReviewService reviewService;
     private final LectureService lectureService;
     private final MemberSurveyService memberSurveyService;
     private final OrganizationService organizationService;
+    private final MypageService mypageService;
 
-    @Operation(summary = "내 정보 조회", description = "로그인한 사용자의 프로필 정보를 조회합니다.")
+    @Operation(summary = "[공통] 내 정보 조회", description = "[공통] 로그인한 사용자의 프로필 정보를 조회합니다. 일반 사용자와 기관 모두 사용 가능합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
         @ApiResponse(responseCode = "401", description = "인증 필요")
@@ -71,7 +70,7 @@ public class MypageController {
         return ResponseEntity.ok(MypageProfileResponse.from(memberEntity, hasSurvey));
     }
 
-    @Operation(summary = "내 정보 수정", description = "로그인한 사용자의 프로필 정보를 수정합니다.")
+    @Operation(summary = "[공통] 내 정보 수정", description = "[공통] 로그인한 사용자의 프로필 정보(닉네임, 연락처, 주소)를 수정합니다. 일반 사용자와 기관 모두 사용 가능합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "수정 성공"),
         @ApiResponse(responseCode = "400", description = "잘못된 요청"),
@@ -87,32 +86,43 @@ public class MypageController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "내 후기 목록 조회", description = "내가 작성한 후기 목록을 조회합니다.")
+    @Operation(summary = "[일반 사용자 전용] 내 후기 목록 조회", description = "[일반 사용자 전용] 내가 작성한 강의 후기 목록을 조회합니다. 수강 완료 후 작성한 리뷰를 확인할 수 있습니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공 (없을 경우 빈 배열)"),
-        @ApiResponse(responseCode = "401", description = "인증 필요")
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "일반 사용자가 아님")
     })
     @GetMapping("/reviews")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<MyReviewListResponse>> getMyReviews(@CurrentMember MemberPrincipal member) {
-        List<Review> reviews = reviewService.findAllByMemberId(member.memberId());
-        List<Long> lectureIds = reviews.stream().map(Review::getLectureId).toList();
-        
-        // Note: lectureService.getLectureNames uses 'IN' clause, so N+1 problem is avoided here.
-        // However, be careful not to change this to individual queries in the future.
-        Map<Long, String> lectureNames = lectureService.getLectureNames(lectureIds);
-
-        List<MyReviewListResponse> response = reviews.stream()
-            .map(review -> MyReviewListResponse.from(review, lectureNames.getOrDefault(review.getLectureId(), "Unknown")))
+        var reviewInfos = mypageService.getMyReviews(member.memberId());
+        var response = reviewInfos.stream()
+            .map(MyReviewListResponse::from)
             .toList();
-
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "설문조사 조회", description = "나의 설문조사 정보를 조회합니다.")
+    @Operation(summary = "[일반 사용자 전용] 내 수강 완료 강의 조회", description = "[일반 사용자 전용] 수료증 인증이 승인된 강의 목록을 조회합니다. 각 강의에 대해 후기 작성 가능 여부(canWriteReview)를 함께 반환합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공 (없을 경우 빈 배열)"),
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "일반 사용자가 아님")
+    })
+    @GetMapping("/completed-lectures")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<MyCompletedLectureResponse>> getMyCompletedLectures(@CurrentMember MemberPrincipal member) {
+        var completedLectures = mypageService.getCompletedLectures(member.memberId());
+        var response = completedLectures.stream()
+            .map(MyCompletedLectureResponse::from)
+            .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "[일반 사용자 전용] 설문조사 조회", description = "[일반 사용자 전용] 강의 추천을 위한 나의 설문조사 정보를 조회합니다. 전공, 부트캠프 수료 여부, 희망 직무 등의 정보를 확인할 수 있습니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 필요")
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "일반 사용자가 아님")
     })
     @GetMapping("/survey")
     @PreAuthorize("hasRole('USER')")
@@ -123,11 +133,12 @@ public class MypageController {
             .orElseGet(() -> ResponseEntity.ok(SurveyResponse.empty()));
     }
 
-    @Operation(summary = "설문조사 등록/수정", description = "설문조사 정보를 등록하거나 수정합니다.")
+    @Operation(summary = "[일반 사용자 전용] 설문조사 등록/수정", description = "[일반 사용자 전용] 강의 추천을 위한 설문조사 정보를 등록하거나 수정합니다. 이미 등록된 경우 덮어씁니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "저장 성공"),
         @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-        @ApiResponse(responseCode = "401", description = "인증 필요")
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "일반 사용자가 아님")
     })
     @PutMapping("/survey")
     @PreAuthorize("hasRole('USER')")
@@ -147,7 +158,7 @@ public class MypageController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "내 강의 목록 조회", description = "내가 등록한(기관) 강의 목록을 조회합니다.")
+    @Operation(summary = "[기관 전용] 등록 강의 목록 조회", description = "[기관 전용] 우리 기관에서 등록한 강의 목록을 조회합니다. 강의 상태, 수강생 수 등을 확인할 수 있습니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
         @ApiResponse(responseCode = "401", description = "인증 필요"),
@@ -166,7 +177,7 @@ public class MypageController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "기관 정보 조회", description = "나의 기관 정보를 조회합니다.")
+    @Operation(summary = "[기관 전용] 기관 정보 조회", description = "[기관 전용] 우리 기관의 상세 정보를 조회합니다. 기관명, 설명, 로고, 시설 이미지, 정부 인증 정보 등을 확인할 수 있습니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
         @ApiResponse(responseCode = "401", description = "인증 필요"),
@@ -180,7 +191,7 @@ public class MypageController {
         return ResponseEntity.ok(OrganizationInfoResponse.from(org, memberEntity));
     }
 
-    @Operation(summary = "기관 정보 수정", description = "기관 정보를 수정합니다. (파일 업로드 포함)")
+    @Operation(summary = "[기관 전용] 기관 정보 수정", description = "[기관 전용] 우리 기관의 정보를 수정합니다. 기관명, 설명, 로고, 시설 이미지, 사업자등록증 등을 업로드할 수 있습니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "수정 성공"),
         @ApiResponse(responseCode = "400", description = "잘못된 요청"),

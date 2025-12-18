@@ -1,7 +1,7 @@
 package com.swcampus.api.mypage.response;
 
+import com.swcampus.domain.mypage.dto.MyReviewInfo;
 import com.swcampus.domain.review.ApprovalStatus;
-import com.swcampus.domain.review.Review;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
@@ -34,17 +34,17 @@ public record MyReviewListResponse(
     @Schema(description = "수정 가능 여부")
     Boolean canEdit
 ) {
-    public static MyReviewListResponse from(Review review, String lectureName) {
+    public static MyReviewListResponse from(MyReviewInfo info) {
         return new MyReviewListResponse(
-            review.getId(),
-            review.getLectureId(),
-            lectureName,
-            review.getScore(),
-            review.getComment(),
-            review.getApprovalStatus(),
-            review.getCreatedAt(),
-            review.getUpdatedAt(),
-            review.getApprovalStatus() == ApprovalStatus.REJECTED
+            info.reviewId(),
+            info.lectureId(),
+            info.lectureName(),
+            info.score(),
+            info.content(),
+            info.approvalStatus(),
+            info.createdAt(),
+            info.updatedAt(),
+            info.canEdit()
         );
     }
 }

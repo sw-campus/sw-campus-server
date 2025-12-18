@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -177,6 +178,14 @@ public class LectureService {
 
 	public Map<Long, String> getLectureNames(List<Long> lectureIds) {
 		return lectureRepository.findLectureNamesByIds(lectureIds);
+	}
+
+	public Map<Long, Lecture> getLecturesByIds(List<Long> lectureIds) {
+		if (lectureIds == null || lectureIds.isEmpty()) {
+			return java.util.Collections.emptyMap();
+		}
+		return lectureRepository.findAllByIds(lectureIds).stream()
+			.collect(Collectors.toMap(Lecture::getLectureId, lecture -> lecture));
 	}
 
 	@Transactional(readOnly = true)

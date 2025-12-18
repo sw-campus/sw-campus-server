@@ -1,6 +1,9 @@
 package com.swcampus.domain.organization;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +43,14 @@ public class OrganizationService {
             return organizationRepository.findByNameContaining(keyword);
         }
         return organizationRepository.findAll();
+    }
+
+    public Map<Long, String> getOrganizationNames(List<Long> orgIds) {
+        if (orgIds == null || orgIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return organizationRepository.findAllByIds(orgIds).stream()
+            .collect(Collectors.toMap(Organization::getId, Organization::getName));
     }
 
     @Transactional

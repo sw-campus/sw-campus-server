@@ -66,4 +66,14 @@ public class OrganizationEntityRepository implements OrganizationRepository {
         return jpaRepository.findByApprovalStatus(status, pageable)
                 .map(OrganizationEntity::toDomain);
     }
+
+    @Override
+    public List<Organization> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return jpaRepository.findAllById(ids).stream()
+                .map(OrganizationEntity::toDomain)
+                .toList();
+    }
 }

@@ -2,9 +2,11 @@ package com.swcampus.infra.postgres.certificate;
 
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.certificate.CertificateRepository;
+import com.swcampus.domain.review.ApprovalStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -34,5 +36,13 @@ public class CertificateEntityRepository implements CertificateRepository {
     @Override
     public boolean existsByMemberIdAndLectureId(Long memberId, Long lectureId) {
         return jpaRepository.existsByMemberIdAndLectureId(memberId, lectureId);
+    }
+
+    @Override
+    public List<Certificate> findAllByMemberId(Long memberId) {
+        return jpaRepository.findAllByMemberIdAndApprovalStatus(memberId, com.swcampus.domain.review.ApprovalStatus.APPROVED)
+            .stream()
+            .map(CertificateEntity::toDomain)
+            .toList();
     }
 }
