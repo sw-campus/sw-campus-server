@@ -117,6 +117,7 @@ public class LectureService {
 		LectureSearchCondition condition = LectureSearchCondition.builder()
 				.categoryIds(Collections.singletonList(categoryId))
 				.status(LectureStatus.RECRUITING)
+				.lectureAuthStatus(LectureAuthStatus.APPROVED)
 				.sort(com.swcampus.domain.lecture.dto.LectureSortType.SCORE_DESC)
 				.pageable(org.springframework.data.domain.PageRequest.of(0, limit))
 				.build();
