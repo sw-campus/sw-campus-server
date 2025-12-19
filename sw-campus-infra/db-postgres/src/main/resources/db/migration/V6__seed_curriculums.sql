@@ -1,5 +1,5 @@
 -- Auto-generated migration file: V6__seed_curriculums.sql
--- Generated at: 2025-12-18 20:20:35
+-- Generated at: 2025-12-19 17:30:09
 
 INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name, curriculum_desc) VALUES (1, 3, '웹 퍼블리싱', '화면을 구조화하고 스타일링하는 가장 기초 단계') ON CONFLICT DO NOTHING;
 INSERT INTO swcampus.curriculums (curriculum_id, category_id, curriculum_name, curriculum_desc) VALUES (2, 3, '자바스크립트 프로그래밍', '프레임워크를 배우기 전, 언어의 논리를 다지는 단계') ON CONFLICT DO NOTHING;

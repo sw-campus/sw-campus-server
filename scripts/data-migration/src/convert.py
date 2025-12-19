@@ -13,10 +13,12 @@
 import os
 import pandas as pd
 import bcrypt
+from datetime import datetime
 from utils import clean_str, clean_int, parse_date
 from sql_gen import write_sql, generate_insert_sql, generate_sequence_reset_sql
 
 # Constants
+STATUS_RECRUITING = 'RECRUITING'
 STATUS_FINISHED = 'FINISHED'
 AUTH_APPROVED = 'APPROVED'
 LOC_OFFLINE = 'OFFLINE'
@@ -47,8 +49,10 @@ CATEGORY_TO_CURRICULUM_CSV = {
 # 통합CSV 대분류 → 소분류 카테고리명 매핑
 UNIFIED_TO_CATEGORY = {
     '웹개발(프론트엔드)': '프론트엔드 개발',
+    '프론트엔드 개발': '프론트엔드 개발',
     '웹개발(백엔드)': '백엔드 개발',
     '백엔드개발': '백엔드 개발',
+    '백엔드 개발': '백엔드 개발',
     '웹개발(풀스택)': '풀스텍 개발',
     '풀스텍 개발': '풀스텍 개발',
     '모바일': '모바일',
@@ -356,6 +360,14 @@ def process_lectures(df, org_map, teacher_map, cat_curr_list_map):
         if not start_date or not end_date:
             continue
         
+        # Determine status based on deadline
+        today = datetime.now().date()
+        if deadline:
+            deadline_date = datetime.strptime(deadline, '%Y-%m-%d').date()
+            status = STATUS_RECRUITING if deadline_date >= today else STATUS_FINISHED
+        else:
+            status = STATUS_FINISHED
+        
         # Insert Lecture
         cols = [
             'lecture_id', 'org_id', 'lecture_name', 'lecture_loc', 'recruit_type',
@@ -370,7 +382,7 @@ def process_lectures(df, org_map, teacher_map, cat_curr_list_map):
             lecture_id, org_id, l_name, lecture_loc, recruit_type,
             start_date, end_date, deadline, total_days, total_times,
             '09:00:00', '18:00:00', 'MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY', lecture_fee, subsidy, edu_subsidy,
-            books, employment_help, equip_pc, STATUS_FINISHED, AUTH_APPROVED,
+            books, employment_help, equip_pc, status, AUTH_APPROVED,
             'NOW()', 'NOW()',
             clean_str(row.get('훈련목표')), None if clean_str(row.get('장점')) == '없음' else clean_str(row.get('장점')),
             project_num, project_time, clean_str(row.get('프로젝트_팀구성방식')), clean_str(row.get('프로젝트_협업툴')),
