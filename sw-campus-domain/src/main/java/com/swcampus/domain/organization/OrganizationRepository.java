@@ -19,7 +19,7 @@ public interface OrganizationRepository {
 
     List<Organization> findByNameContaining(String keyword);
 
-    Page<Organization> findByApprovalStatus(ApprovalStatus status, Pageable pageable);
+    Page<Organization> searchByStatusAndKeyword(ApprovalStatus status, String keyword, Pageable pageable);
 
     java.util.List<Organization> findAllByIds(java.util.List<Long> ids);
 }

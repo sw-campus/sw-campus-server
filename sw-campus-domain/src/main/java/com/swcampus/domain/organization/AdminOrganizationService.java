@@ -16,8 +16,8 @@ public class AdminOrganizationService {
 
     private final OrganizationRepository organizationRepository;
 
-    public Page<Organization> getOrganizationsByStatus(ApprovalStatus status, Pageable pageable) {
-        return organizationRepository.findByApprovalStatus(status, pageable);
+    public Page<Organization> searchOrganizations(ApprovalStatus status, String keyword, Pageable pageable) {
+        return organizationRepository.searchByStatusAndKeyword(status, keyword, pageable);
     }
 
     public Organization getOrganizationDetail(Long id) {

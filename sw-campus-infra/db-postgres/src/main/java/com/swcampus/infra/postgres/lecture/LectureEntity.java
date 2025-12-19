@@ -383,4 +383,9 @@ public class LectureEntity {
 		this.totalTimes = lecture.getTotalTimes();
 		this.updatedAt = LocalDateTime.now();
 	}
+
+	public void updateAuthStatus(com.swcampus.domain.lecture.LectureAuthStatus status) {
+		this.lectureAuthStatus = status;
+		this.updatedAt = LocalDateTime.now();
+	}
 }

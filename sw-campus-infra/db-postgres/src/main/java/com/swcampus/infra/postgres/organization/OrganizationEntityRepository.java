@@ -62,12 +62,6 @@ public class OrganizationEntityRepository implements OrganizationRepository {
     }
 
     @Override
-    public Page<Organization> findByApprovalStatus(ApprovalStatus status, Pageable pageable) {
-        return jpaRepository.findByApprovalStatus(status, pageable)
-                .map(OrganizationEntity::toDomain);
-    }
-
-    @Override
     public List<Organization> findAllByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();
@@ -75,5 +69,25 @@ public class OrganizationEntityRepository implements OrganizationRepository {
         return jpaRepository.findAllById(ids).stream()
                 .map(OrganizationEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Page<Organization> searchByStatusAndKeyword(ApprovalStatus status, String keyword, Pageable pageable) {
+        boolean hasStatus = status != null;
+        boolean hasKeyword = keyword != null && !keyword.isBlank();
+
+        if (hasStatus && hasKeyword) {
+            return jpaRepository.findByApprovalStatusAndNameContainingIgnoreCase(status, keyword, pageable)
+                    .map(OrganizationEntity::toDomain);
+        } else if (hasStatus) {
+            return jpaRepository.findByApprovalStatus(status, pageable)
+                    .map(OrganizationEntity::toDomain);
+        } else if (hasKeyword) {
+            return jpaRepository.findByNameContainingIgnoreCase(keyword, pageable)
+                    .map(OrganizationEntity::toDomain);
+        } else {
+            return jpaRepository.findAll(pageable)
+                    .map(OrganizationEntity::toDomain);
+        }
     }
 }

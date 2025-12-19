@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.swcampus.domain.lecture.Lecture;
@@ -161,20 +162,24 @@ public record LectureResponse(
 				lecture.getDeadline() != null ? lecture.getDeadline().toString() : null,
 				lecture.getTotalDays(),
 				lecture.getTotalTimes(),
-				lecture.getSteps() != null ? lecture.getSteps().stream().map(StepResponse::from).toList() : List.of(),
-				lecture.getAdds() != null ? lecture.getAdds().stream().map(AddResponse::from).toList() : List.of(),
-				lecture.getQuals() != null ? lecture.getQuals().stream().map(QualResponse::from).toList() : List.of(),
-				lecture.getTeachers() != null ? lecture.getTeachers().stream().map(TeacherResponse::from).toList()
-						: List.of(),
+				mapListSafe(lecture.getSteps(), StepResponse::from),
+				mapListSafe(lecture.getAdds(), AddResponse::from),
+				mapListSafe(lecture.getQuals(), QualResponse::from),
+				mapListSafe(lecture.getTeachers(), TeacherResponse::from),
 				extractCategoryName(lecture),
-				lecture.getLectureCurriculums() != null
-						? lecture.getLectureCurriculums().stream().map(CurriculumResponse::from).toList()
-						: List.of(),
+				mapListSafe(lecture.getLectureCurriculums(), CurriculumResponse::from),
 				organization != null ? organization.getLogoUrl() : null,
 				extractFacilityImageUrls(organization),
 
 				averageScore != null ? averageScore : lecture.getAverageScore(),
 				reviewCount != null ? reviewCount : lecture.getReviewCount());
+	}
+
+	private static <T, R> List<R> mapListSafe(List<T> list, Function<T, R> mapper) {
+		if (list == null) {
+			return Collections.emptyList();
+		}
+		return list.stream().map(mapper).toList();
 	}
 
 	private static List<String> extractFacilityImageUrls(Organization organization) {

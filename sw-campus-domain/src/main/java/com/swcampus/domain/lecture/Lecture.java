@@ -72,6 +72,28 @@ public class Lecture {
 	}
 
 	/**
+	 * 강의를 승인합니다.
+	 * 
+	 * @return 승인된 강의
+	 */
+	public Lecture approve() {
+		return this.toBuilder()
+				.lectureAuthStatus(LectureAuthStatus.APPROVED)
+				.build();
+	}
+
+	/**
+	 * 강의를 반려합니다.
+	 * 
+	 * @return 반려된 강의
+	 */
+	public Lecture reject() {
+		return this.toBuilder()
+				.lectureAuthStatus(LectureAuthStatus.REJECTED)
+				.build();
+	}
+
+	/**
 	 * 첫 번째 커리큘럼에서 카테고리 ID를 안전하게 추출합니다.
 	 * 
 	 * @return 카테고리 ID, 없으면 null

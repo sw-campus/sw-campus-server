@@ -16,5 +16,9 @@ public interface OrganizationJpaRepository extends JpaRepository<OrganizationEnt
 
     List<OrganizationEntity> findByNameContaining(String name);
 
+    Page<OrganizationEntity> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
     Page<OrganizationEntity> findByApprovalStatus(ApprovalStatus status, Pageable pageable);
+
+    Page<OrganizationEntity> findByApprovalStatusAndNameContainingIgnoreCase(ApprovalStatus status, String name, Pageable pageable);
 }
