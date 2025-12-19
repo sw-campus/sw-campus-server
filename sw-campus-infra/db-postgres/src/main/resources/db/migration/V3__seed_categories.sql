@@ -1,5 +1,5 @@
 -- Auto-generated migration file: V3__seed_categories.sql
--- Generated at: 2025-12-18 20:20:35
+-- Generated at: 2025-12-19 17:30:09
 
 INSERT INTO swcampus.categories (category_id, pid, category_name, sort) VALUES (1, NULL, '부트캠프', 1) ON CONFLICT DO NOTHING;
 INSERT INTO swcampus.categories (category_id, pid, category_name, sort) VALUES (2, 1, '웹개발', 2) ON CONFLICT DO NOTHING;

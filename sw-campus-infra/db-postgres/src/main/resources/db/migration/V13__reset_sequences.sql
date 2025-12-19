@@ -1,5 +1,5 @@
 -- Auto-generated migration file: V13__reset_sequences.sql
--- Generated at: 2025-12-18 20:20:35
+-- Generated at: 2025-12-19 17:30:09
 
 SELECT setval('swcampus.lectures_lecture_id_seq', (SELECT COALESCE(MAX(lecture_id), 1) FROM swcampus.lectures));
 SELECT setval('swcampus.lecture_steps_step_id_seq', (SELECT COALESCE(MAX(step_id), 1) FROM swcampus.lecture_steps));
