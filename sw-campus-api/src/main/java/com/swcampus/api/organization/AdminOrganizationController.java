@@ -41,31 +41,18 @@ public class AdminOrganizationController {
 
     private final AdminOrganizationService adminOrganizationService;
 
-    @Operation(summary = "승인 대기 기관 목록 조회", description = "상태별로 기관 목록을 페이징하여 조회합니다.")
+    @Operation(summary = "기관 목록 조회/검색", description = "기관 목록을 조회하고 검색합니다. 상태와 기관명으로 필터링할 수 있습니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "403", description = "관리자 권한 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
-    public ResponseEntity<Page<AdminOrganizationSummaryResponse>> getOrganizationList(
-            @Parameter(description = "승인 상태 (PENDING, APPROVED, REJECTED)") @RequestParam(defaultValue = "PENDING") ApprovalStatus status,
+    public ResponseEntity<Page<AdminOrganizationSummaryResponse>> getOrganizations(
+            @Parameter(description = "승인 상태 (PENDING, APPROVED, REJECTED), 미입력시 전체") @RequestParam(required = false) ApprovalStatus status,
+            @Parameter(description = "검색 키워드 (기관명), 미입력시 전체") @RequestParam(required = false, defaultValue = "") String keyword,
             @PageableDefault(size = 10) Pageable pageable) {
-        Page<Organization> organizations = adminOrganizationService.getOrganizationsByStatus(status, pageable);
-        return ResponseEntity.ok(organizations.map(AdminOrganizationSummaryResponse::from));
-    }
-
-    @Operation(summary = "기관 이름 검색", description = "기관명으로 기관을 검색합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "검색 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "관리자 권한 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @GetMapping("/search")
-    public ResponseEntity<Page<AdminOrganizationSummaryResponse>> searchOrganizations(
-            @Parameter(description = "검색 키워드 (기관명)") @RequestParam String keyword,
-            @PageableDefault(size = 10) Pageable pageable) {
-        Page<Organization> organizations = adminOrganizationService.searchOrganizationsByName(keyword, pageable);
+        Page<Organization> organizations = adminOrganizationService.searchOrganizations(status, keyword, pageable);
         return ResponseEntity.ok(organizations.map(AdminOrganizationSummaryResponse::from));
     }
 
