@@ -19,6 +19,8 @@ import com.swcampus.api.lecture.response.LectureResponse;
 import com.swcampus.domain.lecture.AdminLectureService;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureAuthStatus;
+import com.swcampus.domain.organization.AdminOrganizationService;
+import com.swcampus.domain.organization.Organization;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminLectureController {
 
     private final AdminLectureService adminLectureService;
+    private final AdminOrganizationService adminOrganizationService;
 
     @Operation(summary = "강의 목록 조회/검색", description = "강의 목록을 조회하고 검색합니다. 승인 상태와 강의명으로 필터링할 수 있습니다.")
     @ApiResponses({
@@ -64,7 +67,8 @@ public class AdminLectureController {
     public ResponseEntity<LectureResponse> getLecture(
             @Parameter(description = "강의 ID") @PathVariable("id") Long id) {
         Lecture lecture = adminLectureService.getLectureDetail(id);
-        return ResponseEntity.ok(LectureResponse.from(lecture));
+        Organization organization = adminOrganizationService.getOrganizationDetail(lecture.getOrgId());
+        return ResponseEntity.ok(LectureResponse.from(lecture, organization));
     }
 
     @Operation(summary = "강의 승인", description = "강의 등록을 승인합니다.")

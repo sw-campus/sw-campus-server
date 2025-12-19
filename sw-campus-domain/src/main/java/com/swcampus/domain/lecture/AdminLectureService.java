@@ -44,9 +44,7 @@ public class AdminLectureService {
      */
     @Transactional
     public Lecture approveLecture(Long id) {
-        Lecture lecture = getLectureDetail(id);
-        Lecture approvedLecture = lecture.approve();
-        return lectureRepository.save(approvedLecture);
+        return updateLectureStatus(id, Lecture::approve);
     }
 
     /**
@@ -54,8 +52,12 @@ public class AdminLectureService {
      */
     @Transactional
     public Lecture rejectLecture(Long id) {
+        return updateLectureStatus(id, Lecture::reject);
+    }
+
+    private Lecture updateLectureStatus(Long id, java.util.function.Function<Lecture, Lecture> statusUpdater) {
         Lecture lecture = getLectureDetail(id);
-        Lecture rejectedLecture = lecture.reject();
-        return lectureRepository.save(rejectedLecture);
+        Lecture updatedLecture = statusUpdater.apply(lecture);
+        return lectureRepository.save(updatedLecture);
     }
 }
