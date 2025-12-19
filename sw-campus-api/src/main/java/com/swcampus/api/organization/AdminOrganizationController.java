@@ -55,6 +55,20 @@ public class AdminOrganizationController {
         return ResponseEntity.ok(organizations.map(AdminOrganizationSummaryResponse::from));
     }
 
+    @Operation(summary = "기관 이름 검색", description = "기관명으로 기관을 검색합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "검색 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/search")
+    public ResponseEntity<Page<AdminOrganizationSummaryResponse>> searchOrganizations(
+            @Parameter(description = "검색 키워드 (기관명)") @RequestParam String keyword,
+            @PageableDefault(size = 10) Pageable pageable) {
+        Page<Organization> organizations = adminOrganizationService.searchOrganizationsByName(keyword, pageable);
+        return ResponseEntity.ok(organizations.map(AdminOrganizationSummaryResponse::from));
+    }
+
     @Operation(summary = "기관 상세 조회", description = "기관의 상세 정보를 조회합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),

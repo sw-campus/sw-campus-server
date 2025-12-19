@@ -20,6 +20,10 @@ public class AdminOrganizationService {
         return organizationRepository.findByApprovalStatus(status, pageable);
     }
 
+    public Page<Organization> searchOrganizationsByName(String keyword, Pageable pageable) {
+        return organizationRepository.findByNameContaining(keyword, pageable);
+    }
+
     public Organization getOrganizationDetail(Long id) {
         return organizationRepository.findById(id)
                 .orElseThrow(() -> new OrganizationNotFoundException(id));

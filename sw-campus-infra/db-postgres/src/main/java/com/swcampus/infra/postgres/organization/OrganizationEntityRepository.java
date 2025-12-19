@@ -62,6 +62,12 @@ public class OrganizationEntityRepository implements OrganizationRepository {
     }
 
     @Override
+    public Page<Organization> findByNameContaining(String keyword, Pageable pageable) {
+        return jpaRepository.findByNameContainingIgnoreCase(keyword, pageable)
+                .map(OrganizationEntity::toDomain);
+    }
+
+    @Override
     public Page<Organization> findByApprovalStatus(ApprovalStatus status, Pageable pageable) {
         return jpaRepository.findByApprovalStatus(status, pageable)
                 .map(OrganizationEntity::toDomain);
