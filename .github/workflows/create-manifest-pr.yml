@@ -5,13 +5,18 @@ on:
     workflows: ["Build Image"]
     types:
       - completed
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   pr:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
     runs-on: ubuntu-latest
 
     steps:
@@ -25,11 +30,15 @@ jobs:
       - name: Determine image tag
         id: tag
         run: |
-          if [ "${{ github.event.workflow_run.event }}" == "release" ]; then
+          if [ "${{ github.event_name }}" = "workflow_run" ] && \
+             [ "${{ github.event.workflow_run.event }}" = "release" ]; then
             TAG="${{ github.event.workflow_run.release.tag_name }}"
             TAG="${TAG#v}"
-          else
+          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
             TAG="${{ github.event.workflow_run.head_sha }}"
+          else
+            # workflow_dispatch → 현재 커밋 SHA
+            TAG="${{ github.sha }}"
           fi
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
@@ -39,9 +48,14 @@ jobs:
       - name: Determine target manifest branch
         id: target
         run: |
-          REF="${{ github.event.workflow_run.head_branch }}"
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            REF="${{ github.event.workflow_run.head_branch }}"
+          else
+            # workflow_dispatch → 현재 브랜치
+            REF="${{ github.ref_name }}"
+          fi
 
-          if [ "$REF" == "develop" ]; then
+          if [ "$REF" = "develop" ]; then
             echo "branch=develop" >> $GITHUB_OUTPUT
             echo "env=dev" >> $GITHUB_OUTPUT
           else
