@@ -31,8 +31,9 @@ public class OrganizationEntity extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "approval_status")
-    private String approvalStatus;
+    private ApprovalStatus approvalStatus;
 
     @Column(name = "certificate_url", columnDefinition = "TEXT")
     private String certificateUrl;
@@ -64,9 +65,7 @@ public class OrganizationEntity extends BaseEntity {
         entity.userId = organization.getUserId();
         entity.name = organization.getName();
         entity.description = organization.getDescription();
-        entity.approvalStatus = organization.getApprovalStatus() != null
-                ? organization.getApprovalStatus().name()
-                : null;
+        entity.approvalStatus = organization.getApprovalStatus();
         entity.certificateUrl = organization.getCertificateUrl();
         entity.govAuth = organization.getGovAuth();
         entity.facilityImageUrl = organization.getFacilityImageUrl();
@@ -84,7 +83,7 @@ public class OrganizationEntity extends BaseEntity {
                 userId,
                 name,
                 description,
-                approvalStatus != null ? ApprovalStatus.fromName(approvalStatus) : null,
+                approvalStatus,
                 certificateUrl,
                 govAuth,
                 facilityImageUrl,
