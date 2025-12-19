@@ -30,19 +30,20 @@ class AdminOrganizationServiceTest {
     private OrganizationRepository organizationRepository;
 
     @Test
-    @DisplayName("상태별 기관 목록 조회 성공")
-    void getOrganizationsByStatus_Success() {
+    @DisplayName("기관 목록 조회/검색 성공")
+    void searchOrganizations_Success() {
         // given
         ApprovalStatus status = ApprovalStatus.PENDING;
+        String keyword = "";
         Pageable pageable = PageRequest.of(0, 10);
-        given(organizationRepository.findByApprovalStatus(status, pageable)).willReturn(Page.empty());
+        given(organizationRepository.searchByStatusAndKeyword(status, keyword, pageable)).willReturn(Page.empty());
 
         // when
-        Page<Organization> result = adminOrganizationService.getOrganizationsByStatus(status, pageable);
+        Page<Organization> result = adminOrganizationService.searchOrganizations(status, keyword, pageable);
 
         // then
         assertThat(result).isNotNull();
-        verify(organizationRepository).findByApprovalStatus(status, pageable);
+        verify(organizationRepository).searchByStatusAndKeyword(status, keyword, pageable);
     }
 
     @Test
