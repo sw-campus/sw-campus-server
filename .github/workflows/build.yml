@@ -78,13 +78,13 @@ jobs:
             TAG="${GITHUB_SHA}"
           fi
           echo "tag=$TAG" >> $GITHUB_OUTPUT
-
-      # 8) 이미지 빌드 & 푸시
+          
+      # 8) 이미지 빌드 & 푸시 (불변 태그)
       - name: Build and push Docker image
         run: |
           IMAGE="ghcr.io/sw-campus/sw-campus-server"
-          TAG="${{ steps.tag.outputs.tag }}"
-
-          docker build -t $IMAGE:latest -t $IMAGE:$TAG .
-          docker push $IMAGE:latest
+          TAG="${{ github.sha }}"
+          
+          docker build -t $IMAGE:$TAG .
           docker push $IMAGE:$TAG
+
