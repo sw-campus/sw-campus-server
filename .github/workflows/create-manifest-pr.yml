@@ -54,7 +54,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: sw-campus/sw-campus-manifest
-          token: ${{ secrets.GH_MANIFEST_TOKEN }}
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
           path: manifest
 
       # 5) server 이미지 태그 업데이트
@@ -68,7 +68,7 @@ jobs:
       - name: Create PR to manifest
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.GH_MANIFEST_TOKEN }}
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
           path: manifest
           commit-message: "chore(server): update image (${{ steps.target.outputs.env }}) to ${{ steps.tag.outputs.tag }}"
           title: "Deploy server image (${{ steps.target.outputs.env }}) ${{ steps.tag.outputs.tag }}"
