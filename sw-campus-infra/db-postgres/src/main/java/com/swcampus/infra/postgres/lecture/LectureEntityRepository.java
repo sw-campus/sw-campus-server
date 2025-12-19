@@ -55,6 +55,14 @@ public class LectureEntityRepository implements LectureRepository {
 		return jpaRepository.save(entity).toDomain();
 	}
 
+	@Override
+	public Lecture updateAuthStatus(Long lectureId, LectureAuthStatus status) {
+		LectureEntity entity = jpaRepository.findById(lectureId)
+				.orElseThrow(() -> new ResourceNotFoundException("Lecture not found with id: " + lectureId));
+		entity.updateAuthStatus(status);
+		return jpaRepository.save(entity).toDomain();
+	}
+
 	private void updateEntityFields(LectureEntity entity, Lecture lecture) {
 		entity.updateFields(lecture);
 	}
@@ -62,6 +70,18 @@ public class LectureEntityRepository implements LectureRepository {
 	private void updateCollections(LectureEntity entity, Lecture lecture) {
 		// 1:N Steps
 		entity.getSteps().clear();
+		// 1:N Adds
+		entity.getAdds().clear();
+		// 1:N Quals
+		entity.getQuals().clear();
+		// N:M Teachers
+		entity.getLectureTeachers().clear();
+		// N:M Curriculums
+		entity.getLectureCurriculums().clear();
+		// Force flush to execute deletes before inserts (prevents PK/UK violation)
+		entityManager.flush();
+
+		// Now add new Step entities
 		if (lecture.getSteps() != null) {
 			entity.getSteps().addAll(lecture.getSteps().stream()
 					.map(s -> LectureStepEntity.builder()
@@ -72,8 +92,7 @@ public class LectureEntityRepository implements LectureRepository {
 					.toList());
 		}
 
-		// 1:N Adds
-		entity.getAdds().clear();
+		// Now add new Add entities
 		if (lecture.getAdds() != null) {
 			entity.getAdds().addAll(lecture.getAdds().stream()
 					.map(a -> LectureAddEntity.builder()
@@ -83,8 +102,7 @@ public class LectureEntityRepository implements LectureRepository {
 					.toList());
 		}
 
-		// 1:N Quals
-		entity.getQuals().clear();
+		// Now add new Qual entities
 		if (lecture.getQuals() != null) {
 			entity.getQuals().addAll(lecture.getQuals().stream()
 					.map(q -> LectureQualEntity.builder()
@@ -96,9 +114,6 @@ public class LectureEntityRepository implements LectureRepository {
 		}
 
 		// N:M Teachers
-		entity.getLectureTeachers().clear();
-		// Force flush to execute deletes before inserts (prevents UK violation)
-		entityManager.flush();
 
 		if (lecture.getTeachers() != null) {
 			lecture.getTeachers().forEach(t -> {
@@ -117,10 +132,6 @@ public class LectureEntityRepository implements LectureRepository {
 		}
 
 		// N:M Curriculums
-		entity.getLectureCurriculums().clear();
-		// Force flush to execute deletes before inserts (prevents UK violation)
-		entityManager.flush();
-
 		if (lecture.getLectureCurriculums() != null) {
 			lecture.getLectureCurriculums().forEach(lc -> {
 				CurriculumEntity curriculumRef = entityManager.getReference(CurriculumEntity.class,
