@@ -1,6 +1,8 @@
 package com.swcampus.domain.lecture;
 
 import com.swcampus.domain.lecture.dto.BannerWithLectureDto;
+import com.swcampus.domain.organization.Organization;
+import com.swcampus.domain.organization.OrganizationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,7 @@ public class BannerService {
 
     private final BannerRepository bannerRepository;
     private final LectureRepository lectureRepository;
+    private final OrganizationRepository organizationRepository;
 
     /**
      * 모든 활성화된 배너 조회 (강의 정보 포함)
@@ -56,8 +59,24 @@ public class BannerService {
         Map<Long, Lecture> lectureMap = lectures.stream()
                 .collect(Collectors.toMap(Lecture::getLectureId, Function.identity()));
 
+        // Organization 정보 조회하여 orgName 설정
+        List<Long> orgIds = lectures.stream()
+                .map(Lecture::getOrgId)
+                .distinct()
+                .toList();
+        Map<Long, String> orgNameMap = organizationRepository.findAllByIds(orgIds).stream()
+                .collect(Collectors.toMap(Organization::getId, Organization::getName));
+
         return banners.stream()
-                .map(banner -> BannerWithLectureDto.from(banner, lectureMap.get(banner.getLectureId())))
+                .map(banner -> {
+                    Lecture lecture = lectureMap.get(banner.getLectureId());
+                    String orgName = lecture != null ? orgNameMap.get(lecture.getOrgId()) : null;
+                    // orgName을 포함한 Lecture 생성
+                    Lecture lectureWithOrgName = lecture != null
+                            ? lecture.toBuilder().orgName(orgName).build()
+                            : null;
+                    return BannerWithLectureDto.from(banner, lectureWithOrgName);
+                })
                 .toList();
     }
 }
