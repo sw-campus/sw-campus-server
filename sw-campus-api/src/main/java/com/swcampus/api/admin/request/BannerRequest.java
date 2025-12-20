@@ -30,7 +30,7 @@ public record BannerRequest(
                 .imageUrl(imageUrl)
                 .startDate(startDate)
                 .endDate(endDate)
-                .isActive(isActive != null ? isActive : true)
+                .isActive(isActive)
                 .build();
     }
 }

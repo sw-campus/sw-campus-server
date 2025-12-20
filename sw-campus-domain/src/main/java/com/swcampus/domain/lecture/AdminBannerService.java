@@ -47,10 +47,22 @@ public class AdminBannerService {
 
     /**
      * 배너 생성
+     * isActive가 null인 경우 기본값 true 설정
      */
     @Transactional
     public BannerDetailsDto createBanner(Banner banner) {
-        Banner saved = bannerRepository.save(banner);
+        Banner bannerToSave = banner.getIsActive() != null ? banner
+                : Banner.builder()
+                        .lectureId(banner.getLectureId())
+                        .type(banner.getType())
+                        .content(banner.getContent())
+                        .imageUrl(banner.getImageUrl())
+                        .startDate(banner.getStartDate())
+                        .endDate(banner.getEndDate())
+                        .isActive(true)
+                        .build();
+
+        Banner saved = bannerRepository.save(bannerToSave);
         return toDetails(saved);
     }
 
