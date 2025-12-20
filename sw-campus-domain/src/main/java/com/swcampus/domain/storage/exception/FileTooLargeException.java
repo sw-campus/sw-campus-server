@@ -5,7 +5,7 @@ import com.swcampus.domain.common.DomainException;
 import java.util.Map;
 
 public class FileTooLargeException extends DomainException {
-    public static final String CODE = "FILE_TOO_LARGE";
+    public static final String CODE = "파일 용량이 초과되었습니다";
 
     public FileTooLargeException(String message) {
         super(CODE, message);

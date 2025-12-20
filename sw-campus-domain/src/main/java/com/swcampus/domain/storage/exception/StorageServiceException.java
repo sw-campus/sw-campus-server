@@ -4,11 +4,9 @@ import com.swcampus.domain.common.DomainException;
 
 import java.util.Map;
 
-/**
- * Wraps infrastructure/storage layer failures (e.g., AWS S3 SDK errors, network timeouts).
- * This lives in the domain module so infra can throw it without depending on the API layer.
- * The API layer decides the final HTTP status, but a suggested status can be provided.
- */
+import lombok.Getter;
+
+@Getter
 public class StorageServiceException extends DomainException {
     public static final String CODE = "STORAGE_ERROR";
 
@@ -27,9 +25,5 @@ public class StorageServiceException extends DomainException {
     public StorageServiceException(String message, Map<String, Object> details, Integer suggestedHttpStatus) {
         super(CODE, message, details);
         this.suggestedHttpStatus = suggestedHttpStatus;
-    }
-
-    public Integer getSuggestedHttpStatus() {
-        return suggestedHttpStatus;
     }
 }
