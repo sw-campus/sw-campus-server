@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation project(':sw-campus-domain')
+    implementation project(':sw-campus-shared:error')
 
     implementation 'org.springframework.boot:spring-boot-starter'
     
