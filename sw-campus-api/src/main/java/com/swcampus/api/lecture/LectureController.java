@@ -30,10 +30,8 @@ import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
-import com.swcampus.domain.organization.ApprovalStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
-import com.swcampus.domain.organization.exception.OrganizationNotApprovedException;
 import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.review.ReviewWithNickname;
 
@@ -90,12 +88,7 @@ public class LectureController {
 		// 현재 로그인한 사용자 ID 가져오기
 		Long currentUserId = member.memberId();
 
-		Organization organization = organizationService.getOrganizationByUserId(currentUserId);
-
-		// APPROVED 상태만 강의 등록 가능
-		if (organization.getApprovalStatus() != ApprovalStatus.APPROVED) {
-			throw new OrganizationNotApprovedException();
-		}
+		Organization organization = organizationService.getApprovedOrganizationByUserId(currentUserId);
 
 		Lecture lectureDomain = request.toDomain().toBuilder()
 				.orgId(organization.getId())
@@ -144,12 +137,7 @@ public class LectureController {
 		// 현재 로그인한 사용자 ID 가져오기
 		Long currentUserId = member.memberId();
 
-		Organization organization = organizationService.getOrganizationByUserId(currentUserId);
-
-		// APPROVED 상태만 강의 수정 가능
-		if (organization.getApprovalStatus() != ApprovalStatus.APPROVED) {
-			throw new OrganizationNotApprovedException();
-		}
+		Organization organization = organizationService.getApprovedOrganizationByUserId(currentUserId);
 
 		// 권한 확인 및 로직 수행은 Service로 위임
 		Lecture lectureDomain = request.toDomain().toBuilder()
