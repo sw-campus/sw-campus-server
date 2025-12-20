@@ -1,31 +1,44 @@
 package com.swcampus.infra.s3;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.swcampus.domain.storage.exception.InvalidImageTypeException;
 import com.swcampus.domain.storage.presigned.PresignedModels.CompletedPart;
 import com.swcampus.domain.storage.presigned.PresignedModels.MultipartInitResponse;
 import com.swcampus.domain.storage.presigned.PresignedModels.PresignedPart;
 import com.swcampus.domain.storage.presigned.PresignedModels.PresignedSingleUpload;
 import com.swcampus.domain.storage.presigned.PresignedStoragePort;
 import com.swcampus.domain.storage.presigned.StorageAccess;
-import com.swcampus.domain.storage.exception.InvalidImageTypeException;
-import com.swcampus.domain.storage.exception.StorageServiceException;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import software.amazon.awssdk.core.exception.SdkClientException;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.ServerSideEncryption;
+import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedUploadPartRequest;
-
-import java.net.URI;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -71,17 +84,10 @@ public class S3PresignedStorageService implements PresignedStoragePort {
         }
 
         PutObjectRequest putReq = put.build();
-        PresignedPutObjectRequest presigned;
-        try {
-            presigned = presigner.presignPutObject(b -> b
-                    .signatureDuration(Duration.ofMinutes(presignedExpiryMinutes))
-                    .putObjectRequest(putReq)
-            );
-        } catch (S3Exception e) {
-            throw new StorageServiceException("S3 presign put failed: " + e.awsErrorDetails().errorMessage(), e.statusCode());
-        } catch (SdkClientException e) {
-            throw new StorageServiceException("S3 presign client error: " + e.getMessage(), 502);
-        }
+        PresignedPutObjectRequest presigned = presigner.presignPutObject(b -> b
+                .signatureDuration(Duration.ofMinutes(presignedExpiryMinutes))
+                .putObjectRequest(putReq)
+        );
 
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", contentType);
@@ -109,15 +115,7 @@ public class S3PresignedStorageService implements PresignedStoragePort {
             cu = cu.serverSideEncryption(ServerSideEncryption.AES256);
         }
 
-        CreateMultipartUploadResponse init;
-        try {
-            init = s3Client.createMultipartUpload(cu.build());
-        } catch (S3Exception e) {
-            throw new StorageServiceException("S3 create multipart failed: " + e.awsErrorDetails().errorMessage(), e.statusCode());
-        } catch (SdkClientException e) {
-            int status = inferGatewayStatus(e);
-            throw new StorageServiceException("S3 client error during multipart init: " + e.getMessage(), status);
-        }
+        CreateMultipartUploadResponse init = s3Client.createMultipartUpload(cu.build());
         long partSize = Math.max(5L * 1024 * 1024, multipartThresholdMb * 1024L * 1024L); // at least 5MB per S3 rule
         return new MultipartInitResponse(init.uploadId(), key, partSize, buildPublicUrl(bucket, key));
     }
@@ -133,18 +131,10 @@ public class S3PresignedStorageService implements PresignedStoragePort {
                     .uploadId(uploadId)
                     .partNumber(pn)
                     .build();
-            PresignedUploadPartRequest preq;
-            try {
-                preq = presigner.presignUploadPart(b -> b
-                        .signatureDuration(Duration.ofMinutes(presignedExpiryMinutes))
-                        .uploadPartRequest(upr)
-                );
-            } catch (S3Exception e) {
-                throw new StorageServiceException("S3 presign upload-part failed: " + e.awsErrorDetails().errorMessage(), e.statusCode());
-            } catch (SdkClientException e) {
-                int status = inferGatewayStatus(e);
-                throw new StorageServiceException("S3 presign client error during upload-part: " + e.getMessage(), status);
-            }
+            PresignedUploadPartRequest preq = presigner.presignUploadPart(b -> b
+                    .signatureDuration(Duration.ofMinutes(presignedExpiryMinutes))
+                    .uploadPartRequest(upr)
+            );
             result.add(new PresignedPart(pn, preq.url().toString(), Collections.emptyMap()));
         }
         return result;
@@ -163,53 +153,32 @@ public class S3PresignedStorageService implements PresignedStoragePort {
                         .collect(Collectors.toList()))
                 .build();
 
-        try {
-            s3Client.completeMultipartUpload(CompleteMultipartUploadRequest.builder()
-                    .bucket(bucket)
-                    .key(key)
-                    .uploadId(uploadId)
-                    .multipartUpload(cmu)
-                    .build());
-        } catch (S3Exception e) {
-            throw new StorageServiceException("S3 complete multipart failed: " + e.awsErrorDetails().errorMessage(), e.statusCode());
-        } catch (SdkClientException e) {
-            int status = inferGatewayStatus(e);
-            throw new StorageServiceException("S3 client error during multipart complete: " + e.getMessage(), status);
-        }
+        s3Client.completeMultipartUpload(CompleteMultipartUploadRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .uploadId(uploadId)
+                .multipartUpload(cmu)
+                .build());
     }
 
     @Override
     public void abortMultipart(String key, String uploadId, StorageAccess access) {
         String bucket = chooseBucket(access);
-        try {
-            s3Client.abortMultipartUpload(AbortMultipartUploadRequest.builder()
-                    .bucket(bucket)
-                    .key(key)
-                    .uploadId(uploadId)
-                    .build());
-        } catch (S3Exception e) {
-            throw new StorageServiceException("S3 abort multipart failed: " + e.awsErrorDetails().errorMessage(), e.statusCode());
-        } catch (SdkClientException e) {
-            int status = inferGatewayStatus(e);
-            throw new StorageServiceException("S3 client error during multipart abort: " + e.getMessage(), status);
-        }
+        s3Client.abortMultipartUpload(AbortMultipartUploadRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .uploadId(uploadId)
+                .build());
     }
 
     @Override
     public void deleteByUrl(String fileUrl, StorageAccess access) {
         String key = extractKeyFromUrl(fileUrl);
         String bucket = chooseBucket(access);
-        try {
-            s3Client.deleteObject(DeleteObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(key)
-                    .build());
-        } catch (S3Exception e) {
-            throw new StorageServiceException("S3 delete object failed: " + e.awsErrorDetails().errorMessage(), e.statusCode());
-        } catch (SdkClientException e) {
-            int status = inferGatewayStatus(e);
-            throw new StorageServiceException("S3 client error during delete: " + e.getMessage(), status);
-        }
+        s3Client.deleteObject(DeleteObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build());
     }
 
     private void validateImage(String contentType) {
@@ -246,20 +215,4 @@ public class S3PresignedStorageService implements PresignedStoragePort {
         return url.substring(url.indexOf(".com/") + 5);
     }
 
-    private int inferGatewayStatus(Throwable e) {
-        String msg = e.getMessage();
-        if (msg != null) {
-            String lower = msg.toLowerCase();
-            if (lower.contains("timed out") || lower.contains("timeout") || lower.contains("read timed out") || lower.contains("connect timed out")) {
-                return 504; // Gateway Timeout
-            }
-            if (lower.contains("connection refused") || lower.contains("connection reset") || lower.contains("unresolved")) {
-                return 502; // Bad Gateway (generic upstream error)
-            }
-            if (lower.contains("service unavailable") || lower.contains("throttling") || lower.contains("slowdown")) {
-                return 503; // Service Unavailable (S3 throttling/slowdown)
-            }
-        }
-        return 502;
-    }
 }
