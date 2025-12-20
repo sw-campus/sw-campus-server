@@ -4,6 +4,8 @@ import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
 import com.swcampus.domain.member.Role;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -65,5 +67,11 @@ public class MemberEntityRepository implements MemberRepository {
     @Override
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public Page<Member> searchByKeyword(String keyword, Pageable pageable) {
+        return jpaRepository.searchByKeyword(keyword, pageable)
+                .map(MemberEntity::toDomain);
     }
 }
