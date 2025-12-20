@@ -8,6 +8,7 @@ import com.swcampus.domain.auth.EmailService;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.auth.exception.InvalidTokenException;
 import com.swcampus.domain.auth.exception.TokenExpiredException;
+import com.swcampus.domain.organization.OrganizationService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -52,6 +53,9 @@ class AuthControllerRefreshTest {
 
     @MockitoBean
     private CookieUtil cookieUtil;
+
+    @MockitoBean
+    private OrganizationService organizationService;
 
     @Nested
     @DisplayName("POST /api/v1/auth/refresh")

@@ -2,6 +2,7 @@ package com.swcampus.infra.postgres.member;
 
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
+import com.swcampus.domain.member.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -44,5 +45,25 @@ public class MemberEntityRepository implements MemberRepository {
     @Override
     public boolean existsByEmail(String email) {
         return jpaRepository.existsByEmail(email);
+    }
+
+    @Override
+    public boolean existsByOrgId(Long orgId) {
+        return jpaRepository.existsByOrgId(orgId);
+    }
+
+    @Override
+    public Optional<Member> findByOrgId(Long orgId) {
+        return jpaRepository.findByOrgId(orgId).map(MemberEntity::toDomain);
+    }
+
+    @Override
+    public Optional<Member> findFirstByRole(Role role) {
+        return jpaRepository.findFirstByRoleOrderByIdAsc(role).map(MemberEntity::toDomain);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        jpaRepository.deleteById(id);
     }
 }

@@ -19,8 +19,10 @@ import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.mypage.MypageService;
+import com.swcampus.domain.organization.ApprovalStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.organization.exception.OrganizationNotApprovedException;
 import com.swcampus.domain.survey.MemberSurveyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -245,11 +247,16 @@ public class MypageController {
         @Parameter(description = "시설 이미지 4")
         @RequestPart(name = "facilityImage4", required = false) MultipartFile facilityImage4
     ) {
-        // Update Member Info (Phone, Address)
-        memberService.updateProfile(member.memberId(), null, phone, location);
-
         // Update Organization Info
         Organization org = organizationService.getOrganizationByUserId(member.memberId());
+
+        // APPROVED 상태만 기관 정보 수정 가능
+        if (org.getApprovalStatus() != ApprovalStatus.APPROVED) {
+            throw new OrganizationNotApprovedException();
+        }
+
+        // Update Member Info (Phone, Address)
+        memberService.updateProfile(member.memberId(), null, phone, location);
 
         try {
             var params = new com.swcampus.domain.organization.dto.UpdateOrganizationParams(
