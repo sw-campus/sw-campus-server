@@ -12,6 +12,7 @@ import com.swcampus.domain.member.MemberRepository;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationRepository;
+import com.swcampus.domain.organization.exception.OrganizationNotFoundException;
 import com.swcampus.domain.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -111,7 +112,7 @@ public class AuthService {
 
             // 기존 기관 조회
             organization = organizationRepository.findById(command.getOrganizationId())
-                    .orElseThrow(() -> new RuntimeException("해당 기관을 찾을 수 없습니다: " + command.getOrganizationId()));
+                    .orElseThrow(() -> new OrganizationNotFoundException(command.getOrganizationId()));
 
             // 재직증명서 URL 업데이트
             organization.updateCertificateUrl(certificateUrl);

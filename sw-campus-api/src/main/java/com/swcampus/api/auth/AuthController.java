@@ -205,8 +205,14 @@ public class AuthController {
             @Parameter(description = "기존 기관 ID (선택사항. 기존 기관 선택 시 입력, 신규 기관은 입력하지 않음)", example = "1")
             @RequestPart(name = "organizationId", required = false) String organizationIdStr) throws IOException {
 
-        Long organizationId = organizationIdStr != null && !organizationIdStr.isBlank()
-                ? Long.parseLong(organizationIdStr) : null;
+        Long organizationId = null;
+        if (organizationIdStr != null && !organizationIdStr.isBlank()) {
+            try {
+                organizationId = Long.parseLong(organizationIdStr);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("유효하지 않은 기관 ID 형식입니다: " + organizationIdStr);
+            }
+        }
 
         OrganizationSignupRequest request = OrganizationSignupRequest.builder()
                 .email(email)
