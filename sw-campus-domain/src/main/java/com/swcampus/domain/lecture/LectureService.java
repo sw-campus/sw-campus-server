@@ -26,6 +26,8 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class LectureService {
 
+	private static final Long ROOT_CATEGORY_ID = 1L;
+
 	private final LectureRepository lectureRepository;
 	private final com.swcampus.domain.storage.FileStorageService fileStorageService;
 	private final com.swcampus.domain.review.ReviewRepository reviewRepository;
@@ -275,7 +277,7 @@ public class LectureService {
 		return categoryRepository.findById(categoryId)
 				.map(category -> {
 					Long pid = category.getPid();
-					if (pid == null || pid == 1L) {
+					if (pid == null || pid.equals(ROOT_CATEGORY_ID)) {
 						return categoryId;
 					}
 					return pid;
