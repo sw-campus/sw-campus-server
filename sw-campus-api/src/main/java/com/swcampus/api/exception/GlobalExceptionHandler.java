@@ -26,6 +26,9 @@ import com.swcampus.domain.cart.exception.CartLimitExceededException;
 import com.swcampus.domain.organization.exception.OrganizationNotApprovedException;
 import com.swcampus.domain.survey.exception.SurveyAlreadyExistsException;
 import com.swcampus.domain.survey.exception.SurveyNotFoundException;
+import com.swcampus.domain.storage.exception.FileTooLargeException;
+import com.swcampus.domain.storage.exception.InvalidImageTypeException;
+import com.swcampus.domain.storage.exception.StorageAccessDeniedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -241,6 +244,41 @@ public class GlobalExceptionHandler {
                 log.warn("장바구니 중복: {}", e.getMessage());
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                                 .body(ErrorResponse.of(HttpStatus.CONFLICT.value(), e.getMessage()));
+        }
+
+        // === Storage(이미지 업로드) 관련 예외 ===
+
+        @ExceptionHandler(InvalidImageTypeException.class)
+        public ResponseEntity<ErrorResponse> handleInvalidImageType(InvalidImageTypeException e) {
+                log.warn("이미지 MIME 타입 불허: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                                .body(ErrorResponse.of(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(), e.getMessage()));
+        }
+
+        @ExceptionHandler(FileTooLargeException.class)
+        public ResponseEntity<ErrorResponse> handleFileTooLarge(FileTooLargeException e) {
+                log.warn("파일 크기 초과: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                                .body(ErrorResponse.of(HttpStatus.PAYLOAD_TOO_LARGE.value(), e.getMessage()));
+        }
+
+        @ExceptionHandler(StorageAccessDeniedException.class)
+        public ResponseEntity<ErrorResponse> handleStorageAccessDenied(StorageAccessDeniedException e) {
+                log.warn("스토리지 접근 거부: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body(ErrorResponse.of(HttpStatus.FORBIDDEN.value(), e.getMessage()));
+        }
+
+        @ExceptionHandler(com.swcampus.domain.storage.exception.StorageServiceException.class)
+        public ResponseEntity<ErrorResponse> handleStorageServiceException(com.swcampus.domain.storage.exception.StorageServiceException e) {
+                log.error("스토리지 인프라 오류: {}", e.getMessage(), e);
+                Integer suggested = e.getSuggestedHttpStatus();
+                HttpStatus http = suggested != null ? HttpStatus.resolve(suggested) : HttpStatus.BAD_GATEWAY;
+                if (http == null) http = HttpStatus.BAD_GATEWAY; // fallback
+                // 외부 의존성 오류는 메시지를 일반화하여 노출
+                String message = "스토리지 처리 중 오류가 발생했습니다";
+                return ResponseEntity.status(http)
+                                .body(ErrorResponse.of(http.value(), message));
         }
 
         // === Survey 관련 예외 ===
