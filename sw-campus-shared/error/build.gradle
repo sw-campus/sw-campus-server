@@ -5,4 +5,6 @@ plugins {
 dependencies {
     api 'org.springframework:spring-context'
     api 'org.springframework:spring-aop'
+    api 'org.aspectj:aspectjweaver'
+    api 'org.slf4j:slf4j-api'
 }
