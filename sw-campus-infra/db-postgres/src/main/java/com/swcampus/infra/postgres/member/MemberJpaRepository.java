@@ -13,9 +13,9 @@ public interface MemberJpaRepository extends JpaRepository<MemberEntity, Long> {
     boolean existsByEmail(String email);
 
     @Query("SELECT m FROM MemberEntity m WHERE " +
-           ":keyword IS NULL OR :keyword = '' OR " +
-           "LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(m.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+           "(:keyword IS NULL OR :keyword = '') OR " +
+           "m.name ILIKE CONCAT('%', :keyword, '%') OR " +
+           "m.nickname ILIKE CONCAT('%', :keyword, '%') OR " +
+           "m.email ILIKE CONCAT('%', :keyword, '%')")
     Page<MemberEntity> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }
