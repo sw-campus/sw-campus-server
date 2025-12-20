@@ -28,7 +28,7 @@ lecture_category AS (
     JOIN swcampus.curriculums cu ON lc.curriculum_id = cu.curriculum_id
     JOIN swcampus.categories c ON cu.category_id = c.category_id
     WHERE l.lecture_image_url IS NULL OR l.lecture_image_url = ''
-    ORDER BY l.lecture_id, lc.lecture_curriculum_id
+    ORDER BY l.lecture_id, lc.id
 )
 UPDATE swcampus.lectures l
 SET lecture_image_url = 'https://s3-oneday.s3.ap-northeast-2.amazonaws.com/defaults/' || cim.image_file
