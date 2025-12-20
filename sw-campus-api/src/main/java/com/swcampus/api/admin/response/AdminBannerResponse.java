@@ -1,6 +1,6 @@
 package com.swcampus.api.admin.response;
 
-import com.swcampus.domain.lecture.Banner;
+import com.swcampus.domain.lecture.dto.BannerDetailsDto;
 import com.swcampus.domain.lecture.BannerType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -25,16 +25,17 @@ public record AdminBannerResponse(
         @Schema(description = "종료일") OffsetDateTime endDate,
 
         @Schema(description = "활성화 여부", example = "true") Boolean isActive) {
-    public static AdminBannerResponse from(Banner banner, String lectureName) {
+
+    public static AdminBannerResponse from(BannerDetailsDto details) {
         return new AdminBannerResponse(
-                banner.getId(),
-                banner.getLectureId(),
-                lectureName,
-                banner.getType(),
-                banner.getContent(),
-                banner.getImageUrl(),
-                banner.getStartDate(),
-                banner.getEndDate(),
-                banner.getIsActive());
+                details.getId(),
+                details.getLectureId(),
+                details.getLectureName(),
+                details.getType(),
+                details.getContent(),
+                details.getImageUrl(),
+                details.getStartDate(),
+                details.getEndDate(),
+                details.getIsActive());
     }
 }

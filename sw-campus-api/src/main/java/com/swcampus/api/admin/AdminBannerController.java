@@ -4,8 +4,7 @@ import com.swcampus.api.admin.request.BannerActiveRequest;
 import com.swcampus.api.admin.request.BannerRequest;
 import com.swcampus.api.admin.response.AdminBannerResponse;
 import com.swcampus.domain.lecture.AdminBannerService;
-import com.swcampus.domain.lecture.Banner;
-import com.swcampus.domain.lecture.LectureRepository;
+import com.swcampus.domain.lecture.dto.BannerDetailsDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Tag(name = "Admin Banner", description = "관리자 배너 관리 API")
 @RestController
@@ -29,7 +27,6 @@ import java.util.Map;
 public class AdminBannerController {
 
         private final AdminBannerService adminBannerService;
-        private final LectureRepository lectureRepository;
 
         @Operation(summary = "배너 목록 조회", description = "모든 배너를 조회합니다 (활성/비활성 모두 포함).")
         @ApiResponses({
@@ -39,19 +36,9 @@ public class AdminBannerController {
         })
         @GetMapping
         public ResponseEntity<List<AdminBannerResponse>> getBanners() {
-                List<Banner> banners = adminBannerService.getBannerList();
-
-                // N+1 문제 해결: 강의명 일괄 조회
-                List<Long> lectureIds = banners.stream()
-                                .map(Banner::getLectureId)
-                                .distinct()
-                                .toList();
-                Map<Long, String> lectureNames = lectureRepository.findLectureNamesByIds(lectureIds);
-
-                List<AdminBannerResponse> response = banners.stream()
-                                .map(banner -> AdminBannerResponse.from(
-                                                banner,
-                                                lectureNames.getOrDefault(banner.getLectureId(), "알 수 없음")))
+                List<BannerDetailsDto> bannerDetails = adminBannerService.getBannerDetailsDtoList();
+                List<AdminBannerResponse> response = bannerDetails.stream()
+                                .map(AdminBannerResponse::from)
                                 .toList();
                 return ResponseEntity.ok(response);
         }
@@ -64,8 +51,8 @@ public class AdminBannerController {
         @GetMapping("/{id}")
         public ResponseEntity<AdminBannerResponse> getBanner(
                         @Parameter(description = "배너 ID", required = true) @PathVariable("id") Long id) {
-                Banner banner = adminBannerService.getBanner(id);
-                return ResponseEntity.ok(toResponse(banner));
+                BannerDetailsDto details = adminBannerService.getBannerDetailsDto(id);
+                return ResponseEntity.ok(AdminBannerResponse.from(details));
         }
 
         @Operation(summary = "배너 생성", description = "새 배너를 생성합니다.")
@@ -77,8 +64,8 @@ public class AdminBannerController {
         @PostMapping
         public ResponseEntity<AdminBannerResponse> createBanner(
                         @Valid @RequestBody BannerRequest request) {
-                Banner banner = adminBannerService.createBanner(request.toDomain());
-                return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(banner));
+                BannerDetailsDto details = adminBannerService.createBanner(request.toDomain());
+                return ResponseEntity.status(HttpStatus.CREATED).body(AdminBannerResponse.from(details));
         }
 
         @Operation(summary = "배너 수정", description = "기존 배너를 수정합니다.")
@@ -91,8 +78,8 @@ public class AdminBannerController {
         public ResponseEntity<AdminBannerResponse> updateBanner(
                         @Parameter(description = "배너 ID", required = true) @PathVariable("id") Long id,
                         @Valid @RequestBody BannerRequest request) {
-                Banner banner = adminBannerService.updateBanner(id, request.toDomain());
-                return ResponseEntity.ok(toResponse(banner));
+                BannerDetailsDto details = adminBannerService.updateBanner(id, request.toDomain());
+                return ResponseEntity.ok(AdminBannerResponse.from(details));
         }
 
         @Operation(summary = "배너 삭제", description = "배너를 삭제합니다.")
@@ -116,14 +103,7 @@ public class AdminBannerController {
         public ResponseEntity<AdminBannerResponse> toggleBannerActive(
                         @Parameter(description = "배너 ID", required = true) @PathVariable("id") Long id,
                         @Valid @RequestBody BannerActiveRequest request) {
-                Banner banner = adminBannerService.toggleBannerActive(id, request.isActive());
-                return ResponseEntity.ok(toResponse(banner));
-        }
-
-        private AdminBannerResponse toResponse(Banner banner) {
-                Map<Long, String> lectureNames = lectureRepository
-                                .findLectureNamesByIds(List.of(banner.getLectureId()));
-                String lectureName = lectureNames.getOrDefault(banner.getLectureId(), "알 수 없음");
-                return AdminBannerResponse.from(banner, lectureName);
+                BannerDetailsDto details = adminBannerService.toggleBannerActive(id, request.isActive());
+                return ResponseEntity.ok(AdminBannerResponse.from(details));
         }
 }
