@@ -1,6 +1,7 @@
 package com.swcampus.api.admin.response;
 
 import com.swcampus.domain.member.Member;
+import com.swcampus.domain.member.Role;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -19,7 +20,10 @@ public record AdminMemberResponse(
         String nickname,
 
         @Schema(description = "전화번호", example = "010-1234-5678")
-        String phone
+        String phone,
+
+        @Schema(description = "역할", example = "USER")
+        Role role
 ) {
     public static AdminMemberResponse from(Member member) {
         return new AdminMemberResponse(
@@ -27,7 +31,8 @@ public record AdminMemberResponse(
                 member.getEmail(),
                 member.getName(),
                 member.getNickname(),
-                member.getPhone()
+                member.getPhone(),
+                member.getRole()
         );
     }
 }
