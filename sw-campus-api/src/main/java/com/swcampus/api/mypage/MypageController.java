@@ -5,11 +5,11 @@ import com.swcampus.api.mypage.request.UpdateProfileRequest;
 import com.swcampus.api.mypage.request.VerifyPasswordRequest;
 import com.swcampus.api.mypage.response.MyCompletedLectureResponse;
 import com.swcampus.api.mypage.response.MyLectureListResponse;
-import com.swcampus.api.mypage.response.MyReviewListResponse;
 import com.swcampus.api.mypage.response.MypageProfileResponse;
 import com.swcampus.api.mypage.response.OrganizationInfoResponse;
 import com.swcampus.api.mypage.response.SurveyResponse;
 import com.swcampus.api.mypage.response.VerifyPasswordResponse;
+import com.swcampus.api.review.response.ReviewResponse;
 import com.swcampus.api.exception.FileProcessingException;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
@@ -21,6 +21,8 @@ import com.swcampus.domain.member.Role;
 import com.swcampus.domain.mypage.MypageService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.review.Review;
+import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.survey.MemberSurveyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -35,6 +37,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -56,6 +59,7 @@ public class MypageController {
     private final MemberSurveyService memberSurveyService;
     private final OrganizationService organizationService;
     private final MypageService mypageService;
+    private final ReviewService reviewService;
 
     @Operation(summary = "[공통] 비밀번호 확인", description = "[공통] 회원정보 수정 화면 진입 전 비밀번호를 확인합니다. 소셜 로그인 사용자는 비밀번호 검증 없이 항상 true를 반환합니다.")
     @ApiResponses({
@@ -104,22 +108,6 @@ public class MypageController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "[일반 사용자 전용] 내 후기 목록 조회", description = "[일반 사용자 전용] 내가 작성한 강의 후기 목록을 조회합니다. 수강 완료 후 작성한 리뷰를 확인할 수 있습니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "조회 성공 (없을 경우 빈 배열)"),
-        @ApiResponse(responseCode = "401", description = "인증 필요"),
-        @ApiResponse(responseCode = "403", description = "일반 사용자가 아님")
-    })
-    @GetMapping("/reviews")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<MyReviewListResponse>> getMyReviews(@CurrentMember MemberPrincipal member) {
-        var reviewInfos = mypageService.getMyReviews(member.memberId());
-        var response = reviewInfos.stream()
-            .map(MyReviewListResponse::from)
-            .toList();
-        return ResponseEntity.ok(response);
-    }
-
     @Operation(summary = "[일반 사용자 전용] 내 수강 완료 강의 조회", description = "[일반 사용자 전용] 수료증 인증이 승인된 강의 목록을 조회합니다. 각 강의에 대해 후기 작성 가능 여부(canWriteReview)를 함께 반환합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공 (없을 경우 빈 배열)"),
@@ -134,6 +122,26 @@ public class MypageController {
             .map(MyCompletedLectureResponse::from)
             .toList();
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "[일반 사용자 전용] 수강 완료 강의 후기 상세 조회", description = "[일반 사용자 전용] 수강 완료한 강의에 대해 본인이 작성한 후기 상세 정보를 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "일반 사용자가 아님"),
+        @ApiResponse(responseCode = "404", description = "해당 강의에 대한 후기가 없음")
+    })
+    @GetMapping("/completed-lectures/{lectureId}/review")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ReviewResponse> getMyCompletedLectureReview(
+        @CurrentMember MemberPrincipal member,
+        @Parameter(description = "강의 ID", required = true)
+        @PathVariable("lectureId") Long lectureId
+    ) {
+        Long memberId = member.memberId();
+        Review review = reviewService.getMyReviewByLecture(memberId, lectureId);
+        String nickname = reviewService.getNickname(memberId);
+        return ResponseEntity.ok(ReviewResponse.from(review, nickname));
     }
 
     @Operation(summary = "[일반 사용자 전용] 설문조사 조회", description = "[일반 사용자 전용] 강의 추천을 위한 나의 설문조사 정보를 조회합니다. 전공, 부트캠프 수료 여부, 희망 직무 등의 정보를 확인할 수 있습니다.")

@@ -3,14 +3,18 @@ package com.swcampus.domain.review;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.certificate.CertificateRepository;
 import com.swcampus.domain.certificate.exception.CertificateNotFoundException;
+import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
+import com.swcampus.domain.review.dto.PendingReviewInfo;
 import com.swcampus.domain.review.exception.ReviewNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,13 +24,75 @@ public class AdminReviewService {
     private final ReviewRepository reviewRepository;
     private final CertificateRepository certificateRepository;
     private final MemberRepository memberRepository;
+    private final LectureService lectureService;
     private final EmailService emailService;
 
     /**
      * 대기 중인 후기 목록 조회 (수료증 또는 후기가 PENDING)
+     * 강의명, 회원정보, 수료증 상태를 배치 조회하여 N+1 문제 방지
      */
-    public List<Review> getPendingReviews() {
-        return reviewRepository.findPendingReviews();
+    public List<PendingReviewInfo> getPendingReviewsWithDetails() {
+        List<Review> reviews = reviewRepository.findPendingReviews();
+
+        if (reviews.isEmpty()) {
+            return List.of();
+        }
+
+        // 배치 조회: 강의명
+        List<Long> lectureIds = reviews.stream()
+            .map(Review::getLectureId)
+            .distinct()
+            .toList();
+        Map<Long, String> lectureNames = lectureService.getLectureNames(lectureIds);
+
+        // 배치 조회: 회원 정보
+        List<Long> memberIds = reviews.stream()
+            .map(Review::getMemberId)
+            .distinct()
+            .toList();
+        Map<Long, Member> memberMap = memberRepository.findAllByIds(memberIds).stream()
+            .collect(Collectors.toMap(Member::getId, m -> m));
+
+        // 배치 조회: 수료증 상태
+        List<Long> certificateIds = reviews.stream()
+            .map(Review::getCertificateId)
+            .distinct()
+            .toList();
+        Map<Long, Certificate> certificateMap = certificateRepository.findAllByIds(certificateIds);
+
+        // 조합하여 DTO 생성
+        return reviews.stream()
+            .map(review -> {
+                String lectureName = lectureNames.getOrDefault(review.getLectureId(), "알 수 없음");
+                Member member = memberMap.get(review.getMemberId());
+                String userName = member != null ? member.getName() : "알 수 없음";
+                String nickname = member != null ? member.getNickname() : "알 수 없음";
+                Certificate certificate = certificateMap.get(review.getCertificateId());
+                ApprovalStatus certStatus = certificate != null ? certificate.getApprovalStatus() : ApprovalStatus.PENDING;
+
+                return PendingReviewInfo.of(review, lectureName, userName, nickname, certStatus);
+            })
+            .toList();
+    }
+
+    /**
+     * 후기 상세 조회 (강의명, 회원정보, 수료증 상태 포함)
+     */
+    public PendingReviewInfo getReviewWithDetails(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+            .orElseThrow(ReviewNotFoundException::new);
+
+        String lectureName = lectureService.getLectureNames(List.of(review.getLectureId()))
+            .getOrDefault(review.getLectureId(), "알 수 없음");
+
+        Member member = memberRepository.findById(review.getMemberId()).orElse(null);
+        String userName = member != null ? member.getName() : "알 수 없음";
+        String nickname = member != null ? member.getNickname() : "알 수 없음";
+
+        Certificate certificate = certificateRepository.findById(review.getCertificateId()).orElse(null);
+        ApprovalStatus certStatus = certificate != null ? certificate.getApprovalStatus() : ApprovalStatus.PENDING;
+
+        return PendingReviewInfo.of(review, lectureName, userName, nickname, certStatus);
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.swcampus.domain.certificate;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface CertificateRepository {
@@ -9,4 +10,5 @@ public interface CertificateRepository {
     Optional<Certificate> findByMemberIdAndLectureId(Long memberId, Long lectureId);
     boolean existsByMemberIdAndLectureId(Long memberId, Long lectureId);
     List<Certificate> findAllByMemberId(Long memberId);
+    Map<Long, Certificate> findAllByIds(List<Long> ids);
 }
