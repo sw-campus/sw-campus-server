@@ -13,11 +13,16 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import java.io.IOException;
 
 @Tag(name = "Admin Banner", description = "관리자 배너 관리 API")
 @RestController
@@ -28,18 +33,21 @@ public class AdminBannerController {
 
         private final AdminBannerService adminBannerService;
 
-        @Operation(summary = "배너 목록 조회", description = "모든 배너를 조회합니다 (활성/비활성 모두 포함).")
+        @Operation(summary = "배너 목록 조회", description = "배너를 검색합니다. 키워드, 기간 상태로 필터링하고 페이징 처리됩니다.")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "조회 성공"),
                         @ApiResponse(responseCode = "401", description = "인증 필요"),
                         @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
         })
         @GetMapping
-        public ResponseEntity<List<AdminBannerResponse>> getBanners() {
-                List<BannerDetailsDto> bannerDetails = adminBannerService.getBannerDetailsDtoList();
-                List<AdminBannerResponse> response = bannerDetails.stream()
-                                .map(AdminBannerResponse::from)
-                                .toList();
+        public ResponseEntity<Page<AdminBannerResponse>> getBanners(
+                        @Parameter(description = "강의명 검색어") @RequestParam(required = false) String keyword,
+                        @Parameter(description = "기간 상태 (SCHEDULED, ACTIVE, ENDED)") @RequestParam(required = false) String periodStatus,
+                        @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+                        @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+                Pageable pageable = PageRequest.of(page, size);
+                Page<BannerDetailsDto> bannerPage = adminBannerService.searchBanners(keyword, periodStatus, pageable);
+                Page<AdminBannerResponse> response = bannerPage.map(AdminBannerResponse::from);
                 return ResponseEntity.ok(response);
         }
 
@@ -55,30 +63,52 @@ public class AdminBannerController {
                 return ResponseEntity.ok(AdminBannerResponse.from(details));
         }
 
-        @Operation(summary = "배너 생성", description = "새 배너를 생성합니다.")
+        @Operation(summary = "배너 생성", description = "새 배너를 생성합니다. 이미지 파일을 업로드할 수 있습니다.")
         @ApiResponses({
                         @ApiResponse(responseCode = "201", description = "생성 성공"),
                         @ApiResponse(responseCode = "400", description = "유효성 검증 실패"),
                         @ApiResponse(responseCode = "404", description = "강의를 찾을 수 없음")
         })
-        @PostMapping
+        @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         public ResponseEntity<AdminBannerResponse> createBanner(
-                        @Valid @RequestBody BannerRequest request) {
-                BannerDetailsDto details = adminBannerService.createBanner(request.toDomain());
+                        @Valid @RequestPart("request") BannerRequest request,
+                        @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+                byte[] imageContent = null;
+                String imageName = null;
+                String contentType = null;
+                if (image != null && !image.isEmpty()) {
+                        imageContent = image.getBytes();
+                        imageName = image.getOriginalFilename();
+                        contentType = image.getContentType();
+                }
+
+                BannerDetailsDto details = adminBannerService.createBanner(
+                                request.toDomain(), imageContent, imageName, contentType);
                 return ResponseEntity.status(HttpStatus.CREATED).body(AdminBannerResponse.from(details));
         }
 
-        @Operation(summary = "배너 수정", description = "기존 배너를 수정합니다.")
+        @Operation(summary = "배너 수정", description = "기존 배너를 수정합니다. 새 이미지 파일을 업로드하면 기존 이미지를 대체합니다.")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "수정 성공"),
                         @ApiResponse(responseCode = "400", description = "유효성 검증 실패"),
                         @ApiResponse(responseCode = "404", description = "배너 또는 강의를 찾을 수 없음")
         })
-        @PutMapping("/{id}")
+        @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         public ResponseEntity<AdminBannerResponse> updateBanner(
                         @Parameter(description = "배너 ID", required = true) @PathVariable("id") Long id,
-                        @Valid @RequestBody BannerRequest request) {
-                BannerDetailsDto details = adminBannerService.updateBanner(id, request.toDomain());
+                        @Valid @RequestPart("request") BannerRequest request,
+                        @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+                byte[] imageContent = null;
+                String imageName = null;
+                String contentType = null;
+                if (image != null && !image.isEmpty()) {
+                        imageContent = image.getBytes();
+                        imageName = image.getOriginalFilename();
+                        contentType = image.getContentType();
+                }
+
+                BannerDetailsDto details = adminBannerService.updateBanner(
+                                id, request.toDomain(), imageContent, imageName, contentType);
                 return ResponseEntity.ok(AdminBannerResponse.from(details));
         }
 

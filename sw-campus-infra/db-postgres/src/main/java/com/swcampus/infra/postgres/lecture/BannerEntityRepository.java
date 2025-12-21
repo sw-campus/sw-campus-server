@@ -5,6 +5,8 @@ import com.swcampus.domain.lecture.Banner;
 import com.swcampus.domain.lecture.BannerRepository;
 import com.swcampus.domain.lecture.BannerType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
@@ -75,4 +77,16 @@ public class BannerEntityRepository implements BannerRepository {
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
     }
+
+    @Override
+    public Page<Banner> searchBanners(String keyword, String periodStatus, Pageable pageable) {
+        OffsetDateTime now = OffsetDateTime.now();
+        String searchKeyword = (keyword != null && !keyword.isBlank()) ? keyword : null;
+        String status = (periodStatus != null && !periodStatus.isBlank() && !"ALL".equals(periodStatus)) 
+                ? periodStatus : null;
+        
+        return jpaRepository.searchBanners(searchKeyword, status, now, pageable)
+                .map(BannerEntity::toDomain);
+    }
 }
+

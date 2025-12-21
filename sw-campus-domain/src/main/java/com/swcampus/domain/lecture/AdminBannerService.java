@@ -2,10 +2,12 @@ package com.swcampus.domain.lecture;
 
 import com.swcampus.domain.common.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.swcampus.domain.lecture.dto.BannerDetailsDto;
+import com.swcampus.domain.storage.FileStorageService;
 
 import java.util.List;
 import java.util.Map;
@@ -17,8 +19,10 @@ public class AdminBannerService {
 
     private final BannerRepository bannerRepository;
     private final LectureRepository lectureRepository;
+    private final FileStorageService fileStorageService;
 
     private static final String UNKNOWN_LECTURE_NAME = "알 수 없음";
+    private static final String BANNER_UPLOAD_DIRECTORY = "banners";
 
     /**
      * 모든 배너 조회 (관리자용 - 활성/비활성 모두 포함)
@@ -38,6 +42,21 @@ public class AdminBannerService {
     }
 
     /**
+     * 배너 검색 (페이징, 키워드, 기간 상태)
+     */
+    public Page<BannerDetailsDto> searchBanners(String keyword, String periodStatus, Pageable pageable) {
+        Page<Banner> bannerPage = bannerRepository.searchBanners(keyword, periodStatus, pageable);
+        
+        List<Long> lectureIds = bannerPage.getContent().stream()
+                .map(Banner::getLectureId)
+                .distinct()
+                .toList();
+        Map<Long, String> lectureNames = lectureRepository.findLectureNamesByIds(lectureIds);
+
+        return bannerPage.map(banner -> toDetails(banner, lectureNames));
+    }
+
+    /**
      * 배너 상세 조회
      */
     public BannerDetailsDto getBannerDetailsDto(Long id) {
@@ -46,41 +65,65 @@ public class AdminBannerService {
     }
 
     /**
-     * 배너 생성
+     * 배너 생성 (기존 호환성 유지)
      * isActive가 null인 경우 기본값 true 설정
      */
     @Transactional
     public BannerDetailsDto createBanner(Banner banner) {
-        Banner bannerToSave = banner.getIsActive() != null ? banner
-                : Banner.builder()
-                        .lectureId(banner.getLectureId())
-                        .type(banner.getType())
-                        .url(banner.getUrl())
-                        .imageUrl(banner.getImageUrl())
-                        .startDate(banner.getStartDate())
-                        .endDate(banner.getEndDate())
-                        .isActive(true)
-                        .build();
+        return createBanner(banner, null, null, null);
+    }
+
+    /**
+     * 배너 생성 (이미지 파일 업로드 포함)
+     * isActive가 null인 경우 기본값 true 설정
+     */
+    @Transactional
+    public BannerDetailsDto createBanner(Banner banner, byte[] imageContent, String imageName, String contentType) {
+        String imageUrl = banner.getImageUrl();
+
+        // 이미지 파일이 업로드된 경우 S3에 저장하고 URL 획득
+        if (imageContent != null && imageContent.length > 0) {
+            imageUrl = fileStorageService.upload(imageContent, BANNER_UPLOAD_DIRECTORY, imageName, contentType);
+        }
+
+        Banner bannerToSave = banner.toBuilder()
+                .imageUrl(imageUrl)
+                .isActive(banner.getIsActive() != null ? banner.getIsActive() : true)
+                .build();
 
         Banner saved = bannerRepository.save(bannerToSave);
         return toDetails(saved);
     }
 
     /**
-     * 배너 수정
+     * 배너 수정 (기존 호환성 유지)
      * 존재 여부 확인은 bannerRepository.save() 내부에서 수행됨
      */
     @Transactional
     public BannerDetailsDto updateBanner(Long id, Banner banner) {
-        Banner updatedBanner = Banner.builder()
+        return updateBanner(id, banner, null, null, null);
+    }
+
+    /**
+     * 배너 수정 (이미지 파일 업로드 포함)
+     * 새 이미지가 업로드되면 기존 이미지 URL을 대체
+     */
+    @Transactional
+    public BannerDetailsDto updateBanner(Long id, Banner banner, byte[] imageContent, String imageName, String contentType) {
+        Banner existing = getBanner(id);
+        String imageUrl = existing.getImageUrl(); // 기존 이미지 URL 유지
+
+        // 새 이미지 파일이 업로드된 경우 S3에 저장
+        if (imageContent != null && imageContent.length > 0) {
+            imageUrl = fileStorageService.upload(imageContent, BANNER_UPLOAD_DIRECTORY, imageName, contentType);
+        } else if (banner.getImageUrl() != null && !banner.getImageUrl().isBlank()) {
+            // 새 이미지 파일 없지만 URL이 직접 제공된 경우
+            imageUrl = banner.getImageUrl();
+        }
+
+        Banner updatedBanner = banner.toBuilder()
                 .id(id)
-                .lectureId(banner.getLectureId())
-                .type(banner.getType())
-                .url(banner.getUrl())
-                .imageUrl(banner.getImageUrl())
-                .startDate(banner.getStartDate())
-                .endDate(banner.getEndDate())
-                .isActive(banner.getIsActive())
+                .imageUrl(imageUrl)
                 .build();
 
         Banner saved = bannerRepository.save(updatedBanner);
