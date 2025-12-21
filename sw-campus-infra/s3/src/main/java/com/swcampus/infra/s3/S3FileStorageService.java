@@ -22,6 +22,9 @@ public class S3FileStorageService implements FileStorageService {
     @Value("${aws.s3.bucket}")
     private String bucketName;
 
+    @Value("${aws.s3.private-bucket}")
+    private String privateBucketName;
+
     @Value("${aws.s3.region}")
     private String region;
 
@@ -46,6 +49,33 @@ public class S3FileStorageService implements FileStorageService {
 
         DeleteObjectRequest request = DeleteObjectRequest.builder()
                 .bucket(bucketName)
+                .key(key)
+                .build();
+
+        s3Client.deleteObject(request);
+    }
+
+    @Override
+    public String uploadPrivate(byte[] content, String directory, String fileName, String contentType) {
+        String key = generateKey(directory, fileName);
+
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(privateBucketName)
+                .key(key)
+                .contentType(contentType)
+                .build();
+
+        s3Client.putObject(request, RequestBody.fromBytes(content));
+
+        return String.format("https://%s.s3.%s.amazonaws.com/%s", privateBucketName, region, key);
+    }
+
+    @Override
+    public void deletePrivate(String fileUrl) {
+        String key = extractKeyFromUrl(fileUrl);
+
+        DeleteObjectRequest request = DeleteObjectRequest.builder()
+                .bucket(privateBucketName)
                 .key(key)
                 .build();
 
