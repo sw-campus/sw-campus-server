@@ -6,13 +6,12 @@ import com.swcampus.api.review.response.ReviewEligibilityResponse;
 import com.swcampus.api.review.response.ReviewResponse;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
-import com.swcampus.domain.member.Member;
-import com.swcampus.domain.member.MemberRepository;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewCategory;
 import com.swcampus.domain.review.ReviewDetail;
 import com.swcampus.domain.review.ReviewEligibility;
 import com.swcampus.domain.review.ReviewService;
+import com.swcampus.domain.review.ReviewWithNickname;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -35,7 +34,6 @@ import java.util.stream.Collectors;
 public class ReviewController {
 
     private final ReviewService reviewService;
-    private final MemberRepository memberRepository;
 
     @Operation(summary = "후기 작성 가능 여부 확인", description = "닉네임 설정, 수료증 인증, 기존 후기 여부를 확인합니다.")
     @SecurityRequirement(name = "cookieAuth")
@@ -86,7 +84,7 @@ public class ReviewController {
                 details
         );
 
-        String nickname = getNickname(memberId);
+        String nickname = reviewService.getNickname(memberId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ReviewResponse.from(review, nickname));
     }
@@ -124,7 +122,7 @@ public class ReviewController {
                 details
         );
 
-        String nickname = getNickname(memberId);
+        String nickname = reviewService.getNickname(memberId);
         return ResponseEntity.ok(ReviewResponse.from(review, nickname));
     }
 
@@ -138,15 +136,11 @@ public class ReviewController {
             @Parameter(description = "후기 ID", required = true, name = "reviewId")
             @PathVariable("reviewId") Long reviewId) {
 
-        Review review = reviewService.getReview(reviewId);
-        String nickname = getNickname(review.getMemberId());
+        ReviewWithNickname reviewWithNickname = reviewService.getReviewWithNickname(reviewId);
 
-        return ResponseEntity.ok(ReviewResponse.from(review, nickname));
-    }
-
-    private String getNickname(Long memberId) {
-        return memberRepository.findById(memberId)
-                .map(Member::getNickname)
-                .orElse(null);
+        return ResponseEntity.ok(ReviewResponse.from(
+                reviewWithNickname.review(),
+                reviewWithNickname.nickname()
+        ));
     }
 }

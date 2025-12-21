@@ -117,6 +117,26 @@ public class ReviewService {
     }
 
     /**
+     * 후기 상세 조회 (닉네임 포함)
+     */
+    public ReviewWithNickname getReviewWithNickname(Long reviewId) {
+        Review review = getReview(reviewId);
+        String nickname = memberRepository.findById(review.getMemberId())
+                .map(Member::getNickname)
+                .orElse(null);
+        return ReviewWithNickname.of(review, nickname);
+    }
+
+    /**
+     * 회원 닉네임 조회
+     */
+    public String getNickname(Long memberId) {
+        return memberRepository.findById(memberId)
+                .map(Member::getNickname)
+                .orElse(null);
+    }
+
+    /**
      * 강의별 승인된 후기 목록 조회
      */
     public List<Review> getApprovedReviewsByLecture(Long lectureId) {
@@ -156,6 +176,15 @@ public class ReviewService {
     public Review getMyReviewByLecture(Long memberId, Long lectureId) {
         return reviewRepository.findByMemberIdAndLectureId(memberId, lectureId)
                 .orElseThrow(ReviewNotFoundException::new);
+    }
+
+    /**
+     * 내가 작성한 후기 조회 (lectureId 기준, 닉네임 포함)
+     */
+    public ReviewWithNickname getMyReviewWithNicknameByLecture(Long memberId, Long lectureId) {
+        Review review = getMyReviewByLecture(memberId, lectureId);
+        String nickname = getNickname(memberId);
+        return ReviewWithNickname.of(review, nickname);
     }
 
     /**

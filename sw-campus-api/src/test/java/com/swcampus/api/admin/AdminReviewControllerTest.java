@@ -6,14 +6,11 @@ import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.exception.GlobalExceptionHandler;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.certificate.Certificate;
-import com.swcampus.domain.certificate.CertificateRepository;
 import com.swcampus.domain.certificate.exception.CertificateNotFoundException;
-import com.swcampus.domain.lecture.Lecture;
-import com.swcampus.domain.lecture.LectureRepository;
-import com.swcampus.domain.member.Member;
-import com.swcampus.domain.member.MemberRepository;
+import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.review.*;
+import com.swcampus.domain.review.dto.PendingReviewInfo;
 import com.swcampus.domain.review.exception.ReviewNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,9 +32,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -62,13 +58,7 @@ class AdminReviewControllerTest {
     private AdminReviewService adminReviewService;
 
     @MockitoBean
-    private LectureRepository lectureRepository;
-
-    @MockitoBean
-    private MemberRepository memberRepository;
-
-    @MockitoBean
-    private CertificateRepository certificateRepository;
+    private LectureService lectureService;
 
     private void setAdminAuthentication(Long memberId) {
         MemberPrincipal principal = new MemberPrincipal(memberId, "admin@example.com", Role.ADMIN);
@@ -94,6 +84,11 @@ class AdminReviewControllerTest {
         );
     }
 
+    private PendingReviewInfo createMockPendingReviewInfo(Long reviewId, Long memberId, Long lectureId, ApprovalStatus reviewStatus) {
+        Review review = createMockReview(reviewId, memberId, lectureId, reviewStatus);
+        return PendingReviewInfo.of(review, "Java 풀스택 과정", "홍길동", "길동이", ApprovalStatus.PENDING);
+    }
+
     private Certificate createMockCertificate(Long certificateId, Long memberId, Long lectureId, ApprovalStatus status) {
         return Certificate.of(
                 certificateId, memberId, lectureId,
@@ -110,27 +105,11 @@ class AdminReviewControllerTest {
         @DisplayName("대기 중인 후기 목록 조회 성공")
         void getPendingReviews_success() throws Exception {
             // given
-            List<Review> reviews = List.of(
-                    createMockReview(1L, 1L, 1L, ApprovalStatus.PENDING),
-                    createMockReview(2L, 2L, 1L, ApprovalStatus.PENDING)
+            List<PendingReviewInfo> reviews = List.of(
+                    createMockPendingReviewInfo(1L, 1L, 1L, ApprovalStatus.PENDING),
+                    createMockPendingReviewInfo(2L, 2L, 1L, ApprovalStatus.PENDING)
             );
-            given(adminReviewService.getPendingReviews()).willReturn(reviews);
-
-            Lecture lecture = Lecture.builder()
-                    .lectureId(1L)
-                    .lectureName("Java 풀스택 과정")
-                    .build();
-            given(lectureRepository.findById(1L)).willReturn(Optional.of(lecture));
-
-            Member member1 = Member.of(1L, "user1@example.com", "password", "홍길동", "길동이",
-                    "010-1234-5678", Role.USER, null, "서울", LocalDateTime.now(), LocalDateTime.now());
-            Member member2 = Member.of(2L, "user2@example.com", "password", "김철수", "철수",
-                    "010-1234-5678", Role.USER, null, "서울", LocalDateTime.now(), LocalDateTime.now());
-            given(memberRepository.findById(1L)).willReturn(Optional.of(member1));
-            given(memberRepository.findById(2L)).willReturn(Optional.of(member2));
-
-            Certificate cert1 = createMockCertificate(1L, 1L, 1L, ApprovalStatus.PENDING);
-            given(certificateRepository.findById(1L)).willReturn(Optional.of(cert1));
+            given(adminReviewService.getPendingReviewsWithDetails()).willReturn(reviews);
 
             // when & then
             mockMvc.perform(get("/api/v1/admin/reviews"))
@@ -143,7 +122,7 @@ class AdminReviewControllerTest {
         @DisplayName("대기 중인 후기가 없으면 빈 리스트 반환")
         void getPendingReviews_empty() throws Exception {
             // given
-            given(adminReviewService.getPendingReviews()).willReturn(List.of());
+            given(adminReviewService.getPendingReviewsWithDetails()).willReturn(List.of());
 
             // when & then
             mockMvc.perform(get("/api/v1/admin/reviews"))
@@ -164,12 +143,7 @@ class AdminReviewControllerTest {
             Long certificateId = 1L;
             Certificate certificate = createMockCertificate(certificateId, 1L, 1L, ApprovalStatus.PENDING);
             given(adminReviewService.getCertificate(certificateId)).willReturn(certificate);
-
-            Lecture lecture = Lecture.builder()
-                    .lectureId(1L)
-                    .lectureName("Java 풀스택 과정")
-                    .build();
-            given(lectureRepository.findById(1L)).willReturn(Optional.of(lecture));
+            given(lectureService.getLectureNames(List.of(1L))).willReturn(Map.of(1L, "Java 풀스택 과정"));
 
             // when & then
             mockMvc.perform(get("/api/v1/admin/certificates/{certificateId}", certificateId))
@@ -244,18 +218,8 @@ class AdminReviewControllerTest {
         void getReviewDetail_success() throws Exception {
             // given
             Long reviewId = 1L;
-            Review review = createMockReview(reviewId, 1L, 1L, ApprovalStatus.PENDING);
-            given(adminReviewService.getReview(reviewId)).willReturn(review);
-
-            Lecture lecture = Lecture.builder()
-                    .lectureId(1L)
-                    .lectureName("Java 풀스택 과정")
-                    .build();
-            given(lectureRepository.findById(1L)).willReturn(Optional.of(lecture));
-
-            Member member = Member.of(1L, "user@example.com", "password", "홍길동", "길동이",
-                    "010-1234-5678", Role.USER, null, "서울", LocalDateTime.now(), LocalDateTime.now());
-            given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+            PendingReviewInfo reviewInfo = createMockPendingReviewInfo(reviewId, 1L, 1L, ApprovalStatus.PENDING);
+            given(adminReviewService.getReviewWithDetails(reviewId)).willReturn(reviewInfo);
 
             // when & then
             mockMvc.perform(get("/api/v1/admin/reviews/{reviewId}", reviewId))
@@ -269,7 +233,7 @@ class AdminReviewControllerTest {
         void getReviewDetail_notFound() throws Exception {
             // given
             Long reviewId = 999L;
-            given(adminReviewService.getReview(reviewId))
+            given(adminReviewService.getReviewWithDetails(reviewId))
                     .willThrow(new ReviewNotFoundException());
 
             // when & then
