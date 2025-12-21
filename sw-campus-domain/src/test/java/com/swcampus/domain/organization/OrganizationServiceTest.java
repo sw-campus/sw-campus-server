@@ -84,9 +84,7 @@ class OrganizationServiceTest {
             given(organizationRepository.findById(orgId)).willReturn(Optional.of(org));
             given(organizationRepository.save(any(Organization.class))).willAnswer(invocation -> invocation.getArgument(0));
 
-            UpdateOrganizationParams params = new UpdateOrganizationParams(
-                newName, newDesc, null, null, null, null, null, null, null, null
-            );
+            UpdateOrganizationParams params = createDefaultUpdateParams(newName, newDesc);
 
             // when
             Organization result = organizationService.updateOrganization(orgId, userId, params);
@@ -110,9 +108,7 @@ class OrganizationServiceTest {
 
             given(organizationRepository.findById(orgId)).willReturn(Optional.of(org));
 
-            UpdateOrganizationParams params = new UpdateOrganizationParams(
-                newName, newDesc, null, null, null, null, null, null, null, null
-            );
+            UpdateOrganizationParams params = createDefaultUpdateParams(newName, newDesc);
 
             // when & then
             assertThatThrownBy(() -> organizationService.updateOrganization(orgId, otherUserId, params))
@@ -130,13 +126,15 @@ class OrganizationServiceTest {
 
             given(organizationRepository.findById(orgId)).willReturn(Optional.empty());
 
-            UpdateOrganizationParams params = new UpdateOrganizationParams(
-                newName, newDesc, null, null, null, null, null, null, null, null
-            );
+            UpdateOrganizationParams params = createDefaultUpdateParams(newName, newDesc);
 
             // when & then
             assertThatThrownBy(() -> organizationService.updateOrganization(orgId, userId, params))
                     .isInstanceOf(com.swcampus.domain.common.ResourceNotFoundException.class);
+        }
+
+        private UpdateOrganizationParams createDefaultUpdateParams(String name, String description) {
+            return new UpdateOrganizationParams(name, description, null, null, null, null, null, null, null, null);
         }
     }
 }
