@@ -15,9 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.swcampus.api.organization.response.AdminOrganizationApprovalResponse;
 import com.swcampus.api.organization.response.AdminOrganizationDetailResponse;
 import com.swcampus.api.organization.response.AdminOrganizationSummaryResponse;
+import com.swcampus.domain.auth.EmailService;
 import com.swcampus.domain.organization.AdminOrganizationService;
 import com.swcampus.domain.organization.ApprovalStatus;
+import com.swcampus.domain.organization.ApproveOrganizationResult;
 import com.swcampus.domain.organization.Organization;
+import com.swcampus.domain.organization.RejectOrganizationResult;
 
 import com.swcampus.api.exception.ErrorResponse;
 
@@ -40,6 +43,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminOrganizationController {
 
     private final AdminOrganizationService adminOrganizationService;
+    private final EmailService emailService;
 
     @Operation(summary = "기관 목록 조회/검색", description = "기관 목록을 조회하고 검색합니다. 상태와 기관명으로 필터링할 수 있습니다.")
     @ApiResponses({
@@ -49,9 +53,9 @@ public class AdminOrganizationController {
     })
     @GetMapping
     public ResponseEntity<Page<AdminOrganizationSummaryResponse>> getOrganizations(
-            @Parameter(description = "승인 상태 (PENDING, APPROVED, REJECTED), 미입력시 전체") @RequestParam(required = false) ApprovalStatus status,
-            @Parameter(description = "검색 키워드 (기관명), 미입력시 전체") @RequestParam(required = false, defaultValue = "") String keyword,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @Parameter(description = "승인 상태 (PENDING, APPROVED, REJECTED), 미입력시 전체") @RequestParam(name = "status", required = false) ApprovalStatus status,
+            @Parameter(description = "검색 키워드 (기관명), 미입력시 전체") @RequestParam(name = "keyword", required = false, defaultValue = "") String keyword,
+            @Parameter(hidden = true) @PageableDefault(size = 10) Pageable pageable) {
         Page<Organization> organizations = adminOrganizationService.searchOrganizations(status, keyword, pageable);
         return ResponseEntity.ok(organizations.map(AdminOrganizationSummaryResponse::from));
     }
@@ -76,22 +80,37 @@ public class AdminOrganizationController {
     @PatchMapping("/{id}/approve")
     public ResponseEntity<AdminOrganizationApprovalResponse> approveOrganization(
             @Parameter(description = "기관 ID") @PathVariable("id") Long id) {
-        Organization organization = adminOrganizationService.approveOrganization(id);
-        return ResponseEntity.ok(AdminOrganizationApprovalResponse.of(organization, "기관이 승인되었습니다."));
+        ApproveOrganizationResult result = adminOrganizationService.approveOrganization(id);
+
+        // 승인된 사용자에게 이메일 발송
+        emailService.sendApprovalEmail(
+                result.getMemberEmail(),
+                result.getOrganization().getName()
+        );
+
+        return ResponseEntity.ok(AdminOrganizationApprovalResponse.of(result.getOrganization(), "기관이 승인되었습니다."));
     }
 
-    @Operation(summary = "기관 반려", description = "기관 가입을 반려합니다.")
+    @Operation(summary = "기관 반려", description = "기관 가입을 반려합니다. 해당 기관에 연결된 회원을 삭제하고 관리자 연락처를 반환합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "반려 성공",
                     content = @Content(schema = @Schema(implementation = AdminOrganizationApprovalResponse.class),
                             examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
-                                    value = "{\"id\": 1, \"approvalStatus\": \"REJECTED\", \"message\": \"기관이 반려되었습니다.\"}"))),
+                                    value = "{\"id\": 1, \"approvalStatus\": \"REJECTED\", \"message\": \"기관이 반려되었습니다. 관리자에게 문의해 주세요.\", \"adminEmail\": \"admin@example.com\", \"adminPhone\": \"010-1234-5678\"}"))),
             @ApiResponse(responseCode = "404", description = "기관을 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PatchMapping("/{id}/reject")
     public ResponseEntity<AdminOrganizationApprovalResponse> rejectOrganization(
             @Parameter(description = "기관 ID") @PathVariable("id") Long id) {
-        Organization organization = adminOrganizationService.rejectOrganization(id);
-        return ResponseEntity.ok(AdminOrganizationApprovalResponse.of(organization, "기관이 반려되었습니다."));
+        RejectOrganizationResult result = adminOrganizationService.rejectOrganization(id);
+
+        // 반려된 사용자에게 이메일 발송
+        emailService.sendRejectionEmail(
+                result.getMemberEmail(),
+                result.getAdminEmail(),
+                result.getAdminPhone()
+        );
+
+        return ResponseEntity.ok(AdminOrganizationApprovalResponse.ofReject(id, result, "기관이 반려되었습니다. 관리자에게 문의해 주세요."));
     }
 }

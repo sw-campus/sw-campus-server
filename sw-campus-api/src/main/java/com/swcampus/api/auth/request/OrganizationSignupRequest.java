@@ -55,6 +55,9 @@ public class OrganizationSignupRequest {
     @NotNull(message = "재직증명서는 필수입니다")
     private MultipartFile certificateImage;
 
+    @Schema(description = "기존 기관 ID (선택사항. 기존 기관 선택 시 입력, 신규 기관은 입력하지 않음)", example = "1")
+    private Long organizationId;
+
     public OrganizationSignupCommand toCommand() throws IOException {
         var builder = OrganizationSignupCommand.builder()
                 .email(email)
@@ -63,7 +66,8 @@ public class OrganizationSignupRequest {
                 .nickname(nickname)
                 .phone(phone)
                 .location(location)
-                .organizationName(organizationName);
+                .organizationName(organizationName)
+                .organizationId(organizationId);
 
         if (certificateImage != null && !certificateImage.isEmpty()) {
             builder.certificateImage(certificateImage.getBytes())

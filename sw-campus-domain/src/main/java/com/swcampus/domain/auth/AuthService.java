@@ -2,6 +2,7 @@ package com.swcampus.domain.auth;
 
 import com.swcampus.domain.auth.exception.CertificateRequiredException;
 import com.swcampus.domain.auth.exception.DuplicateEmailException;
+import com.swcampus.domain.auth.exception.DuplicateOrganizationMemberException;
 import com.swcampus.domain.auth.exception.EmailNotVerifiedException;
 import com.swcampus.domain.auth.exception.InvalidCredentialsException;
 import com.swcampus.domain.auth.exception.InvalidTokenException;
@@ -11,6 +12,7 @@ import com.swcampus.domain.member.MemberRepository;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationRepository;
+import com.swcampus.domain.organization.exception.OrganizationNotFoundException;
 import com.swcampus.domain.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -98,22 +100,48 @@ public class AuthService {
                 command.getPhone(),
                 command.getLocation()
         );
-        Member savedMember = memberRepository.save(member);
 
-        // 8. Organization 생성 (approvalStatus = PENDING)
-        Organization organization = Organization.create(
-                savedMember.getId(),
-                command.getOrganizationName(),
-                null,
-                certificateUrl
-        );
-        Organization savedOrganization = organizationRepository.save(organization);
+        Organization organization;
 
-        // 9. Member에 orgId 연결
-        savedMember.setOrgId(savedOrganization.getId());
-        memberRepository.save(savedMember);
+        if (command.getOrganizationId() != null) {
+            // 기존 기관 선택
+            // 중복 가입 체크: 이미 다른 사용자가 연결된 기관인지 확인
+            if (memberRepository.existsByOrgId(command.getOrganizationId())) {
+                throw new DuplicateOrganizationMemberException(command.getOrganizationId());
+            }
 
-        return new OrganizationSignupResult(savedMember, savedOrganization);
+            // 기존 기관 조회
+            organization = organizationRepository.findById(command.getOrganizationId())
+                    .orElseThrow(() -> new OrganizationNotFoundException(command.getOrganizationId()));
+
+            // 재직증명서 URL 업데이트
+            organization.updateCertificateUrl(certificateUrl);
+            organization = organizationRepository.save(organization);
+
+            // Member에 orgId 연결
+            member.setOrgId(organization.getId());
+            Member savedMember = memberRepository.save(member);
+
+            return new OrganizationSignupResult(savedMember, organization);
+        } else {
+            // 신규 기관 생성
+            Member savedMember = memberRepository.save(member);
+
+            // Organization 생성 (approvalStatus = PENDING)
+            organization = Organization.create(
+                    savedMember.getId(),
+                    command.getOrganizationName(),
+                    null,
+                    certificateUrl
+            );
+            Organization savedOrganization = organizationRepository.save(organization);
+
+            // Member에 orgId 연결
+            savedMember.setOrgId(savedOrganization.getId());
+            memberRepository.save(savedMember);
+
+            return new OrganizationSignupResult(savedMember, savedOrganization);
+        }
     }
 
     public LoginResult login(String email, String password) {

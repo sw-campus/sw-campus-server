@@ -7,6 +7,7 @@ import com.swcampus.api.auth.request.SignupRequest;
 import com.swcampus.api.auth.response.EmailStatusResponse;
 import com.swcampus.api.auth.response.LoginResponse;
 import com.swcampus.api.auth.response.MessageResponse;
+import com.swcampus.api.auth.response.OrganizationSearchResponse;
 import com.swcampus.api.auth.response.OrganizationSignupResponse;
 import com.swcampus.api.auth.response.SignupResponse;
 import com.swcampus.api.auth.response.VerifiedEmailResponse;
@@ -19,6 +20,8 @@ import com.swcampus.domain.auth.OrganizationSignupResult;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.auth.exception.InvalidTokenException;
 import com.swcampus.domain.member.Member;
+import com.swcampus.domain.organization.Organization;
+import com.swcampus.domain.organization.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -47,6 +50,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -58,6 +62,7 @@ public class AuthController {
     private final EmailService emailService;
     private final TokenProvider tokenProvider;
     private final CookieUtil cookieUtil;
+    private final OrganizationService organizationService;
 
     @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;
@@ -142,6 +147,16 @@ public class AuthController {
         return ResponseEntity.ok(VerifiedEmailResponse.of(verifiedEmail));
     }
 
+    @GetMapping("/organizations/search")
+    @Operation(summary = "기관 검색", description = "기관 회원가입 시 기존 기관을 검색합니다. 인증 불필요.")
+    @ApiResponse(responseCode = "200", description = "검색 성공")
+    public ResponseEntity<List<OrganizationSearchResponse>> searchOrganizations(
+            @Parameter(description = "기관명 검색어", example = "한국")
+            @RequestParam(name = "keyword", required = false, defaultValue = "") String keyword) {
+        List<Organization> organizations = organizationService.getOrganizationList(keyword);
+        return ResponseEntity.ok(OrganizationSearchResponse.fromList(organizations));
+    }
+
     @PostMapping("/signup")
     @Operation(summary = "일반 회원가입", description = "이메일 인증 완료 후 일반 사용자로 회원가입합니다.")
     @ApiResponses({
@@ -162,10 +177,12 @@ public class AuthController {
     }
 
     @PostMapping(value = "/signup/organization", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "기관 회원가입", description = "기관 사용자로 회원가입합니다. 재직증명서 이미지가 필요하며, 관리자 승인 후 이용 가능합니다.")
+    @Operation(summary = "기관 회원가입", description = "기관 사용자로 회원가입합니다. 재직증명서 이미지가 필요하며, 관리자 승인 후 이용 가능합니다. 기존 기관 선택 시 organizationId를 입력하고, 신규 기관은 입력하지 않습니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "회원가입 성공 (승인 대기)"),
         @ApiResponse(responseCode = "400", description = "잘못된 요청",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "409", description = "이미 다른 사용자가 연결된 기관",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<OrganizationSignupResponse> signupOrganization(
@@ -184,7 +201,18 @@ public class AuthController {
             @Parameter(description = "기관명", example = "ABC교육원", required = true)
             @RequestPart(name = "organizationName") String organizationName,
             @Parameter(description = "재직증명서 이미지 (jpg, png)", required = true)
-            @RequestPart(name = "certificateImage") MultipartFile certificateImage) throws IOException {
+            @RequestPart(name = "certificateImage") MultipartFile certificateImage,
+            @Parameter(description = "기존 기관 ID (선택사항. 기존 기관 선택 시 입력, 신규 기관은 입력하지 않음)", example = "1")
+            @RequestPart(name = "organizationId", required = false) String organizationIdStr) throws IOException {
+
+        Long organizationId = null;
+        if (organizationIdStr != null && !organizationIdStr.isBlank()) {
+            try {
+                organizationId = Long.parseLong(organizationIdStr);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("유효하지 않은 기관 ID 형식입니다: " + organizationIdStr);
+            }
+        }
 
         OrganizationSignupRequest request = OrganizationSignupRequest.builder()
                 .email(email)
@@ -195,6 +223,7 @@ public class AuthController {
                 .location(location)
                 .organizationName(organizationName)
                 .certificateImage(certificateImage)
+                .organizationId(organizationId)
                 .build();
 
         OrganizationSignupResult result = authService.signupOrganization(request.toCommand());

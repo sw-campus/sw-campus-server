@@ -16,4 +16,5 @@ public class OrganizationSignupCommand {
     private byte[] certificateImage;
     private String certificateFileName;
     private String certificateContentType;
+    private Long organizationId;  // 기존 기관 선택 시 사용 (null이면 신규 기관)
 }
