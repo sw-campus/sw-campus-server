@@ -18,5 +18,5 @@ public interface MemberRepository {
     void deleteById(Long id);
     Page<Member> searchByKeyword(String keyword, Pageable pageable);
     boolean existsByNicknameIgnoreCase(String nickname);
-    boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long excludeMemberId);
+    boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long id);
 }

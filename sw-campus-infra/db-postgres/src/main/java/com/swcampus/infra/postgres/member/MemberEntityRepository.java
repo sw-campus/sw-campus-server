@@ -81,7 +81,7 @@ public class MemberEntityRepository implements MemberRepository {
     }
 
     @Override
-    public boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long excludeMemberId) {
-        return jpaRepository.existsByNicknameIgnoreCaseAndIdNot(nickname, excludeMemberId);
+    public boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long id) {
+        return jpaRepository.existsByNicknameIgnoreCaseAndIdNot(nickname, id);
     }
 }

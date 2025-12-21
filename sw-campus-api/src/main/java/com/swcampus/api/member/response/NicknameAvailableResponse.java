@@ -10,9 +10,9 @@ import lombok.Getter;
 public class NicknameAvailableResponse {
 
     @Schema(description = "사용 가능 여부", example = "true")
-    private boolean available;
+    private boolean isAvailable;
 
-    public static NicknameAvailableResponse of(boolean available) {
-        return new NicknameAvailableResponse(available);
+    public static NicknameAvailableResponse of(boolean isAvailable) {
+        return new NicknameAvailableResponse(isAvailable);
     }
 }

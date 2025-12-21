@@ -23,9 +23,7 @@ public interface MemberJpaRepository extends JpaRepository<MemberEntity, Long> {
            "m.email ILIKE CONCAT('%', :keyword, '%')")
     Page<MemberEntity> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
-    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM MemberEntity m WHERE LOWER(m.nickname) = LOWER(:nickname)")
-    boolean existsByNicknameIgnoreCase(@Param("nickname") String nickname);
+    boolean existsByNicknameIgnoreCase(String nickname);
 
-    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM MemberEntity m WHERE LOWER(m.nickname) = LOWER(:nickname) AND m.id <> :excludeId")
-    boolean existsByNicknameIgnoreCaseAndIdNot(@Param("nickname") String nickname, @Param("excludeId") Long excludeId);
+    boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long id);
 }
