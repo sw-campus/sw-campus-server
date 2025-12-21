@@ -83,10 +83,10 @@ public class AuthService {
         // 5. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(command.getPassword());
 
-        // 6. 재직증명서 S3 업로드
-        String certificateUrl = fileStorageService.upload(
+        // 6. 재직증명서 S3 Private Bucket 업로드 (민감정보)
+        String certificateUrl = fileStorageService.uploadPrivate(
                 command.getCertificateImage(),
-                "organizations",
+                "certificates",
                 command.getCertificateFileName(),
                 command.getCertificateContentType()
         );

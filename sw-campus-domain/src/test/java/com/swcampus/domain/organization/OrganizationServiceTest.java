@@ -51,7 +51,7 @@ class OrganizationServiceTest {
             String newCertUrl = "http://s3/new_cert.jpg";
 
             given(organizationRepository.findById(orgId)).willReturn(Optional.of(org));
-            given(fileStorageService.upload(any(), anyString(), anyString(), anyString())).willReturn(newCertUrl);
+            given(fileStorageService.uploadPrivate(any(), anyString(), anyString(), anyString())).willReturn(newCertUrl);
             given(organizationRepository.save(any(Organization.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
@@ -61,7 +61,7 @@ class OrganizationServiceTest {
             assertThat(result.getName()).isEqualTo("New Name");
             assertThat(result.getDescription()).isEqualTo("New Desc");
             assertThat(result.getCertificateUrl()).isEqualTo(newCertUrl);
-            verify(fileStorageService).upload(eq(fileContent), eq("certificates"), eq(fileName), eq(contentType));
+            verify(fileStorageService).uploadPrivate(eq(fileContent), eq("certificates"), eq(fileName), eq(contentType));
         }
 
         @Test
