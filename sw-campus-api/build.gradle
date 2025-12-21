@@ -13,15 +13,12 @@ dependencies {
     runtimeOnly project(':sw-campus-infra:db-redis')    // redis
     implementation project(':sw-campus-infra:oauth')    // oauth client
     implementation project(':sw-campus-infra:ocr')      // ocr client
-//    runtimeOnly project(':sw-campus-infra:db-mongodb')  // read
 
     // Spring Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'
-
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-//    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
 
     // Spring Security
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -45,6 +42,9 @@ dependencies {
 
     // Swagger UI + OpenAPI 3.0
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+
+    // open telemetry
+    runtimeOnly 'io.micrometer:micrometer-registry-otlp'
 
     // Test (모듈 전용)
     testRuntimeOnly 'com.h2database:h2' // H2 for test (in-memory database with PostgreSQL mode)

@@ -2,12 +2,13 @@ package com.swcampus.shared.error;
 
 import java.util.List;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 인프라 계층 예외를 위한 Cross-cutting translator
@@ -22,28 +23,19 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class InfraExceptionAspect {
 
-    private final List<InfraExceptionTranslator> translators;
+	private final List<InfraExceptionTranslator> translators;
 
-    @Around("execution(public * com.swcampus.infra..*(..))")
-    public Object translateInfraExceptions(ProceedingJoinPoint pjp) throws Throwable {
-        try {
-            return pjp.proceed();
-        } catch (Throwable t) {
-            for (InfraExceptionTranslator tr : translators) {
-                try {
-                    RuntimeException mapped = tr.translate(t);
-                    if (mapped != null) {
-                        log.error("[Infra] {}.{} failed: {}",
-                                pjp.getSignature().getDeclaringTypeName(),
-                                pjp.getSignature().getName(),
-							t, t);
-                        throw mapped;
-                    }
-                } catch (RuntimeException re) {
-                    log.warn("[Infra] Translator {} failed: {}", tr.getClass().getSimpleName(), re.toString());
-                }
-            }
-            throw t;
-        }
-    }
+	@Around("execution(public * com.swcampus.infra..*(..))")
+	public Object translateInfraExceptions(ProceedingJoinPoint pjp) throws Throwable {
+		try {
+			return pjp.proceed();
+		} catch (Throwable t) {
+			for (InfraExceptionTranslator tr : translators) {
+				RuntimeException mapped = tr.translate(t);
+				if (mapped != null)
+					throw mapped;
+			}
+			throw t;
+		}
+	}
 }

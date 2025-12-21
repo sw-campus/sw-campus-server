@@ -44,6 +44,13 @@ spring:
           starttls:
             enable: true
 
+# 로그 관련 설정
+otel:
+  service:
+    name: sw-campus-api
+  traces:
+    exporter: logging
+
 # Swagger UI 설정
 springdoc:
   api-docs:
