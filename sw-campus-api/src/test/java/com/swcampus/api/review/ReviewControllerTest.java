@@ -365,7 +365,7 @@ class ReviewControllerTest {
 
             Review review = createMockReview(reviewId, memberId, 1L);
             ReviewWithNickname reviewWithNickname = ReviewWithNickname.of(review, "길동이");
-            given(reviewService.getReviewWithNickname(reviewId))
+            given(reviewService.getReviewWithNickname(eq(reviewId), any()))
                     .willReturn(reviewWithNickname);
 
             // when & then
@@ -382,7 +382,7 @@ class ReviewControllerTest {
             // given
             Long reviewId = 999L;
 
-            given(reviewService.getReviewWithNickname(reviewId))
+            given(reviewService.getReviewWithNickname(eq(reviewId), any()))
                     .willThrow(new ReviewNotFoundException());
 
             // when & then

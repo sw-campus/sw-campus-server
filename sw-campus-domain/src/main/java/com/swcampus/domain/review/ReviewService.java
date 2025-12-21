@@ -120,9 +120,23 @@ public class ReviewService {
 
     /**
      * 후기 상세 조회 (닉네임 포함)
+     *
+     * @param reviewId 후기 ID
+     * @param requesterId 요청자 ID (null이면 미인증 사용자)
+     * @return 후기 정보
+     * @throws ReviewNotFoundException 후기가 없거나 접근 권한이 없는 경우
      */
-    public ReviewWithNickname getReviewWithNickname(Long reviewId) {
+    public ReviewWithNickname getReviewWithNickname(Long reviewId, Long requesterId) {
         Review review = getReview(reviewId);
+
+        // 접근 권한 확인: 본인 후기이거나 승인된 후기만 조회 가능
+        boolean isOwner = requesterId != null && requesterId.equals(review.getMemberId());
+        boolean isApproved = review.getApprovalStatus() == ApprovalStatus.APPROVED;
+
+        if (!isOwner && !isApproved) {
+            throw new ReviewNotFoundException();
+        }
+
         String nickname = memberRepository.findById(review.getMemberId())
                 .map(Member::getNickname)
                 .orElse(null);

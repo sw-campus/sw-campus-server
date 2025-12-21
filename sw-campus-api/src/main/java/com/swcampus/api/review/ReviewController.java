@@ -5,6 +5,7 @@ import com.swcampus.api.review.request.UpdateReviewRequest;
 import com.swcampus.api.review.response.ReviewEligibilityResponse;
 import com.swcampus.api.review.response.ReviewResponse;
 import com.swcampus.api.security.CurrentMember;
+import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewCategory;
@@ -206,7 +207,7 @@ public class ReviewController {
         return ResponseEntity.ok(ReviewResponse.from(review, nickname));
     }
 
-    @Operation(summary = "후기 상세 조회", description = "후기 ID로 상세 정보를 조회합니다. 승인된 후기만 일반 사용자에게 노출됩니다.")
+    @Operation(summary = "후기 상세 조회", description = "후기 ID로 상세 정보를 조회합니다. 승인된 후기만 일반 사용자에게 노출되며, 본인이 작성한 후기는 승인 상태와 관계없이 조회할 수 있습니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공",
             content = @Content(schema = @Schema(implementation = ReviewResponse.class),
@@ -231,14 +232,16 @@ public class ReviewController {
                       "updated_at": "2025-12-12T09:15:00"
                     }
                     """))),
-        @ApiResponse(responseCode = "404", description = "후기를 찾을 수 없음")
+        @ApiResponse(responseCode = "404", description = "후기를 찾을 수 없음 (미승인 후기를 타인이 조회 시도한 경우 포함)")
     })
     @GetMapping("/{reviewId}")
     public ResponseEntity<ReviewResponse> getReview(
+            @OptionalCurrentMember MemberPrincipal member,
             @Parameter(description = "후기 ID", required = true, name = "reviewId")
             @PathVariable("reviewId") Long reviewId) {
 
-        ReviewWithNickname reviewWithNickname = reviewService.getReviewWithNickname(reviewId);
+        Long requesterId = member != null ? member.memberId() : null;
+        ReviewWithNickname reviewWithNickname = reviewService.getReviewWithNickname(reviewId, requesterId);
 
         return ResponseEntity.ok(ReviewResponse.from(
                 reviewWithNickname.review(),
