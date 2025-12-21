@@ -1,5 +1,6 @@
 package com.swcampus.domain.member;
 
+import com.swcampus.domain.member.exception.DuplicateNicknameException;
 import com.swcampus.domain.member.exception.MemberNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,7 +40,27 @@ public class MemberService {
     @Transactional
     public void updateProfile(Long memberId, String nickname, String phone, String address) {
         Member member = getMember(memberId);
+
+        // 닉네임 변경 시 중복 검사 (자신 제외)
+        if (nickname != null && !nickname.isBlank()
+                && !nickname.equalsIgnoreCase(member.getNickname())) {
+            if (!isNicknameAvailable(nickname, memberId)) {
+                throw new DuplicateNicknameException(nickname);
+            }
+        }
+
         member.updateProfile(nickname, phone, address);
         memberRepository.save(member);
+    }
+
+    public boolean isNicknameAvailable(String nickname, Long excludeMemberId) {
+        if (nickname == null || nickname.isBlank()) {
+            return false;
+        }
+
+        if (excludeMemberId != null) {
+            return !memberRepository.existsByNicknameIgnoreCaseAndIdNot(nickname, excludeMemberId);
+        }
+        return !memberRepository.existsByNicknameIgnoreCase(nickname);
     }
 }

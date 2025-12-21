@@ -6,8 +6,9 @@ import jakarta.validation.constraints.Size;
 
 @Schema(description = "내 정보 수정 요청")
 public record UpdateProfileRequest(
-    @Schema(description = "닉네임", example = "dev_master")
+    @Schema(description = "닉네임 (영문, 숫자, 한글, -, _ 만 허용, 최대 20자)", example = "dev_master")
     @Size(max = 20, message = "닉네임은 20자 이내여야 합니다.")
+    @Pattern(regexp = "^[a-zA-Z0-9가-힣_-]*$", message = "닉네임은 영문, 숫자, 한글, -, _ 만 사용할 수 있습니다")
     String nickname,
 
     @Schema(description = "전화번호", example = "01012345678")

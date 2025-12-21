@@ -22,4 +22,8 @@ public interface MemberJpaRepository extends JpaRepository<MemberEntity, Long> {
            "m.nickname ILIKE CONCAT('%', :keyword, '%') OR " +
            "m.email ILIKE CONCAT('%', :keyword, '%')")
     Page<MemberEntity> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    boolean existsByNicknameIgnoreCase(String nickname);
+
+    boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long id);
 }

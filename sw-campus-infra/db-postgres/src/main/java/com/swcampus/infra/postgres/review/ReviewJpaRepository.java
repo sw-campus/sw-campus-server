@@ -58,11 +58,11 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         "LEFT JOIN FETCH r.details " +
                         "LEFT JOIN LectureEntity l ON l.lectureId = r.lectureId " +
                         "WHERE (:status IS NULL OR r.approvalStatus = :status) " +
-                        "AND (:keyword IS NULL OR :keyword = '' OR l.lectureTitle ILIKE CONCAT('%', :keyword, '%'))",
+                        "AND (:keyword IS NULL OR :keyword = '' OR l.lectureName ILIKE CONCAT('%', :keyword, '%'))",
                 countQuery = "SELECT COUNT(DISTINCT r) FROM ReviewEntity r " +
                         "LEFT JOIN LectureEntity l ON l.lectureId = r.lectureId " +
                         "WHERE (:status IS NULL OR r.approvalStatus = :status) " +
-                        "AND (:keyword IS NULL OR :keyword = '' OR l.lectureTitle ILIKE CONCAT('%', :keyword, '%'))")
+                        "AND (:keyword IS NULL OR :keyword = '' OR l.lectureName ILIKE CONCAT('%', :keyword, '%'))")
         Page<ReviewEntity> findAllWithDetailsAndKeyword(
                         @Param("status") ApprovalStatus status,
                         @Param("keyword") String keyword,

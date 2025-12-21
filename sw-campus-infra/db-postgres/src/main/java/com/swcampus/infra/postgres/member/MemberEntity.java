@@ -30,6 +30,7 @@ public class MemberEntity extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
+    @Column(unique = true)
     private String nickname;
 
     private String phone;

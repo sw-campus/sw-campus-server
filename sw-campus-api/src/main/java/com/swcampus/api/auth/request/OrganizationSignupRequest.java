@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,8 +37,10 @@ public class OrganizationSignupRequest {
     @NotBlank(message = "이름은 필수입니다")
     private String name;
 
-    @Schema(description = "닉네임", example = "대표님", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "닉네임 (영문, 숫자, 한글, -, _ 만 허용, 최대 20자)", example = "대표님", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "닉네임은 필수입니다")
+    @Size(max = 20, message = "닉네임은 20자 이내여야 합니다")
+    @Pattern(regexp = "^[a-zA-Z0-9가-힣_-]+$", message = "닉네임은 영문, 숫자, 한글, -, _ 만 사용할 수 있습니다")
     private String nickname;
 
     @Schema(description = "전화번호", example = "010-9876-5432", requiredMode = Schema.RequiredMode.REQUIRED)
