@@ -179,6 +179,15 @@ public class ReviewService {
     }
 
     /**
+     * 내가 작성한 후기 조회 (lectureId 기준, 닉네임 포함)
+     */
+    public ReviewWithNickname getMyReviewWithNicknameByLecture(Long memberId, Long lectureId) {
+        Review review = getMyReviewByLecture(memberId, lectureId);
+        String nickname = getNickname(memberId);
+        return ReviewWithNickname.of(review, nickname);
+    }
+
+    /**
      * 리뷰 목록에 닉네임을 배치로 조회하여 매핑
      */
     private List<ReviewWithNickname> toReviewsWithNicknames(List<Review> reviews) {

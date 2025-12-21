@@ -31,6 +31,7 @@ import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewCategory;
 import com.swcampus.domain.review.ReviewDetail;
 import com.swcampus.domain.review.ReviewService;
+import com.swcampus.domain.review.ReviewWithNickname;
 import com.swcampus.domain.review.exception.ReviewNotFoundException;
 import com.swcampus.domain.survey.MemberSurvey;
 import com.swcampus.domain.survey.MemberSurveyService;
@@ -215,9 +216,9 @@ class MypageControllerTest {
             LocalDateTime.now(), LocalDateTime.now(),
             details
         );
+        ReviewWithNickname reviewWithNickname = ReviewWithNickname.of(review, "테스터");
 
-        given(reviewService.getMyReviewByLecture(1L, lectureId)).willReturn(review);
-        given(reviewService.getNickname(1L)).willReturn("테스터");
+        given(reviewService.getMyReviewWithNicknameByLecture(1L, lectureId)).willReturn(reviewWithNickname);
 
         // when & then
         mockMvc.perform(get("/api/v1/mypage/completed-lectures/{lectureId}/review", lectureId)
@@ -230,8 +231,7 @@ class MypageControllerTest {
                 .andExpect(jsonPath("$.detailScores").isArray())
                 .andExpect(jsonPath("$.detailScores.length()").value(5));
 
-        verify(reviewService).getMyReviewByLecture(1L, lectureId);
-        verify(reviewService).getNickname(1L);
+        verify(reviewService).getMyReviewWithNicknameByLecture(1L, lectureId);
     }
 
     @Test
@@ -239,7 +239,7 @@ class MypageControllerTest {
     void getMyCompletedLectureReview_NotFound() throws Exception {
         // given
         Long lectureId = 999L;
-        given(reviewService.getMyReviewByLecture(1L, lectureId))
+        given(reviewService.getMyReviewWithNicknameByLecture(1L, lectureId))
                 .willThrow(new ReviewNotFoundException());
 
         // when & then

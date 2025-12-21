@@ -21,8 +21,8 @@ import com.swcampus.domain.member.Role;
 import com.swcampus.domain.mypage.MypageService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
-import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewService;
+import com.swcampus.domain.review.ReviewWithNickname;
 import com.swcampus.domain.survey.MemberSurveyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -138,10 +138,10 @@ public class MypageController {
         @Parameter(description = "강의 ID", required = true)
         @PathVariable("lectureId") Long lectureId
     ) {
-        Long memberId = member.memberId();
-        Review review = reviewService.getMyReviewByLecture(memberId, lectureId);
-        String nickname = reviewService.getNickname(memberId);
-        return ResponseEntity.ok(ReviewResponse.from(review, nickname));
+        ReviewWithNickname reviewWithNickname = reviewService.getMyReviewWithNicknameByLecture(
+            member.memberId(), lectureId);
+        return ResponseEntity.ok(ReviewResponse.from(
+            reviewWithNickname.review(), reviewWithNickname.nickname()));
     }
 
     @Operation(summary = "[일반 사용자 전용] 설문조사 조회", description = "[일반 사용자 전용] 강의 추천을 위한 나의 설문조사 정보를 조회합니다. 전공, 부트캠프 수료 여부, 희망 직무 등의 정보를 확인할 수 있습니다.")
