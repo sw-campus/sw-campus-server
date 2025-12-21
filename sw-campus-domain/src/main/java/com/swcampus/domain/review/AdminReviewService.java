@@ -9,6 +9,8 @@ import com.swcampus.domain.member.MemberRepository;
 import com.swcampus.domain.review.dto.PendingReviewInfo;
 import com.swcampus.domain.review.exception.ReviewNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -197,5 +199,53 @@ public class AdminReviewService {
         }
 
         return reviewRepository.save(review);
+    }
+
+    /**
+     * 전체 후기 목록 조회 (필터링 및 페이지네이션)
+     * 강의명, 회원정보, 수료증 상태를 배치 조회하여 N+1 문제 방지
+     */
+    public Page<PendingReviewInfo> getAllReviewsWithDetails(ApprovalStatus status, String keyword, Pageable pageable) {
+        Page<Review> reviewPage = reviewRepository.findAllWithDetails(status, keyword, pageable);
+
+        if (reviewPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<Review> reviews = reviewPage.getContent();
+
+        // 배치 조회: 강의명
+        List<Long> lectureIds = reviews.stream()
+            .map(Review::getLectureId)
+            .distinct()
+            .toList();
+        Map<Long, String> lectureNames = lectureService.getLectureNames(lectureIds);
+
+        // 배치 조회: 회원 정보
+        List<Long> memberIds = reviews.stream()
+            .map(Review::getMemberId)
+            .distinct()
+            .toList();
+        Map<Long, Member> memberMap = memberRepository.findAllByIds(memberIds).stream()
+            .collect(Collectors.toMap(Member::getId, m -> m));
+
+        // 배치 조회: 수료증 상태
+        List<Long> certificateIds = reviews.stream()
+            .map(Review::getCertificateId)
+            .distinct()
+            .toList();
+        Map<Long, Certificate> certificateMap = certificateRepository.findAllByIds(certificateIds);
+
+        // 조합하여 DTO 생성
+        return reviewPage.map(review -> {
+            String lectureName = lectureNames.getOrDefault(review.getLectureId(), "알 수 없음");
+            Member member = memberMap.get(review.getMemberId());
+            String userName = member != null ? member.getName() : "알 수 없음";
+            String nickname = member != null ? member.getNickname() : "알 수 없음";
+            Certificate certificate = certificateMap.get(review.getCertificateId());
+            ApprovalStatus certStatus = certificate != null ? certificate.getApprovalStatus() : ApprovalStatus.PENDING;
+
+            return PendingReviewInfo.of(review, lectureName, userName, nickname, certStatus);
+        });
     }
 }
