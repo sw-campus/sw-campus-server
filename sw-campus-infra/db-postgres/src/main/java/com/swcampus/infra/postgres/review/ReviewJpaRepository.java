@@ -2,6 +2,8 @@ package com.swcampus.infra.postgres.review;
 
 import com.swcampus.domain.review.ApprovalStatus;
 import com.swcampus.infra.postgres.lecture.LectureEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -51,4 +53,18 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         "GROUP BY r.lectureId")
         List<Object[]> countReviewsByLectureIds(@Param("lectureIds") List<Long> lectureIds,
                         @Param("status") ApprovalStatus status);
+
+        @Query(value = "SELECT DISTINCT r FROM ReviewEntity r " +
+                        "LEFT JOIN FETCH r.details " +
+                        "LEFT JOIN LectureEntity l ON l.lectureId = r.lectureId " +
+                        "WHERE (:status IS NULL OR r.approvalStatus = :status) " +
+                        "AND (:keyword IS NULL OR :keyword = '' OR l.lectureTitle ILIKE CONCAT('%', :keyword, '%'))",
+                countQuery = "SELECT COUNT(DISTINCT r) FROM ReviewEntity r " +
+                        "LEFT JOIN LectureEntity l ON l.lectureId = r.lectureId " +
+                        "WHERE (:status IS NULL OR r.approvalStatus = :status) " +
+                        "AND (:keyword IS NULL OR :keyword = '' OR l.lectureTitle ILIKE CONCAT('%', :keyword, '%'))")
+        Page<ReviewEntity> findAllWithDetailsAndKeyword(
+                        @Param("status") ApprovalStatus status,
+                        @Param("keyword") String keyword,
+                        Pageable pageable);
 }

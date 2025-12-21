@@ -5,6 +5,7 @@ import com.swcampus.api.admin.response.*;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.review.AdminReviewService;
+import com.swcampus.domain.review.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.dto.PendingReviewInfo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,10 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,6 +55,29 @@ public class AdminReviewController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(new AdminReviewListResponse(summaries, summaries.size()));
+    }
+
+    @Operation(summary = "전체 후기 목록 조회", description = "모든 후기를 조회합니다. 승인 상태 필터링, 강의명 검색, 페이지네이션을 지원합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+    })
+    @GetMapping("/reviews/all")
+    public ResponseEntity<Page<AdminReviewListResponse.AdminReviewSummary>> getAllReviews(
+            @Parameter(description = "승인 상태 (PENDING, APPROVED, REJECTED)")
+            @RequestParam(name = "status", required = false) ApprovalStatus status,
+            @Parameter(description = "검색 키워드 (강의명)", example = "웹 개발")
+            @RequestParam(name = "keyword", required = false, defaultValue = "") String keyword,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+            @RequestParam(name = "page", required = false, defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10")
+            @RequestParam(name = "size", required = false, defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<PendingReviewInfo> reviews = adminReviewService.getAllReviewsWithDetails(status, keyword, pageable);
+
+        return ResponseEntity.ok(reviews.map(this::toSummary));
     }
 
     @Operation(summary = "[1단계] 수료증 조회", description = "수료증 이미지 및 정보를 조회합니다.")
