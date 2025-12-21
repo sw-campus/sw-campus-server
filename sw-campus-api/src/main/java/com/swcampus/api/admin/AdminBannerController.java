@@ -22,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.swcampus.api.exception.FileProcessingException;
+
 import java.io.IOException;
 
 @Tag(name = "Admin Banner", description = "관리자 배너 관리 API")
@@ -32,6 +34,35 @@ import java.io.IOException;
 public class AdminBannerController {
 
         private final AdminBannerService adminBannerService;
+
+        /**
+         * 이미지 파일에서 추출한 데이터를 담는 레코드
+         */
+        private record ImageData(byte[] content, String fileName, String contentType) {
+                static ImageData empty() {
+                        return new ImageData(null, null, null);
+                }
+        }
+
+        /**
+         * MultipartFile에서 이미지 데이터를 추출합니다.
+         * @param image 업로드된 이미지 파일 (nullable)
+         * @return 추출된 이미지 데이터
+         */
+        private ImageData extractImageData(MultipartFile image) {
+                if (image == null || image.isEmpty()) {
+                        return ImageData.empty();
+                }
+                try {
+                        return new ImageData(
+                                        image.getBytes(),
+                                        image.getOriginalFilename(),
+                                        image.getContentType()
+                        );
+                } catch (IOException e) {
+                        throw new FileProcessingException("배너 이미지 파일 처리 중 오류가 발생했습니다", e);
+                }
+        }
 
         @Operation(summary = "배너 목록 조회", description = "배너를 검색합니다. 키워드, 기간 상태로 필터링하고 페이징 처리됩니다.")
         @ApiResponses({
@@ -72,18 +103,11 @@ public class AdminBannerController {
         @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         public ResponseEntity<AdminBannerResponse> createBanner(
                         @Valid @RequestPart("request") BannerRequest request,
-                        @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
-                byte[] imageContent = null;
-                String imageName = null;
-                String contentType = null;
-                if (image != null && !image.isEmpty()) {
-                        imageContent = image.getBytes();
-                        imageName = image.getOriginalFilename();
-                        contentType = image.getContentType();
-                }
+                        @RequestPart(value = "image", required = false) MultipartFile image) {
+                ImageData imageData = extractImageData(image);
 
                 BannerDetailsDto details = adminBannerService.createBanner(
-                                request.toDomain(), imageContent, imageName, contentType);
+                                request.toDomain(), imageData.content(), imageData.fileName(), imageData.contentType());
                 return ResponseEntity.status(HttpStatus.CREATED).body(AdminBannerResponse.from(details));
         }
 
@@ -97,18 +121,11 @@ public class AdminBannerController {
         public ResponseEntity<AdminBannerResponse> updateBanner(
                         @Parameter(description = "배너 ID", required = true) @PathVariable("id") Long id,
                         @Valid @RequestPart("request") BannerRequest request,
-                        @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
-                byte[] imageContent = null;
-                String imageName = null;
-                String contentType = null;
-                if (image != null && !image.isEmpty()) {
-                        imageContent = image.getBytes();
-                        imageName = image.getOriginalFilename();
-                        contentType = image.getContentType();
-                }
+                        @RequestPart(value = "image", required = false) MultipartFile image) {
+                ImageData imageData = extractImageData(image);
 
                 BannerDetailsDto details = adminBannerService.updateBanner(
-                                id, request.toDomain(), imageContent, imageName, contentType);
+                                id, request.toDomain(), imageData.content(), imageData.fileName(), imageData.contentType());
                 return ResponseEntity.ok(AdminBannerResponse.from(details));
         }
 
