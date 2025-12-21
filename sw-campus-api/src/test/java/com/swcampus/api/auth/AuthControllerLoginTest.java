@@ -14,6 +14,7 @@ import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.organization.ApprovalStatus;
 import com.swcampus.domain.organization.Organization;
+import com.swcampus.domain.organization.OrganizationService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -65,6 +66,9 @@ class AuthControllerLoginTest {
 
     @MockitoBean
     private CookieUtil cookieUtil;
+
+    @MockitoBean
+    private OrganizationService organizationService;
 
     @Nested
     @DisplayName("POST /api/v1/auth/login")

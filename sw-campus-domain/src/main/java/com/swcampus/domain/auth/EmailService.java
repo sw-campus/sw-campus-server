@@ -66,6 +66,63 @@ public class EmailService {
         return emailVerificationRepository.findByEmailAndVerified(email, true).isPresent();
     }
 
+    public void sendApprovalEmail(String memberEmail, String organizationName) {
+        String subject = "[SW Campus] 기관 회원가입 승인 완료";
+        String content = buildApprovalEmailContent(organizationName);
+        mailSender.send(memberEmail, subject, content);
+    }
+
+    public void sendRejectionEmail(String memberEmail, String adminEmail, String adminPhone) {
+        String subject = "[SW Campus] 기관 회원가입 반려 안내";
+        String content = buildRejectionEmailContent(adminEmail, adminPhone);
+        mailSender.send(memberEmail, subject, content);
+    }
+
+    private String buildApprovalEmailContent(String organizationName) {
+        return """
+                <html>
+                <body style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h2 style="color: #28a745;">SW Campus 기관 회원가입 승인 완료</h2>
+                    <p>안녕하세요.</p>
+                    <p>신청하신 <strong>%s</strong> 기관 회원가입이 승인되었습니다.</p>
+                    <p>이제 SW Campus의 모든 기관 서비스를 이용하실 수 있습니다.</p>
+                    <div style="background: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #c3e6cb;">
+                        <p style="margin: 5px 0; color: #155724;"><strong>✓ 강의 등록</strong></p>
+                        <p style="margin: 5px 0; color: #155724;"><strong>✓ 기관 정보 수정</strong></p>
+                        <p style="margin: 5px 0; color: #155724;"><strong>✓ 기타 기관 전용 서비스</strong></p>
+                    </div>
+                    <a href="https://swcampus.com" style="display:inline-block;padding:10px 20px;background:#28a745;color:#fff;text-decoration:none;border-radius:5px;">
+                        SW Campus 바로가기
+                    </a>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="color: #999; font-size: 12px;">본 메일은 SW Campus에서 발송되었습니다.</p>
+                </body>
+                </html>
+                """.formatted(organizationName);
+    }
+
+    private String buildRejectionEmailContent(String adminEmail, String adminPhone) {
+        String phoneDisplay = adminPhone != null ? adminPhone : "미등록";
+        return """
+                <html>
+                <body style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h2 style="color: #333;">SW Campus 기관 회원가입 반려 안내</h2>
+                    <p>안녕하세요.</p>
+                    <p>신청하신 기관 회원가입이 반려되었습니다.</p>
+                    <p>재직증명서 또는 기타 서류에 문제가 있을 수 있습니다.</p>
+                    <p>자세한 사항은 아래 관리자에게 문의해 주세요.</p>
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>관리자 이메일:</strong> %s</p>
+                        <p style="margin: 5px 0;"><strong>관리자 연락처:</strong> %s</p>
+                    </div>
+                    <p>다시 가입을 원하시면 이메일 인증부터 새로 진행해 주세요.</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="color: #999; font-size: 12px;">본 메일은 SW Campus에서 발송되었습니다.</p>
+                </body>
+                </html>
+                """.formatted(adminEmail, phoneDisplay);
+    }
+
     private String buildEmailContent(String verifyUrl) {
         return """
                 <html>

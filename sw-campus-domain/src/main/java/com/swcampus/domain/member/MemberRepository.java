@@ -12,5 +12,9 @@ public interface MemberRepository {
     List<Member> findAllByIds(List<Long> ids);
     Optional<Member> findByEmail(String email);
     boolean existsByEmail(String email);
+    boolean existsByOrgId(Long orgId);
+    Optional<Member> findByOrgId(Long orgId);
+    Optional<Member> findFirstByRole(Role role);
+    void deleteById(Long id);
     Page<Member> searchByKeyword(String keyword, Pageable pageable);
 }

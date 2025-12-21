@@ -37,8 +37,7 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -49,8 +48,7 @@ public class SecurityConfig {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json;charset=UTF-8");
                             response.getWriter().write("{\"message\":\"접근 권한이 없습니다\"}");
-                        })
-                )
+                        }))
                 .authorizeHttpRequests(auth -> auth
                         // 인증 없이 접근 가능
                         .requestMatchers(
@@ -60,22 +58,21 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
-                                "/swagger-resources/**"
-                        ).permitAll()
+                                "/swagger-resources/**")
+                        .permitAll()
                         // 공개 API (조회)
                         .requestMatchers(HttpMethod.GET, "/api/v1/reviews/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/lectures/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/organizations/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/banners/**").permitAll()
                         // 관리자 API (인증 필요, 추후 ROLE_ADMIN 추가 가능)
                         .requestMatchers("/api/v1/admin/**").authenticated()
                         // 나머지는 인증 필요
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .addFilterBefore(
                         new JwtAuthenticationFilter(tokenProvider),
-                        UsernamePasswordAuthenticationFilter.class
-                );
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

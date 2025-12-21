@@ -245,11 +245,11 @@ public class MypageController {
         @Parameter(description = "시설 이미지 4")
         @RequestPart(name = "facilityImage4", required = false) MultipartFile facilityImage4
     ) {
+        // Update Organization Info (승인된 기관만 수정 가능)
+        Organization org = organizationService.getApprovedOrganizationByUserId(member.memberId());
+
         // Update Member Info (Phone, Address)
         memberService.updateProfile(member.memberId(), null, phone, location);
-
-        // Update Organization Info
-        Organization org = organizationService.getOrganizationByUserId(member.memberId());
 
         try {
             var params = new com.swcampus.domain.organization.dto.UpdateOrganizationParams(

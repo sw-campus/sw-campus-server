@@ -105,4 +105,9 @@ public class Organization {
         this.homepage = homepage;
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
