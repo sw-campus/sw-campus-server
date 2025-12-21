@@ -18,6 +18,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import com.swcampus.domain.member.Member;
+import com.swcampus.domain.member.MemberRepository;
+import com.swcampus.domain.member.Role;
 import com.swcampus.domain.organization.exception.OrganizationNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,6 +31,9 @@ class AdminOrganizationServiceTest {
 
     @Mock
     private OrganizationRepository organizationRepository;
+
+    @Mock
+    private MemberRepository memberRepository;
 
     @Test
     @DisplayName("기관 목록 조회/검색 성공")
@@ -74,54 +80,47 @@ class AdminOrganizationServiceTest {
     }
 
     @Test
-    @DisplayName("기관 승인 성공 - 이미 승인된 기관도 멱등성 유지")
-    void approveOrganization_AlreadyApproved_IdempotentSuccess() {
-        // given
-        Long id = 1L;
-        Organization organization = Organization.create(1L, "Test Org", "Desc", "url");
-        organization.approve(); // 이미 승인된 상태
-        given(organizationRepository.findById(id)).willReturn(Optional.of(organization));
-        given(organizationRepository.save(any(Organization.class))).willAnswer(invocation -> invocation.getArgument(0));
-
-        // when
-        Organization result = adminOrganizationService.approveOrganization(id);
-
-        // then
-        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
-        verify(organizationRepository).save(organization);
-    }
-
-    @Test
     @DisplayName("기관 승인 성공")
     void approveOrganization_Success() {
         // given
-        Long id = 1L;
+        Long orgId = 1L;
         Organization organization = Organization.create(1L, "Test Org", "Desc", "url");
-        given(organizationRepository.findById(id)).willReturn(Optional.of(organization));
+        Member member = Member.createOrganization("test@test.com", "password", "Test User", "nickname", "010-1234-5678", "Seoul");
+
+        given(organizationRepository.findById(orgId)).willReturn(Optional.of(organization));
+        given(memberRepository.findByOrgId(orgId)).willReturn(Optional.of(member));
         given(organizationRepository.save(any(Organization.class))).willAnswer(invocation -> invocation.getArgument(0));
 
         // when
-        Organization result = adminOrganizationService.approveOrganization(id);
+        ApproveOrganizationResult result = adminOrganizationService.approveOrganization(orgId);
 
         // then
-        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(result.getOrganization().getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(result.getMemberEmail()).isEqualTo("test@test.com");
         verify(organizationRepository).save(organization);
+        verify(memberRepository).findByOrgId(orgId);
     }
 
     @Test
-    @DisplayName("기관 반려 성공")
+    @DisplayName("기관 반려 성공 - Member 삭제 및 관리자 연락처 반환")
     void rejectOrganization_Success() {
         // given
-        Long id = 1L;
+        Long orgId = 1L;
         Organization organization = Organization.create(1L, "Test Org", "Desc", "url");
-        given(organizationRepository.findById(id)).willReturn(Optional.of(organization));
-        given(organizationRepository.save(any(Organization.class))).willAnswer(invocation -> invocation.getArgument(0));
+        Member member = Member.createOrganization("test@test.com", "password", "Test User", "nickname", "010-1234-5678", "Seoul");
+        Member admin = Member.createUser("admin@test.com", "password", "Admin", "admin", "010-9999-9999", "Seoul");
+
+        given(organizationRepository.findById(orgId)).willReturn(Optional.of(organization));
+        given(memberRepository.findByOrgId(orgId)).willReturn(Optional.of(member));
+        given(memberRepository.findFirstByRole(Role.ADMIN)).willReturn(Optional.of(admin));
 
         // when
-        Organization result = adminOrganizationService.rejectOrganization(id);
+        RejectOrganizationResult result = adminOrganizationService.rejectOrganization(orgId);
 
         // then
-        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.REJECTED);
-        verify(organizationRepository).save(organization);
+        assertThat(result.getMemberEmail()).isEqualTo("test@test.com");
+        assertThat(result.getAdminEmail()).isEqualTo("admin@test.com");
+        assertThat(result.getAdminPhone()).isEqualTo("010-9999-9999");
+        verify(memberRepository).deleteById(member.getId());
     }
 }

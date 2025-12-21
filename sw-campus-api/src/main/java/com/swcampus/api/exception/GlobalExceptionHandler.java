@@ -2,6 +2,7 @@ package com.swcampus.api.exception;
 
 import com.swcampus.domain.auth.exception.CertificateRequiredException;
 import com.swcampus.domain.auth.exception.DuplicateEmailException;
+import com.swcampus.domain.auth.exception.DuplicateOrganizationMemberException;
 import com.swcampus.domain.auth.exception.EmailNotVerifiedException;
 import com.swcampus.domain.auth.exception.EmailVerificationExpiredException;
 import com.swcampus.domain.auth.exception.InvalidCredentialsException;
@@ -13,6 +14,7 @@ import com.swcampus.domain.certificate.exception.CertificateAlreadyExistsExcepti
 import com.swcampus.domain.certificate.exception.CertificateLectureMismatchException;
 import com.swcampus.domain.certificate.exception.CertificateNotFoundException;
 import com.swcampus.domain.certificate.exception.CertificateNotVerifiedException;
+import com.swcampus.domain.member.exception.AdminNotFoundException;
 import com.swcampus.domain.member.exception.MemberNotFoundException;
 import com.swcampus.domain.review.exception.ReviewAlreadyExistsException;
 import com.swcampus.domain.review.exception.ReviewNotFoundException;
@@ -20,6 +22,7 @@ import com.swcampus.domain.review.exception.ReviewNotModifiableException;
 import com.swcampus.domain.review.exception.ReviewNotOwnerException;
 import com.swcampus.domain.cart.exception.AlreadyInCartException;
 import com.swcampus.domain.cart.exception.CartLimitExceededException;
+import com.swcampus.domain.organization.exception.OrganizationNotApprovedException;
 import com.swcampus.domain.survey.exception.SurveyAlreadyExistsException;
 import com.swcampus.domain.survey.exception.SurveyNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +45,13 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(DuplicateEmailException.class)
         public ResponseEntity<ErrorResponse> handleDuplicateEmailException(DuplicateEmailException e) {
                 log.warn("중복 이메일: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(ErrorResponse.of(HttpStatus.CONFLICT.value(), e.getMessage()));
+        }
+
+        @ExceptionHandler(DuplicateOrganizationMemberException.class)
+        public ResponseEntity<ErrorResponse> handleDuplicateOrganizationMemberException(DuplicateOrganizationMemberException e) {
+                log.warn("중복 기관 가입: {}", e.getMessage());
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                                 .body(ErrorResponse.of(HttpStatus.CONFLICT.value(), e.getMessage()));
         }
@@ -103,6 +113,13 @@ public class GlobalExceptionHandler {
                                 .body(ErrorResponse.of(HttpStatus.NOT_FOUND.value(), e.getMessage()));
         }
 
+        @ExceptionHandler(AdminNotFoundException.class)
+        public ResponseEntity<ErrorResponse> handleAdminNotFoundException(AdminNotFoundException e) {
+                log.error("관리자 조회 실패: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
+        }
+
         // === Validation 예외 ===
 
         @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
@@ -133,6 +150,13 @@ public class GlobalExceptionHandler {
                 log.warn("재직증명서 누락: {}", e.getMessage());
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+        }
+
+        @ExceptionHandler(OrganizationNotApprovedException.class)
+        public ResponseEntity<ErrorResponse> handleOrganizationNotApprovedException(OrganizationNotApprovedException e) {
+                log.warn("기관 미승인 상태: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body(ErrorResponse.of(HttpStatus.FORBIDDEN.value(), e.getMessage()));
         }
 
         @ExceptionHandler(CertificateLectureMismatchException.class)

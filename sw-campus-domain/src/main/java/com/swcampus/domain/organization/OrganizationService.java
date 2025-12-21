@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.organization.dto.UpdateOrganizationParams;
 import com.swcampus.domain.organization.dto.UpdateOrganizationParams.FileUploadData;
+import com.swcampus.domain.organization.exception.OrganizationNotApprovedException;
 import com.swcampus.domain.storage.FileStorageService;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -27,6 +28,18 @@ public class OrganizationService {
     public Organization getOrganizationByUserId(Long userId) {
         return organizationRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("해당 사용자의 업체를 찾을 수 없습니다."));
+    }
+
+    /**
+     * 승인된(APPROVED) 기관만 반환합니다.
+     * PENDING 또는 REJECTED 상태인 경우 OrganizationNotApprovedException을 발생시킵니다.
+     */
+    public Organization getApprovedOrganizationByUserId(Long userId) {
+        Organization organization = getOrganizationByUserId(userId);
+        if (organization.getApprovalStatus() != ApprovalStatus.APPROVED) {
+            throw new OrganizationNotApprovedException();
+        }
+        return organization;
     }
 
     public Organization getOrganization(Long organizationId) {

@@ -88,7 +88,7 @@ public class LectureController {
 		// 현재 로그인한 사용자 ID 가져오기
 		Long currentUserId = member.memberId();
 
-		Organization organization = organizationService.getOrganizationByUserId(currentUserId);
+		Organization organization = organizationService.getApprovedOrganizationByUserId(currentUserId);
 
 		Lecture lectureDomain = request.toDomain().toBuilder()
 				.orgId(organization.getId())
@@ -137,7 +137,7 @@ public class LectureController {
 		// 현재 로그인한 사용자 ID 가져오기
 		Long currentUserId = member.memberId();
 
-		Organization organization = organizationService.getOrganizationByUserId(currentUserId);
+		Organization organization = organizationService.getApprovedOrganizationByUserId(currentUserId);
 
 		// 권한 확인 및 로직 수행은 Service로 위임
 		Lecture lectureDomain = request.toDomain().toBuilder()

@@ -8,6 +8,7 @@ import com.swcampus.domain.auth.AuthService;
 import com.swcampus.domain.auth.EmailService;
 import com.swcampus.domain.auth.exception.DuplicateEmailException;
 import com.swcampus.domain.auth.exception.InvalidTokenException;
+import com.swcampus.domain.organization.OrganizationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,9 @@ class AuthControllerEmailTest {
 
     @MockitoBean
     private com.swcampus.api.config.CookieUtil cookieUtil;
+
+    @MockitoBean
+    private OrganizationService organizationService;
 
     @Nested
     @DisplayName("POST /api/v1/auth/email/send - 인증 메일 발송")

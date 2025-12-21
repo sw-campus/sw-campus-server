@@ -316,8 +316,8 @@ class MypageControllerTest {
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         Organization org = Organization.of(100L, 1L, "Test Org", "Desc", com.swcampus.domain.organization.ApprovalStatus.APPROVED, "cert.jpg", null, null, null, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
-        
-        given(organizationService.getOrganizationByUserId(1L)).willReturn(org);
+
+        given(organizationService.getApprovedOrganizationByUserId(1L)).willReturn(org);
 
         MockMultipartFile file = new MockMultipartFile("businessRegistration", "cert.jpg", "image/jpeg", "content".getBytes());
         MockMultipartFile organizationNamePart = new MockMultipartFile("organizationName", "", "text/plain", "Updated Org".getBytes());
