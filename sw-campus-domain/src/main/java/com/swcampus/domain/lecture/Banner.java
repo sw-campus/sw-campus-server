@@ -6,7 +6,7 @@ import lombok.Getter;
 import java.time.OffsetDateTime;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class Banner {
     private Long id;
     private Long lectureId;
