@@ -30,10 +30,19 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -129,6 +138,110 @@ class AdminReviewControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.total_count").value(0))
                     .andExpect(jsonPath("$.reviews").isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/admin/reviews/all")
+    class GetAllReviews {
+
+        @Test
+        @DisplayName("전체 후기 목록 조회 성공")
+        void getAllReviews_success() throws Exception {
+            // given
+            List<PendingReviewInfo> reviews = List.of(
+                    createMockPendingReviewInfo(1L, 1L, 1L, ApprovalStatus.APPROVED),
+                    createMockPendingReviewInfo(2L, 2L, 1L, ApprovalStatus.PENDING)
+            );
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<PendingReviewInfo> reviewPage = new PageImpl<>(reviews, pageable, 2);
+
+            given(adminReviewService.getAllReviewsWithDetails(isNull(), eq(""), any(Pageable.class)))
+                    .willReturn(reviewPage);
+
+            // when & then
+            mockMvc.perform(get("/api/v1/admin/reviews/all"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.content.length()").value(2));
+        }
+
+        @Test
+        @DisplayName("승인 상태로 필터링하여 조회")
+        void getAllReviews_filterByStatus() throws Exception {
+            // given
+            List<PendingReviewInfo> reviews = List.of(
+                    createMockPendingReviewInfo(1L, 1L, 1L, ApprovalStatus.APPROVED)
+            );
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<PendingReviewInfo> reviewPage = new PageImpl<>(reviews, pageable, 1);
+
+            given(adminReviewService.getAllReviewsWithDetails(eq(ApprovalStatus.APPROVED), eq(""), any(Pageable.class)))
+                    .willReturn(reviewPage);
+
+            // when & then
+            mockMvc.perform(get("/api/v1/admin/reviews/all")
+                            .param("status", "APPROVED"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(1));
+        }
+
+        @Test
+        @DisplayName("강의명 키워드로 검색")
+        void getAllReviews_searchByKeyword() throws Exception {
+            // given
+            List<PendingReviewInfo> reviews = List.of(
+                    createMockPendingReviewInfo(1L, 1L, 1L, ApprovalStatus.APPROVED)
+            );
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<PendingReviewInfo> reviewPage = new PageImpl<>(reviews, pageable, 1);
+
+            given(adminReviewService.getAllReviewsWithDetails(isNull(), eq("Java"), any(Pageable.class)))
+                    .willReturn(reviewPage);
+
+            // when & then
+            mockMvc.perform(get("/api/v1/admin/reviews/all")
+                            .param("keyword", "Java"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(1))
+                    .andExpect(jsonPath("$.content[0].lecture_name").value("Java 풀스택 과정"));
+        }
+
+        @Test
+        @DisplayName("페이지네이션 적용")
+        void getAllReviews_withPagination() throws Exception {
+            // given
+            List<PendingReviewInfo> reviews = List.of(
+                    createMockPendingReviewInfo(3L, 3L, 1L, ApprovalStatus.APPROVED)
+            );
+            Pageable pageable = PageRequest.of(1, 2, Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<PendingReviewInfo> reviewPage = new PageImpl<>(reviews, pageable, 5);
+
+            given(adminReviewService.getAllReviewsWithDetails(isNull(), eq(""), any(Pageable.class)))
+                    .willReturn(reviewPage);
+
+            // when & then
+            mockMvc.perform(get("/api/v1/admin/reviews/all")
+                            .param("page", "1")
+                            .param("size", "2"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(1));
+        }
+
+        @Test
+        @DisplayName("결과가 없으면 빈 페이지 반환")
+        void getAllReviews_empty() throws Exception {
+            // given
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<PendingReviewInfo> emptyPage = Page.empty(pageable);
+
+            given(adminReviewService.getAllReviewsWithDetails(isNull(), eq(""), any(Pageable.class)))
+                    .willReturn(emptyPage);
+
+            // when & then
+            mockMvc.perform(get("/api/v1/admin/reviews/all"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isEmpty());
         }
     }
 
