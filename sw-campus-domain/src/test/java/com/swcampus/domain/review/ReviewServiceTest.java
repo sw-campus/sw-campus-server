@@ -334,8 +334,8 @@ class ReviewServiceTest {
         }
 
         @Test
-        @DisplayName("대기중(PENDING)인 후기 수정 시 예외 발생")
-        void updateReview_pending_throwsException() {
+        @DisplayName("대기중(PENDING)인 후기 수정 성공")
+        void updateReview_pending_success() {
             // given
             Long memberId = 1L;
             Long reviewId = 1L;
@@ -345,11 +345,17 @@ class ReviewServiceTest {
 
             given(reviewRepository.findById(reviewId))
                     .willReturn(Optional.of(review));
+            given(reviewRepository.save(any(Review.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
-            // when & then
-            assertThatThrownBy(() -> reviewService.updateReview(
-                    memberId, reviewId, "테스트", List.of()
-            )).isInstanceOf(ReviewNotModifiableException.class);
+            // when
+            Review result = reviewService.updateReview(
+                    memberId, reviewId, "수정된 후기", createDefaultDetails()
+            );
+
+            // then
+            assertThat(result.getComment()).isEqualTo("수정된 후기");
+            assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
         }
     }
 

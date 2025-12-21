@@ -14,6 +14,9 @@ import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.review.ReviewWithNickname;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -56,7 +59,29 @@ public class ReviewController {
     @Operation(summary = "후기 작성", description = "수료증 인증이 완료된 강의에 후기를 작성합니다.")
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "작성 성공"),
+        @ApiResponse(responseCode = "201", description = "작성 성공",
+            content = @Content(schema = @Schema(implementation = ReviewResponse.class),
+                examples = @ExampleObject(value = """
+                    {
+                      "review_id": 1,
+                      "lecture_id": 10,
+                      "member_id": 5,
+                      "nickname": "개발자김철수",
+                      "comment": "전체적으로 만족스러운 강의였습니다. 실무에 바로 적용할 수 있는 내용이 많았습니다.",
+                      "score": 4.3,
+                      "detail_scores": [
+                        {"category": "TEACHER", "score": 4.5, "comment": "강사님이 친절하고 설명을 잘 해주셔서 이해하기 쉬웠습니다. 질문에도 성심성의껏 답변해주셨습니다."},
+                        {"category": "CURRICULUM", "score": 4.0, "comment": "커리큘럼이 체계적이고 단계별로 잘 구성되어 있었습니다. 다만 후반부가 조금 빠르게 진행되었습니다."},
+                        {"category": "MANAGEMENT", "score": 4.5, "comment": "출결 관리와 학습 지원이 잘 되었습니다. 담당자분이 친절하게 안내해주셨습니다."},
+                        {"category": "FACILITY", "score": 4.0, "comment": "강의실 시설이 깨끗하고 쾌적했습니다. 개인 모니터와 책상 공간도 충분했습니다."},
+                        {"category": "PROJECT", "score": 4.5, "comment": "팀 프로젝트를 통해 실무 경험을 쌓을 수 있었습니다. 포트폴리오로 활용하기 좋았습니다."}
+                      ],
+                      "approval_status": "PENDING",
+                      "blurred": false,
+                      "created_at": "2025-12-10T10:30:00",
+                      "updated_at": "2025-12-10T10:30:00"
+                    }
+                    """))),
         @ApiResponse(responseCode = "400", description = "유효성 검증 실패"),
         @ApiResponse(responseCode = "401", description = "인증 필요"),
         @ApiResponse(responseCode = "403", description = "수료증 인증 필요"),
@@ -65,6 +90,23 @@ public class ReviewController {
     @PostMapping
     public ResponseEntity<ReviewResponse> createReview(
             @CurrentMember MemberPrincipal member,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "후기 작성 요청",
+                required = true,
+                content = @Content(schema = @Schema(implementation = CreateReviewRequest.class),
+                    examples = @ExampleObject(value = """
+                        {
+                          "lecture_id": 10,
+                          "comment": "전체적으로 만족스러운 강의였습니다. 실무에 바로 적용할 수 있는 내용이 많았습니다.",
+                          "detail_scores": [
+                            {"category": "TEACHER", "score": 4.5, "comment": "강사님이 친절하고 설명을 잘 해주셔서 이해하기 쉬웠습니다. 질문에도 성심성의껏 답변해주셨습니다."},
+                            {"category": "CURRICULUM", "score": 4.0, "comment": "커리큘럼이 체계적이고 단계별로 잘 구성되어 있었습니다. 다만 후반부가 조금 빠르게 진행되었습니다."},
+                            {"category": "MANAGEMENT", "score": 4.5, "comment": "출결 관리와 학습 지원이 잘 되었습니다. 담당자분이 친절하게 안내해주셨습니다."},
+                            {"category": "FACILITY", "score": 4.0, "comment": "강의실 시설이 깨끗하고 쾌적했습니다. 개인 모니터와 책상 공간도 충분했습니다."},
+                            {"category": "PROJECT", "score": 4.5, "comment": "팀 프로젝트를 통해 실무 경험을 쌓을 수 있었습니다. 포트폴리오로 활용하기 좋았습니다."}
+                          ]
+                        }
+                        """)))
             @Valid @RequestBody CreateReviewRequest request) {
 
         Long memberId = member.memberId();
@@ -89,10 +131,32 @@ public class ReviewController {
                 .body(ReviewResponse.from(review, nickname));
     }
 
-    @Operation(summary = "후기 수정", description = "본인이 작성한 후기를 수정합니다. 승인된 후기는 수정할 수 없습니다.")
+    @Operation(summary = "후기 수정", description = "본인이 작성한 후기를 수정합니다. 승인된 후기는 수정할 수 없습니다. PENDING 또는 REJECTED 상태의 후기만 수정 가능합니다.")
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "수정 성공"),
+        @ApiResponse(responseCode = "200", description = "수정 성공",
+            content = @Content(schema = @Schema(implementation = ReviewResponse.class),
+                examples = @ExampleObject(value = """
+                    {
+                      "review_id": 1,
+                      "lecture_id": 10,
+                      "member_id": 5,
+                      "nickname": "개발자김철수",
+                      "comment": "수정된 후기입니다. 추가로 느낀 점을 보완했습니다.",
+                      "score": 4.5,
+                      "detail_scores": [
+                        {"category": "TEACHER", "score": 5.0, "comment": "강사님이 정말 훌륭하셨습니다. 어려운 개념도 쉽게 설명해주셔서 완벽히 이해할 수 있었습니다."},
+                        {"category": "CURRICULUM", "score": 4.5, "comment": "커리큘럼 구성이 탄탄했습니다. 기초부터 심화까지 체계적으로 배울 수 있었습니다."},
+                        {"category": "MANAGEMENT", "score": 4.5, "comment": "학습 관리가 철저했습니다. 출결 및 과제 관리가 잘 되어 집중할 수 있었습니다."},
+                        {"category": "FACILITY", "score": 4.0, "comment": "시설이 깨끗하고 쾌적했습니다. 냉난방도 적절했습니다."},
+                        {"category": "PROJECT", "score": 4.5, "comment": "실전 프로젝트 경험이 매우 유익했습니다. 팀원들과 협업하는 방법도 배웠습니다."}
+                      ],
+                      "approval_status": "PENDING",
+                      "blurred": false,
+                      "created_at": "2025-12-10T10:30:00",
+                      "updated_at": "2025-12-15T14:20:00"
+                    }
+                    """))),
         @ApiResponse(responseCode = "400", description = "유효성 검증 실패"),
         @ApiResponse(responseCode = "401", description = "인증 필요"),
         @ApiResponse(responseCode = "403", description = "본인 후기만 수정 가능 / 승인된 후기 수정 불가"),
@@ -103,6 +167,22 @@ public class ReviewController {
             @CurrentMember MemberPrincipal member,
             @Parameter(description = "후기 ID", required = true, name = "reviewId")
             @PathVariable("reviewId") Long reviewId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "후기 수정 요청",
+                required = true,
+                content = @Content(schema = @Schema(implementation = UpdateReviewRequest.class),
+                    examples = @ExampleObject(value = """
+                        {
+                          "comment": "수정된 후기입니다. 추가로 느낀 점을 보완했습니다.",
+                          "detail_scores": [
+                            {"category": "TEACHER", "score": 5.0, "comment": "강사님이 정말 훌륭하셨습니다. 어려운 개념도 쉽게 설명해주셔서 완벽히 이해할 수 있었습니다."},
+                            {"category": "CURRICULUM", "score": 4.5, "comment": "커리큘럼 구성이 탄탄했습니다. 기초부터 심화까지 체계적으로 배울 수 있었습니다."},
+                            {"category": "MANAGEMENT", "score": 4.5, "comment": "학습 관리가 철저했습니다. 출결 및 과제 관리가 잘 되어 집중할 수 있었습니다."},
+                            {"category": "FACILITY", "score": 4.0, "comment": "시설이 깨끗하고 쾌적했습니다. 냉난방도 적절했습니다."},
+                            {"category": "PROJECT", "score": 4.5, "comment": "실전 프로젝트 경험이 매우 유익했습니다. 팀원들과 협업하는 방법도 배웠습니다."}
+                          ]
+                        }
+                        """)))
             @Valid @RequestBody UpdateReviewRequest request) {
 
         Long memberId = member.memberId();
@@ -126,9 +206,31 @@ public class ReviewController {
         return ResponseEntity.ok(ReviewResponse.from(review, nickname));
     }
 
-    @Operation(summary = "후기 상세 조회", description = "후기 ID로 상세 정보를 조회합니다.")
+    @Operation(summary = "후기 상세 조회", description = "후기 ID로 상세 정보를 조회합니다. 승인된 후기만 일반 사용자에게 노출됩니다.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "200", description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = ReviewResponse.class),
+                examples = @ExampleObject(value = """
+                    {
+                      "review_id": 1,
+                      "lecture_id": 10,
+                      "member_id": 5,
+                      "nickname": "개발자김철수",
+                      "comment": "전체적으로 만족스러운 강의였습니다. 실무에 바로 적용할 수 있는 내용이 많았습니다.",
+                      "score": 4.3,
+                      "detail_scores": [
+                        {"category": "TEACHER", "score": 4.5, "comment": "강사님이 친절하고 설명을 잘 해주셔서 이해하기 쉬웠습니다. 질문에도 성심성의껏 답변해주셨습니다."},
+                        {"category": "CURRICULUM", "score": 4.0, "comment": "커리큘럼이 체계적이고 단계별로 잘 구성되어 있었습니다. 다만 후반부가 조금 빠르게 진행되었습니다."},
+                        {"category": "MANAGEMENT", "score": 4.5, "comment": "출결 관리와 학습 지원이 잘 되었습니다. 담당자분이 친절하게 안내해주셨습니다."},
+                        {"category": "FACILITY", "score": 4.0, "comment": "강의실 시설이 깨끗하고 쾌적했습니다. 개인 모니터와 책상 공간도 충분했습니다."},
+                        {"category": "PROJECT", "score": 4.5, "comment": "팀 프로젝트를 통해 실무 경험을 쌓을 수 있었습니다. 포트폴리오로 활용하기 좋았습니다."}
+                      ],
+                      "approval_status": "APPROVED",
+                      "blurred": false,
+                      "created_at": "2025-12-10T10:30:00",
+                      "updated_at": "2025-12-12T09:15:00"
+                    }
+                    """))),
         @ApiResponse(responseCode = "404", description = "후기를 찾을 수 없음")
     })
     @GetMapping("/{reviewId}")

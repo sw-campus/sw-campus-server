@@ -79,10 +79,10 @@ public class ReviewService {
 
     /**
      * 후기 수정
-     * 반려된 후기만 수정할 수 있습니다.
+     * 승인된 후기는 수정할 수 없습니다.
      */
     @Transactional
-    public Review updateReview(Long memberId, Long reviewId, 
+    public Review updateReview(Long memberId, Long reviewId,
                                 String comment, List<ReviewDetail> details) {
         // 1. 후기 조회
         Review review = reviewRepository.findById(reviewId)
@@ -93,14 +93,16 @@ public class ReviewService {
             throw new ReviewNotOwnerException();
         }
 
-        // 3. 승인 상태 확인 (반려된 후기만 수정 가능)
-        if (review.getApprovalStatus() != ApprovalStatus.REJECTED) {
+        // 3. 승인 상태 확인 (승인된 후기만 수정 불가)
+        if (review.getApprovalStatus() == ApprovalStatus.APPROVED) {
             throw new ReviewNotModifiableException();
         }
 
         // 4. 후기 수정
         review.update(comment, details);
-        review.resubmit();
+        if (review.getApprovalStatus() == ApprovalStatus.REJECTED) {
+            review.resubmit();
+        }
         return reviewRepository.save(review);
     }
 
