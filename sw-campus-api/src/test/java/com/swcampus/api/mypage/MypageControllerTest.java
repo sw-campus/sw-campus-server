@@ -128,7 +128,7 @@ class MypageControllerTest {
     @DisplayName("내 정보 수정 - 성공")
     void updateProfile_Success() throws Exception {
         // given
-        UpdateProfileRequest request = new UpdateProfileRequest("New Nickname", "01012345678", "New Address");
+        UpdateProfileRequest request = new UpdateProfileRequest("New_Nickname", "01012345678", "New Address");
 
         // when & then
         mockMvc.perform(patch("/api/v1/mypage/profile")
@@ -138,15 +138,15 @@ class MypageControllerTest {
                         .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
                 .andDo(print())
                 .andExpect(status().isOk());
-        
-        verify(memberService).updateProfile(1L, "New Nickname", "01012345678", "New Address");
+
+        verify(memberService).updateProfile(1L, "New_Nickname", "01012345678", "New Address");
     }
 
     @Test
     @DisplayName("내 정보 수정 - 실패 (유효성 검증)")
     void updateProfile_InvalidInput_Returns400() throws Exception {
         // given
-        UpdateProfileRequest request = new UpdateProfileRequest("New Nickname", "invalid-phone", "New Address");
+        UpdateProfileRequest request = new UpdateProfileRequest("Valid_Nickname", "invalid-phone", "New Address");
 
         // when & then
         mockMvc.perform(patch("/api/v1/mypage/profile")

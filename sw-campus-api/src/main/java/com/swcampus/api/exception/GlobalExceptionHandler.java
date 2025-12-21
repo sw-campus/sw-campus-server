@@ -15,6 +15,7 @@ import com.swcampus.domain.certificate.exception.CertificateLectureMismatchExcep
 import com.swcampus.domain.certificate.exception.CertificateNotFoundException;
 import com.swcampus.domain.certificate.exception.CertificateNotVerifiedException;
 import com.swcampus.domain.member.exception.AdminNotFoundException;
+import com.swcampus.domain.member.exception.DuplicateNicknameException;
 import com.swcampus.domain.member.exception.MemberNotFoundException;
 import com.swcampus.domain.review.exception.ReviewAlreadyExistsException;
 import com.swcampus.domain.review.exception.ReviewNotFoundException;
@@ -45,6 +46,13 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(DuplicateEmailException.class)
         public ResponseEntity<ErrorResponse> handleDuplicateEmailException(DuplicateEmailException e) {
                 log.warn("중복 이메일: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(ErrorResponse.of(HttpStatus.CONFLICT.value(), e.getMessage()));
+        }
+
+        @ExceptionHandler(DuplicateNicknameException.class)
+        public ResponseEntity<ErrorResponse> handleDuplicateNicknameException(DuplicateNicknameException e) {
+                log.warn("중복 닉네임: {}", e.getMessage());
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                                 .body(ErrorResponse.of(HttpStatus.CONFLICT.value(), e.getMessage()));
         }

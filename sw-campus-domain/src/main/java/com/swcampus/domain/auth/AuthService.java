@@ -10,6 +10,7 @@ import com.swcampus.domain.auth.exception.TokenExpiredException;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
 import com.swcampus.domain.member.Role;
+import com.swcampus.domain.member.exception.DuplicateNicknameException;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationRepository;
 import com.swcampus.domain.organization.exception.OrganizationNotFoundException;
@@ -39,17 +40,22 @@ public class AuthService {
             throw new DuplicateEmailException(command.getEmail());
         }
 
-        // 2. 이메일 인증 여부 확인
+        // 2. 닉네임 중복 검증
+        if (memberRepository.existsByNicknameIgnoreCase(command.getNickname())) {
+            throw new DuplicateNicknameException(command.getNickname());
+        }
+
+        // 3. 이메일 인증 여부 확인
         emailVerificationRepository.findByEmailAndVerified(command.getEmail(), true)
                 .orElseThrow(() -> new EmailNotVerifiedException(command.getEmail()));
 
-        // 3. 비밀번호 정책 검증
+        // 4. 비밀번호 정책 검증
         passwordValidator.validate(command.getPassword());
 
-        // 4. 비밀번호 암호화
+        // 5. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(command.getPassword());
 
-        // 5. 회원 생성
+        // 6. 회원 생성
         Member member = Member.createUser(
                 command.getEmail(),
                 encodedPassword,
@@ -73,17 +79,22 @@ public class AuthService {
             throw new DuplicateEmailException(command.getEmail());
         }
 
-        // 3. 이메일 인증 여부 확인
+        // 3. 닉네임 중복 검증
+        if (memberRepository.existsByNicknameIgnoreCase(command.getNickname())) {
+            throw new DuplicateNicknameException(command.getNickname());
+        }
+
+        // 4. 이메일 인증 여부 확인
         emailVerificationRepository.findByEmailAndVerified(command.getEmail(), true)
                 .orElseThrow(() -> new EmailNotVerifiedException(command.getEmail()));
 
-        // 4. 비밀번호 정책 검증
+        // 5. 비밀번호 정책 검증
         passwordValidator.validate(command.getPassword());
 
-        // 5. 비밀번호 암호화
+        // 6. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(command.getPassword());
 
-        // 6. 재직증명서 S3 Private Bucket 업로드 (민감정보)
+        // 7. 재직증명서 S3 Private Bucket 업로드 (민감정보)
         String certificateUrl = fileStorageService.uploadPrivate(
                 command.getCertificateImage(),
                 "certificates",
@@ -91,7 +102,7 @@ public class AuthService {
                 command.getCertificateContentType()
         );
 
-        // 7. 회원 생성 (ORGANIZATION 역할)
+        // 8. 회원 생성 (ORGANIZATION 역할)
         Member member = Member.createOrganization(
                 command.getEmail(),
                 encodedPassword,

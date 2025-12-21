@@ -74,4 +74,14 @@ public class MemberEntityRepository implements MemberRepository {
         return jpaRepository.searchByKeyword(keyword, pageable)
                 .map(MemberEntity::toDomain);
     }
+
+    @Override
+    public boolean existsByNicknameIgnoreCase(String nickname) {
+        return jpaRepository.existsByNicknameIgnoreCase(nickname);
+    }
+
+    @Override
+    public boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long excludeMemberId) {
+        return jpaRepository.existsByNicknameIgnoreCaseAndIdNot(nickname, excludeMemberId);
+    }
 }

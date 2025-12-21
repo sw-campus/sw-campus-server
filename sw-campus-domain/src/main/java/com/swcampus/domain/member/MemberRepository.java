@@ -17,4 +17,6 @@ public interface MemberRepository {
     Optional<Member> findFirstByRole(Role role);
     void deleteById(Long id);
     Page<Member> searchByKeyword(String keyword, Pageable pageable);
+    boolean existsByNicknameIgnoreCase(String nickname);
+    boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long excludeMemberId);
 }

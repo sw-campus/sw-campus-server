@@ -22,4 +22,10 @@ public interface MemberJpaRepository extends JpaRepository<MemberEntity, Long> {
            "m.nickname ILIKE CONCAT('%', :keyword, '%') OR " +
            "m.email ILIKE CONCAT('%', :keyword, '%')")
     Page<MemberEntity> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM MemberEntity m WHERE LOWER(m.nickname) = LOWER(:nickname)")
+    boolean existsByNicknameIgnoreCase(@Param("nickname") String nickname);
+
+    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM MemberEntity m WHERE LOWER(m.nickname) = LOWER(:nickname) AND m.id <> :excludeId")
+    boolean existsByNicknameIgnoreCaseAndIdNot(@Param("nickname") String nickname, @Param("excludeId") Long excludeId);
 }
