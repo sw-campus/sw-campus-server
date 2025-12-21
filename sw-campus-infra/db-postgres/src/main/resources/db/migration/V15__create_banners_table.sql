@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS "swcampus"."banners" (
     "banner_id" bigint NOT NULL DEFAULT nextval('swcampus.banners_banner_id_seq'),
     "lecture_id" bigint NOT NULL,
     "banner_type" character varying(50) NOT NULL,
-    "content" text,
+    "url" text,
     "image_url" text,
     "start_date" timestamp with time zone NOT NULL,
     "end_date" timestamp with time zone NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS "swcampus"."banners" (
     "updated_at" timestamp(6) without time zone DEFAULT NOW(),
     CONSTRAINT "banners_pkey" PRIMARY KEY ("banner_id"),
     CONSTRAINT "banners_lecture_fk" FOREIGN KEY ("lecture_id") REFERENCES "swcampus"."lectures"("lecture_id") ON DELETE CASCADE,
-    CONSTRAINT "banners_banner_type_check" CHECK (("banner_type"::text = ANY (ARRAY['BIG'::text, 'SMALL'::text, 'TEXT'::text])))
+    CONSTRAINT "banners_banner_type_check" CHECK (("banner_type"::text = ANY (ARRAY['BIG'::text, 'MIDDLE'::text, 'SMALL'::text])))
 );
 
 -- Create index for faster lookups

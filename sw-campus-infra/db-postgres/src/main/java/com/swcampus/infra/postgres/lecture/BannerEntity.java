@@ -31,8 +31,8 @@ public class BannerEntity extends BaseEntity {
     @Column(name = "BANNER_TYPE")
     private BannerType bannerType;
 
-    @Column(name = "CONTENT", columnDefinition = "TEXT")
-    private String content;
+    @Column(name = "URL", columnDefinition = "TEXT")
+    private String url;
 
     @Column(name = "IMAGE_URL", columnDefinition = "TEXT")
     private String imageUrl;
@@ -53,7 +53,7 @@ public class BannerEntity extends BaseEntity {
                 .bannerId(banner.getId())
                 .lecture(lectureEntity)
                 .bannerType(banner.getType())
-                .content(banner.getContent())
+                .url(banner.getUrl())
                 .imageUrl(banner.getImageUrl())
                 .startDate(banner.getStartDate())
                 .endDate(banner.getEndDate())
@@ -66,7 +66,7 @@ public class BannerEntity extends BaseEntity {
                 .id(this.bannerId)
                 .lectureId(this.lecture != null ? this.lecture.getLectureId() : null)
                 .type(this.bannerType)
-                .content(this.content)
+                .url(this.url)
                 .imageUrl(this.imageUrl)
                 .startDate(this.startDate)
                 .endDate(this.endDate)
@@ -77,7 +77,7 @@ public class BannerEntity extends BaseEntity {
     public void updateFields(Banner banner, LectureEntity lectureEntity) {
         this.lecture = lectureEntity;
         this.bannerType = banner.getType();
-        this.content = banner.getContent();
+        this.url = banner.getUrl();
         this.imageUrl = banner.getImageUrl();
         this.startDate = banner.getStartDate();
         this.endDate = banner.getEndDate();

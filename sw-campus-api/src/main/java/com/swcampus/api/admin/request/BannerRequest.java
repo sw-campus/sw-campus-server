@@ -13,7 +13,7 @@ public record BannerRequest(
 
         @Schema(description = "배너 타입", example = "BIG", required = true) @NotNull(message = "배너 타입은 필수입니다") BannerType type,
 
-        @Schema(description = "배너 내용", example = "신규 강의 런칭!") String content,
+        @Schema(description = "배너 클릭 시 이동 URL", example = "https://example.com/event") @org.hibernate.validator.constraints.URL(message = "유효한 URL 형식이 아닙니다.") String url,
 
         @Schema(description = "배너 이미지 URL", example = "https://example.com/banner.jpg") String imageUrl,
 
@@ -26,7 +26,7 @@ public record BannerRequest(
         return Banner.builder()
                 .lectureId(lectureId)
                 .type(type)
-                .content(content)
+                .url(url)
                 .imageUrl(imageUrl)
                 .startDate(startDate)
                 .endDate(endDate)

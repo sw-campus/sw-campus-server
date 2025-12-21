@@ -18,7 +18,7 @@ public class BannerDetailsDto {
     private Long lectureId;
     private String lectureName;
     private BannerType type;
-    private String content;
+    private String url;
     private String imageUrl;
     private OffsetDateTime startDate;
     private OffsetDateTime endDate;
@@ -33,7 +33,7 @@ public class BannerDetailsDto {
                 .lectureId(banner.getLectureId())
                 .lectureName(lectureName)
                 .type(banner.getType())
-                .content(banner.getContent())
+                .url(banner.getUrl())
                 .imageUrl(banner.getImageUrl())
                 .startDate(banner.getStartDate())
                 .endDate(banner.getEndDate())
