@@ -22,4 +22,25 @@ public interface FileStorageService {
      * @param fileUrl 삭제할 파일의 URL
      */
     void delete(String fileUrl);
+
+    /**
+     * 민감한 파일을 private bucket에 저장하고 리소스 식별자(URL)를 반환
+     * <p>
+     * <b>주의:</b> 반환되는 URL은 직접적인 공개 접근이 불가능하며, 파일을 식별하기 위한 용도로 사용됩니다.
+     * 파일에 접근하려면 별도의 인증된 절차(예: pre-signed URL 생성)가 필요합니다.
+     *
+     * @param content     파일 바이트 배열
+     * @param directory   저장할 디렉토리 경로
+     * @param fileName    원본 파일명
+     * @param contentType MIME 타입
+     * @return 저장된 파일의 리소스 식별자 (URL 형식)
+     */
+    String uploadPrivate(byte[] content, String directory, String fileName, String contentType);
+
+    /**
+     * private bucket에서 파일 삭제
+     *
+     * @param fileUrl 삭제할 파일의 URL
+     */
+    void deletePrivate(String fileUrl);
 }

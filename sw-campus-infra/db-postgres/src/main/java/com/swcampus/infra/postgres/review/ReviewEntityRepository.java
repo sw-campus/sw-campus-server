@@ -4,6 +4,8 @@ import com.swcampus.domain.review.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -107,5 +109,11 @@ public class ReviewEntityRepository implements ReviewRepository {
                 .collect(java.util.stream.Collectors.toMap(
                         row -> (Long) row[0],
                         row -> (Long) row[1]));
+    }
+
+    @Override
+    public Page<Review> findAllWithDetails(ApprovalStatus status, String keyword, Pageable pageable) {
+        return jpaRepository.findAllWithDetailsAndKeyword(status, keyword, pageable)
+                .map(ReviewEntity::toDomain);
     }
 }

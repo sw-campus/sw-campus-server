@@ -31,6 +31,7 @@ aws:
     secret-key: test-secret-key
   s3:
     bucket: test-bucket
+    private-bucket: test-private-bucket
     region: ap-northeast-2
 
 oauth:

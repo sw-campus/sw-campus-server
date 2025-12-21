@@ -90,8 +90,8 @@ public class OrganizationService {
             organization.setGovAuth(params.govAuth());
         }
         
-        // 사업자등록증 업데이트
-        String certificateUrl = uploadFileIfPresent(params.certificate(), "certificates");
+        // 사업자등록증 업데이트 (민감정보 - private bucket 사용)
+        String certificateUrl = uploadPrivateFileIfPresent(params.certificate(), "certificates");
         if (certificateUrl != null) {
             organization.updateCertificateUrl(certificateUrl);
         }
@@ -141,5 +141,12 @@ public class OrganizationService {
             return null;
         }
         return fileStorageService.upload(file.content(), folder, file.fileName(), file.contentType());
+    }
+
+    private String uploadPrivateFileIfPresent(FileUploadData file, String folder) {
+        if (file == null || file.content() == null || file.content().length == 0) {
+            return null;
+        }
+        return fileStorageService.uploadPrivate(file.content(), folder, file.fileName(), file.contentType());
     }
 }
