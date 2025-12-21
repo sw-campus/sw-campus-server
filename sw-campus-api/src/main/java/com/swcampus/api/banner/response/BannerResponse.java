@@ -16,7 +16,7 @@ public record BannerResponse(
 
         @Schema(description = "배너 타입", example = "BIG") BannerType type,
 
-        @Schema(description = "배너 내용", example = "신규 강의 런칭!") String content,
+        @Schema(description = "배너 클릭 시 이동 URL", example = "https://example.com/event") String url,
 
         @Schema(description = "배너 이미지 URL", example = "https://example.com/banner.jpg") String imageUrl,
 
@@ -42,7 +42,7 @@ public record BannerResponse(
                 dto.getId(),
                 dto.getLectureId(),
                 dto.getType(),
-                dto.getContent(),
+                dto.getUrl(),
                 dto.getImageUrl(),
                 dto.getStartDate(),
                 dto.getEndDate(),

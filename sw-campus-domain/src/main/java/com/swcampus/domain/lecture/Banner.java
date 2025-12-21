@@ -11,7 +11,7 @@ public class Banner {
     private Long id;
     private Long lectureId;
     private BannerType type;
-    private String content;
+    private String url;
     private String imageUrl;
     private OffsetDateTime startDate;
     private OffsetDateTime endDate;

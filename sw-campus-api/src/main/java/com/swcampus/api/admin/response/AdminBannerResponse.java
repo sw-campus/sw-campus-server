@@ -16,7 +16,7 @@ public record AdminBannerResponse(
 
         @Schema(description = "배너 타입", example = "BIG") BannerType type,
 
-        @Schema(description = "배너 내용", example = "신규 강의 런칭!") String content,
+        @Schema(description = "배너 클릭 시 이동 URL", example = "https://example.com/event") String url,
 
         @Schema(description = "배너 이미지 URL", example = "https://example.com/banner.jpg") String imageUrl,
 
@@ -32,7 +32,7 @@ public record AdminBannerResponse(
                 details.getLectureId(),
                 details.getLectureName(),
                 details.getType(),
-                details.getContent(),
+                details.getUrl(),
                 details.getImageUrl(),
                 details.getStartDate(),
                 details.getEndDate(),
