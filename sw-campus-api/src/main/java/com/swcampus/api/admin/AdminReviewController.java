@@ -3,13 +3,10 @@ package com.swcampus.api.admin;
 import com.swcampus.api.admin.request.BlindReviewRequest;
 import com.swcampus.api.admin.response.*;
 import com.swcampus.domain.certificate.Certificate;
-import com.swcampus.domain.certificate.CertificateRepository;
-import com.swcampus.domain.lecture.Lecture;
-import com.swcampus.domain.lecture.LectureRepository;
-import com.swcampus.domain.member.Member;
-import com.swcampus.domain.member.MemberRepository;
+import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.review.AdminReviewService;
 import com.swcampus.domain.review.Review;
+import com.swcampus.domain.review.dto.PendingReviewInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,9 +30,7 @@ import java.util.stream.Collectors;
 public class AdminReviewController {
 
     private final AdminReviewService adminReviewService;
-    private final LectureRepository lectureRepository;
-    private final MemberRepository memberRepository;
-    private final CertificateRepository certificateRepository;
+    private final LectureService lectureService;
 
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
@@ -48,7 +43,7 @@ public class AdminReviewController {
     })
     @GetMapping("/reviews")
     public ResponseEntity<AdminReviewListResponse> getPendingReviews() {
-        List<Review> reviews = adminReviewService.getPendingReviews();
+        List<PendingReviewInfo> reviews = adminReviewService.getPendingReviewsWithDetails();
 
         List<AdminReviewListResponse.AdminReviewSummary> summaries = reviews.stream()
                 .map(this::toSummary)
@@ -69,9 +64,8 @@ public class AdminReviewController {
 
         Certificate certificate = adminReviewService.getCertificate(certificateId);
 
-        String lectureName = lectureRepository.findById(certificate.getLectureId())
-                .map(Lecture::getLectureName)
-                .orElse("알 수 없음");
+        String lectureName = lectureService.getLectureNames(List.of(certificate.getLectureId()))
+                .getOrDefault(certificate.getLectureId(), "알 수 없음");
 
         return ResponseEntity.ok(new AdminCertificateResponse(
                 certificate.getId(),
@@ -131,9 +125,9 @@ public class AdminReviewController {
             @Parameter(description = "후기 ID", required = true, name = "reviewId")
             @PathVariable("reviewId") Long reviewId) {
 
-        Review review = adminReviewService.getReview(reviewId);
+        PendingReviewInfo reviewInfo = adminReviewService.getReviewWithDetails(reviewId);
 
-        return ResponseEntity.ok(toDetailResponse(review));
+        return ResponseEntity.ok(toDetailResponse(reviewInfo));
     }
 
     @Operation(summary = "[2단계] 후기 승인", description = "후기를 승인하여 일반 사용자에게 노출합니다.")
@@ -199,50 +193,24 @@ public class AdminReviewController {
         ));
     }
 
-    private AdminReviewListResponse.AdminReviewSummary toSummary(Review review) {
-        String lectureName = lectureRepository.findById(review.getLectureId())
-                .map(Lecture::getLectureName)
-                .orElse("알 수 없음");
-
-        Member member = memberRepository.findById(review.getMemberId()).orElse(null);
-        String userName = member != null ? member.getName() : "알 수 없음";
-        String nickname = member != null ? member.getNickname() : "알 수 없음";
-
-        // 수료증 상태 조회
-        Certificate certificate = certificateRepository.findById(review.getCertificateId())
-                .orElse(null);
-        String certStatus = certificate != null ? certificate.getApprovalStatus().name() : "PENDING";
-
+    private AdminReviewListResponse.AdminReviewSummary toSummary(PendingReviewInfo info) {
         return new AdminReviewListResponse.AdminReviewSummary(
-                review.getId(),
-                review.getLectureId(),
-                lectureName,
-                review.getMemberId(),
-                userName,
-                nickname,
-                review.getScore(),
-                review.getCertificateId(),
-                certStatus,
-                review.getApprovalStatus().name(),
-                review.getCreatedAt().format(FORMATTER)
+                info.reviewId(),
+                info.lectureId(),
+                info.lectureName(),
+                info.memberId(),
+                info.userName(),
+                info.nickname(),
+                info.score(),
+                info.certificateId(),
+                info.certificateApprovalStatus().name(),
+                info.reviewApprovalStatus().name(),
+                info.createdAt().format(FORMATTER)
         );
     }
 
-    private AdminReviewDetailResponse toDetailResponse(Review review) {
-        String lectureName = lectureRepository.findById(review.getLectureId())
-                .map(Lecture::getLectureName)
-                .orElse("알 수 없음");
-
-        Member member = memberRepository.findById(review.getMemberId()).orElse(null);
-        String userName = member != null ? member.getName() : "알 수 없음";
-        String nickname = member != null ? member.getNickname() : "알 수 없음";
-
-        // 수료증 상태 조회
-        Certificate certificate = certificateRepository.findById(review.getCertificateId())
-                .orElse(null);
-        String certStatus = certificate != null ? certificate.getApprovalStatus().name() : "PENDING";
-
-        List<AdminReviewDetailResponse.DetailScore> detailScores = review.getDetails().stream()
+    private AdminReviewDetailResponse toDetailResponse(PendingReviewInfo info) {
+        List<AdminReviewDetailResponse.DetailScore> detailScores = info.details().stream()
                 .map(d -> new AdminReviewDetailResponse.DetailScore(
                         d.getCategory().name(),
                         d.getScore(),
@@ -251,19 +219,19 @@ public class AdminReviewController {
                 .collect(Collectors.toList());
 
         return new AdminReviewDetailResponse(
-                review.getId(),
-                review.getLectureId(),
-                lectureName,
-                review.getMemberId(),
-                userName,
-                nickname,
-                review.getComment(),
-                review.getScore(),
-                review.getApprovalStatus().name(),
-                review.getCertificateId(),
-                certStatus,
+                info.reviewId(),
+                info.lectureId(),
+                info.lectureName(),
+                info.memberId(),
+                info.userName(),
+                info.nickname(),
+                info.comment(),
+                info.score(),
+                info.reviewApprovalStatus().name(),
+                info.certificateId(),
+                info.certificateApprovalStatus().name(),
                 detailScores,
-                review.getCreatedAt().format(FORMATTER)
+                info.createdAt().format(FORMATTER)
         );
     }
 }

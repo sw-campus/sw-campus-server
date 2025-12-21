@@ -8,8 +8,6 @@ import com.swcampus.api.review.request.DetailScoreRequest;
 import com.swcampus.api.review.request.UpdateReviewRequest;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.certificate.exception.CertificateNotVerifiedException;
-import com.swcampus.domain.member.Member;
-import com.swcampus.domain.member.MemberRepository;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.review.*;
 import com.swcampus.domain.review.exception.ReviewAlreadyExistsException;
@@ -36,7 +34,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
@@ -62,9 +59,6 @@ class ReviewControllerTest {
 
     @MockitoBean
     private ReviewService reviewService;
-
-    @MockitoBean
-    private MemberRepository memberRepository;
 
     private void setAuthentication(Long memberId) {
         MemberPrincipal principal = new MemberPrincipal(memberId, "user@example.com", Role.USER);
@@ -190,10 +184,8 @@ class ReviewControllerTest {
             given(reviewService.createReview(eq(memberId), eq(lectureId), anyString(), anyList()))
                     .willReturn(review);
 
-            Member member = Member.of(memberId, "test@example.com", "password", "홍길동", "길동이",
-                    "010-1234-5678", Role.USER, null, "서울", LocalDateTime.now(), LocalDateTime.now());
-            given(memberRepository.findById(memberId))
-                    .willReturn(Optional.of(member));
+            given(reviewService.getNickname(memberId))
+                    .willReturn("길동이");
 
             // when & then
             mockMvc.perform(post("/api/v1/reviews")
@@ -285,10 +277,8 @@ class ReviewControllerTest {
             given(reviewService.updateReview(eq(memberId), eq(reviewId), anyString(), anyList()))
                     .willReturn(review);
 
-            Member member = Member.of(memberId, "test@example.com", "password", "홍길동", "길동이",
-                    "010-1234-5678", Role.USER, null, "서울", LocalDateTime.now(), LocalDateTime.now());
-            given(memberRepository.findById(memberId))
-                    .willReturn(Optional.of(member));
+            given(reviewService.getNickname(memberId))
+                    .willReturn("길동이");
 
             // when & then
             mockMvc.perform(put("/api/v1/reviews/{reviewId}", reviewId)
@@ -374,13 +364,9 @@ class ReviewControllerTest {
             Long memberId = 1L;
 
             Review review = createMockReview(reviewId, memberId, 1L);
-            given(reviewService.getReview(reviewId))
-                    .willReturn(review);
-
-            Member member = Member.of(memberId, "test@example.com", "password", "홍길동", "길동이",
-                    "010-1234-5678", Role.USER, null, "서울", LocalDateTime.now(), LocalDateTime.now());
-            given(memberRepository.findById(memberId))
-                    .willReturn(Optional.of(member));
+            ReviewWithNickname reviewWithNickname = ReviewWithNickname.of(review, "길동이");
+            given(reviewService.getReviewWithNickname(reviewId))
+                    .willReturn(reviewWithNickname);
 
             // when & then
             mockMvc.perform(get("/api/v1/reviews/{reviewId}", reviewId))
@@ -396,7 +382,7 @@ class ReviewControllerTest {
             // given
             Long reviewId = 999L;
 
-            given(reviewService.getReview(reviewId))
+            given(reviewService.getReviewWithNickname(reviewId))
                     .willThrow(new ReviewNotFoundException());
 
             // when & then

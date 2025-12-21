@@ -24,10 +24,15 @@ import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.mypage.MypageService;
 import com.swcampus.domain.mypage.dto.CompletedLectureInfo;
-import com.swcampus.domain.mypage.dto.MyReviewInfo;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
 import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.review.Review;
+import com.swcampus.domain.review.ReviewCategory;
+import com.swcampus.domain.review.ReviewDetail;
+import com.swcampus.domain.review.ReviewService;
+import com.swcampus.domain.review.ReviewWithNickname;
+import com.swcampus.domain.review.exception.ReviewNotFoundException;
 import com.swcampus.domain.survey.MemberSurvey;
 import com.swcampus.domain.survey.MemberSurveyService;
 import java.math.BigDecimal;
@@ -78,6 +83,9 @@ class MypageControllerTest {
 
     @MockitoBean
     private MypageService mypageService;
+
+    @MockitoBean
+    private ReviewService reviewService;
 
     private MemberPrincipal memberPrincipal;
     private static final String TEST_PASSWORD = "password";
@@ -151,27 +159,6 @@ class MypageControllerTest {
     }
 
     @Test
-    @DisplayName("내 후기 목록 조회 - 성공")
-    void getMyReviews_Success() throws Exception {
-        // given
-        MyReviewInfo reviewInfo = new MyReviewInfo(
-            1L, 100L, "Test Lecture", 4.5, "Great!",
-            ApprovalStatus.APPROVED, LocalDateTime.now(), LocalDateTime.now(), false
-        );
-        given(mypageService.getMyReviews(1L)).willReturn(List.of(reviewInfo));
-        
-        // when & then
-        mockMvc.perform(get("/api/v1/mypage/reviews")
-                        .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].reviewId").value(1))
-                .andExpect(jsonPath("$[0].lectureName").value("Test Lecture"));
-        
-        verify(mypageService).getMyReviews(1L);
-    }
-
-    @Test
     @DisplayName("내 수강 완료 강의 조회 - 성공")
     void getMyCompletedLectures_Success() throws Exception {
         // given
@@ -208,6 +195,58 @@ class MypageControllerTest {
                 .andExpect(jsonPath("$").isEmpty());
         
         verify(mypageService).getCompletedLectures(1L);
+    }
+
+    @Test
+    @DisplayName("수강 완료 강의 후기 상세 조회 - 성공")
+    void getMyCompletedLectureReview_Success() throws Exception {
+        // given
+        Long lectureId = 100L;
+        List<ReviewDetail> details = List.of(
+            ReviewDetail.create(ReviewCategory.TEACHER, 4.5, "강사님이 좋았습니다"),
+            ReviewDetail.create(ReviewCategory.CURRICULUM, 4.0, "커리큘럼이 좋았습니다"),
+            ReviewDetail.create(ReviewCategory.MANAGEMENT, 4.5, "행정이 좋았습니다"),
+            ReviewDetail.create(ReviewCategory.FACILITY, 3.5, "시설이 좋았습니다"),
+            ReviewDetail.create(ReviewCategory.PROJECT, 5.0, "프로젝트가 좋았습니다")
+        );
+        Review review = Review.of(
+            1L, 1L, lectureId, 1L,
+            "좋은 강의였습니다", 4.3,
+            ApprovalStatus.APPROVED, false,
+            LocalDateTime.now(), LocalDateTime.now(),
+            details
+        );
+        ReviewWithNickname reviewWithNickname = ReviewWithNickname.of(review, "테스터");
+
+        given(reviewService.getMyReviewWithNicknameByLecture(1L, lectureId)).willReturn(reviewWithNickname);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/mypage/completed-lectures/{lectureId}/review", lectureId)
+                        .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reviewId").value(1))
+                .andExpect(jsonPath("$.lectureId").value(100))
+                .andExpect(jsonPath("$.nickname").value("테스터"))
+                .andExpect(jsonPath("$.detailScores").isArray())
+                .andExpect(jsonPath("$.detailScores.length()").value(5));
+
+        verify(reviewService).getMyReviewWithNicknameByLecture(1L, lectureId);
+    }
+
+    @Test
+    @DisplayName("수강 완료 강의 후기 상세 조회 - 후기 없음")
+    void getMyCompletedLectureReview_NotFound() throws Exception {
+        // given
+        Long lectureId = 999L;
+        given(reviewService.getMyReviewWithNicknameByLecture(1L, lectureId))
+                .willThrow(new ReviewNotFoundException());
+
+        // when & then
+        mockMvc.perform(get("/api/v1/mypage/completed-lectures/{lectureId}/review", lectureId)
+                        .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
+                .andDo(print())
+                .andExpect(status().isNotFound());
     }
 
     @Test
