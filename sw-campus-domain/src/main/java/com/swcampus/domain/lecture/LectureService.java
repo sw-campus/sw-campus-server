@@ -6,10 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.swcampus.domain.category.CategoryRepository;
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
 import com.swcampus.domain.lecture.dto.LectureSummaryDto;
@@ -24,9 +26,15 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class LectureService {
 
+	private static final Long ROOT_CATEGORY_ID = 1L;
+
 	private final LectureRepository lectureRepository;
 	private final com.swcampus.domain.storage.FileStorageService fileStorageService;
 	private final com.swcampus.domain.review.ReviewRepository reviewRepository;
+	private final CategoryRepository categoryRepository;
+
+	@Value("${app.default-image.base-url:}")
+	private String defaultImageBaseUrl;
 
 	@Transactional
 	public Lecture registerLecture(Lecture lecture) {
@@ -45,6 +53,8 @@ public class LectureService {
 
 		if (imageContent != null && imageContent.length > 0) {
 			imageUrl = fileStorageService.upload(imageContent, "lectures", imageName, contentType);
+		} else if (imageUrl == null || imageUrl.isBlank()) {
+			imageUrl = resolveDefaultImageUrl(lecture);
 		}
 
 		List<Teacher> updatedTeachers = processNewTeachers(lecture.getTeachers(), teacherImages);
@@ -238,6 +248,55 @@ public class LectureService {
 			}
 		}
 		return updatedTeachers;
+	}
+
+	private String resolveDefaultImageUrl(Lecture lecture) {
+		if (defaultImageBaseUrl == null || defaultImageBaseUrl.isBlank()) {
+			return null;
+		}
+
+		Long categoryId = lecture.extractCategoryId();
+		if (categoryId == null) {
+			return null;
+		}
+
+		Long middleCategoryId = findMiddleCategoryId(categoryId);
+		if (middleCategoryId == null) {
+			return null;
+		}
+
+		String fileName = getDefaultImageFileName(middleCategoryId);
+		if (fileName == null) {
+			return null;
+		}
+
+		return defaultImageBaseUrl + "/" + fileName;
+	}
+
+	private Long findMiddleCategoryId(Long categoryId) {
+		return categoryRepository.findById(categoryId)
+				.map(category -> {
+					Long pid = category.getPid();
+					if (pid == null || pid.equals(ROOT_CATEGORY_ID)) {
+						return categoryId;
+					}
+					return pid;
+				})
+				.orElse(null);
+	}
+
+	private String getDefaultImageFileName(Long middleCategoryId) {
+		return switch (middleCategoryId.intValue()) {
+			case 2 -> "web-development.png";
+			case 6 -> "mobile.png";
+			case 8 -> "data-ai.png";
+			case 12 -> "cloud.png";
+			case 14 -> "security.png";
+			case 16 -> "embedded-iot.png";
+			case 19 -> "game-blockchain.png";
+			case 22 -> "planning-marketing-design.png";
+			default -> null;
+		};
 	}
 
 }
