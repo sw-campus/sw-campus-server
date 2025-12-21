@@ -119,22 +119,7 @@ public class OrganizationService {
         return organizationRepository.save(organization);
     }
 
-    /**
-     * @deprecated 이전 버전과의 호환성을 위해 유지. 새로운 코드에서는 UpdateOrganizationParams를 사용하세요.
-     */
-    @Deprecated
-    @Transactional
-    public Organization updateOrganization(Long orgId, Long userId, String name, String description, 
-                                           byte[] fileContent, String fileName, String contentType) {
-        FileUploadData certificate = null;
-        if (fileContent != null && fileContent.length > 0) {
-            certificate = new FileUploadData(fileContent, fileName, contentType);
-        }
-        
-        return updateOrganization(orgId, userId, new UpdateOrganizationParams(
-            name, description, null, null, certificate, null, null, null, null, null
-        ));
-    }
+
 
     private String uploadFileIfPresent(FileUploadData file, String folder) {
         if (file == null || file.content() == null || file.content().length == 0) {
