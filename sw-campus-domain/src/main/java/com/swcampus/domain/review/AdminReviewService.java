@@ -35,46 +35,7 @@ public class AdminReviewService {
      */
     public List<PendingReviewInfo> getPendingReviewsWithDetails() {
         List<Review> reviews = reviewRepository.findPendingReviews();
-
-        if (reviews.isEmpty()) {
-            return List.of();
-        }
-
-        // 배치 조회: 강의명
-        List<Long> lectureIds = reviews.stream()
-            .map(Review::getLectureId)
-            .distinct()
-            .toList();
-        Map<Long, String> lectureNames = lectureService.getLectureNames(lectureIds);
-
-        // 배치 조회: 회원 정보
-        List<Long> memberIds = reviews.stream()
-            .map(Review::getMemberId)
-            .distinct()
-            .toList();
-        Map<Long, Member> memberMap = memberRepository.findAllByIds(memberIds).stream()
-            .collect(Collectors.toMap(Member::getId, m -> m));
-
-        // 배치 조회: 수료증 상태
-        List<Long> certificateIds = reviews.stream()
-            .map(Review::getCertificateId)
-            .distinct()
-            .toList();
-        Map<Long, Certificate> certificateMap = certificateRepository.findAllByIds(certificateIds);
-
-        // 조합하여 DTO 생성
-        return reviews.stream()
-            .map(review -> {
-                String lectureName = lectureNames.getOrDefault(review.getLectureId(), "알 수 없음");
-                Member member = memberMap.get(review.getMemberId());
-                String userName = member != null ? member.getName() : "알 수 없음";
-                String nickname = member != null ? member.getNickname() : "알 수 없음";
-                Certificate certificate = certificateMap.get(review.getCertificateId());
-                ApprovalStatus certStatus = certificate != null ? certificate.getApprovalStatus() : ApprovalStatus.PENDING;
-
-                return PendingReviewInfo.of(review, lectureName, userName, nickname, certStatus);
-            })
-            .toList();
+        return enrichReviewsWithDetails(reviews);
     }
 
     /**
@@ -213,15 +174,36 @@ public class AdminReviewService {
         }
 
         List<Review> reviews = reviewPage.getContent();
+        ReviewEnrichmentData enrichmentData = fetchEnrichmentData(reviews);
 
-        // 배치 조회: 강의명
+        return reviewPage.map(review -> toReviewInfo(review, enrichmentData));
+    }
+
+    /**
+     * 후기 목록을 PendingReviewInfo로 변환 (배치 조회로 N+1 방지)
+     */
+    private List<PendingReviewInfo> enrichReviewsWithDetails(List<Review> reviews) {
+        if (reviews.isEmpty()) {
+            return List.of();
+        }
+
+        ReviewEnrichmentData enrichmentData = fetchEnrichmentData(reviews);
+
+        return reviews.stream()
+            .map(review -> toReviewInfo(review, enrichmentData))
+            .toList();
+    }
+
+    /**
+     * 후기 목록에 필요한 연관 데이터를 배치 조회
+     */
+    private ReviewEnrichmentData fetchEnrichmentData(List<Review> reviews) {
         List<Long> lectureIds = reviews.stream()
             .map(Review::getLectureId)
             .distinct()
             .toList();
         Map<Long, String> lectureNames = lectureService.getLectureNames(lectureIds);
 
-        // 배치 조회: 회원 정보
         List<Long> memberIds = reviews.stream()
             .map(Review::getMemberId)
             .distinct()
@@ -229,23 +211,35 @@ public class AdminReviewService {
         Map<Long, Member> memberMap = memberRepository.findAllByIds(memberIds).stream()
             .collect(Collectors.toMap(Member::getId, m -> m));
 
-        // 배치 조회: 수료증 상태
         List<Long> certificateIds = reviews.stream()
             .map(Review::getCertificateId)
             .distinct()
             .toList();
         Map<Long, Certificate> certificateMap = certificateRepository.findAllByIds(certificateIds);
 
-        // 조합하여 DTO 생성
-        return reviewPage.map(review -> {
-            String lectureName = lectureNames.getOrDefault(review.getLectureId(), "알 수 없음");
-            Member member = memberMap.get(review.getMemberId());
-            String userName = member != null ? member.getName() : "알 수 없음";
-            String nickname = member != null ? member.getNickname() : "알 수 없음";
-            Certificate certificate = certificateMap.get(review.getCertificateId());
-            ApprovalStatus certStatus = certificate != null ? certificate.getApprovalStatus() : ApprovalStatus.PENDING;
-
-            return PendingReviewInfo.of(review, lectureName, userName, nickname, certStatus);
-        });
+        return new ReviewEnrichmentData(lectureNames, memberMap, certificateMap);
     }
+
+    /**
+     * Review를 PendingReviewInfo로 변환
+     */
+    private PendingReviewInfo toReviewInfo(Review review, ReviewEnrichmentData data) {
+        String lectureName = data.lectureNames().getOrDefault(review.getLectureId(), "알 수 없음");
+        Member member = data.memberMap().get(review.getMemberId());
+        String userName = member != null ? member.getName() : "알 수 없음";
+        String nickname = member != null ? member.getNickname() : "알 수 없음";
+        Certificate certificate = data.certificateMap().get(review.getCertificateId());
+        ApprovalStatus certStatus = certificate != null ? certificate.getApprovalStatus() : ApprovalStatus.PENDING;
+
+        return PendingReviewInfo.of(review, lectureName, userName, nickname, certStatus);
+    }
+
+    /**
+     * 후기 보강에 필요한 배치 조회 데이터
+     */
+    private record ReviewEnrichmentData(
+        Map<Long, String> lectureNames,
+        Map<Long, Member> memberMap,
+        Map<Long, Certificate> certificateMap
+    ) {}
 }
