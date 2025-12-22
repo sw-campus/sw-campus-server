@@ -1,0 +1,86 @@
+package com.swcampus.api.storage;
+
+import com.swcampus.api.security.CurrentMember;
+import com.swcampus.api.storage.request.PresignedUrlBatchRequest;
+import com.swcampus.api.storage.request.PresignedUploadRequest;
+import com.swcampus.api.storage.response.PresignedUploadResponse;
+import com.swcampus.api.storage.response.PresignedUrlResponse;
+import com.swcampus.domain.auth.MemberPrincipal;
+import com.swcampus.domain.member.Role;
+import com.swcampus.domain.storage.PresignedUrlService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@Tag(name = "Storage", description = "스토리지 API")
+@RestController
+@RequestMapping("/api/v1/storage")
+@RequiredArgsConstructor
+public class StorageController {
+
+    private final PresignedUrlService presignedUrlService;
+
+    @Operation(summary = "Presigned GET URL 발급", description = "S3 객체에 접근하기 위한 Presigned GET URL을 발급합니다. Public 파일은 인증 없이, Private 파일은 관리자만 접근 가능합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "발급 성공"),
+            @ApiResponse(responseCode = "403", description = "Private 파일에 대한 접근 권한 없음")
+    })
+    @GetMapping("/presigned/url")
+    public ResponseEntity<PresignedUrlResponse> getPresignedUrl(
+            @Parameter(description = "S3 객체 key", required = true, example = "lectures/2024/01/01/uuid.jpg")
+            @RequestParam("key") String key,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal MemberPrincipal member) {
+
+        boolean isAdmin = member != null && member.role() == Role.ADMIN;
+        var presignedUrl = presignedUrlService.getPresignedUrl(key, isAdmin);
+
+        return ResponseEntity.ok(PresignedUrlResponse.from(presignedUrl));
+    }
+
+    @Operation(summary = "배치 Presigned GET URL 발급", description = "여러 S3 객체에 대한 Presigned GET URL을 일괄 발급합니다. Private 파일에 대해 권한이 없으면 해당 key의 값은 null로 반환됩니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "발급 성공"),
+            @ApiResponse(responseCode = "400", description = "요청 개수가 50개 초과")
+    })
+    @PostMapping("/presigned/url/batch")
+    public ResponseEntity<Map<String, String>> getPresignedUrlBatch(
+            @Valid @RequestBody PresignedUrlBatchRequest request,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal MemberPrincipal member) {
+
+        boolean isAdmin = member != null && member.role() == Role.ADMIN;
+        var urls = presignedUrlService.getPresignedUrls(request.keys(), isAdmin);
+
+        return ResponseEntity.ok(urls);
+    }
+
+    @Operation(summary = "Presigned Upload URL 발급", description = "S3에 파일을 업로드하기 위한 Presigned PUT URL을 발급합니다. 인증이 필요합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "발급 성공"),
+            @ApiResponse(responseCode = "400", description = "지원하지 않는 카테고리"),
+            @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @PostMapping("/presigned/upload")
+    public ResponseEntity<PresignedUploadResponse> getPresignedUploadUrl(
+            @Valid @RequestBody PresignedUploadRequest request,
+            @CurrentMember MemberPrincipal member) {
+
+        var presignedUploadUrl = presignedUrlService.getPresignedUploadUrl(
+                request.category(),
+                request.fileName(),
+                request.contentType()
+        );
+
+        return ResponseEntity.ok(PresignedUploadResponse.from(presignedUploadUrl));
+    }
+}
