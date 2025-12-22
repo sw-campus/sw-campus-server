@@ -34,14 +34,14 @@ public class StorageController {
             @ApiResponse(responseCode = "200", description = "발급 성공"),
             @ApiResponse(responseCode = "403", description = "Private 파일에 대한 접근 권한 없음")
     })
-    @GetMapping("/presigned/url")
+    @GetMapping("/presigned-urls")
     public ResponseEntity<PresignedUrlResponse> getPresignedUrl(
             @Parameter(description = "S3 객체 key", required = true, example = "lectures/2024/01/01/uuid.jpg")
             @RequestParam("key") String key,
             @Parameter(hidden = true)
             @AuthenticationPrincipal MemberPrincipal member) {
 
-        boolean isAdmin = member != null && member.role() == Role.ADMIN;
+        boolean isAdmin = isAdmin(member);
         var presignedUrl = presignedUrlService.getPresignedUrl(key, isAdmin);
 
         return ResponseEntity.ok(PresignedUrlResponse.from(presignedUrl));
@@ -52,25 +52,26 @@ public class StorageController {
             @ApiResponse(responseCode = "200", description = "발급 성공"),
             @ApiResponse(responseCode = "400", description = "요청 개수가 50개 초과")
     })
-    @PostMapping("/presigned/url/batch")
+    @PostMapping("/presigned-urls/batch")
     public ResponseEntity<Map<String, String>> getPresignedUrlBatch(
             @Valid @RequestBody PresignedUrlBatchRequest request,
             @Parameter(hidden = true)
             @AuthenticationPrincipal MemberPrincipal member) {
 
-        boolean isAdmin = member != null && member.role() == Role.ADMIN;
+        boolean isAdmin = isAdmin(member);
         var urls = presignedUrlService.getPresignedUrls(request.keys(), isAdmin);
 
         return ResponseEntity.ok(urls);
     }
 
-    @Operation(summary = "Presigned Upload URL 발급", description = "S3에 파일을 업로드하기 위한 Presigned PUT URL을 발급합니다. 인증이 필요합니다.")
+    @Operation(summary = "Presigned Upload URL 발급", description = "S3에 파일을 업로드하기 위한 Presigned PUT URL을 발급합니다. 카테고리별 권한 체크가 적용됩니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "발급 성공"),
             @ApiResponse(responseCode = "400", description = "지원하지 않는 카테고리"),
-            @ApiResponse(responseCode = "401", description = "인증 필요")
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "해당 카테고리에 대한 업로드 권한 없음")
     })
-    @PostMapping("/presigned/upload")
+    @PostMapping("/presigned-urls/upload")
     public ResponseEntity<PresignedUploadResponse> getPresignedUploadUrl(
             @Valid @RequestBody PresignedUploadRequest request,
             @CurrentMember MemberPrincipal member) {
@@ -78,9 +79,14 @@ public class StorageController {
         var presignedUploadUrl = presignedUrlService.getPresignedUploadUrl(
                 request.category(),
                 request.fileName(),
-                request.contentType()
+                request.contentType(),
+                member.role()
         );
 
         return ResponseEntity.ok(PresignedUploadResponse.from(presignedUploadUrl));
+    }
+
+    private boolean isAdmin(MemberPrincipal member) {
+        return member != null && member.role() == Role.ADMIN;
     }
 }

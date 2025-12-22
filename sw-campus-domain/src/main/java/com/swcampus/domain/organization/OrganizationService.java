@@ -90,10 +90,10 @@ public class OrganizationService {
             organization.setGovAuth(params.govAuth());
         }
         
-        // 사업자등록증 업데이트 (민감정보 - private bucket 사용)
-        String certificateUrl = uploadPrivateFileIfPresent(params.certificate(), "certificates");
-        if (certificateUrl != null) {
-            organization.updateCertificateUrl(certificateUrl);
+        // 사업자등록증 업데이트 (민감정보 - private bucket 사용) - key만 저장
+        String certificateKey = uploadPrivateFileIfPresent(params.certificate(), "employment-certificates");
+        if (certificateKey != null) {
+            organization.updateCertificateKey(certificateKey);
         }
         
         // 로고 업데이트

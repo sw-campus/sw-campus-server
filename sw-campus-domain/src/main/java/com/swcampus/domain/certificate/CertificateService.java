@@ -56,11 +56,11 @@ public class CertificateService {
             throw new CertificateLectureMismatchException();
         }
 
-        // 5. S3에 이미지 업로드
-        String imageUrl = fileStorageService.upload(imageBytes, "certificates", fileName, contentType);
+        // 5. S3 Private Bucket에 이미지 업로드
+        String imageKey = fileStorageService.uploadPrivate(imageBytes, "certificates", fileName, contentType);
 
         // 6. 수료증 저장 (OCR 검증 성공 시 status = "SUCCESS")
-        Certificate certificate = Certificate.create(memberId, lectureId, imageUrl, "SUCCESS");
+        Certificate certificate = Certificate.create(memberId, lectureId, imageKey, "SUCCESS");
         return certificateRepository.save(certificate);
     }
 

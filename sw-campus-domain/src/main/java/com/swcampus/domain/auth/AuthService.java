@@ -94,10 +94,10 @@ public class AuthService {
         // 6. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(command.getPassword());
 
-        // 7. 재직증명서 S3 Private Bucket 업로드 (민감정보)
-        String certificateUrl = fileStorageService.uploadPrivate(
+        // 7. 재직증명서 S3 Private Bucket 업로드 (민감정보) - key만 저장
+        String certificateKey = fileStorageService.uploadPrivate(
                 command.getCertificateImage(),
-                "certificates",
+                "employment-certificates",
                 command.getCertificateFileName(),
                 command.getCertificateContentType()
         );
@@ -125,8 +125,8 @@ public class AuthService {
             organization = organizationRepository.findById(command.getOrganizationId())
                     .orElseThrow(() -> new OrganizationNotFoundException(command.getOrganizationId()));
 
-            // 재직증명서 URL 업데이트
-            organization.updateCertificateUrl(certificateUrl);
+            // 재직증명서 Key 업데이트
+            organization.updateCertificateKey(certificateKey);
             organization = organizationRepository.save(organization);
 
             // Member에 orgId 연결
@@ -143,7 +143,7 @@ public class AuthService {
                     savedMember.getId(),
                     command.getOrganizationName(),
                     null,
-                    certificateUrl
+                    certificateKey
             );
             Organization savedOrganization = organizationRepository.save(organization);
 

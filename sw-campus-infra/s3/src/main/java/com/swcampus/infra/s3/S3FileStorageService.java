@@ -42,12 +42,12 @@ public class S3FileStorageService implements FileStorageService {
 
     @Override
     public String uploadPrivate(byte[] content, String directory, String fileName, String contentType) {
-        return performUpload(content, directory, fileName, contentType, privateBucketName);
+        return performUploadAndGetKey(content, directory, fileName, contentType, privateBucketName);
     }
 
     @Override
-    public void deletePrivate(String fileUrl) {
-        performDelete(fileUrl, privateBucketName);
+    public void deletePrivate(String fileKey) {
+        performDeleteByKey(fileKey, privateBucketName);
     }
 
     private String performUpload(byte[] content, String directory, String fileName, String contentType, String targetBucket) {
@@ -64,9 +64,32 @@ public class S3FileStorageService implements FileStorageService {
         return String.format("https://%s.s3.%s.amazonaws.com/%s", targetBucket, region, key);
     }
 
+    private String performUploadAndGetKey(byte[] content, String directory, String fileName, String contentType, String targetBucket) {
+        String key = generateKey(directory, fileName);
+
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(targetBucket)
+                .key(key)
+                .contentType(contentType)
+                .build();
+
+        s3Client.putObject(request, RequestBody.fromBytes(content));
+
+        return key;
+    }
+
     private void performDelete(String fileUrl, String targetBucket) {
         String key = extractKeyFromUrl(fileUrl);
 
+        DeleteObjectRequest request = DeleteObjectRequest.builder()
+                .bucket(targetBucket)
+                .key(key)
+                .build();
+
+        s3Client.deleteObject(request);
+    }
+
+    private void performDeleteByKey(String key, String targetBucket) {
         DeleteObjectRequest request = DeleteObjectRequest.builder()
                 .bucket(targetBucket)
                 .key(key)

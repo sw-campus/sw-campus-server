@@ -1,5 +1,6 @@
 package com.swcampus.infra.s3;
 
+import com.swcampus.domain.member.Role;
 import com.swcampus.domain.storage.PresignedUrlService;
 import com.swcampus.domain.storage.exception.InvalidStorageCategoryException;
 import com.swcampus.domain.storage.exception.StorageAccessDeniedException;
@@ -33,6 +34,10 @@ public class S3PresignedUrlService implements PresignedUrlService {
     private static final Set<String> VALID_CATEGORIES = Set.of(
             "lectures", "organizations", "teachers", "banners", "thumbnails", "certificates", "employment-certificates", "members"
     );
+    // 관리자만 업로드 가능한 카테고리
+    private static final Set<String> ADMIN_ONLY_CATEGORIES = Set.of("banners");
+    // 기관 또는 관리자만 업로드 가능한 카테고리
+    private static final Set<String> ORGANIZATION_CATEGORIES = Set.of("lectures", "organizations", "teachers", "thumbnails");
 
     private final S3Presigner s3Presigner;
 
@@ -76,16 +81,37 @@ public class S3PresignedUrlService implements PresignedUrlService {
     }
 
     @Override
-    public PresignedUploadUrl getPresignedUploadUrl(String category, String fileName, String contentType) {
+    public PresignedUploadUrl getPresignedUploadUrl(String category, String fileName, String contentType, Role role) {
         if (!VALID_CATEGORIES.contains(category)) {
             throw new InvalidStorageCategoryException(category);
         }
+
+        validateUploadPermission(category, role);
 
         String key = generateKey(category, fileName);
         String bucket = PRIVATE_CATEGORIES.contains(category) ? privateBucket : publicBucket;
         String url = generatePresignedPutUrl(bucket, key, contentType, DEFAULT_EXPIRATION_MINUTES);
 
         return new PresignedUploadUrl(url, key, DEFAULT_EXPIRATION_MINUTES * 60);
+    }
+
+    private void validateUploadPermission(String category, Role role) {
+        // 관리자는 모든 카테고리 업로드 가능
+        if (role == Role.ADMIN) {
+            return;
+        }
+
+        // 관리자 전용 카테고리 체크
+        if (ADMIN_ONLY_CATEGORIES.contains(category)) {
+            throw new StorageAccessDeniedException();
+        }
+
+        // 기관 전용 카테고리 체크
+        if (ORGANIZATION_CATEGORIES.contains(category) && role != Role.ORGANIZATION) {
+            throw new StorageAccessDeniedException();
+        }
+
+        // 나머지 카테고리(certificates, employment-certificates, members)는 모든 인증 사용자 허용
     }
 
     private boolean isPrivateKey(String key) {

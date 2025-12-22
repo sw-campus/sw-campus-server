@@ -13,8 +13,8 @@ public record CertificateCheckResponse(
     @Schema(description = "수료증 ID", example = "1")
     Long certificateId,
 
-    @Schema(description = "수료증 이미지 URL", example = "https://example.com/cert.jpg")
-    String imageUrl,
+    @Schema(description = "수료증 이미지 S3 Key", example = "certificates/2024/01/01/uuid.jpg")
+    String imageKey,
 
     @Schema(description = "승인 상태 (PENDING, APPROVED, REJECTED)", example = "APPROVED")
     String approvalStatus,
@@ -29,13 +29,13 @@ public record CertificateCheckResponse(
         return new CertificateCheckResponse(false, null, null, null, null);
     }
 
-    public static CertificateCheckResponse certified(Long id, String imageUrl, 
+    public static CertificateCheckResponse certified(Long id, String imageKey,
                                                       String status, LocalDateTime certifiedAt) {
         return new CertificateCheckResponse(
-            true, 
-            id, 
-            imageUrl, 
-            status, 
+            true,
+            id,
+            imageKey,
+            status,
             certifiedAt != null ? certifiedAt.format(FORMATTER) : null
         );
     }

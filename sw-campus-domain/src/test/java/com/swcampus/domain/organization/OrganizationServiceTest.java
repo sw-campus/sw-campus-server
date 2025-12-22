@@ -67,8 +67,8 @@ class OrganizationServiceTest {
             // then
             assertThat(result.getName()).isEqualTo("New Name");
             assertThat(result.getDescription()).isEqualTo("New Desc");
-            assertThat(result.getCertificateUrl()).isEqualTo(newCertUrl);
-            verify(fileStorageService).uploadPrivate(eq(fileContent), eq("certificates"), eq(fileName), eq(contentType));
+            assertThat(result.getCertificateKey()).isEqualTo(newCertUrl);
+            verify(fileStorageService).uploadPrivate(eq(fileContent), eq("employment-certificates"), eq(fileName), eq(contentType));
         }
 
         @Test
@@ -92,7 +92,7 @@ class OrganizationServiceTest {
             // then
             assertThat(result.getName()).isEqualTo("New Name");
             assertThat(result.getDescription()).isEqualTo("New Desc");
-            assertThat(result.getCertificateUrl()).isEqualTo("cert.jpg"); // 기존 인증서 유지
+            assertThat(result.getCertificateKey()).isEqualTo("cert.jpg"); // 기존 인증서 유지
         }
 
         @Test

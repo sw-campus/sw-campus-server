@@ -1,5 +1,7 @@
 package com.swcampus.domain.storage;
 
+import com.swcampus.domain.member.Role;
+
 import java.util.List;
 import java.util.Map;
 
@@ -35,10 +37,12 @@ public interface PresignedUrlService {
      * @param category    파일 카테고리 (lectures, organizations, certificates 등)
      * @param fileName    원본 파일명
      * @param contentType MIME 타입
+     * @param role        사용자 역할 (카테고리별 권한 체크용)
      * @return Presigned Upload URL 정보
      * @throws com.swcampus.domain.storage.exception.InvalidStorageCategoryException 지원하지 않는 카테고리인 경우
+     * @throws com.swcampus.domain.storage.exception.StorageAccessDeniedException 해당 카테고리에 대한 업로드 권한이 없는 경우
      */
-    PresignedUploadUrl getPresignedUploadUrl(String category, String fileName, String contentType);
+    PresignedUploadUrl getPresignedUploadUrl(String category, String fileName, String contentType, Role role);
 
     /**
      * Presigned GET URL 응답 정보

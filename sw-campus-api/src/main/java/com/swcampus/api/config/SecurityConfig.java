@@ -68,8 +68,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/banners/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/members/nickname/check").permitAll()
                         // Storage API (인증 선택적)
-                        .requestMatchers(HttpMethod.GET, "/api/v1/storage/presigned/url").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/storage/presigned/url/batch").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/storage/presigned-urls").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/storage/presigned-urls/batch").permitAll()
                         // 관리자 API (인증 필요, 추후 ROLE_ADMIN 추가 가능)
                         .requestMatchers("/api/v1/admin/**").authenticated()
                         // 나머지는 인증 필요
