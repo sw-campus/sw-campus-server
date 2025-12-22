@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <configuration>
-    <!-- 콘솔 로깅 -->
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>
-                %clr(%d{HH:mm:ss.SSS}){faint} | %clr(%-5level){highlight} | %clr(%mdc{traceId:-}){cyan} | %logger{36} - %msg%n
-            </pattern>
-            <charset>utf8</charset>
-        </encoder>
-    </appender>
+    <include resource="logback/logback-appenders.xml"/>
 
     <!-- 패키지별 로그 레벨 -->
     <logger name="org.springframework" level="WARN"/>
@@ -17,6 +9,7 @@
     <logger name="com.swcampus" level="INFO"/>
 
     <root level="INFO">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="OTEL"/>
     </root>
 </configuration>
