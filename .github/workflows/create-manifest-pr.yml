@@ -75,8 +75,13 @@ jobs:
       - name: Update server image tag
         run: |
           cd manifest
-          sed -i "s|image: .*sw-campus-server:.*|image: ghcr.io/sw-campus/sw-campus-server:${{ steps.tag.outputs.tag }}|g" \
-            k8s/server/deployment.yaml
+          # develop 브랜치면 develop 환경 values.yaml 업데이트
+          if [ "${{ steps.target.outputs.branch }}" == "develop" ]; then
+            VALUES_FILE="k8s/environments/develop/values.yaml"
+          else
+            VALUES_FILE="k8s/environments/release/values.yaml"
+          fi
+          sed -i '/repository: ghcr.io\/sw-campus\/sw-campus-server$/,/pullPolicy:/ s|tag: ".*"|tag: "${{ steps.tag.outputs.tag }}"|' "$VALUES_FILE"
 
       # 6) manifest 레포에 PR 생성 (환경별)
       - name: Create PR to manifest
@@ -92,4 +97,5 @@ jobs:
           base: ${{ steps.target.outputs.branch }}
           branch: chore/server-image-${{ steps.target.outputs.env }}-${{ steps.tag.outputs.tag }}
           add-paths: |
-            k8s/server/deployment.yaml
+            k8s/environments/develop/values.yaml
+            k8s/environments/release/values.yaml
