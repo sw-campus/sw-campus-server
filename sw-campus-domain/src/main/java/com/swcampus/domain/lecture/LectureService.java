@@ -80,9 +80,9 @@ public class LectureService {
 			throw new AccessDeniedException("해당 강의를 수정할 권한이 없습니다.");
 		}
 
-		if (existingLecture.getLectureAuthStatus() != LectureAuthStatus.REJECTED) {
-			throw new LectureNotModifiableException();
-		}
+//		if (existingLecture.getLectureAuthStatus() == LectureAuthStatus.APPROVED) {
+//			throw new LectureNotModifiableException();
+//		}
 
 		String imageUrl = existingLecture.getLectureImageUrl();
 
@@ -92,11 +92,17 @@ public class LectureService {
 
 		List<Teacher> updatedTeachers = processNewTeachers(lecture.getTeachers(), teacherImages);
 
+		// 반려된 강의는 수정 시 승인 대기 상태로 변경, 그 외(승인됨, 대기중)는 기존 상태 유지
+		LectureAuthStatus newAuthStatus = existingLecture.getLectureAuthStatus();
+		if (existingLecture.getLectureAuthStatus() == LectureAuthStatus.REJECTED) {
+			newAuthStatus = LectureAuthStatus.PENDING;
+		}
+
 		Lecture updatedLecture = lecture.toBuilder()
 				.lectureId(lectureId)
 				.lectureImageUrl(imageUrl)
 				.status(existingLecture.getStatus())
-				.lectureAuthStatus(LectureAuthStatus.PENDING)
+				.lectureAuthStatus(newAuthStatus)
 				.createdAt(existingLecture.getCreatedAt())
 				.teachers(updatedTeachers)
 				.build();
