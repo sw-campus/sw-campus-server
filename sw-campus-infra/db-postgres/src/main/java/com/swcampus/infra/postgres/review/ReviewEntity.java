@@ -82,22 +82,32 @@ public class ReviewEntity extends BaseEntity {
         this.approvalStatus = review.getApprovalStatus();
         this.blurred = review.isBlurred();
 
-        // 기존 details를 category 기준으로 업데이트 (DELETE/INSERT 대신 UPDATE)
+        // 기존 details를 category 기준으로 업데이트, 추가, 삭제 처리
         if (review.getDetails() != null) {
-            Map<ReviewCategory, ReviewDetailEntity> existingDetails = this.details.stream()
-                    .collect(Collectors.toMap(ReviewDetailEntity::getCategory, d -> d));
+            Map<ReviewCategory, ReviewDetail> newDetailsMap = review.getDetails().stream()
+                    .collect(Collectors.toMap(ReviewDetail::getCategory, d -> d));
 
-            for (ReviewDetail detail : review.getDetails()) {
-                ReviewDetailEntity existing = existingDetails.get(detail.getCategory());
-                if (existing != null) {
-                    existing.update(detail);
+            // 기존 details 업데이트 또는 삭제 대상 수집
+            List<ReviewDetailEntity> toRemove = new ArrayList<>();
+            for (ReviewDetailEntity existingDetail : this.details) {
+                ReviewDetail newDetail = newDetailsMap.get(existingDetail.getCategory());
+                if (newDetail != null) {
+                    existingDetail.update(newDetail);
+                    newDetailsMap.remove(existingDetail.getCategory());
                 } else {
-                    // 기존에 없는 카테고리면 새로 추가
-                    ReviewDetailEntity newDetail = ReviewDetailEntity.from(detail);
-                    newDetail.setReview(this);
-                    this.details.add(newDetail);
+                    toRemove.add(existingDetail);
                 }
             }
+            this.details.removeAll(toRemove);
+
+            // 새로운 카테고리 추가
+            for (ReviewDetail newDetail : newDetailsMap.values()) {
+                ReviewDetailEntity newEntity = ReviewDetailEntity.from(newDetail);
+                newEntity.setReview(this);
+                this.details.add(newEntity);
+            }
+        } else {
+            this.details.clear();
         }
     }
 
