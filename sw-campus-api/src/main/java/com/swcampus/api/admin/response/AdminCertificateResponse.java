@@ -13,8 +13,8 @@ public record AdminCertificateResponse(
     @Schema(description = "강의명", example = "웹 개발 부트캠프")
     String lectureName,
 
-    @Schema(description = "수료증 이미지 S3 Key", example = "certificates/2024/01/01/uuid.jpg")
-    String imageKey,
+    @Schema(description = "수료증 이미지 URL", example = "https://s3.../certificates/2024/01/01/uuid.jpg")
+    String imageUrl,
 
     @Schema(description = "승인 상태 (PENDING, APPROVED, REJECTED)", example = "PENDING")
     String approvalStatus,
