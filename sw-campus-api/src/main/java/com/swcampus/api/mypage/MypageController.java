@@ -11,6 +11,7 @@ import com.swcampus.api.mypage.response.SurveyResponse;
 import com.swcampus.api.mypage.response.VerifyPasswordResponse;
 import com.swcampus.api.review.response.ReviewResponse;
 import com.swcampus.api.exception.FileProcessingException;
+import com.swcampus.api.lecture.response.LectureResponse;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.lecture.Lecture;
@@ -201,6 +202,31 @@ public class MypageController {
             .toList();
 
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "[기관 전용] 등록 강의 상세 조회", description = "[기관 전용] 우리 기관에서 등록한 강의의 상세 정보를 조회합니다. 승인 상태와 관계없이 조회할 수 있습니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "기관 회원이 아니거나 본인 강의가 아님"),
+        @ApiResponse(responseCode = "404", description = "강의를 찾을 수 없음")
+    })
+    @GetMapping("/lectures/{lectureId}")
+    @PreAuthorize("hasRole('ORGANIZATION')")
+    public ResponseEntity<LectureResponse> getMyLectureDetail(
+        @CurrentMember MemberPrincipal member,
+        @Parameter(description = "강의 ID", required = true)
+        @PathVariable("lectureId") Long lectureId
+    ) {
+        Organization org = organizationService.getOrganizationByUserId(member.memberId());
+        Lecture lecture = lectureService.getLecture(lectureId);
+
+        // 본인 기관의 강의인지 확인
+        if (!org.getId().equals(lecture.getOrgId())) {
+            throw new org.springframework.security.access.AccessDeniedException("본인 기관의 강의만 조회할 수 있습니다.");
+        }
+
+        return ResponseEntity.ok(LectureResponse.from(lecture, org));
     }
 
     @Operation(summary = "[기관 전용] 기관 정보 조회", description = "[기관 전용] 우리 기관의 상세 정보를 조회합니다. 기관명, 설명, 로고, 시설 이미지, 정부 인증 정보 등을 확인할 수 있습니다.")
