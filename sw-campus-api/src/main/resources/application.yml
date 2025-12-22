@@ -46,10 +46,9 @@ spring:
 
 # 로그 관련 설정
 otel:
-  service:
-    name: sw-campus-api
-  traces:
-    exporter: logging
+  resource:
+    attributes:
+      service.name: sw-campus # 관측 단위의 ID이므로 서비스명
 
 # Swagger UI 설정
 springdoc:
