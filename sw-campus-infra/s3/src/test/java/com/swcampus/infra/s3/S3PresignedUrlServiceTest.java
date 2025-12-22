@@ -1,5 +1,6 @@
 package com.swcampus.infra.s3;
 
+import com.swcampus.domain.member.Role;
 import com.swcampus.domain.storage.PresignedUrlService.PresignedUploadUrl;
 import com.swcampus.domain.storage.PresignedUrlService.PresignedUrl;
 import com.swcampus.domain.storage.exception.InvalidStorageCategoryException;
@@ -210,7 +211,7 @@ class S3PresignedUrlServiceTest {
             String contentType = "image/jpeg";
 
             // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl(category, fileName, contentType);
+            PresignedUploadUrl result = service.getPresignedUploadUrl(category, fileName, contentType, Role.ORGANIZATION);
 
             // then
             assertThat(result.uploadUrl()).isNotNull();
@@ -223,7 +224,7 @@ class S3PresignedUrlServiceTest {
         @DisplayName("certificates 카테고리로 업로드 URL을 발급받는다")
         void certificates_success() {
             // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl("certificates", "cert.pdf", "application/pdf");
+            PresignedUploadUrl result = service.getPresignedUploadUrl("certificates", "cert.pdf", "application/pdf", Role.USER);
 
             // then
             assertThat(result.key()).startsWith("certificates/");
@@ -233,7 +234,7 @@ class S3PresignedUrlServiceTest {
         @DisplayName("employment-certificates 카테고리로 업로드 URL을 발급받는다")
         void employmentCertificates_success() {
             // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl("employment-certificates", "doc.pdf", "application/pdf");
+            PresignedUploadUrl result = service.getPresignedUploadUrl("employment-certificates", "doc.pdf", "application/pdf", Role.USER);
 
             // then
             assertThat(result.key()).startsWith("employment-certificates/");
@@ -243,7 +244,7 @@ class S3PresignedUrlServiceTest {
         @DisplayName("잘못된 카테고리는 예외가 발생한다")
         void invalidCategory_throwsException() {
             // when & then
-            assertThatThrownBy(() -> service.getPresignedUploadUrl("invalid-category", "test.jpg", "image/jpeg"))
+            assertThatThrownBy(() -> service.getPresignedUploadUrl("invalid-category", "test.jpg", "image/jpeg", Role.USER))
                     .isInstanceOf(InvalidStorageCategoryException.class);
         }
 
@@ -251,7 +252,7 @@ class S3PresignedUrlServiceTest {
         @DisplayName("생성된 key는 UUID를 포함한다")
         void generatedKey_containsUuid() {
             // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "original-name.jpg", "image/jpeg");
+            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "original-name.jpg", "image/jpeg", Role.ORGANIZATION);
 
             // then
             String key = result.key();
