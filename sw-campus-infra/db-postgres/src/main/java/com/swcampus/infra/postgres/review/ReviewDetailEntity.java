@@ -52,4 +52,9 @@ public class ReviewDetailEntity {
             this.comment
         );
     }
+
+    public void update(ReviewDetail detail) {
+        this.score = detail.getScore();
+        this.comment = detail.getComment();
+    }
 }

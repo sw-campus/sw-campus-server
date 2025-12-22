@@ -2,6 +2,7 @@ package com.swcampus.infra.postgres.review;
 
 import com.swcampus.domain.review.ApprovalStatus;
 import com.swcampus.domain.review.Review;
+import com.swcampus.domain.review.ReviewCategory;
 import com.swcampus.domain.review.ReviewDetail;
 import com.swcampus.infra.postgres.BaseEntity;
 import jakarta.persistence.*;
@@ -11,6 +12,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "reviews")
@@ -67,6 +70,35 @@ public class ReviewEntity extends BaseEntity {
         }
 
         return entity;
+    }
+
+    /**
+     * 기존 Entity의 값을 업데이트합니다.
+     * JPA Auditing이 @LastModifiedDate를 자동으로 갱신합니다.
+     */
+    public void update(Review review) {
+        this.comment = review.getComment();
+        this.score = review.getScore();
+        this.approvalStatus = review.getApprovalStatus();
+        this.blurred = review.isBlurred();
+
+        // 기존 details를 category 기준으로 업데이트 (DELETE/INSERT 대신 UPDATE)
+        if (review.getDetails() != null) {
+            Map<ReviewCategory, ReviewDetailEntity> existingDetails = this.details.stream()
+                    .collect(Collectors.toMap(ReviewDetailEntity::getCategory, d -> d));
+
+            for (ReviewDetail detail : review.getDetails()) {
+                ReviewDetailEntity existing = existingDetails.get(detail.getCategory());
+                if (existing != null) {
+                    existing.update(detail);
+                } else {
+                    // 기존에 없는 카테고리면 새로 추가
+                    ReviewDetailEntity newDetail = ReviewDetailEntity.from(detail);
+                    newDetail.setReview(this);
+                    this.details.add(newDetail);
+                }
+            }
+        }
     }
 
     public Review toDomain() {
