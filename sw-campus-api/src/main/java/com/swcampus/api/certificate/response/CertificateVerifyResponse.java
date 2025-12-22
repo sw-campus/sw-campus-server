@@ -10,8 +10,8 @@ public record CertificateVerifyResponse(
     @Schema(description = "강의 ID", example = "10")
     Long lectureId,
 
-    @Schema(description = "수료증 이미지 URL", example = "https://example.com/cert.jpg")
-    String imageUrl,
+    @Schema(description = "수료증 이미지 S3 Key", example = "certificates/2024/01/01/uuid.jpg")
+    String imageKey,
 
     @Schema(description = "승인 상태 (PENDING)", example = "PENDING")
     String approvalStatus,
@@ -19,12 +19,12 @@ public record CertificateVerifyResponse(
     @Schema(description = "안내 메시지", example = "수료증 인증이 완료되었습니다. 관리자 승인 후 후기 작성이 가능합니다.")
     String message
 ) {
-    public static CertificateVerifyResponse of(Long certificateId, Long lectureId, 
-                                                String imageUrl, String approvalStatus) {
+    public static CertificateVerifyResponse of(Long certificateId, Long lectureId,
+                                                String imageKey, String approvalStatus) {
         return new CertificateVerifyResponse(
             certificateId,
             lectureId,
-            imageUrl,
+            imageKey,
             approvalStatus,
             "수료증 인증이 완료되었습니다. 관리자 승인 후 후기 작성이 가능합니다."
         );

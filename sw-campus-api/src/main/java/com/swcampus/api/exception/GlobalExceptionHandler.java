@@ -26,6 +26,10 @@ import com.swcampus.domain.cart.exception.CartLimitExceededException;
 import com.swcampus.domain.organization.exception.OrganizationNotApprovedException;
 import com.swcampus.domain.survey.exception.SurveyAlreadyExistsException;
 import com.swcampus.domain.survey.exception.SurveyNotFoundException;
+import com.swcampus.domain.storage.exception.InvalidStorageCategoryException;
+import com.swcampus.domain.storage.exception.StorageAccessDeniedException;
+import com.swcampus.domain.storage.exception.StorageBatchLimitExceededException;
+import com.swcampus.domain.storage.exception.StorageKeyNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -257,6 +261,36 @@ public class GlobalExceptionHandler {
                 log.warn("설문조사 중복: {}", e.getMessage());
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                                 .body(ErrorResponse.of(HttpStatus.CONFLICT.value(), e.getMessage()));
+        }
+
+        // === Storage 관련 예외 ===
+
+        @ExceptionHandler(StorageKeyNotFoundException.class)
+        public ResponseEntity<ErrorResponse> handleStorageKeyNotFoundException(StorageKeyNotFoundException e) {
+                log.warn("Storage key 조회 실패: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ErrorResponse.of(HttpStatus.NOT_FOUND.value(), e.getMessage()));
+        }
+
+        @ExceptionHandler(StorageAccessDeniedException.class)
+        public ResponseEntity<ErrorResponse> handleStorageAccessDeniedException(StorageAccessDeniedException e) {
+                log.warn("Storage 접근 거부: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body(ErrorResponse.of(HttpStatus.FORBIDDEN.value(), e.getMessage()));
+        }
+
+        @ExceptionHandler(StorageBatchLimitExceededException.class)
+        public ResponseEntity<ErrorResponse> handleStorageBatchLimitExceededException(StorageBatchLimitExceededException e) {
+                log.warn("Storage 배치 한도 초과: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+        }
+
+        @ExceptionHandler(InvalidStorageCategoryException.class)
+        public ResponseEntity<ErrorResponse> handleInvalidStorageCategoryException(InvalidStorageCategoryException e) {
+                log.warn("Storage 카테고리 오류: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
         }
 
         // === Multipart 예외 ===

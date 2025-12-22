@@ -13,16 +13,16 @@ public class Certificate {
     private Long id;
     private Long memberId;
     private Long lectureId;
-    private String imageUrl;
+    private String imageKey;
     private String status;
     private ApprovalStatus approvalStatus;
     private LocalDateTime createdAt;
 
-    public static Certificate create(Long memberId, Long lectureId, String imageUrl, String status) {
+    public static Certificate create(Long memberId, Long lectureId, String imageKey, String status) {
         Certificate certificate = new Certificate();
         certificate.memberId = memberId;
         certificate.lectureId = lectureId;
-        certificate.imageUrl = imageUrl;
+        certificate.imageKey = imageKey;
         certificate.status = status;
         certificate.approvalStatus = ApprovalStatus.PENDING;
         certificate.createdAt = LocalDateTime.now();
@@ -30,13 +30,13 @@ public class Certificate {
     }
 
     public static Certificate of(Long id, Long memberId, Long lectureId,
-                                  String imageUrl, String status,
+                                  String imageKey, String status,
                                   ApprovalStatus approvalStatus, LocalDateTime createdAt) {
         Certificate certificate = new Certificate();
         certificate.id = id;
         certificate.memberId = memberId;
         certificate.lectureId = lectureId;
-        certificate.imageUrl = imageUrl;
+        certificate.imageKey = imageKey;
         certificate.status = status;
         certificate.approvalStatus = approvalStatus;
         certificate.createdAt = createdAt;

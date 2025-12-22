@@ -21,8 +21,8 @@ public class AdminOrganizationDetailResponse {
     @Schema(description = "기관 설명", example = "기관 설명입니다.")
     private String description;
 
-    @Schema(description = "재직증명서 URL", example = "https://s3.../certificate.jpg")
-    private String certificateUrl;
+    @Schema(description = "재직증명서 S3 Key", example = "employment-certificates/2024/01/01/uuid.jpg")
+    private String certificateKey;
 
     @Schema(description = "승인 상태", example = "PENDING")
     private ApprovalStatus approvalStatus;
@@ -41,7 +41,7 @@ public class AdminOrganizationDetailResponse {
                 .id(organization.getId())
                 .name(organization.getName())
                 .description(organization.getDescription())
-                .certificateUrl(organization.getCertificateUrl())
+                .certificateKey(organization.getCertificateKey())
                 .approvalStatus(organization.getApprovalStatus())
                 .homepage(organization.getHomepage())
                 .createdAt(organization.getCreatedAt())
