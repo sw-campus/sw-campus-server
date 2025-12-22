@@ -334,8 +334,8 @@ class ReviewServiceTest {
         }
 
         @Test
-        @DisplayName("대기중(PENDING)인 후기 수정 시 예외 발생")
-        void updateReview_pending_throwsException() {
+        @DisplayName("대기중(PENDING)인 후기 수정 성공")
+        void updateReview_pending_success() {
             // given
             Long memberId = 1L;
             Long reviewId = 1L;
@@ -345,11 +345,17 @@ class ReviewServiceTest {
 
             given(reviewRepository.findById(reviewId))
                     .willReturn(Optional.of(review));
+            given(reviewRepository.save(any(Review.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
-            // when & then
-            assertThatThrownBy(() -> reviewService.updateReview(
-                    memberId, reviewId, "테스트", List.of()
-            )).isInstanceOf(ReviewNotModifiableException.class);
+            // when
+            Review result = reviewService.updateReview(
+                    memberId, reviewId, "수정된 후기", createDefaultDetails()
+            );
+
+            // then
+            assertThat(result.getComment()).isEqualTo("수정된 후기");
+            assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
         }
     }
 
@@ -391,6 +397,182 @@ class ReviewServiceTest {
 
             // when & then
             assertThatThrownBy(() -> reviewService.getReview(reviewId))
+                    .isInstanceOf(ReviewNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("후기 상세 조회 (접근 제어)")
+    class GetReviewWithNicknameTest {
+
+        @Test
+        @DisplayName("본인의 PENDING 후기 조회 성공")
+        void getReviewWithNickname_owner_pending_success() {
+            // given
+            Long reviewId = 1L;
+            Long memberId = 1L;
+            Review review = Review.of(
+                    reviewId, memberId, 1L, 1L, "테스트 후기",
+                    4.5, ApprovalStatus.PENDING, false,
+                    LocalDateTime.now(), LocalDateTime.now(),
+                    createDefaultDetails()
+            );
+            Member member = createMemberWithNickname("홍길동");
+
+            given(reviewRepository.findById(reviewId))
+                    .willReturn(Optional.of(review));
+            given(memberRepository.findById(memberId))
+                    .willReturn(Optional.of(member));
+
+            // when
+            ReviewWithNickname result = reviewService.getReviewWithNickname(reviewId, memberId);
+
+            // then
+            assertThat(result.review().getId()).isEqualTo(reviewId);
+            assertThat(result.nickname()).isEqualTo("홍길동");
+        }
+
+        @Test
+        @DisplayName("본인의 REJECTED 후기 조회 성공")
+        void getReviewWithNickname_owner_rejected_success() {
+            // given
+            Long reviewId = 1L;
+            Long memberId = 1L;
+            Review review = Review.of(
+                    reviewId, memberId, 1L, 1L, "테스트 후기",
+                    4.5, ApprovalStatus.REJECTED, false,
+                    LocalDateTime.now(), LocalDateTime.now(),
+                    createDefaultDetails()
+            );
+            Member member = createMemberWithNickname("홍길동");
+
+            given(reviewRepository.findById(reviewId))
+                    .willReturn(Optional.of(review));
+            given(memberRepository.findById(memberId))
+                    .willReturn(Optional.of(member));
+
+            // when
+            ReviewWithNickname result = reviewService.getReviewWithNickname(reviewId, memberId);
+
+            // then
+            assertThat(result.review().getId()).isEqualTo(reviewId);
+        }
+
+        @Test
+        @DisplayName("타인의 APPROVED 후기 조회 성공")
+        void getReviewWithNickname_otherUser_approved_success() {
+            // given
+            Long reviewId = 1L;
+            Long ownerId = 1L;
+            Long requesterId = 2L;
+            Review review = Review.of(
+                    reviewId, ownerId, 1L, 1L, "테스트 후기",
+                    4.5, ApprovalStatus.APPROVED, false,
+                    LocalDateTime.now(), LocalDateTime.now(),
+                    createDefaultDetails()
+            );
+            Member owner = createMemberWithNickname("홍길동");
+
+            given(reviewRepository.findById(reviewId))
+                    .willReturn(Optional.of(review));
+            given(memberRepository.findById(ownerId))
+                    .willReturn(Optional.of(owner));
+
+            // when
+            ReviewWithNickname result = reviewService.getReviewWithNickname(reviewId, requesterId);
+
+            // then
+            assertThat(result.review().getId()).isEqualTo(reviewId);
+        }
+
+        @Test
+        @DisplayName("미인증 사용자의 APPROVED 후기 조회 성공")
+        void getReviewWithNickname_unauthenticated_approved_success() {
+            // given
+            Long reviewId = 1L;
+            Long ownerId = 1L;
+            Review review = Review.of(
+                    reviewId, ownerId, 1L, 1L, "테스트 후기",
+                    4.5, ApprovalStatus.APPROVED, false,
+                    LocalDateTime.now(), LocalDateTime.now(),
+                    createDefaultDetails()
+            );
+            Member owner = createMemberWithNickname("홍길동");
+
+            given(reviewRepository.findById(reviewId))
+                    .willReturn(Optional.of(review));
+            given(memberRepository.findById(ownerId))
+                    .willReturn(Optional.of(owner));
+
+            // when (null requesterId = 미인증)
+            ReviewWithNickname result = reviewService.getReviewWithNickname(reviewId, null);
+
+            // then
+            assertThat(result.review().getId()).isEqualTo(reviewId);
+        }
+
+        @Test
+        @DisplayName("타인의 PENDING 후기 조회 시 예외 발생")
+        void getReviewWithNickname_otherUser_pending_throwsException() {
+            // given
+            Long reviewId = 1L;
+            Long ownerId = 1L;
+            Long requesterId = 2L;
+            Review review = Review.of(
+                    reviewId, ownerId, 1L, 1L, "테스트 후기",
+                    4.5, ApprovalStatus.PENDING, false,
+                    LocalDateTime.now(), LocalDateTime.now(),
+                    createDefaultDetails()
+            );
+
+            given(reviewRepository.findById(reviewId))
+                    .willReturn(Optional.of(review));
+
+            // when & then
+            assertThatThrownBy(() -> reviewService.getReviewWithNickname(reviewId, requesterId))
+                    .isInstanceOf(ReviewNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("미인증 사용자의 PENDING 후기 조회 시 예외 발생")
+        void getReviewWithNickname_unauthenticated_pending_throwsException() {
+            // given
+            Long reviewId = 1L;
+            Long ownerId = 1L;
+            Review review = Review.of(
+                    reviewId, ownerId, 1L, 1L, "테스트 후기",
+                    4.5, ApprovalStatus.PENDING, false,
+                    LocalDateTime.now(), LocalDateTime.now(),
+                    createDefaultDetails()
+            );
+
+            given(reviewRepository.findById(reviewId))
+                    .willReturn(Optional.of(review));
+
+            // when & then (null requesterId = 미인증)
+            assertThatThrownBy(() -> reviewService.getReviewWithNickname(reviewId, null))
+                    .isInstanceOf(ReviewNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("타인의 REJECTED 후기 조회 시 예외 발생")
+        void getReviewWithNickname_otherUser_rejected_throwsException() {
+            // given
+            Long reviewId = 1L;
+            Long ownerId = 1L;
+            Long requesterId = 2L;
+            Review review = Review.of(
+                    reviewId, ownerId, 1L, 1L, "테스트 후기",
+                    4.5, ApprovalStatus.REJECTED, false,
+                    LocalDateTime.now(), LocalDateTime.now(),
+                    createDefaultDetails()
+            );
+
+            given(reviewRepository.findById(reviewId))
+                    .willReturn(Optional.of(review));
+
+            // when & then
+            assertThatThrownBy(() -> reviewService.getReviewWithNickname(reviewId, requesterId))
                     .isInstanceOf(ReviewNotFoundException.class);
         }
     }
