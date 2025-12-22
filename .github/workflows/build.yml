@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - develop
   release:
     types: [published]
   workflow_dispatch:
@@ -87,4 +88,10 @@ jobs:
           
           docker build -t $IMAGE:$TAG .
           docker push $IMAGE:$TAG
+          
+          # develop 브랜치일 때 develop 태그로도 푸시
+          if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+            docker tag $IMAGE:$TAG $IMAGE:develop
+            docker push $IMAGE:develop
+          fi
 
