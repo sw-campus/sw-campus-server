@@ -73,7 +73,7 @@ public class AdminOrganizationService {
 
     /**
      * 기관 상태별 통계를 조회합니다.
-     * 재직증명서(certificateUrl)를 제출한 기관만 카운트합니다.
+     * 회원이 등록된(Member.orgId가 존재하는) 기관만 카운트합니다.
      */
     public OrganizationApprovalStats getStats() {
         long total = organizationRepository.countAll();

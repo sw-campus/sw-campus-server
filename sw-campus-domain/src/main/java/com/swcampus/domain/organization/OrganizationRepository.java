@@ -21,12 +21,12 @@ public interface OrganizationRepository {
 
     List<Organization> findByNameContaining(String keyword);
 
-    // 재직증명서 제출한 기관만 검색 (목록용)
+    // 회원이 등록된 기관만 검색 (목록용)
     Page<Organization> searchByStatusAndKeyword(ApprovalStatus status, String keyword, Pageable pageable);
 
     java.util.List<Organization> findAllByIds(java.util.List<Long> ids);
 
-    // 재직증명서 제출한 기관만 카운트 (통계용)
+    // 회원이 등록된 기관만 카운트 (통계용)
     long countAll();
     long countByApprovalStatus(ApprovalStatus status);
 }

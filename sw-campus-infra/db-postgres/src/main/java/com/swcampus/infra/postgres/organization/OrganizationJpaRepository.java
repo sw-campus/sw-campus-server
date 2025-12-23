@@ -17,23 +17,23 @@ public interface OrganizationJpaRepository extends JpaRepository<OrganizationEnt
 
     List<OrganizationEntity> findByNameContaining(String name);
 
-    // 재직증명서 제출한 기관만 목록 조회 (certificateKey가 있는 경우만)
-    @Query("SELECT o FROM OrganizationEntity o WHERE o.certificateKey IS NOT NULL AND LOWER(o.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    Page<OrganizationEntity> findWithCertificateByNameContainingIgnoreCase(String name, Pageable pageable);
+    // 회원이 등록된 기관만 목록 조회 (Member.orgId가 존재하는 경우만)
+    @Query("SELECT o FROM OrganizationEntity o WHERE EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id) AND LOWER(o.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    Page<OrganizationEntity> findWithMemberRegistrationByNameContainingIgnoreCase(String name, Pageable pageable);
 
-    @Query("SELECT o FROM OrganizationEntity o WHERE o.certificateKey IS NOT NULL AND o.approvalStatus = :status")
-    Page<OrganizationEntity> findWithCertificateByApprovalStatus(ApprovalStatus status, Pageable pageable);
+    @Query("SELECT o FROM OrganizationEntity o WHERE EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id) AND o.approvalStatus = :status")
+    Page<OrganizationEntity> findWithMemberRegistrationByApprovalStatus(ApprovalStatus status, Pageable pageable);
 
-    @Query("SELECT o FROM OrganizationEntity o WHERE o.certificateKey IS NOT NULL AND o.approvalStatus = :status AND LOWER(o.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    Page<OrganizationEntity> findWithCertificateByApprovalStatusAndNameContainingIgnoreCase(ApprovalStatus status, String name, Pageable pageable);
+    @Query("SELECT o FROM OrganizationEntity o WHERE EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id) AND o.approvalStatus = :status AND LOWER(o.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    Page<OrganizationEntity> findWithMemberRegistrationByApprovalStatusAndNameContainingIgnoreCase(ApprovalStatus status, String name, Pageable pageable);
 
-    @Query("SELECT o FROM OrganizationEntity o WHERE o.certificateKey IS NOT NULL")
-    Page<OrganizationEntity> findAllWithCertificate(Pageable pageable);
+    @Query("SELECT o FROM OrganizationEntity o WHERE EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id)")
+    Page<OrganizationEntity> findAllWithMemberRegistration(Pageable pageable);
 
-    // 재직증명서 제출한 기관만 카운트 (certificateKey가 있는 경우만)
-    @Query("SELECT COUNT(o) FROM OrganizationEntity o WHERE o.certificateKey IS NOT NULL")
-    long countWithCertificate();
+    // 회원이 등록된 기관만 카운트 (Member.orgId가 존재하는 경우만)
+    @Query("SELECT COUNT(o) FROM OrganizationEntity o WHERE EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id)")
+    long countWithMemberRegistration();
 
-    @Query("SELECT COUNT(o) FROM OrganizationEntity o WHERE o.approvalStatus = :status AND o.certificateKey IS NOT NULL")
-    long countByApprovalStatusWithCertificate(ApprovalStatus status);
+    @Query("SELECT COUNT(o) FROM OrganizationEntity o WHERE o.approvalStatus = :status AND EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id)")
+    long countByApprovalStatusWithMemberRegistration(ApprovalStatus status);
 }

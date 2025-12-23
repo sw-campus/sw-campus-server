@@ -76,29 +76,29 @@ public class OrganizationEntityRepository implements OrganizationRepository {
         boolean hasStatus = status != null;
         boolean hasKeyword = keyword != null && !keyword.isBlank();
 
-        // 재직증명서 제출한 기관만 검색
+        // 회원이 등록된 기관만 검색
         if (hasStatus && hasKeyword) {
-            return jpaRepository.findWithCertificateByApprovalStatusAndNameContainingIgnoreCase(status, keyword, pageable)
+            return jpaRepository.findWithMemberRegistrationByApprovalStatusAndNameContainingIgnoreCase(status, keyword, pageable)
                     .map(OrganizationEntity::toDomain);
         } else if (hasStatus) {
-            return jpaRepository.findWithCertificateByApprovalStatus(status, pageable)
+            return jpaRepository.findWithMemberRegistrationByApprovalStatus(status, pageable)
                     .map(OrganizationEntity::toDomain);
         } else if (hasKeyword) {
-            return jpaRepository.findWithCertificateByNameContainingIgnoreCase(keyword, pageable)
+            return jpaRepository.findWithMemberRegistrationByNameContainingIgnoreCase(keyword, pageable)
                     .map(OrganizationEntity::toDomain);
         } else {
-            return jpaRepository.findAllWithCertificate(pageable)
+            return jpaRepository.findAllWithMemberRegistration(pageable)
                     .map(OrganizationEntity::toDomain);
         }
     }
 
     @Override
     public long countAll() {
-        return jpaRepository.countWithCertificate();
+        return jpaRepository.countWithMemberRegistration();
     }
 
     @Override
     public long countByApprovalStatus(ApprovalStatus status) {
-        return jpaRepository.countByApprovalStatusWithCertificate(status);
+        return jpaRepository.countByApprovalStatusWithMemberRegistration(status);
     }
 }
