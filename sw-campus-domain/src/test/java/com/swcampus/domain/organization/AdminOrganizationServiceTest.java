@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;

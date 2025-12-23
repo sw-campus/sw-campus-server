@@ -42,10 +42,10 @@ public class AdminBannerService {
     }
 
     /**
-     * 배너 검색 (페이징, 키워드, 기간 상태)
+     * 배너 검색 (페이징, 키워드, 기간 상태, 타입)
      */
-    public Page<BannerDetailsDto> searchBanners(String keyword, String periodStatus, Pageable pageable) {
-        Page<Banner> bannerPage = bannerRepository.searchBanners(keyword, periodStatus, pageable);
+    public Page<BannerDetailsDto> searchBanners(String keyword, BannerPeriodStatus periodStatus, BannerType type, Pageable pageable) {
+        Page<Banner> bannerPage = bannerRepository.searchBanners(keyword, periodStatus, type, pageable);
         
         List<Long> lectureIds = bannerPage.getContent().stream()
                 .map(Banner::getLectureId)
@@ -183,4 +183,19 @@ public class AdminBannerService {
         String lectureName = lectureNames.getOrDefault(banner.getLectureId(), UNKNOWN_LECTURE_NAME);
         return BannerDetailsDto.from(banner, lectureName);
     }
+
+    /**
+     * 배너 상태별 통계를 조회합니다.
+     */
+    public BannerStats getStats() {
+        long total = bannerRepository.countAll();
+        long active = bannerRepository.countByIsActive(true);
+        long inactive = bannerRepository.countByIsActive(false);
+        long scheduled = bannerRepository.countByPeriodStatus(BannerPeriodStatus.SCHEDULED);
+        long currentlyActive = bannerRepository.countByPeriodStatus(BannerPeriodStatus.ACTIVE);
+        long ended = bannerRepository.countByPeriodStatus(BannerPeriodStatus.ENDED);
+        return new BannerStats(total, active, inactive, scheduled, currentlyActive, ended);
+    }
+
+    public record BannerStats(long total, long active, long inactive, long scheduled, long currentlyActive, long ended) {}
 }

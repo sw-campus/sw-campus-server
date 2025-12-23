@@ -12,7 +12,7 @@ import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.auth.exception.InvalidCredentialsException;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.Role;
-import com.swcampus.domain.organization.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
 import jakarta.servlet.http.Cookie;

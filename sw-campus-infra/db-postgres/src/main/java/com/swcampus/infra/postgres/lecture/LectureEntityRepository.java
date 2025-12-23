@@ -254,4 +254,14 @@ public class LectureEntityRepository implements LectureRepository {
 				})
 				.toList();
 	}
+
+	@Override
+	public long countAll() {
+		return jpaRepository.count();
+	}
+
+	@Override
+	public long countByAuthStatus(LectureAuthStatus status) {
+		return jpaRepository.countByLectureAuthStatus(status);
+	}
 }

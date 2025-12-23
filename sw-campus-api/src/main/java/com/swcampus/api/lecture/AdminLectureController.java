@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.swcampus.api.admin.response.ApprovalStatsResponse;
 import com.swcampus.api.exception.ErrorResponse;
 import com.swcampus.api.lecture.response.AdminLectureApprovalResponse;
 import com.swcampus.api.lecture.response.AdminLectureSummaryResponse;
@@ -42,6 +43,18 @@ public class AdminLectureController {
 
     private final AdminLectureService adminLectureService;
     private final AdminOrganizationService adminOrganizationService;
+
+    @Operation(summary = "강의 상태별 통계 조회", description = "전체/대기/승인/반려 강의 수를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/stats")
+    public ResponseEntity<ApprovalStatsResponse> getStats() {
+        var stats = adminLectureService.getStats();
+        return ResponseEntity.ok(ApprovalStatsResponse.of(stats.total(), stats.pending(), stats.approved(), stats.rejected()));
+    }
 
     @Operation(summary = "강의 목록 조회/검색", description = "강의 목록을 조회하고 검색합니다. 승인 상태와 강의명으로 필터링할 수 있습니다.")
     @ApiResponses({

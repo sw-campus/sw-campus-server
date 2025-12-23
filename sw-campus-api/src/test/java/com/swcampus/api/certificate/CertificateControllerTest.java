@@ -9,7 +9,7 @@ import com.swcampus.domain.certificate.CertificateService;
 import com.swcampus.domain.certificate.exception.CertificateAlreadyExistsException;
 import com.swcampus.domain.certificate.exception.CertificateLectureMismatchException;
 import com.swcampus.domain.member.Role;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

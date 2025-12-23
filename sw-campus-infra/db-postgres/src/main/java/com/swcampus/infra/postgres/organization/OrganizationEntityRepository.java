@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import com.swcampus.domain.organization.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationRepository;
 
@@ -76,18 +76,29 @@ public class OrganizationEntityRepository implements OrganizationRepository {
         boolean hasStatus = status != null;
         boolean hasKeyword = keyword != null && !keyword.isBlank();
 
+        // 회원이 등록된 기관만 검색
         if (hasStatus && hasKeyword) {
-            return jpaRepository.findByApprovalStatusAndNameContainingIgnoreCase(status, keyword, pageable)
+            return jpaRepository.findWithMemberRegistrationByApprovalStatusAndNameContainingIgnoreCase(status, keyword, pageable)
                     .map(OrganizationEntity::toDomain);
         } else if (hasStatus) {
-            return jpaRepository.findByApprovalStatus(status, pageable)
+            return jpaRepository.findWithMemberRegistrationByApprovalStatus(status, pageable)
                     .map(OrganizationEntity::toDomain);
         } else if (hasKeyword) {
-            return jpaRepository.findByNameContainingIgnoreCase(keyword, pageable)
+            return jpaRepository.findWithMemberRegistrationByNameContainingIgnoreCase(keyword, pageable)
                     .map(OrganizationEntity::toDomain);
         } else {
-            return jpaRepository.findAll(pageable)
+            return jpaRepository.findAllWithMemberRegistration(pageable)
                     .map(OrganizationEntity::toDomain);
         }
+    }
+
+    @Override
+    public long countAll() {
+        return jpaRepository.countWithMemberRegistration();
+    }
+
+    @Override
+    public long countByApprovalStatus(ApprovalStatus status) {
+        return jpaRepository.countByApprovalStatusWithMemberRegistration(status);
     }
 }

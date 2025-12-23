@@ -36,4 +36,8 @@ public interface LectureRepository {
      * 자식 컬렉션(quals, steps, adds 등)은 건드리지 않습니다.
      */
     Lecture updateAuthStatus(Long lectureId, LectureAuthStatus status);
+
+    // Statistics methods
+    long countAll();
+    long countByAuthStatus(LectureAuthStatus status);
 }

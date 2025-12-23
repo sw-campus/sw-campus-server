@@ -1,6 +1,6 @@
 package com.swcampus.domain.mypage.dto;
 
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import java.time.LocalDateTime;
 
 /**

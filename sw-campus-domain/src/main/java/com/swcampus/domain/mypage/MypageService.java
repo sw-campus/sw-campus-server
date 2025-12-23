@@ -7,7 +7,7 @@ import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.mypage.dto.CompletedLectureInfo;
 import com.swcampus.domain.mypage.dto.MyReviewInfo;
 import com.swcampus.domain.organization.OrganizationService;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewService;
 import java.util.List;
