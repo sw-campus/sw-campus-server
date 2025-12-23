@@ -11,12 +11,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.method.HandlerMethod;
 
 import com.swcampus.domain.ratelimit.RateLimitRepository;
+import com.swcampus.domain.ratelimit.exception.RateLimitExceededException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RateLimitInterceptor - Rate Limiting 테스트")
@@ -54,24 +54,21 @@ class RateLimitInterceptorTest {
 
         // then
         assertThat(result).isTrue();
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.getStatus()).isEqualTo(200);
     }
 
     @Test
-    @DisplayName("Rate limit 초과 시 429 반환")
-    void preHandle_exceedsLimit_returns429() throws Exception {
+    @DisplayName("Rate limit 초과 시 RateLimitExceededException 발생")
+    void preHandle_exceedsLimit_throwsException() {
         // given
         RateLimited rateLimited = createRateLimitedAnnotation("test-api", 20, 60);
         when(handlerMethod.getMethodAnnotation(RateLimited.class)).thenReturn(rateLimited);
         when(rateLimitRepository.incrementAndGet(eq("test-api:192.168.1.1"), eq(60L))).thenReturn(21L);
 
-        // when
-        boolean result = rateLimitInterceptor.preHandle(request, response, handlerMethod);
-
-        // then
-        assertThat(result).isFalse();
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
-        assertThat(response.getContentAsString()).contains("요청이 너무 많습니다");
+        // when & then
+        assertThatThrownBy(() -> rateLimitInterceptor.preHandle(request, response, handlerMethod))
+                .isInstanceOf(RateLimitExceededException.class)
+                .hasMessage("요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
     }
 
     @Test

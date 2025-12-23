@@ -1,12 +1,12 @@
 package com.swcampus.api.ratelimit;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import com.swcampus.domain.ratelimit.RateLimitRepository;
+import com.swcampus.domain.ratelimit.exception.RateLimitExceededException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,7 +22,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private final RateLimitRepository rateLimitRepository;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (!(handler instanceof HandlerMethod handlerMethod)) {
             return true;
         }
@@ -39,10 +39,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
         if (currentCount > rateLimited.limit()) {
             log.warn("Rate limit exceeded for key: {}, count: {}, limit: {}", rateLimitKey, currentCount, rateLimited.limit());
-            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"message\":\"요청이 너무 많습니다. 잠시 후 다시 시도해주세요.\"}");
-            return false;
+            throw new RateLimitExceededException();
         }
 
         return true;

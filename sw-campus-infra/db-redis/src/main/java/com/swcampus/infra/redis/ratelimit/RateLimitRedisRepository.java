@@ -26,7 +26,8 @@ public class RateLimitRedisRepository implements RateLimitRepository {
         try {
             Long count = redisTemplate.opsForValue().increment(redisKey);
             if (count == null) {
-                return 1L;
+                log.warn("Redis increment returned null for key: {}. Assuming fail-open.", redisKey);
+                return 0L;
             }
 
             // 첫 번째 요청인 경우 TTL 설정

@@ -24,6 +24,7 @@ import com.swcampus.domain.review.exception.ReviewNotOwnerException;
 import com.swcampus.domain.cart.exception.AlreadyInCartException;
 import com.swcampus.domain.cart.exception.CartLimitExceededException;
 import com.swcampus.domain.organization.exception.OrganizationNotApprovedException;
+import com.swcampus.domain.ratelimit.exception.RateLimitExceededException;
 import com.swcampus.domain.survey.exception.SurveyAlreadyExistsException;
 import com.swcampus.domain.survey.exception.SurveyNotFoundException;
 import com.swcampus.domain.storage.exception.InvalidStorageCategoryException;
@@ -291,6 +292,15 @@ public class GlobalExceptionHandler {
                 log.warn("Storage 카테고리 오류: {}", e.getMessage());
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+        }
+
+        // === Rate Limit 관련 예외 ===
+
+        @ExceptionHandler(RateLimitExceededException.class)
+        public ResponseEntity<ErrorResponse> handleRateLimitExceededException(RateLimitExceededException e) {
+                log.warn("Rate Limit 초과: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                                .body(ErrorResponse.of(HttpStatus.TOO_MANY_REQUESTS.value(), e.getMessage()));
         }
 
         // === Multipart 예외 ===
