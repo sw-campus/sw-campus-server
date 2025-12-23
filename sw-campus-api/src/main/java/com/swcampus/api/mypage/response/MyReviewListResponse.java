@@ -1,7 +1,7 @@
 package com.swcampus.api.mypage.response;
 
 import com.swcampus.domain.mypage.dto.MyReviewInfo;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 

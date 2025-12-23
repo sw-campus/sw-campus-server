@@ -1,6 +1,6 @@
 package com.swcampus.domain.review.dto;
 
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewDetail;
 

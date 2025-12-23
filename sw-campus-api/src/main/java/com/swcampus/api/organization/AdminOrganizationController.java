@@ -18,7 +18,7 @@ import com.swcampus.api.organization.response.AdminOrganizationDetailResponse;
 import com.swcampus.api.organization.response.AdminOrganizationSummaryResponse;
 import com.swcampus.domain.auth.EmailService;
 import com.swcampus.domain.organization.AdminOrganizationService;
-import com.swcampus.domain.organization.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.organization.ApproveOrganizationResult;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.RejectOrganizationResult;

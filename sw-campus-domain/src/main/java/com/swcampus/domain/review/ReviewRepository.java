@@ -1,5 +1,6 @@
 package com.swcampus.domain.review;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

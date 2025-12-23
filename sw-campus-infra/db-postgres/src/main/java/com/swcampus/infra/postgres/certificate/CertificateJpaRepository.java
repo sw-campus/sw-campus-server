@@ -1,6 +1,6 @@
 package com.swcampus.infra.postgres.certificate;
 
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

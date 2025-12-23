@@ -5,6 +5,7 @@ import com.swcampus.api.admin.request.BannerRequest;
 import com.swcampus.api.admin.response.AdminBannerResponse;
 import com.swcampus.api.admin.response.BannerStatsResponse;
 import com.swcampus.domain.lecture.AdminBannerService;
+import com.swcampus.domain.lecture.BannerPeriodStatus;
 import com.swcampus.domain.lecture.dto.BannerDetailsDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -92,7 +93,8 @@ public class AdminBannerController {
                         @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
                         @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
                 Pageable pageable = PageRequest.of(page, size);
-                Page<BannerDetailsDto> bannerPage = adminBannerService.searchBanners(keyword, periodStatus, pageable);
+                BannerPeriodStatus status = BannerPeriodStatus.fromString(periodStatus);
+                Page<BannerDetailsDto> bannerPage = adminBannerService.searchBanners(keyword, status, pageable);
                 Page<AdminBannerResponse> response = bannerPage.map(AdminBannerResponse::from);
                 return ResponseEntity.ok(response);
         }

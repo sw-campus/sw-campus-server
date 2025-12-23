@@ -7,7 +7,7 @@ import com.swcampus.domain.lecture.LectureAuthStatus;
 import com.swcampus.domain.lecture.LectureRepository;
 import com.swcampus.domain.member.MemberRepository;
 import com.swcampus.domain.member.Role;
-import com.swcampus.domain.organization.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.organization.OrganizationRepository;
 import com.swcampus.domain.review.ReviewRepository;
 
@@ -50,12 +50,12 @@ public class AdminStatsService {
         // 수료증 통계
         long totalCertificates = certificateRepository.countAll();
         long pendingCertificates = certificateRepository.countByApprovalStatus(
-                com.swcampus.domain.review.ApprovalStatus.PENDING);
+                ApprovalStatus.PENDING);
 
         // 리뷰 통계 (수료증이 승인된 리뷰만 카운트 - 리뷰 관리는 수료증 승인 후 진행)
         long totalReviews = reviewRepository.countWithApprovedCertificate();
         long pendingReviews = reviewRepository.countWithApprovedCertificateAndReviewStatus(
-                com.swcampus.domain.review.ApprovalStatus.PENDING);
+                ApprovalStatus.PENDING);
 
         return AdminStats.builder()
                 .totalMembers(totalMembers)

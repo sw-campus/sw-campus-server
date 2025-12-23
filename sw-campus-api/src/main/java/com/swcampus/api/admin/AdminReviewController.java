@@ -5,7 +5,7 @@ import com.swcampus.api.admin.response.*;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.review.AdminReviewService;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.dto.PendingReviewInfo;
 import io.swagger.v3.oas.annotations.Operation;

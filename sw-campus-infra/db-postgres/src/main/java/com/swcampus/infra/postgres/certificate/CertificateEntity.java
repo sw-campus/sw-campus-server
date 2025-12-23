@@ -1,7 +1,7 @@
 package com.swcampus.infra.postgres.certificate;
 
 import com.swcampus.domain.certificate.Certificate;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.infra.postgres.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

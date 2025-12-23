@@ -1,5 +1,7 @@
 package com.swcampus.domain.organization;
 
+import com.swcampus.domain.common.ApprovalStatus;
+
 import java.util.List;
 import java.util.Optional;
 

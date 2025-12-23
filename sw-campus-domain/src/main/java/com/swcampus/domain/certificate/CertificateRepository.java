@@ -1,6 +1,6 @@
 package com.swcampus.domain.certificate;
 
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 
 import java.util.List;
 import java.util.Map;

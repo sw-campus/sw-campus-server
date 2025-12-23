@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import com.swcampus.domain.organization.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 
 public interface OrganizationJpaRepository extends JpaRepository<OrganizationEntity, Long> {
     Optional<OrganizationEntity> findByUserId(Long userId);

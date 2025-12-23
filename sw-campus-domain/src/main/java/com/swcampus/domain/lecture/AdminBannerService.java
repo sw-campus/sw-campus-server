@@ -44,7 +44,7 @@ public class AdminBannerService {
     /**
      * 배너 검색 (페이징, 키워드, 기간 상태)
      */
-    public Page<BannerDetailsDto> searchBanners(String keyword, String periodStatus, Pageable pageable) {
+    public Page<BannerDetailsDto> searchBanners(String keyword, BannerPeriodStatus periodStatus, Pageable pageable) {
         Page<Banner> bannerPage = bannerRepository.searchBanners(keyword, periodStatus, pageable);
         
         List<Long> lectureIds = bannerPage.getContent().stream()
@@ -191,9 +191,9 @@ public class AdminBannerService {
         long total = bannerRepository.countAll();
         long active = bannerRepository.countByIsActive(true);
         long inactive = bannerRepository.countByIsActive(false);
-        long scheduled = bannerRepository.countByPeriodStatus("SCHEDULED");
-        long currentlyActive = bannerRepository.countByPeriodStatus("ACTIVE");
-        long ended = bannerRepository.countByPeriodStatus("ENDED");
+        long scheduled = bannerRepository.countByPeriodStatus(BannerPeriodStatus.SCHEDULED);
+        long currentlyActive = bannerRepository.countByPeriodStatus(BannerPeriodStatus.ACTIVE);
+        long ended = bannerRepository.countByPeriodStatus(BannerPeriodStatus.ENDED);
         return new BannerStats(total, active, inactive, scheduled, currentlyActive, ended);
     }
 

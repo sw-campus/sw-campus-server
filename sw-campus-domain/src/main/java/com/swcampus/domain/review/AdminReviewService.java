@@ -3,6 +3,7 @@ package com.swcampus.domain.review;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.certificate.CertificateRepository;
 import com.swcampus.domain.certificate.exception.CertificateNotFoundException;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;

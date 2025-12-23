@@ -1,6 +1,6 @@
 package com.swcampus.infra.postgres.review;
 
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.infra.postgres.lecture.LectureEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

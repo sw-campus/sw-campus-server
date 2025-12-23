@@ -2,6 +2,7 @@ package com.swcampus.infra.postgres.lecture;
 
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.lecture.Banner;
+import com.swcampus.domain.lecture.BannerPeriodStatus;
 import com.swcampus.domain.lecture.BannerRepository;
 import com.swcampus.domain.lecture.BannerType;
 import lombok.RequiredArgsConstructor;
@@ -79,11 +80,10 @@ public class BannerEntityRepository implements BannerRepository {
     }
 
     @Override
-    public Page<Banner> searchBanners(String keyword, String periodStatus, Pageable pageable) {
+    public Page<Banner> searchBanners(String keyword, BannerPeriodStatus periodStatus, Pageable pageable) {
         OffsetDateTime now = OffsetDateTime.now();
         String searchKeyword = (keyword != null && !keyword.isBlank()) ? keyword : null;
-        String status = (periodStatus != null && !periodStatus.isBlank() && !"ALL".equals(periodStatus)) 
-                ? periodStatus : null;
+        String status = periodStatus != null ? periodStatus.name() : null;
         
         // Specification 기반 동적 쿼리 사용 (메인 쿼리와 count 쿼리의 중복 제거)
         var spec = BannerSpecifications.searchBanners(searchKeyword, status, now);
@@ -103,13 +103,15 @@ public class BannerEntityRepository implements BannerRepository {
     }
 
     @Override
-    public long countByPeriodStatus(String periodStatus) {
+    public long countByPeriodStatus(BannerPeriodStatus periodStatus) {
+        if (periodStatus == null) {
+            return 0L;
+        }
         OffsetDateTime now = OffsetDateTime.now();
         return switch (periodStatus) {
-            case "SCHEDULED" -> jpaRepository.countScheduled(now);
-            case "ACTIVE" -> jpaRepository.countActive(now);
-            case "ENDED" -> jpaRepository.countEnded(now);
-            default -> 0L;
+            case SCHEDULED -> jpaRepository.countScheduled(now);
+            case ACTIVE -> jpaRepository.countActive(now);
+            case ENDED -> jpaRepository.countEnded(now);
         };
     }
 }

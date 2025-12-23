@@ -1,6 +1,6 @@
 package com.swcampus.api.organization.response;
 
-import com.swcampus.domain.organization.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.RejectOrganizationResult;
 

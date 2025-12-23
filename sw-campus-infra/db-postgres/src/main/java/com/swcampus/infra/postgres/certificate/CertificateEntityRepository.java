@@ -2,7 +2,7 @@ package com.swcampus.infra.postgres.certificate;
 
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.certificate.CertificateRepository;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
