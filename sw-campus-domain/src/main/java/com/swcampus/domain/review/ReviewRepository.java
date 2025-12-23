@@ -1,5 +1,6 @@
 package com.swcampus.domain.review;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -35,4 +36,19 @@ public interface ReviewRepository {
     Map<Long, Long> countReviewsByLectureIds(List<Long> lectureIds);
 
     Page<Review> findAllWithDetails(ApprovalStatus status, String keyword, Pageable pageable);
+
+    // Statistics methods
+    long countAll();
+    long countByApprovalStatus(ApprovalStatus status);
+    
+    /**
+     * 수료증이 승인된 리뷰 수를 조회합니다.
+     * (리뷰 관리는 수료증 승인 후에 진행되므로, 실제 '리뷰' 카운트에 사용)
+     */
+    long countWithApprovedCertificate();
+    
+    /**
+     * 수료증이 승인되고 특정 리뷰 상태인 리뷰 수를 조회합니다.
+     */
+    long countWithApprovedCertificateAndReviewStatus(ApprovalStatus reviewStatus);
 }

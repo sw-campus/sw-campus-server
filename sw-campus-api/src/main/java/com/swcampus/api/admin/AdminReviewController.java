@@ -5,7 +5,7 @@ import com.swcampus.api.admin.response.*;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.review.AdminReviewService;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.dto.PendingReviewInfo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,6 +39,30 @@ public class AdminReviewController {
 
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+
+    @Operation(summary = "수료증 상태별 통계 조회", description = "전체/대기/승인/반려 수료증 수를 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+    })
+    @GetMapping("/certificates/stats")
+    public ResponseEntity<ApprovalStatsResponse> getCertificateStats() {
+        var stats = adminReviewService.getCertificateStats();
+        return ResponseEntity.ok(ApprovalStatsResponse.of(stats.total(), stats.pending(), stats.approved(), stats.rejected()));
+    }
+
+    @Operation(summary = "리뷰 상태별 통계 조회", description = "전체/대기/승인/반려 리뷰 수를 조회합니다. (수료증 승인된 리뷰만 카운트)")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+    })
+    @GetMapping("/reviews/stats")
+    public ResponseEntity<ApprovalStatsResponse> getReviewStats() {
+        var stats = adminReviewService.getReviewStats();
+        return ResponseEntity.ok(ApprovalStatsResponse.of(stats.total(), stats.pending(), stats.approved(), stats.rejected()));
+    }
 
     @Operation(summary = "대기 중인 후기 목록 조회", description = "수료증 또는 후기가 PENDING 상태인 목록을 조회합니다.")
     @ApiResponses({

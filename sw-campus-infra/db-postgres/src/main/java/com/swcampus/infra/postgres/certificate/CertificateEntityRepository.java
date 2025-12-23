@@ -2,7 +2,7 @@ package com.swcampus.infra.postgres.certificate;
 
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.certificate.CertificateRepository;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -42,7 +42,7 @@ public class CertificateEntityRepository implements CertificateRepository {
 
     @Override
     public List<Certificate> findAllByMemberId(Long memberId) {
-        return jpaRepository.findAllByMemberIdAndApprovalStatus(memberId, com.swcampus.domain.review.ApprovalStatus.APPROVED)
+        return jpaRepository.findAllByMemberIdAndApprovalStatus(memberId, ApprovalStatus.APPROVED)
             .stream()
             .map(CertificateEntity::toDomain)
             .toList();
@@ -58,5 +58,15 @@ public class CertificateEntityRepository implements CertificateRepository {
                 CertificateEntity::getId,
                 CertificateEntity::toDomain
             ));
+    }
+
+    @Override
+    public long countAll() {
+        return jpaRepository.count();
+    }
+
+    @Override
+    public long countByApprovalStatus(ApprovalStatus status) {
+        return jpaRepository.countByApprovalStatus(status);
     }
 }

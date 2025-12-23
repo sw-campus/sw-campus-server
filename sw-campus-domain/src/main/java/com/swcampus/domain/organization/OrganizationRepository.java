@@ -1,5 +1,7 @@
 package com.swcampus.domain.organization;
 
+import com.swcampus.domain.common.ApprovalStatus;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -19,7 +21,12 @@ public interface OrganizationRepository {
 
     List<Organization> findByNameContaining(String keyword);
 
+    // 회원이 등록된 기관만 검색 (목록용)
     Page<Organization> searchByStatusAndKeyword(ApprovalStatus status, String keyword, Pageable pageable);
 
     java.util.List<Organization> findAllByIds(java.util.List<Long> ids);
+
+    // 회원이 등록된 기관만 카운트 (통계용)
+    long countAll();
+    long countByApprovalStatus(ApprovalStatus status);
 }

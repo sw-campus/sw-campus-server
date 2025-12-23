@@ -1,5 +1,6 @@
 package com.swcampus.domain.organization;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

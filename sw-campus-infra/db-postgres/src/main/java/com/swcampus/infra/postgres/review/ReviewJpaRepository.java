@@ -1,6 +1,6 @@
 package com.swcampus.infra.postgres.review;
 
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.infra.postgres.lecture.LectureEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -67,4 +67,23 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         @Param("status") ApprovalStatus status,
                         @Param("keyword") String keyword,
                         Pageable pageable);
+
+        long countByApprovalStatus(ApprovalStatus status);
+
+        /**
+         * 수료증이 승인된 리뷰 수를 조회합니다.
+         */
+        @Query("SELECT COUNT(r) FROM ReviewEntity r " +
+                        "JOIN CertificateEntity c ON c.id = r.certificateId " +
+                        "WHERE c.approvalStatus = com.swcampus.domain.common.ApprovalStatus.APPROVED")
+        long countWithApprovedCertificate();
+
+        /**
+         * 수료증이 승인되고 특정 리뷰 상태인 리뷰 수를 조회합니다.
+         */
+        @Query("SELECT COUNT(r) FROM ReviewEntity r " +
+                        "JOIN CertificateEntity c ON c.id = r.certificateId " +
+                        "WHERE c.approvalStatus = com.swcampus.domain.common.ApprovalStatus.APPROVED " +
+                        "AND r.approvalStatus = :reviewStatus")
+        long countWithApprovedCertificateAndReviewStatus(@Param("reviewStatus") ApprovalStatus reviewStatus);
 }

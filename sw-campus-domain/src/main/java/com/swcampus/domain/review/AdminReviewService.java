@@ -3,6 +3,7 @@ package com.swcampus.domain.review;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.certificate.CertificateRepository;
 import com.swcampus.domain.certificate.exception.CertificateNotFoundException;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
@@ -242,4 +243,30 @@ public class AdminReviewService {
         Map<Long, Member> memberMap,
         Map<Long, Certificate> certificateMap
     ) {}
+
+    /**
+     * 수료증 상태별 통계를 조회합니다.
+     */
+    public CertificateApprovalStats getCertificateStats() {
+        long total = certificateRepository.countAll();
+        long pending = certificateRepository.countByApprovalStatus(ApprovalStatus.PENDING);
+        long approved = certificateRepository.countByApprovalStatus(ApprovalStatus.APPROVED);
+        long rejected = certificateRepository.countByApprovalStatus(ApprovalStatus.REJECTED);
+        return new CertificateApprovalStats(total, pending, approved, rejected);
+    }
+
+    /**
+     * 리뷰 상태별 통계를 조회합니다.
+     * (수료증이 승인된 리뷰만 카운트)
+     */
+    public ReviewApprovalStats getReviewStats() {
+        long total = reviewRepository.countWithApprovedCertificate();
+        long pending = reviewRepository.countWithApprovedCertificateAndReviewStatus(ApprovalStatus.PENDING);
+        long approved = reviewRepository.countWithApprovedCertificateAndReviewStatus(ApprovalStatus.APPROVED);
+        long rejected = reviewRepository.countWithApprovedCertificateAndReviewStatus(ApprovalStatus.REJECTED);
+        return new ReviewApprovalStats(total, pending, approved, rejected);
+    }
+
+    public record CertificateApprovalStats(long total, long pending, long approved, long rejected) {}
+    public record ReviewApprovalStats(long total, long pending, long approved, long rejected) {}
 }

@@ -1,6 +1,6 @@
 package com.swcampus.infra.postgres.organization;
 
-import com.swcampus.domain.organization.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationRepository;
 import com.swcampus.infra.postgres.TestApplication;

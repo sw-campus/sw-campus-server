@@ -12,12 +12,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.swcampus.api.admin.response.ApprovalStatsResponse;
 import com.swcampus.api.organization.response.AdminOrganizationApprovalResponse;
 import com.swcampus.api.organization.response.AdminOrganizationDetailResponse;
 import com.swcampus.api.organization.response.AdminOrganizationSummaryResponse;
 import com.swcampus.domain.auth.EmailService;
 import com.swcampus.domain.organization.AdminOrganizationService;
-import com.swcampus.domain.organization.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.organization.ApproveOrganizationResult;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.RejectOrganizationResult;
@@ -44,6 +45,18 @@ public class AdminOrganizationController {
 
     private final AdminOrganizationService adminOrganizationService;
     private final EmailService emailService;
+
+    @Operation(summary = "기관 상태별 통계 조회", description = "전체/대기/승인/반려 기관 수를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/stats")
+    public ResponseEntity<ApprovalStatsResponse> getStats() {
+        var stats = adminOrganizationService.getStats();
+        return ResponseEntity.ok(ApprovalStatsResponse.of(stats.total(), stats.pending(), stats.approved(), stats.rejected()));
+    }
 
     @Operation(summary = "기관 목록 조회/검색", description = "기관 목록을 조회하고 검색합니다. 상태와 기관명으로 필터링할 수 있습니다.")
     @ApiResponses({

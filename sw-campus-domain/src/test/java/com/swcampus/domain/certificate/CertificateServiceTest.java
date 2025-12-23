@@ -6,7 +6,7 @@ import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureRepository;
 import com.swcampus.domain.ocr.OcrClient;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.storage.FileStorageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
