@@ -1,6 +1,5 @@
 package com.swcampus.domain.lecture;
 
-import com.swcampus.domain.lecture.exception.LectureNotModifiableException;
 import com.swcampus.domain.storage.FileStorageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -63,8 +62,8 @@ class LectureServiceTest {
         }
 
         @Test
-        @DisplayName("승인된 강의 수정 시 예외 발생")
-        void modifyLecture_approved_throwsException() {
+        @DisplayName("승인된 강의 수정 성공 및 상태 유지(APPROVED)")
+        void modifyLecture_approved_success() {
             // given
             Long lectureId = 1L;
             Long orgId = 1L;
@@ -74,17 +73,25 @@ class LectureServiceTest {
                     .lectureAuthStatus(LectureAuthStatus.APPROVED)
                     .build();
 
+            Lecture updateParams = Lecture.builder()
+                    .lectureName("수정된 강의")
+                    .build();
+
             given(lectureRepository.findById(lectureId))
                     .willReturn(Optional.of(existingLecture));
+            given(lectureRepository.save(any(Lecture.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
-            // when & then
-            assertThatThrownBy(() -> lectureService.modifyLecture(lectureId, orgId, Lecture.builder().build(), null, null, null, Collections.emptyList()))
-                    .isInstanceOf(LectureNotModifiableException.class);
+            // when
+            Lecture result = lectureService.modifyLecture(lectureId, orgId, updateParams, null, null, null, Collections.emptyList());
+
+            // then
+            assertThat(result.getLectureAuthStatus()).isEqualTo(LectureAuthStatus.APPROVED);
         }
-        
+
         @Test
-        @DisplayName("대기중인 강의 수정 시 예외 발생")
-        void modifyLecture_pending_throwsException() {
+        @DisplayName("대기중인 강의 수정 성공 및 상태 유지(PENDING)")
+        void modifyLecture_pending_success() {
             // given
             Long lectureId = 1L;
             Long orgId = 1L;
@@ -94,12 +101,20 @@ class LectureServiceTest {
                     .lectureAuthStatus(LectureAuthStatus.PENDING)
                     .build();
 
+            Lecture updateParams = Lecture.builder()
+                    .lectureName("수정된 강의")
+                    .build();
+
             given(lectureRepository.findById(lectureId))
                     .willReturn(Optional.of(existingLecture));
+            given(lectureRepository.save(any(Lecture.class)))
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
-            // when & then
-            assertThatThrownBy(() -> lectureService.modifyLecture(lectureId, orgId, Lecture.builder().build(), null, null, null, Collections.emptyList()))
-                    .isInstanceOf(LectureNotModifiableException.class);
+            // when
+            Lecture result = lectureService.modifyLecture(lectureId, orgId, updateParams, null, null, null, Collections.emptyList());
+
+            // then
+            assertThat(result.getLectureAuthStatus()).isEqualTo(LectureAuthStatus.PENDING);
         }
 
         @Test
