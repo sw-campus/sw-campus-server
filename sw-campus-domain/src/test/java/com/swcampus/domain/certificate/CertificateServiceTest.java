@@ -6,7 +6,7 @@ import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureRepository;
 import com.swcampus.domain.ocr.OcrClient;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.storage.FileStorageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -54,7 +54,7 @@ class CertificateServiceTest {
             // given
             Long memberId = 1L;
             Long lectureId = 1L;
-            Certificate certificate = Certificate.create(memberId, lectureId, "https://s3.../image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(memberId, lectureId, "certificates/image.jpg", "SUCCESS");
 
             given(certificateRepository.findByMemberIdAndLectureId(memberId, lectureId))
                     .willReturn(Optional.of(certificate));
@@ -181,10 +181,10 @@ class CertificateServiceTest {
                     .willReturn(Optional.of(lecture));
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "Java 풀스택 개발자 과정", "홍길동"));
-            given(fileStorageService.upload(any(), eq("certificates"), anyString(), anyString()))
-                    .willReturn("https://s3.../certificates/test.jpg");
+            given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
+                    .willReturn("certificates/test.jpg");
 
-            Certificate savedCertificate = Certificate.create(memberId, lectureId, "https://s3.../certificates/test.jpg", "SUCCESS");
+            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg", "SUCCESS");
             given(certificateRepository.save(any(Certificate.class)))
                     .willReturn(savedCertificate);
 
@@ -215,10 +215,10 @@ class CertificateServiceTest {
             // OCR 결과: 공백이 다름
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "Java풀스택개발자과정", "홍길동"));
-            given(fileStorageService.upload(any(), eq("certificates"), anyString(), anyString()))
-                    .willReturn("https://s3.../certificates/test.jpg");
+            given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
+                    .willReturn("certificates/test.jpg");
 
-            Certificate savedCertificate = Certificate.create(memberId, lectureId, "https://s3.../certificates/test.jpg", "SUCCESS");
+            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg", "SUCCESS");
             given(certificateRepository.save(any(Certificate.class)))
                     .willReturn(savedCertificate);
 
@@ -247,10 +247,10 @@ class CertificateServiceTest {
             // OCR 결과: 대소문자가 다름
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "JAVA 풀스택 개발자 과정", "홍길동"));
-            given(fileStorageService.upload(any(), eq("certificates"), anyString(), anyString()))
-                    .willReturn("https://s3.../certificates/test.jpg");
+            given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
+                    .willReturn("certificates/test.jpg");
 
-            Certificate savedCertificate = Certificate.create(memberId, lectureId, "https://s3.../certificates/test.jpg", "SUCCESS");
+            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg", "SUCCESS");
             given(certificateRepository.save(any(Certificate.class)))
                     .willReturn(savedCertificate);
 

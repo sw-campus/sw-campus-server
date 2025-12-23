@@ -1,7 +1,8 @@
 package com.swcampus.infra.postgres.review;
 
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.review.Review;
+import com.swcampus.domain.review.ReviewCategory;
 import com.swcampus.domain.review.ReviewDetail;
 import com.swcampus.infra.postgres.BaseEntity;
 import jakarta.persistence.*;
@@ -11,6 +12,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "reviews")
@@ -67,6 +70,45 @@ public class ReviewEntity extends BaseEntity {
         }
 
         return entity;
+    }
+
+    /**
+     * 기존 Entity의 값을 업데이트합니다.
+     * JPA Auditing이 @LastModifiedDate를 자동으로 갱신합니다.
+     */
+    public void update(Review review) {
+        this.comment = review.getComment();
+        this.score = review.getScore();
+        this.approvalStatus = review.getApprovalStatus();
+        this.blurred = review.isBlurred();
+
+        // 기존 details를 category 기준으로 업데이트, 추가, 삭제 처리
+        if (review.getDetails() != null) {
+            Map<ReviewCategory, ReviewDetail> newDetailsMap = review.getDetails().stream()
+                    .collect(Collectors.toMap(ReviewDetail::getCategory, d -> d));
+
+            // 기존 details 업데이트 또는 삭제 대상 수집
+            List<ReviewDetailEntity> toRemove = new ArrayList<>();
+            for (ReviewDetailEntity existingDetail : this.details) {
+                ReviewDetail newDetail = newDetailsMap.get(existingDetail.getCategory());
+                if (newDetail != null) {
+                    existingDetail.update(newDetail);
+                    newDetailsMap.remove(existingDetail.getCategory());
+                } else {
+                    toRemove.add(existingDetail);
+                }
+            }
+            this.details.removeAll(toRemove);
+
+            // 새로운 카테고리 추가
+            for (ReviewDetail newDetail : newDetailsMap.values()) {
+                ReviewDetailEntity newEntity = ReviewDetailEntity.from(newDetail);
+                newEntity.setReview(this);
+                this.details.add(newEntity);
+            }
+        } else {
+            this.details.clear();
+        }
     }
 
     public Review toDomain() {

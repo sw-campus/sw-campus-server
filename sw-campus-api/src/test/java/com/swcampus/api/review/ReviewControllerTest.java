@@ -93,7 +93,7 @@ class ReviewControllerTest {
         return Review.of(
                 reviewId, memberId, lectureId, 1L,
                 "좋은 강의였습니다", 4.3,
-                ApprovalStatus.PENDING, false,
+                com.swcampus.domain.common.ApprovalStatus.PENDING, false,
                 LocalDateTime.now(), LocalDateTime.now(),
                 details
         );

@@ -1,6 +1,6 @@
 package com.swcampus.infra.postgres.organization;
 
-import com.swcampus.domain.organization.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.infra.postgres.BaseEntity;
 import jakarta.persistence.*;
@@ -35,8 +35,8 @@ public class OrganizationEntity extends BaseEntity {
     @Column(name = "approval_status")
     private ApprovalStatus approvalStatus;
 
-    @Column(name = "certificate_url", columnDefinition = "TEXT")
-    private String certificateUrl;
+    @Column(name = "certificate_url", columnDefinition = "TEXT")  // TODO: DB 마이그레이션 후 certificate_key로 변경
+    private String certificateKey;
 
     @Column(name = "gov_auth", length = 100)
     private String govAuth;
@@ -66,7 +66,7 @@ public class OrganizationEntity extends BaseEntity {
         entity.name = organization.getName();
         entity.description = organization.getDescription();
         entity.approvalStatus = organization.getApprovalStatus();
-        entity.certificateUrl = organization.getCertificateUrl();
+        entity.certificateKey = organization.getCertificateKey();
         entity.govAuth = organization.getGovAuth();
         entity.facilityImageUrl = organization.getFacilityImageUrl();
         entity.facilityImageUrl2 = organization.getFacilityImageUrl2();
@@ -84,7 +84,7 @@ public class OrganizationEntity extends BaseEntity {
                 name,
                 description,
                 approvalStatus,
-                certificateUrl,
+                certificateKey,
                 govAuth,
                 facilityImageUrl,
                 facilityImageUrl2,

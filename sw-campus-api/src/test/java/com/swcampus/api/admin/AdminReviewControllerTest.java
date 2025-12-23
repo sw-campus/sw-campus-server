@@ -7,6 +7,7 @@ import com.swcampus.api.exception.GlobalExceptionHandler;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.certificate.exception.CertificateNotFoundException;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.review.*;

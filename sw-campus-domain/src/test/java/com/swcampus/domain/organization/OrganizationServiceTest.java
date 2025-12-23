@@ -1,5 +1,6 @@
 package com.swcampus.domain.organization;
 
+import com.swcampus.domain.organization.dto.UpdateOrganizationParams;
 import com.swcampus.domain.storage.FileStorageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -54,14 +55,20 @@ class OrganizationServiceTest {
             given(fileStorageService.uploadPrivate(any(), anyString(), anyString(), anyString())).willReturn(newCertUrl);
             given(organizationRepository.save(any(Organization.class))).willAnswer(invocation -> invocation.getArgument(0));
 
+            UpdateOrganizationParams params = new UpdateOrganizationParams(
+                newName, newDesc, null, null, 
+                new UpdateOrganizationParams.FileUploadData(fileContent, fileName, contentType),
+                null, null, null, null, null
+            );
+
             // when
-            Organization result = organizationService.updateOrganization(orgId, userId, newName, newDesc, fileContent, fileName, contentType);
+            Organization result = organizationService.updateOrganization(orgId, userId, params);
 
             // then
             assertThat(result.getName()).isEqualTo("New Name");
             assertThat(result.getDescription()).isEqualTo("New Desc");
-            assertThat(result.getCertificateUrl()).isEqualTo(newCertUrl);
-            verify(fileStorageService).uploadPrivate(eq(fileContent), eq("certificates"), eq(fileName), eq(contentType));
+            assertThat(result.getCertificateKey()).isEqualTo(newCertUrl);
+            verify(fileStorageService).uploadPrivate(eq(fileContent), eq("employment-certificates"), eq(fileName), eq(contentType));
         }
 
         @Test
@@ -77,13 +84,15 @@ class OrganizationServiceTest {
             given(organizationRepository.findById(orgId)).willReturn(Optional.of(org));
             given(organizationRepository.save(any(Organization.class))).willAnswer(invocation -> invocation.getArgument(0));
 
+            UpdateOrganizationParams params = createDefaultUpdateParams(newName, newDesc);
+
             // when
-            Organization result = organizationService.updateOrganization(orgId, userId, newName, newDesc, null, null, null);
+            Organization result = organizationService.updateOrganization(orgId, userId, params);
 
             // then
             assertThat(result.getName()).isEqualTo("New Name");
             assertThat(result.getDescription()).isEqualTo("New Desc");
-            assertThat(result.getCertificateUrl()).isEqualTo("cert.jpg"); // 기존 인증서 유지
+            assertThat(result.getCertificateKey()).isEqualTo("cert.jpg"); // 기존 인증서 유지
         }
 
         @Test
@@ -99,8 +108,10 @@ class OrganizationServiceTest {
 
             given(organizationRepository.findById(orgId)).willReturn(Optional.of(org));
 
+            UpdateOrganizationParams params = createDefaultUpdateParams(newName, newDesc);
+
             // when & then
-            assertThatThrownBy(() -> organizationService.updateOrganization(orgId, otherUserId, newName, newDesc, null, null, null))
+            assertThatThrownBy(() -> organizationService.updateOrganization(orgId, otherUserId, params))
                     .isInstanceOf(AccessDeniedException.class);
         }
 
@@ -115,9 +126,15 @@ class OrganizationServiceTest {
 
             given(organizationRepository.findById(orgId)).willReturn(Optional.empty());
 
+            UpdateOrganizationParams params = createDefaultUpdateParams(newName, newDesc);
+
             // when & then
-            assertThatThrownBy(() -> organizationService.updateOrganization(orgId, userId, newName, newDesc, null, null, null))
+            assertThatThrownBy(() -> organizationService.updateOrganization(orgId, userId, params))
                     .isInstanceOf(com.swcampus.domain.common.ResourceNotFoundException.class);
+        }
+
+        private UpdateOrganizationParams createDefaultUpdateParams(String name, String description) {
+            return new UpdateOrganizationParams(name, description, null, null, null, null, null, null, null, null);
         }
     }
 }

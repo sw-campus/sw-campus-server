@@ -1,5 +1,6 @@
 package com.swcampus.infra.postgres.lecture;
 
+import com.swcampus.domain.lecture.BannerType;
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -71,16 +72,32 @@ public class BannerSpecifications {
     }
 
     /**
+     * 배너 타입으로 필터링하는 Specification
+     * @param type 배너 타입 (nullable)
+     * @return Specification
+     */
+    public static Specification<BannerEntity> hasBannerType(BannerType type) {
+        return (root, query, cb) -> {
+            if (type == null) {
+                return cb.conjunction(); // 항상 true (조건 없음)
+            }
+            return cb.equal(root.get("bannerType"), type);
+        };
+    }
+
+    /**
      * 검색 조건을 결합하는 메서드
      * @param keyword 검색 키워드
      * @param periodStatus 기간 상태
+     * @param type 배너 타입
      * @param now 현재 시간
      * @return 결합된 Specification
      */
-    public static Specification<BannerEntity> searchBanners(String keyword, String periodStatus, OffsetDateTime now) {
+    public static Specification<BannerEntity> searchBanners(String keyword, String periodStatus, BannerType type, OffsetDateTime now) {
         return Specification.allOf(
                 hasLectureNameContaining(keyword),
-                hasPeriodStatus(periodStatus, now)
+                hasPeriodStatus(periodStatus, now),
+                hasBannerType(type)
         );
     }
 }

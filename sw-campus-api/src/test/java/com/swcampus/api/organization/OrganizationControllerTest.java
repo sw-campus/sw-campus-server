@@ -1,6 +1,8 @@
 package com.swcampus.api.organization;
 
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -16,9 +18,16 @@ import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.common.ApprovalStatus;
+import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewService;
+import com.swcampus.domain.review.ReviewSortType;
+import com.swcampus.domain.review.ReviewWithNickname;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,5 +123,103 @@ class OrganizationControllerTest {
                 .andExpect(jsonPath("$[0].lecture_id").value(100))
                 .andExpect(jsonPath("$[0].lecture_name").value("Org Lecture"))
                 .andExpect(jsonPath("$[0].average_score").value(4.3));
+    }
+
+    @Test
+    @DisplayName("기관별 승인된 후기 페이지네이션 조회 성공")
+    void getApprovedReviewsByOrganization_withPagination() throws Exception {
+        // given
+        Review review1 = Review.of(1L, 1L, 1L, 1L, "좋은 강의였습니다", 4.5,
+                ApprovalStatus.APPROVED, false, LocalDateTime.now(), LocalDateTime.now(), null);
+        Review review2 = Review.of(2L, 2L, 2L, 2L, "만족스러운 수업이었습니다", 4.0,
+                ApprovalStatus.APPROVED, false, LocalDateTime.now(), LocalDateTime.now(), null);
+
+        List<ReviewWithNickname> reviewsWithNicknames = List.of(
+                ReviewWithNickname.of(review1, "사용자1"),
+                ReviewWithNickname.of(review2, "사용자2")
+        );
+        Page<ReviewWithNickname> reviewPage = new PageImpl<>(reviewsWithNicknames);
+
+        when(reviewService.getApprovedReviewsByOrganizationWithPagination(
+                eq(10L), eq(0), eq(10), eq(ReviewSortType.LATEST)))
+                .thenReturn(reviewPage);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/organizations/{organizationId}/reviews", 10L)
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("sort", "LATEST"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].review_id").value(1))
+                .andExpect(jsonPath("$.content[0].comment").value("좋은 강의였습니다"))
+                .andExpect(jsonPath("$.content[0].score").value(4.5))
+                .andExpect(jsonPath("$.content[0].nickname").value("사용자1"))
+                .andExpect(jsonPath("$.content[1].review_id").value(2));
+    }
+
+    @Test
+    @DisplayName("기관별 후기 조회 - 기본값으로 조회")
+    void getApprovedReviewsByOrganization_withDefaultParams() throws Exception {
+        // given
+        Page<ReviewWithNickname> emptyPage = new PageImpl<>(List.of());
+
+        when(reviewService.getApprovedReviewsByOrganizationWithPagination(
+                eq(10L), eq(0), eq(6), eq(ReviewSortType.LATEST)))
+                .thenReturn(emptyPage);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/organizations/{organizationId}/reviews", 10L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("기관별 후기 조회 - 별점 높은순 정렬")
+    void getApprovedReviewsByOrganization_sortByScoreDesc() throws Exception {
+        // given
+        Review review = Review.of(1L, 1L, 1L, 1L, "최고의 강의", 5.0,
+                ApprovalStatus.APPROVED, false, LocalDateTime.now(), LocalDateTime.now(), null);
+
+        List<ReviewWithNickname> reviewsWithNicknames = List.of(
+                ReviewWithNickname.of(review, "베스트리뷰어")
+        );
+        Page<ReviewWithNickname> reviewPage = new PageImpl<>(reviewsWithNicknames);
+
+        when(reviewService.getApprovedReviewsByOrganizationWithPagination(
+                eq(10L), eq(0), eq(6), eq(ReviewSortType.SCORE_DESC)))
+                .thenReturn(reviewPage);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/organizations/{organizationId}/reviews", 10L)
+                        .param("sort", "SCORE_DESC"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].score").value(5.0));
+    }
+
+    @Test
+    @DisplayName("기관별 후기 조회 - 두번째 페이지 조회")
+    void getApprovedReviewsByOrganization_secondPage() throws Exception {
+        // given
+        Review review = Review.of(11L, 11L, 11L, 11L, "11번째 후기", 4.0,
+                ApprovalStatus.APPROVED, false, LocalDateTime.now(), LocalDateTime.now(), null);
+
+        List<ReviewWithNickname> reviewsWithNicknames = List.of(
+                ReviewWithNickname.of(review, "사용자11")
+        );
+        Page<ReviewWithNickname> reviewPage = new PageImpl<>(reviewsWithNicknames);
+
+        when(reviewService.getApprovedReviewsByOrganizationWithPagination(
+                eq(10L), eq(1), eq(10), eq(ReviewSortType.LATEST)))
+                .thenReturn(reviewPage);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/organizations/{organizationId}/reviews", 10L)
+                        .param("page", "1")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].review_id").value(11));
     }
 }

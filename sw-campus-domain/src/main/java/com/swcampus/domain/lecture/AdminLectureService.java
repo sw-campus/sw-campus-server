@@ -54,4 +54,17 @@ public class AdminLectureService {
     public Lecture rejectLecture(Long id) {
         return lectureRepository.updateAuthStatus(id, LectureAuthStatus.REJECTED);
     }
+
+    /**
+     * 강의 상태별 통계를 조회합니다.
+     */
+    public LectureApprovalStats getStats() {
+        long total = lectureRepository.countAll();
+        long pending = lectureRepository.countByAuthStatus(LectureAuthStatus.PENDING);
+        long approved = lectureRepository.countByAuthStatus(LectureAuthStatus.APPROVED);
+        long rejected = lectureRepository.countByAuthStatus(LectureAuthStatus.REJECTED);
+        return new LectureApprovalStats(total, pending, approved, rejected);
+    }
+
+    public record LectureApprovalStats(long total, long pending, long approved, long rejected) {}
 }

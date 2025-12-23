@@ -1,6 +1,7 @@
 package com.swcampus.api.member;
 
 import com.swcampus.api.member.response.NicknameAvailableResponse;
+import com.swcampus.api.ratelimit.RateLimited;
 import com.swcampus.domain.member.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,8 +28,10 @@ public class MemberController {
             description = "닉네임 사용 가능 여부를 확인합니다. 대소문자를 구분하지 않습니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "검사 완료")
+            @ApiResponse(responseCode = "200", description = "검사 완료"),
+            @ApiResponse(responseCode = "429", description = "요청 횟수 초과 (분당 20회)")
     })
+    @RateLimited(key = "nickname-check", limit = 20, windowSeconds = 60)
     @GetMapping("/nickname/check")
     public ResponseEntity<NicknameAvailableResponse> checkNicknameAvailable(
             @Parameter(description = "확인할 닉네임", example = "길동이", required = true)

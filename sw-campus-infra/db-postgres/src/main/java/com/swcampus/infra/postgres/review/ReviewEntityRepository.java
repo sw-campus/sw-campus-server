@@ -1,8 +1,9 @@
 package com.swcampus.infra.postgres.review;
 
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewRepository;
+import com.swcampus.domain.review.exception.ReviewNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +21,18 @@ public class ReviewEntityRepository implements ReviewRepository {
 
     @Override
     public Review save(Review review) {
-        ReviewEntity entity = ReviewEntity.from(review);
+        ReviewEntity entity;
+
+        if (review.getId() != null) {
+            // 기존 Entity 업데이트: 조회 후 값만 수정 (JPA Auditing 정상 작동)
+            entity = jpaRepository.findByIdWithDetails(review.getId())
+                    .orElseThrow(() -> new ReviewNotFoundException(review.getId()));
+            entity.update(review);
+        } else {
+            // 신규 생성
+            entity = ReviewEntity.from(review);
+        }
+
         ReviewEntity saved = jpaRepository.save(entity);
         return saved.toDomain();
     }
@@ -115,5 +127,31 @@ public class ReviewEntityRepository implements ReviewRepository {
     public Page<Review> findAllWithDetails(ApprovalStatus status, String keyword, Pageable pageable) {
         return jpaRepository.findAllWithDetailsAndKeyword(status, keyword, pageable)
                 .map(ReviewEntity::toDomain);
+    }
+
+    @Override
+    public Page<Review> findByOrganizationIdAndApprovalStatusWithPagination(Long organizationId, ApprovalStatus status, Pageable pageable) {
+        return jpaRepository.findByOrganizationIdAndApprovalStatusWithPagination(organizationId, status, pageable)
+                .map(ReviewEntity::toDomain);
+    }
+
+    @Override
+    public long countAll() {
+        return jpaRepository.count();
+    }
+
+    @Override
+    public long countByApprovalStatus(ApprovalStatus status) {
+        return jpaRepository.countByApprovalStatus(status);
+    }
+
+    @Override
+    public long countWithApprovedCertificate() {
+        return jpaRepository.countWithApprovedCertificate();
+    }
+
+    @Override
+    public long countWithApprovedCertificateAndReviewStatus(ApprovalStatus reviewStatus) {
+        return jpaRepository.countWithApprovedCertificateAndReviewStatus(reviewStatus);
     }
 }

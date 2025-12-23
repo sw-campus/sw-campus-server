@@ -1,5 +1,6 @@
 package com.swcampus.domain.review;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

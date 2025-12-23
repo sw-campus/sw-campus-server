@@ -1,5 +1,6 @@
 package com.swcampus.domain.organization;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -69,4 +70,18 @@ public class AdminOrganizationService {
 
         return new RejectOrganizationResult(memberEmail, admin.getEmail(), admin.getPhone());
     }
+
+    /**
+     * 기관 상태별 통계를 조회합니다.
+     * 회원이 등록된(Member.orgId가 존재하는) 기관만 카운트합니다.
+     */
+    public OrganizationApprovalStats getStats() {
+        long total = organizationRepository.countAll();
+        long pending = organizationRepository.countByApprovalStatus(ApprovalStatus.PENDING);
+        long approved = organizationRepository.countByApprovalStatus(ApprovalStatus.APPROVED);
+        long rejected = organizationRepository.countByApprovalStatus(ApprovalStatus.REJECTED);
+        return new OrganizationApprovalStats(total, pending, approved, rejected);
+    }
+
+    public record OrganizationApprovalStats(long total, long pending, long approved, long rejected) {}
 }

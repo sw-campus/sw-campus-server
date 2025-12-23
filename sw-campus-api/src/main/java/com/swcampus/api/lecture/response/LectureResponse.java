@@ -22,6 +22,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record LectureResponse(
 		@Schema(description = "강의 ID", example = "1") Long lectureId,
 
+		@Schema(description = "카테고리 ID", example = "10") Long categoryId,
+
 		@Schema(description = "기관 ID", example = "1") Long orgId,
 
 		@Schema(description = "기관명", example = "패스트캠퍼스") String orgName,
@@ -123,6 +125,7 @@ public record LectureResponse(
 			Long reviewCount) {
 		return new LectureResponse(
 				lecture.getLectureId(),
+				lecture.extractCategoryId(), // categoryId 추가
 				lecture.getOrgId(),
 				lecture.getOrgName(),
 				lecture.getLectureName(),

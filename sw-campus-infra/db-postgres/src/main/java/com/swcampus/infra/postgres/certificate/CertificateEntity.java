@@ -1,7 +1,7 @@
 package com.swcampus.infra.postgres.certificate;
 
 import com.swcampus.domain.certificate.Certificate;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.infra.postgres.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -26,8 +26,8 @@ public class CertificateEntity extends BaseEntity {
     @Column(name = "lecture_id", nullable = false)
     private Long lectureId;
 
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    @Column(name = "image_url", nullable = false)  // TODO: DB 마이그레이션 후 image_key로 변경
+    private String imageKey;
 
     @Column(nullable = false)
     private String status;
@@ -41,7 +41,7 @@ public class CertificateEntity extends BaseEntity {
         entity.id = certificate.getId();
         entity.memberId = certificate.getMemberId();
         entity.lectureId = certificate.getLectureId();
-        entity.imageUrl = certificate.getImageUrl();
+        entity.imageKey = certificate.getImageKey();
         entity.status = certificate.getStatus();
         entity.approvalStatus = certificate.getApprovalStatus();
         return entity;
@@ -52,7 +52,7 @@ public class CertificateEntity extends BaseEntity {
             this.id,
             this.memberId,
             this.lectureId,
-            this.imageUrl,
+            this.imageKey,
             this.status,
             this.approvalStatus,
             this.getCreatedAt()

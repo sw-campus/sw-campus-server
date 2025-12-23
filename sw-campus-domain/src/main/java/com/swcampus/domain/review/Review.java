@@ -1,5 +1,6 @@
 package com.swcampus.domain.review;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

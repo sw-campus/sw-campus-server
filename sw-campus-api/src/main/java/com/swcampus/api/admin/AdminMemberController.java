@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.swcampus.api.admin.response.AdminMemberResponse;
+import com.swcampus.api.admin.response.MemberRoleStatsResponse;
 import com.swcampus.api.exception.ErrorResponse;
 import com.swcampus.domain.member.AdminMemberService;
 import com.swcampus.domain.member.Member;
+import com.swcampus.domain.member.Role;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,7 +38,19 @@ public class AdminMemberController {
 
     private final AdminMemberService adminMemberService;
 
-    @Operation(summary = "회원 목록 조회/검색", description = "회원 목록을 조회하고 검색합니다. 이름, 닉네임, 이메일로 검색할 수 있습니다.")
+    @Operation(summary = "회원 역할별 통계 조회", description = "전체/일반/기관/관리자 회원 수를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/stats")
+    public ResponseEntity<MemberRoleStatsResponse> getStats() {
+        var stats = adminMemberService.getStats();
+        return ResponseEntity.ok(MemberRoleStatsResponse.of(stats.total(), stats.user(), stats.organization(), stats.admin()));
+    }
+
+    @Operation(summary = "회원 목록 조회/검색", description = "회원 목록을 조회하고 검색합니다. 역할과 이름, 닉네임, 이메일로 필터링할 수 있습니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -44,6 +58,8 @@ public class AdminMemberController {
     })
     @GetMapping
     public ResponseEntity<Page<AdminMemberResponse>> getMembers(
+            @Parameter(description = "회원 역할 (USER, ORGANIZATION, ADMIN), 미입력시 전체")
+            @RequestParam(name = "role", required = false) Role role,
             @Parameter(description = "검색 키워드 (이름, 닉네임, 이메일), 미입력시 전체")
             @RequestParam(name = "keyword", required = false, defaultValue = "") String keyword,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
@@ -51,7 +67,7 @@ public class AdminMemberController {
             @Parameter(description = "페이지 크기", example = "10")
             @RequestParam(name = "size", required = false, defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Member> members = adminMemberService.searchMembers(keyword, pageable);
+        Page<Member> members = adminMemberService.searchMembers(role, keyword, pageable);
         return ResponseEntity.ok(members.map(AdminMemberResponse::from));
     }
 }

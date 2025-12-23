@@ -1,7 +1,7 @@
 package com.swcampus.api.mypage.response;
 
 import com.swcampus.domain.member.Member;
-import com.swcampus.domain.organization.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.organization.Organization;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -28,8 +28,8 @@ public record OrganizationInfoResponse(
     @Schema(description = "승인 상태")
     ApprovalStatus approvalStatus,
 
-    @Schema(description = "사업자등록증 URL")
-    String certificateUrl,
+    @Schema(description = "사업자등록증 S3 Key")
+    String certificateKey,
 
     @Schema(description = "정부 인증 정보")
     String govAuth,
@@ -61,7 +61,7 @@ public record OrganizationInfoResponse(
             member.getPhone(),
             member.getLocation(),
             organization.getApprovalStatus(),
-            organization.getCertificateUrl(),
+            organization.getCertificateKey(),
             organization.getGovAuth(),
             organization.getFacilityImageUrl(),
             organization.getFacilityImageUrl2(),

@@ -63,4 +63,6 @@ public interface LectureJpaRepository extends JpaRepository<LectureEntity, Long>
                         "LEFT JOIN FETCH c.category " +
                         "WHERE l.lectureId IN :ids")
         List<LectureEntity> findAllByIdInWithCurriculums(@Param("ids") List<Long> ids);
+
+        long countByLectureAuthStatus(LectureAuthStatus status);
 }

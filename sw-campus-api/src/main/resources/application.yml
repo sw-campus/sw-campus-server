@@ -2,8 +2,13 @@ spring:
   application:
     name: sw-campus-server
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+
   profiles:
-    default: local
+    default: staging
     group:
       local: local
       staging: staging
@@ -24,9 +29,9 @@ spring:
   # Spring Batch
   batch:
     jdbc:
-      initialize-schema: never  # 또는 embedded, never
+      initialize-schema: never # 또는 embedded, never
     job:
-      enabled: false  # 애플리케이션 시작 시 자동 실행 방지
+      enabled: false # 애플리케이션 시작 시 자동 실행 방지
 
   # Jackson (날짜 직렬화 설정)
   jackson:
@@ -43,6 +48,12 @@ spring:
           auth: true
           starttls:
             enable: true
+
+# 로그 관련 설정
+otel:
+  resource:
+    attributes:
+      service.name: sw-campus # 관측 단위의 ID이므로 서비스명
 
 # Swagger UI 설정
 springdoc:
