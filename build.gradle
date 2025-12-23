@@ -20,9 +20,13 @@ allprojects {
 }
 
 subprojects {
-    apply {
-        plugin 'java'
-        plugin 'io.spring.dependency-management'
+    // 전파가 필요한 모듈에서는 java-library + api 사용
+    apply plugin: 'java-library'
+    apply plugin: 'io.spring.dependency-management'
+
+    // Java 컴파일 옵션: 파라미터 이름 정보 보존
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs.add('-parameters')
     }
 
     dependencyManagement {
@@ -32,10 +36,14 @@ subprojects {
     }
 
     dependencies {
+        // 공통 Lombok
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
         testCompileOnly 'org.projectlombok:lombok'
         testAnnotationProcessor 'org.projectlombok:lombok'
+
+        // 공통 로깅 API
+        implementation 'org.slf4j:slf4j-api'
 
         // 공통 테스트 의존성
         testImplementation 'org.springframework.boot:spring-boot-starter-test'

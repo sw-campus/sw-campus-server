@@ -30,7 +30,7 @@ class MemberTest {
         assertThat(member.getPhone()).isEqualTo(phone);
         assertThat(member.getLocation()).isEqualTo(location);
         assertThat(member.getRole()).isEqualTo(Role.USER);
-        assertThat(member.getOrgAuth()).isNull();
+        assertThat(member.getOrgId()).isNull();
         assertThat(member.getCreatedAt()).isNotNull();
         assertThat(member.getUpdatedAt()).isNotNull();
     }
@@ -46,7 +46,7 @@ class MemberTest {
 
         // then
         assertThat(member.getRole()).isEqualTo(Role.ORGANIZATION);
-        assertThat(member.getOrgAuth()).isEqualTo(0);
+        assertThat(member.getOrgId()).isNull(); // orgId는 Organization 생성 후 설정됨
     }
 
     @Test

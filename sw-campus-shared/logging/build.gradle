@@ -1,3 +1,14 @@
 plugins {
     id 'java'
 }
+
+dependencies {
+    api 'org.slf4j:slf4j-api'
+
+    // OpenTelemetry Logback Appender
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.10.0-alpha'
+
+    // OpenTelemetry SDK
+    implementation 'io.opentelemetry:opentelemetry-sdk:1.32.0'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.32.0'
+}

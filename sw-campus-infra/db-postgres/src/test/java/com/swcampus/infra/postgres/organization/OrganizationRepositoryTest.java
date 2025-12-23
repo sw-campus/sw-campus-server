@@ -1,5 +1,6 @@
 package com.swcampus.infra.postgres.organization;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationRepository;
 import com.swcampus.infra.postgres.TestApplication;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ContextConfiguration(classes = TestApplication.class)
-@Import(OrganizationRepositoryImpl.class)
+@Import(OrganizationEntityRepository.class)
 @ActiveProfiles("test")
 class OrganizationRepositoryTest {
 
@@ -28,7 +29,7 @@ class OrganizationRepositoryTest {
     @DisplayName("Organization 저장 및 조회")
     void saveAndFindById() {
         // given
-        Organization organization = Organization.create(1L, "소프트웨어 캠퍼스", "IT 교육 전문 기관");
+        Organization organization = Organization.create(1L, "소프트웨어 캠퍼스", "IT 교육 전문 기관", "https://s3.../cert.jpg");
 
         // when
         Organization saved = organizationRepository.save(organization);
@@ -39,13 +40,15 @@ class OrganizationRepositoryTest {
         assertThat(found.get().getName()).isEqualTo("소프트웨어 캠퍼스");
         assertThat(found.get().getDescription()).isEqualTo("IT 교육 전문 기관");
         assertThat(found.get().getUserId()).isEqualTo(1L);
+        assertThat(found.get().getCertificateKey()).isEqualTo("https://s3.../cert.jpg");
+        assertThat(found.get().getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
     }
 
     @Test
     @DisplayName("userId로 Organization 조회")
     void findByUserId() {
         // given
-        Organization organization = Organization.create(100L, "테스트 기관", "설명");
+        Organization organization = Organization.create(100L, "테스트 기관", "설명", "https://s3.../cert.jpg");
         organizationRepository.save(organization);
 
         // when
@@ -60,7 +63,7 @@ class OrganizationRepositoryTest {
     @DisplayName("userId 존재 여부 확인")
     void existsByUserId() {
         // given
-        Organization organization = Organization.create(200L, "테스트 기관", "설명");
+        Organization organization = Organization.create(200L, "테스트 기관", "설명", "https://s3.../cert.jpg");
         organizationRepository.save(organization);
 
         // when & then

@@ -1,14 +1,72 @@
 spring:
+  application:
+    name: sw-campus-server
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+
   profiles:
-    active: local # 기본 실행 프로필
+    default: staging
+    group:
+      local: local
+      staging: staging
+      prod: prod
+      ddl-gen: ddl-gen
+
   config:
     import:
       - optional:classpath:logging.yml # 공통 로깅 설정 불러오기
-      - optional:classpath:config/application-${spring.profiles.active}.yml # Submodule 설정
+      - optional:classpath:config/application-${spring.profiles.active}.yml
+
   jpa:
     open-in-view: false
-    hibernate:
-      ddl-auto: none # 스키마를 변경하지 않음
     properties:
       hibernate:
         default_batch_fetch_size: 100 # N+1 최적화
+
+  # Spring Batch
+  batch:
+    jdbc:
+      initialize-schema: never # 또는 embedded, never
+    job:
+      enabled: false # 애플리케이션 시작 시 자동 실행 방지
+
+  # Jackson (날짜 직렬화 설정)
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+  # Mail (SMTP)
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# 로그 관련 설정
+otel:
+  resource:
+    attributes:
+      service.name: sw-campus # 관측 단위의 ID이므로 서비스명
+
+# Swagger UI 설정
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  packages-to-scan:
+    - com.swcampus.api
+  paths-to-match:
+    - /api/**

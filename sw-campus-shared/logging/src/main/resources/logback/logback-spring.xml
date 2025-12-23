@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProfile name="ddl-gen">
+        <include resource="logback/logback-ddl-gen.xml"/>
+    </springProfile>
+
+    <springProfile name="local">
+        <include resource="logback/logback-local.xml"/>
+    </springProfile>
+
+    <springProfile name="staging">
+        <include resource="logback/logback-staging.xml"/>
+    </springProfile>
+
+    <springProfile name="prod">
+        <include resource="logback/logback-prod.xml"/>
+    </springProfile>
+
+    <springProfile name="default">
+        <include resource="logback/logback-local.xml"/>
+    </springProfile>
+</configuration>
+

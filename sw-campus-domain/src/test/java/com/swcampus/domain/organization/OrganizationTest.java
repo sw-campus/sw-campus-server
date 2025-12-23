@@ -1,5 +1,6 @@
 package com.swcampus.domain.organization;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +15,17 @@ class OrganizationTest {
         Long userId = 1L;
         String name = "소프트웨어 캠퍼스";
         String description = "IT 교육 전문 기관";
+        String certificateKey = "employment-certificates/2024/01/01/certificate.jpg";
 
         // when
-        Organization organization = Organization.create(userId, name, description);
+        Organization organization = Organization.create(userId, name, description, certificateKey);
 
         // then
         assertThat(organization.getUserId()).isEqualTo(userId);
         assertThat(organization.getName()).isEqualTo(name);
         assertThat(organization.getDescription()).isEqualTo(description);
+        assertThat(organization.getCertificateKey()).isEqualTo(certificateKey);
+        assertThat(organization.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
         assertThat(organization.getCreatedAt()).isNotNull();
         assertThat(organization.getUpdatedAt()).isNotNull();
     }
@@ -30,7 +34,7 @@ class OrganizationTest {
     @DisplayName("Organization 정보 수정")
     void updateInfo() {
         // given
-        Organization organization = Organization.create(1L, "기존 이름", "기존 설명");
+        Organization organization = Organization.create(1L, "기존 이름", "기존 설명", "employment-certificates/cert.jpg");
 
         // when
         organization.updateInfo("새로운 이름", "새로운 설명");
@@ -44,7 +48,7 @@ class OrganizationTest {
     @DisplayName("시설 이미지 수정")
     void updateFacilityImages() {
         // given
-        Organization organization = Organization.create(1L, "테스트 기관", "설명");
+        Organization organization = Organization.create(1L, "테스트 기관", "설명", "employment-certificates/cert.jpg");
 
         // when
         organization.updateFacilityImages(
@@ -65,7 +69,7 @@ class OrganizationTest {
     @DisplayName("로고 URL 수정")
     void updateLogoUrl() {
         // given
-        Organization organization = Organization.create(1L, "테스트 기관", "설명");
+        Organization organization = Organization.create(1L, "테스트 기관", "설명", "employment-certificates/cert.jpg");
 
         // when
         organization.updateLogoUrl("http://logo.png");
@@ -78,12 +82,38 @@ class OrganizationTest {
     @DisplayName("정부 인증 설정")
     void setGovAuth() {
         // given
-        Organization organization = Organization.create(1L, "테스트 기관", "설명");
+        Organization organization = Organization.create(1L, "테스트 기관", "설명", "employment-certificates/cert.jpg");
 
         // when
         organization.setGovAuth("정부인증-2024-001");
 
         // then
         assertThat(organization.getGovAuth()).isEqualTo("정부인증-2024-001");
+    }
+
+    @Test
+    @DisplayName("기관 승인")
+    void approve() {
+        // given
+        Organization organization = Organization.create(1L, "테스트 기관", "설명", "employment-certificates/cert.jpg");
+
+        // when
+        organization.approve();
+
+        // then
+        assertThat(organization.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("기관 반려")
+    void reject() {
+        // given
+        Organization organization = Organization.create(1L, "테스트 기관", "설명", "employment-certificates/cert.jpg");
+
+        // when
+        organization.reject();
+
+        // then
+        assertThat(organization.getApprovalStatus()).isEqualTo(ApprovalStatus.REJECTED);
     }
 }

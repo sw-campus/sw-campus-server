@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb;MODE=PostgreSQL
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;INIT=CREATE SCHEMA IF NOT EXISTS swcampus
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -10,9 +10,15 @@ spring:
       ddl-auto: create-drop
     show-sql: true
 
+  flyway:
+    enabled: false
+
   mail:
     host: localhost
     port: 3025
+
+  jackson:
+    property-naming-strategy: SNAKE_CASE
 
 jwt:
   secret: test-secret-key-for-testing-purpose-only-32bytes!!
@@ -20,6 +26,19 @@ jwt:
   refresh-token-validity: 86400
 
 aws:
+  credentials:
+    access-key: test-access-key
+    secret-key: test-secret-key
   s3:
     bucket: test-bucket
+    private-bucket: test-private-bucket
     region: ap-northeast-2
+
+oauth:
+  google:
+    client-id: test-google-client-id
+    client-secret: test-google-client-secret
+    redirect-uri: http://localhost:3000/oauth/callback/google
+  github:
+    client-id: test-github-client-id
+    client-secret: test-github-client-secret
