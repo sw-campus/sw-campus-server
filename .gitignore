@@ -43,6 +43,3 @@ skipped_constraints.log
 .venv/
 scripts/output/
 scripts/data-migration/output/
-
-### Config ###
-sw-campus-api/src/main/resources/config/
