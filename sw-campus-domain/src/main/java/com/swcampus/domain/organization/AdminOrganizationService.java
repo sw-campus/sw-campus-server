@@ -69,4 +69,18 @@ public class AdminOrganizationService {
 
         return new RejectOrganizationResult(memberEmail, admin.getEmail(), admin.getPhone());
     }
+
+    /**
+     * 기관 상태별 통계를 조회합니다.
+     * 재직증명서(certificateUrl)를 제출한 기관만 카운트합니다.
+     */
+    public OrganizationApprovalStats getStats() {
+        long total = organizationRepository.countAll();
+        long pending = organizationRepository.countByApprovalStatus(ApprovalStatus.PENDING);
+        long approved = organizationRepository.countByApprovalStatus(ApprovalStatus.APPROVED);
+        long rejected = organizationRepository.countByApprovalStatus(ApprovalStatus.REJECTED);
+        return new OrganizationApprovalStats(total, pending, approved, rejected);
+    }
+
+    public record OrganizationApprovalStats(long total, long pending, long approved, long rejected) {}
 }

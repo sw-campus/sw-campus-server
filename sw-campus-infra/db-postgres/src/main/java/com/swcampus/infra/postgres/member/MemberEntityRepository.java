@@ -70,8 +70,8 @@ public class MemberEntityRepository implements MemberRepository {
     }
 
     @Override
-    public Page<Member> searchByKeyword(String keyword, Pageable pageable) {
-        return jpaRepository.searchByKeyword(keyword, pageable)
+    public Page<Member> searchByRoleAndKeyword(Role role, String keyword, Pageable pageable) {
+        return jpaRepository.searchByRoleAndKeyword(role, keyword, pageable)
                 .map(MemberEntity::toDomain);
     }
 
@@ -83,5 +83,15 @@ public class MemberEntityRepository implements MemberRepository {
     @Override
     public boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long id) {
         return jpaRepository.existsByNicknameIgnoreCaseAndIdNot(nickname, id);
+    }
+
+    @Override
+    public long countAll() {
+        return jpaRepository.count();
+    }
+
+    @Override
+    public long countByRole(Role role) {
+        return jpaRepository.countByRole(role);
     }
 }

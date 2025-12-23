@@ -40,7 +40,7 @@ class OrganizationRepositoryTest {
         assertThat(found.get().getName()).isEqualTo("소프트웨어 캠퍼스");
         assertThat(found.get().getDescription()).isEqualTo("IT 교육 전문 기관");
         assertThat(found.get().getUserId()).isEqualTo(1L);
-        assertThat(found.get().getCertificateUrl()).isEqualTo("https://s3.../cert.jpg");
+        assertThat(found.get().getCertificateKey()).isEqualTo("https://s3.../cert.jpg");
         assertThat(found.get().getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
     }
 

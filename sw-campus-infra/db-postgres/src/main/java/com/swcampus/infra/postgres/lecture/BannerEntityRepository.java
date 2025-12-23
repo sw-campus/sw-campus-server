@@ -91,5 +91,26 @@ public class BannerEntityRepository implements BannerRepository {
         return jpaRepository.findAll(spec, pageable)
                 .map(BannerEntity::toDomain);
     }
+
+    @Override
+    public long countAll() {
+        return jpaRepository.count();
+    }
+
+    @Override
+    public long countByIsActive(boolean isActive) {
+        return jpaRepository.countByIsActive(isActive);
+    }
+
+    @Override
+    public long countByPeriodStatus(String periodStatus) {
+        OffsetDateTime now = OffsetDateTime.now();
+        return switch (periodStatus) {
+            case "SCHEDULED" -> jpaRepository.countScheduled(now);
+            case "ACTIVE" -> jpaRepository.countActive(now);
+            case "ENDED" -> jpaRepository.countEnded(now);
+            default -> 0L;
+        };
+    }
 }
 

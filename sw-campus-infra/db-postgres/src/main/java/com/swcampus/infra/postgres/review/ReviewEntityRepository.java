@@ -128,4 +128,24 @@ public class ReviewEntityRepository implements ReviewRepository {
         return jpaRepository.findAllWithDetailsAndKeyword(status, keyword, pageable)
                 .map(ReviewEntity::toDomain);
     }
+
+    @Override
+    public long countAll() {
+        return jpaRepository.count();
+    }
+
+    @Override
+    public long countByApprovalStatus(ApprovalStatus status) {
+        return jpaRepository.countByApprovalStatus(status);
+    }
+
+    @Override
+    public long countWithApprovedCertificate() {
+        return jpaRepository.countWithApprovedCertificate();
+    }
+
+    @Override
+    public long countWithApprovedCertificateAndReviewStatus(ApprovalStatus reviewStatus) {
+        return jpaRepository.countWithApprovedCertificateAndReviewStatus(reviewStatus);
+    }
 }

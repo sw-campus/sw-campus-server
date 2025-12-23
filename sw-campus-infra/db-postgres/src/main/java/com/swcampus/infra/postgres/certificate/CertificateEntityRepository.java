@@ -59,4 +59,14 @@ public class CertificateEntityRepository implements CertificateRepository {
                 CertificateEntity::toDomain
             ));
     }
+
+    @Override
+    public long countAll() {
+        return jpaRepository.count();
+    }
+
+    @Override
+    public long countByApprovalStatus(ApprovalStatus status) {
+        return jpaRepository.countByApprovalStatus(status);
+    }
 }

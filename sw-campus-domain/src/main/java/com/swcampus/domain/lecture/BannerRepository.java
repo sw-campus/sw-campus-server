@@ -29,5 +29,10 @@ public interface BannerRepository {
      * @return 배너 페이지
      */
     Page<Banner> searchBanners(String keyword, String periodStatus, Pageable pageable);
+
+    // Statistics methods
+    long countAll();
+    long countByIsActive(boolean isActive);
+    long countByPeriodStatus(String periodStatus);
 }
 

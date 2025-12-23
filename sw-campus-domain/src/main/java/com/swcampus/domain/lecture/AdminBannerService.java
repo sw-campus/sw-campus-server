@@ -183,4 +183,19 @@ public class AdminBannerService {
         String lectureName = lectureNames.getOrDefault(banner.getLectureId(), UNKNOWN_LECTURE_NAME);
         return BannerDetailsDto.from(banner, lectureName);
     }
+
+    /**
+     * 배너 상태별 통계를 조회합니다.
+     */
+    public BannerStats getStats() {
+        long total = bannerRepository.countAll();
+        long active = bannerRepository.countByIsActive(true);
+        long inactive = bannerRepository.countByIsActive(false);
+        long scheduled = bannerRepository.countByPeriodStatus("SCHEDULED");
+        long currentlyActive = bannerRepository.countByPeriodStatus("ACTIVE");
+        long ended = bannerRepository.countByPeriodStatus("ENDED");
+        return new BannerStats(total, active, inactive, scheduled, currentlyActive, ended);
+    }
+
+    public record BannerStats(long total, long active, long inactive, long scheduled, long currentlyActive, long ended) {}
 }

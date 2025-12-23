@@ -16,7 +16,11 @@ public interface MemberRepository {
     Optional<Member> findByOrgId(Long orgId);
     Optional<Member> findFirstByRole(Role role);
     void deleteById(Long id);
-    Page<Member> searchByKeyword(String keyword, Pageable pageable);
+    Page<Member> searchByRoleAndKeyword(Role role, String keyword, Pageable pageable);
     boolean existsByNicknameIgnoreCase(String nickname);
     boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long id);
+    
+    // Statistics methods
+    long countAll();
+    long countByRole(Role role);
 }

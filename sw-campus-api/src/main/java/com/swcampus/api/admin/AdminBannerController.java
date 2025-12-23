@@ -3,6 +3,7 @@ package com.swcampus.api.admin;
 import com.swcampus.api.admin.request.BannerActiveRequest;
 import com.swcampus.api.admin.request.BannerRequest;
 import com.swcampus.api.admin.response.AdminBannerResponse;
+import com.swcampus.api.admin.response.BannerStatsResponse;
 import com.swcampus.domain.lecture.AdminBannerService;
 import com.swcampus.domain.lecture.dto.BannerDetailsDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,6 +63,20 @@ public class AdminBannerController {
                 } catch (IOException e) {
                         throw new FileProcessingException("배너 이미지 파일 처리 중 오류가 발생했습니다", e);
                 }
+        }
+
+        @Operation(summary = "배너 상태별 통계 조회", description = "전체/활성/비활성/예정/진행중/종료 배너 수를 조회합니다.")
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "조회 성공"),
+                        @ApiResponse(responseCode = "401", description = "인증 필요"),
+                        @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+        })
+        @GetMapping("/stats")
+        public ResponseEntity<BannerStatsResponse> getStats() {
+                var stats = adminBannerService.getStats();
+                return ResponseEntity.ok(BannerStatsResponse.of(
+                        stats.total(), stats.active(), stats.inactive(), 
+                        stats.scheduled(), stats.currentlyActive(), stats.ended()));
         }
 
         @Operation(summary = "배너 목록 조회", description = "배너를 검색합니다. 키워드, 기간 상태로 필터링하고 페이징 처리됩니다.")

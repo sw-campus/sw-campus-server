@@ -3,6 +3,8 @@ package com.swcampus.infra.postgres.lecture;
 import com.swcampus.domain.lecture.BannerType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -22,6 +24,18 @@ public interface BannerJpaRepository extends JpaRepository<BannerEntity, Long>, 
     List<BannerEntity> findAllByBannerTypeAndIsActiveTrueAndStartDateBeforeAndEndDateAfter(
             BannerType bannerType, OffsetDateTime now1, OffsetDateTime now2);
 
+    long countByIsActive(boolean isActive);
 
+    // SCHEDULED: startDate > now
+    @Query("SELECT COUNT(b) FROM BannerEntity b WHERE b.startDate > :now")
+    long countScheduled(@Param("now") OffsetDateTime now);
+
+    // ACTIVE: startDate <= now AND endDate > now
+    @Query("SELECT COUNT(b) FROM BannerEntity b WHERE b.startDate <= :now AND b.endDate > :now")
+    long countActive(@Param("now") OffsetDateTime now);
+
+    // ENDED: endDate <= now
+    @Query("SELECT COUNT(b) FROM BannerEntity b WHERE b.endDate <= :now")
+    long countEnded(@Param("now") OffsetDateTime now);
 }
 

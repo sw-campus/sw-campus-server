@@ -13,4 +13,6 @@ public interface CertificateJpaRepository extends JpaRepository<CertificateEntit
     boolean existsByMemberIdAndLectureId(Long memberId, Long lectureId);
 
     List<CertificateEntity> findAllByMemberIdAndApprovalStatus(Long memberId, ApprovalStatus approvalStatus);
+
+    long countByApprovalStatus(ApprovalStatus approvalStatus);
 }
