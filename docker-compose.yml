@@ -22,7 +22,7 @@ services:
     image: zionge2k/sw-campus-ocr:latest
     container_name: sw-campus-ocr
     ports:
-      - "8001:8000"
+      - "8000:8000"
     environment:
       - PYTHONUNBUFFERED=1
     healthcheck:
