@@ -130,6 +130,12 @@ public class ReviewEntityRepository implements ReviewRepository {
     }
 
     @Override
+    public Page<Review> findByOrganizationIdAndApprovalStatusWithPagination(Long organizationId, ApprovalStatus status, Pageable pageable) {
+        return jpaRepository.findByOrganizationIdAndApprovalStatusWithPagination(organizationId, status, pageable)
+                .map(ReviewEntity::toDomain);
+    }
+
+    @Override
     public long countAll() {
         return jpaRepository.count();
     }

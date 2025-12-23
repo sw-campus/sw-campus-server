@@ -12,6 +12,9 @@ import com.swcampus.domain.review.exception.ReviewNotFoundException;
 import com.swcampus.domain.review.exception.ReviewNotModifiableException;
 import com.swcampus.domain.review.exception.ReviewNotOwnerException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -185,6 +188,41 @@ public class ReviewService {
     public List<ReviewWithNickname> getApprovedReviewsWithNicknameByOrganization(Long organizationId) {
         List<Review> reviews = getApprovedReviewsByOrganization(organizationId);
         return toReviewsWithNicknames(reviews);
+    }
+
+    /**
+     * 기관별 승인된 후기 목록 조회 (페이지네이션, 정렬)
+     */
+    public Page<ReviewWithNickname> getApprovedReviewsByOrganizationWithPagination(
+            Long organizationId, int page, int size, ReviewSortType sortType) {
+        Pageable pageable = PageRequest.of(page, size, sortType.getSort());
+        Page<Review> reviewPage = reviewRepository.findByOrganizationIdAndApprovalStatusWithPagination(
+                organizationId, ApprovalStatus.APPROVED, pageable);
+        return toPageReviewsWithNicknames(reviewPage);
+    }
+
+    private Page<ReviewWithNickname> toPageReviewsWithNicknames(Page<Review> reviewPage) {
+        List<Review> reviews = reviewPage.getContent();
+        if (reviews.isEmpty()) {
+            return reviewPage.map(review -> ReviewWithNickname.of(review, null));
+        }
+
+        List<Long> memberIds = reviews.stream()
+                .map(Review::getMemberId)
+                .distinct()
+                .toList();
+
+        Map<Long, String> nicknameMap = memberRepository.findAllByIds(memberIds).stream()
+                .collect(Collectors.toMap(
+                        Member::getId,
+                        member -> member.getNickname() != null ? member.getNickname() : "",
+                        (existing, replacement) -> existing
+                ));
+
+        return reviewPage.map(review -> ReviewWithNickname.of(
+                review,
+                nicknameMap.get(review.getMemberId())
+        ));
     }
 
     /**
