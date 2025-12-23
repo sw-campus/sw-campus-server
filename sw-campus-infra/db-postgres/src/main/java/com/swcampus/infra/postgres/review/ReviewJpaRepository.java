@@ -68,6 +68,18 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         @Param("keyword") String keyword,
                         Pageable pageable);
 
+        @Query(value = "SELECT DISTINCT r FROM ReviewEntity r " +
+                        "LEFT JOIN FETCH r.details " +
+                        "WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId) " +
+                        "AND r.approvalStatus = :status",
+                countQuery = "SELECT COUNT(DISTINCT r) FROM ReviewEntity r " +
+                        "WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId) " +
+                        "AND r.approvalStatus = :status")
+        Page<ReviewEntity> findByOrganizationIdAndApprovalStatusWithPagination(
+                        @Param("organizationId") Long organizationId,
+                        @Param("status") ApprovalStatus status,
+                        Pageable pageable);
+
         long countByApprovalStatus(ApprovalStatus status);
 
         /**

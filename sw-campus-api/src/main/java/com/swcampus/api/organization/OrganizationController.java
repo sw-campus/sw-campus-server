@@ -3,6 +3,7 @@ package com.swcampus.api.organization;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +20,7 @@ import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
 import com.swcampus.domain.review.ReviewService;
+import com.swcampus.domain.review.ReviewSortType;
 import com.swcampus.domain.review.ReviewWithNickname;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -101,17 +103,23 @@ public class OrganizationController {
         }
 
         @GetMapping("/{organizationId}/reviews")
-        @Operation(summary = "기관별 승인된 후기 조회", description = "기관 ID로 승인된 후기 목록을 조회합니다.")
+        @Operation(summary = "기관별 승인된 후기 조회", description = "기관 ID로 승인된 후기 목록을 페이지네이션으로 조회합니다. 정렬 옵션: LATEST(최신순), OLDEST(오래된순), SCORE_DESC(별점 높은순), SCORE_ASC(별점 낮은순)")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "조회 성공")
         })
-        public ResponseEntity<List<ReviewResponse>> getApprovedReviewsByOrganization(
-                        @Parameter(description = "기관 ID", example = "1", required = true) @PathVariable("organizationId") Long organizationId) {
-                List<ReviewWithNickname> reviewsWithNicknames = reviewService.getApprovedReviewsWithNicknameByOrganization(organizationId);
-                List<ReviewResponse> responses = reviewsWithNicknames.stream()
-                                .map(rwn -> ReviewResponse.from(rwn.review(), rwn.nickname()))
-                                .toList();
-                return ResponseEntity.ok(responses);
+        public ResponseEntity<Page<ReviewResponse>> getApprovedReviewsByOrganization(
+                        @Parameter(description = "기관 ID", example = "1", required = true)
+                        @PathVariable("organizationId") Long organizationId,
+                        @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+                        @RequestParam(name = "page", defaultValue = "0") int page,
+                        @Parameter(description = "페이지 크기", example = "6")
+                        @RequestParam(name = "size", defaultValue = "6") int size,
+                        @Parameter(description = "정렬 기준 (LATEST, OLDEST, SCORE_DESC, SCORE_ASC)", example = "LATEST")
+                        @RequestParam(name = "sort", defaultValue = "LATEST") ReviewSortType sortType) {
+                Page<ReviewWithNickname> reviewsPage = reviewService.getApprovedReviewsByOrganizationWithPagination(
+                                organizationId, page, size, sortType);
+                Page<ReviewResponse> responsePage = reviewsPage.map(rwn -> ReviewResponse.from(rwn.review(), rwn.nickname()));
+                return ResponseEntity.ok(responsePage);
         }
 }
 
