@@ -75,7 +75,7 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
          */
         @Query("SELECT COUNT(r) FROM ReviewEntity r " +
                         "JOIN CertificateEntity c ON c.id = r.certificateId " +
-                        "WHERE c.approvalStatus = com.swcampus.domain.review.ApprovalStatus.APPROVED")
+                        "WHERE c.approvalStatus = com.swcampus.domain.common.ApprovalStatus.APPROVED")
         long countWithApprovedCertificate();
 
         /**
@@ -83,7 +83,7 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
          */
         @Query("SELECT COUNT(r) FROM ReviewEntity r " +
                         "JOIN CertificateEntity c ON c.id = r.certificateId " +
-                        "WHERE c.approvalStatus = com.swcampus.domain.review.ApprovalStatus.APPROVED " +
+                        "WHERE c.approvalStatus = com.swcampus.domain.common.ApprovalStatus.APPROVED " +
                         "AND r.approvalStatus = :reviewStatus")
         long countWithApprovedCertificateAndReviewStatus(@Param("reviewStatus") ApprovalStatus reviewStatus);
 }
