@@ -6,6 +6,7 @@ import com.swcampus.api.admin.response.AdminBannerResponse;
 import com.swcampus.api.admin.response.BannerStatsResponse;
 import com.swcampus.domain.lecture.AdminBannerService;
 import com.swcampus.domain.lecture.BannerPeriodStatus;
+import com.swcampus.domain.lecture.BannerType;
 import com.swcampus.domain.lecture.dto.BannerDetailsDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -80,7 +81,7 @@ public class AdminBannerController {
                         stats.scheduled(), stats.currentlyActive(), stats.ended()));
         }
 
-        @Operation(summary = "배너 목록 조회", description = "배너를 검색합니다. 키워드, 기간 상태로 필터링하고 페이징 처리됩니다.")
+        @Operation(summary = "배너 목록 조회", description = "배너를 검색합니다. 키워드, 기간 상태, 배너 타입으로 필터링하고 페이징 처리됩니다.")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "조회 성공"),
                         @ApiResponse(responseCode = "401", description = "인증 필요"),
@@ -90,11 +91,12 @@ public class AdminBannerController {
         public ResponseEntity<Page<AdminBannerResponse>> getBanners(
                         @Parameter(description = "강의명 검색어") @RequestParam(required = false) String keyword,
                         @Parameter(description = "기간 상태 (SCHEDULED, ACTIVE, ENDED)") @RequestParam(required = false) String periodStatus,
+                        @Parameter(description = "배너 타입 (BIG, MIDDLE, SMALL)") @RequestParam(required = false) BannerType type,
                         @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
                         @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
                 Pageable pageable = PageRequest.of(page, size);
                 BannerPeriodStatus status = BannerPeriodStatus.fromString(periodStatus);
-                Page<BannerDetailsDto> bannerPage = adminBannerService.searchBanners(keyword, status, pageable);
+                Page<BannerDetailsDto> bannerPage = adminBannerService.searchBanners(keyword, status, type, pageable);
                 Page<AdminBannerResponse> response = bannerPage.map(AdminBannerResponse::from);
                 return ResponseEntity.ok(response);
         }

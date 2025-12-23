@@ -42,10 +42,10 @@ public class AdminBannerService {
     }
 
     /**
-     * 배너 검색 (페이징, 키워드, 기간 상태)
+     * 배너 검색 (페이징, 키워드, 기간 상태, 타입)
      */
-    public Page<BannerDetailsDto> searchBanners(String keyword, BannerPeriodStatus periodStatus, Pageable pageable) {
-        Page<Banner> bannerPage = bannerRepository.searchBanners(keyword, periodStatus, pageable);
+    public Page<BannerDetailsDto> searchBanners(String keyword, BannerPeriodStatus periodStatus, BannerType type, Pageable pageable) {
+        Page<Banner> bannerPage = bannerRepository.searchBanners(keyword, periodStatus, type, pageable);
         
         List<Long> lectureIds = bannerPage.getContent().stream()
                 .map(Banner::getLectureId)

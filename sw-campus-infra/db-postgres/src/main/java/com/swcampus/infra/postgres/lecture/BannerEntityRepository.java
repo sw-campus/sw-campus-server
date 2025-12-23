@@ -80,13 +80,13 @@ public class BannerEntityRepository implements BannerRepository {
     }
 
     @Override
-    public Page<Banner> searchBanners(String keyword, BannerPeriodStatus periodStatus, Pageable pageable) {
+    public Page<Banner> searchBanners(String keyword, BannerPeriodStatus periodStatus, BannerType type, Pageable pageable) {
         OffsetDateTime now = OffsetDateTime.now();
         String searchKeyword = (keyword != null && !keyword.isBlank()) ? keyword : null;
         String status = periodStatus != null ? periodStatus.name() : null;
         
         // Specification 기반 동적 쿼리 사용 (메인 쿼리와 count 쿼리의 중복 제거)
-        var spec = BannerSpecifications.searchBanners(searchKeyword, status, now);
+        var spec = BannerSpecifications.searchBanners(searchKeyword, status, type, now);
         
         return jpaRepository.findAll(spec, pageable)
                 .map(BannerEntity::toDomain);
