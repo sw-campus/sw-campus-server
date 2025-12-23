@@ -18,7 +18,7 @@ import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.lecture.LectureStatus;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
-import com.swcampus.domain.review.ApprovalStatus;
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.review.ReviewSortType;
@@ -166,7 +166,7 @@ class OrganizationControllerTest {
         Page<ReviewWithNickname> emptyPage = new PageImpl<>(List.of());
 
         when(reviewService.getApprovedReviewsByOrganizationWithPagination(
-                eq(10L), eq(0), eq(10), eq(ReviewSortType.LATEST)))
+                eq(10L), eq(0), eq(6), eq(ReviewSortType.LATEST)))
                 .thenReturn(emptyPage);
 
         // when & then
@@ -189,7 +189,7 @@ class OrganizationControllerTest {
         Page<ReviewWithNickname> reviewPage = new PageImpl<>(reviewsWithNicknames);
 
         when(reviewService.getApprovedReviewsByOrganizationWithPagination(
-                eq(10L), eq(0), eq(10), eq(ReviewSortType.SCORE_DESC)))
+                eq(10L), eq(0), eq(6), eq(ReviewSortType.SCORE_DESC)))
                 .thenReturn(reviewPage);
 
         // when & then
