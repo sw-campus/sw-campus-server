@@ -3,6 +3,7 @@ package com.swcampus.infra.postgres.review;
 import com.swcampus.domain.review.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewRepository;
+import com.swcampus.domain.review.exception.ReviewNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +21,18 @@ public class ReviewEntityRepository implements ReviewRepository {
 
     @Override
     public Review save(Review review) {
-        ReviewEntity entity = ReviewEntity.from(review);
+        ReviewEntity entity;
+
+        if (review.getId() != null) {
+            // 기존 Entity 업데이트: 조회 후 값만 수정 (JPA Auditing 정상 작동)
+            entity = jpaRepository.findByIdWithDetails(review.getId())
+                    .orElseThrow(() -> new ReviewNotFoundException(review.getId()));
+            entity.update(review);
+        } else {
+            // 신규 생성
+            entity = ReviewEntity.from(review);
+        }
+
         ReviewEntity saved = jpaRepository.save(entity);
         return saved.toDomain();
     }

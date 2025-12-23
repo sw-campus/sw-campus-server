@@ -43,7 +43,7 @@ public class CertificateController {
         return certificateService.checkCertificate(memberId, lectureId)
                 .map(cert -> ResponseEntity.ok(CertificateCheckResponse.certified(
                         cert.getId(),
-                        cert.getImageUrl(),
+                        cert.getImageKey(),
                         cert.getApprovalStatus().name(),
                         cert.getCreatedAt()
                 )))
@@ -79,7 +79,7 @@ public class CertificateController {
         return ResponseEntity.ok(CertificateVerifyResponse.of(
                 certificate.getId(),
                 certificate.getLectureId(),
-                certificate.getImageUrl(),
+                certificate.getImageKey(),
                 certificate.getApprovalStatus().name()
         ));
     }

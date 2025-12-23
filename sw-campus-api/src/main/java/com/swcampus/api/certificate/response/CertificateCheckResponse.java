@@ -13,7 +13,7 @@ public record CertificateCheckResponse(
     @Schema(description = "수료증 ID", example = "1")
     Long certificateId,
 
-    @Schema(description = "수료증 이미지 URL", example = "https://example.com/cert.jpg")
+    @Schema(description = "수료증 이미지 URL", example = "https://s3.../certificates/2024/01/01/uuid.jpg")
     String imageUrl,
 
     @Schema(description = "승인 상태 (PENDING, APPROVED, REJECTED)", example = "APPROVED")
@@ -22,20 +22,20 @@ public record CertificateCheckResponse(
     @Schema(description = "인증 일시", example = "2025-01-15T10:30:00")
     String certifiedAt
 ) {
-    private static final DateTimeFormatter FORMATTER = 
+    private static final DateTimeFormatter FORMATTER =
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     public static CertificateCheckResponse notCertified() {
         return new CertificateCheckResponse(false, null, null, null, null);
     }
 
-    public static CertificateCheckResponse certified(Long id, String imageUrl, 
+    public static CertificateCheckResponse certified(Long id, String imageUrl,
                                                       String status, LocalDateTime certifiedAt) {
         return new CertificateCheckResponse(
-            true, 
-            id, 
-            imageUrl, 
-            status, 
+            true,
+            id,
+            imageUrl,
+            status,
             certifiedAt != null ? certifiedAt.format(FORMATTER) : null
         );
     }

@@ -23,8 +23,8 @@ public class OrganizationResponse {
     @Schema(description = "기관 설명", example = "IT 전문 교육 기관입니다.")
     private String description;
 
-    @Schema(description = "사업자등록증 URL", example = "https://example.com/certificate.jpg")
-    private String certificateUrl;
+    @Schema(description = "사업자등록증 S3 Key", example = "employment-certificates/2024/01/01/uuid.jpg")
+    private String certificateKey;
 
     @Schema(description = "정부 인증 여부", example = "K-DIGITAL")
     private String govAuth;
@@ -53,7 +53,7 @@ public class OrganizationResponse {
                 .userId(organization.getUserId())
                 .name(organization.getName())
                 .description(organization.getDescription())
-                .certificateUrl(organization.getCertificateUrl())
+                .certificateKey(organization.getCertificateKey())
                 .govAuth(organization.getGovAuth())
                 .facilityImageUrl(organization.getFacilityImageUrl())
                 .facilityImageUrl2(organization.getFacilityImageUrl2())

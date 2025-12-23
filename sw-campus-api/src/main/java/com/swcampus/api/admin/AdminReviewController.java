@@ -99,7 +99,7 @@ public class AdminReviewController {
                 certificate.getId(),
                 certificate.getLectureId(),
                 lectureName,
-                certificate.getImageUrl(),
+                certificate.getImageKey(),
                 certificate.getApprovalStatus().name(),
                 certificate.getCreatedAt().format(FORMATTER)
         ));
