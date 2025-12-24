@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class AnalyticsService {
+
+    private static final int DEFAULT_DAYS = 7;
+    private static final int DEFAULT_LIMIT = 10;
     
     private final AnalyticsRepository analyticsRepository;
     
@@ -24,24 +27,12 @@ public class AnalyticsService {
      */
     public AnalyticsReport getReport(int daysAgo) {
         if (daysAgo <= 0) {
-            daysAgo = 7;
+            daysAgo = DEFAULT_DAYS;
         }
         return analyticsRepository.getReport(daysAgo);
     }
     
-    /**
-     * 최근 7일간의 Analytics 리포트를 조회합니다.
-     */
-    public AnalyticsReport getWeeklyReport() {
-        return getReport(7);
-    }
-    
-    /**
-     * 최근 30일간의 Analytics 리포트를 조회합니다.
-     */
-    public AnalyticsReport getMonthlyReport() {
-        return getReport(30);
-    }
+
     
     /**
      * 최근 N일간의 이벤트 통계를 조회합니다.
@@ -51,7 +42,7 @@ public class AnalyticsService {
      */
     public EventStats getEventStats(int daysAgo) {
         if (daysAgo <= 0) {
-            daysAgo = 7;
+            daysAgo = DEFAULT_DAYS;
         }
         return analyticsRepository.getEventStats(daysAgo);
     }
@@ -60,8 +51,8 @@ public class AnalyticsService {
      * 클릭 수 높은 순으로 배너 통계를 조회합니다.
      */
     public List<BannerClickStats> getTopBannersByClicks(int daysAgo, int limit) {
-        if (daysAgo <= 0) daysAgo = 7;
-        if (limit <= 0) limit = 10;
+        if (daysAgo <= 0) daysAgo = DEFAULT_DAYS;
+        if (limit <= 0) limit = DEFAULT_LIMIT;
         return analyticsRepository.getTopBannersByClicks(daysAgo, limit);
     }
     
@@ -69,8 +60,8 @@ public class AnalyticsService {
      * 클릭 수 높은 순으로 강의 통계를 조회합니다.
      */
     public List<LectureClickStats> getTopLecturesByClicks(int daysAgo, int limit) {
-        if (daysAgo <= 0) daysAgo = 7;
-        if (limit <= 0) limit = 10;
+        if (daysAgo <= 0) daysAgo = DEFAULT_DAYS;
+        if (limit <= 0) limit = DEFAULT_LIMIT;
         return analyticsRepository.getTopLecturesByClicks(daysAgo, limit);
     }
 }

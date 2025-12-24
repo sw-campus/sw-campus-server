@@ -9,6 +9,10 @@ import com.swcampus.domain.analytics.LectureClickStats;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
+import com.google.api.gax.rpc.ApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -22,6 +26,9 @@ import java.util.Map;
  */
 @Repository
 public class GoogleAnalyticsRepository implements AnalyticsRepository {
+
+    private static final Logger log = LoggerFactory.getLogger(GoogleAnalyticsRepository.class);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final BetaAnalyticsDataClient analyticsClient;
     private final String propertyId;
@@ -87,10 +94,9 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
         );
 
         List<AnalyticsReport.DailyStats> dailyStats = new ArrayList<>();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
         for (Row row : dailyResponse.getRowsList()) {
-            LocalDate date = LocalDate.parse(row.getDimensionValues(0).getValue(), formatter);
+            LocalDate date = LocalDate.parse(row.getDimensionValues(0).getValue(), DATE_FORMATTER);
             long dailyActiveUsers = Long.parseLong(row.getMetricValues(0).getValue());
             long dailyPageViews = Long.parseLong(row.getMetricValues(1).getValue());
             dailyStats.add(new AnalyticsReport.DailyStats(date, dailyActiveUsers, dailyPageViews));
@@ -134,10 +140,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
             eventDetails.add(new EventStats.EventDetail(
                 eventName,
-                eventCount,
-                null,
-                null,
-                null
+                eventCount
             ));
         }
 
@@ -179,8 +182,8 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
                     case "SMALL" -> smallBannerClicks = count;
                 }
             }
-        } catch (Exception e) {
-            System.err.println("Failed to fetch banner types: " + e.getMessage());
+        } catch (ApiException e) {
+            log.error("Failed to fetch banner types", e);
         }
 
         return new EventStats(
@@ -240,8 +243,8 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
                 result.add(new BannerClickStats(bannerId, bannerName, bannerType, clickCount));
             }
-        } catch (Exception e) {
-            System.err.println("Failed to fetch top banners: " + e.getMessage());
+        } catch (ApiException e) {
+            log.error("Failed to fetch top banners", e);
         }
 
         return result;
@@ -256,23 +259,24 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
         Map<String, LectureData> lectureMap = new HashMap<>();
 
         try {
-            // Fetch apply_button_click events
-            RunReportResponse applyResponse = analyticsClient.runReport(
+            // Fetch both apply_button_click and share events in a single API call
+            RunReportResponse response = analyticsClient.runReport(
                 RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
                     .addDateRanges(DateRange.newBuilder()
                         .setStartDate(startDate)
                         .setEndDate(endDate)
                         .build())
+                    .addDimensions(Dimension.newBuilder().setName("eventName"))
                     .addDimensions(Dimension.newBuilder().setName("customEvent:lecture_id"))
                     .addDimensions(Dimension.newBuilder().setName("customEvent:lecture_name"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .setDimensionFilter(FilterExpression.newBuilder()
                         .setFilter(Filter.newBuilder()
                             .setFieldName("eventName")
-                            .setStringFilter(Filter.StringFilter.newBuilder()
-                                .setMatchType(Filter.StringFilter.MatchType.EXACT)
-                                .setValue("apply_button_click")
+                            .setInListFilter(Filter.InListFilter.newBuilder()
+                                .addValues("apply_button_click")
+                                .addValues("share")
                                 .setCaseSensitive(false)
                             )
                         )
@@ -280,50 +284,22 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
                     .build()
             );
 
-            for (Row row : applyResponse.getRowsList()) {
-                String lectureId = row.getDimensionValues(0).getValue();
-                String lectureName = row.getDimensionValues(1).getValue();
+            for (Row row : response.getRowsList()) {
+                String eventName = row.getDimensionValues(0).getValue();
+                String lectureId = row.getDimensionValues(1).getValue();
+                String lectureName = row.getDimensionValues(2).getValue();
                 long count = Long.parseLong(row.getMetricValues(0).getValue());
 
-                lectureMap.computeIfAbsent(lectureId, k -> new LectureData(lectureName))
-                    .applyClicks = count;
+                LectureData data = lectureMap.computeIfAbsent(lectureId, k -> new LectureData(lectureName));
+                if ("apply_button_click".equals(eventName)) {
+                    data.applyClicks = count;
+                } else if ("share".equals(eventName)) {
+                    data.shareClicks = count;
+                }
             }
 
-            // Fetch share events
-            RunReportResponse shareResponse = analyticsClient.runReport(
-                RunReportRequest.newBuilder()
-                    .setProperty("properties/" + propertyId)
-                    .addDateRanges(DateRange.newBuilder()
-                        .setStartDate(startDate)
-                        .setEndDate(endDate)
-                        .build())
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:lecture_id"))
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:lecture_name"))
-                    .addMetrics(Metric.newBuilder().setName("eventCount"))
-                    .setDimensionFilter(FilterExpression.newBuilder()
-                        .setFilter(Filter.newBuilder()
-                            .setFieldName("eventName")
-                            .setStringFilter(Filter.StringFilter.newBuilder()
-                                .setMatchType(Filter.StringFilter.MatchType.EXACT)
-                                .setValue("share")
-                                .setCaseSensitive(false)
-                            )
-                        )
-                        .build())
-                    .build()
-            );
-
-            for (Row row : shareResponse.getRowsList()) {
-                String lectureId = row.getDimensionValues(0).getValue();
-                String lectureName = row.getDimensionValues(1).getValue();
-                long count = Long.parseLong(row.getMetricValues(0).getValue());
-
-                lectureMap.computeIfAbsent(lectureId, k -> new LectureData(lectureName))
-                    .shareClicks = count;
-            }
-
-        } catch (Exception e) {
-            System.err.println("Failed to fetch top lectures: " + e.getMessage());
+        } catch (ApiException e) {
+            log.error("Failed to fetch top lectures", e);
         }
 
         // Convert to result list and sort by total clicks

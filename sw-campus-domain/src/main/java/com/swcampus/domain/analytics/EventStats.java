@@ -66,9 +66,6 @@ public class EventStats {
      */
     public record EventDetail(
         String eventName,
-        long eventCount,
-        String bannerId,
-        String bannerType,
-        String lectureId
+        long eventCount
     ) {}
 }

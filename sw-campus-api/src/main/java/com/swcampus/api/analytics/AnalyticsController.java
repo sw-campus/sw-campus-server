@@ -62,19 +62,7 @@ public class AnalyticsController {
         return ResponseEntity.ok(AnalyticsReportResponse.from(report));
     }
 
-    @Operation(summary = "주간 통계 조회", description = "최근 7일간의 통계를 조회합니다.")
-    @GetMapping("/weekly")
-    public ResponseEntity<AnalyticsReportResponse> getWeeklyAnalytics() {
-        AnalyticsReport report = analyticsService.getWeeklyReport();
-        return ResponseEntity.ok(AnalyticsReportResponse.from(report));
-    }
 
-    @Operation(summary = "월간 통계 조회", description = "최근 30일간의 통계를 조회합니다.")
-    @GetMapping("/monthly")
-    public ResponseEntity<AnalyticsReportResponse> getMonthlyAnalytics() {
-        AnalyticsReport report = analyticsService.getMonthlyReport();
-        return ResponseEntity.ok(AnalyticsReportResponse.from(report));
-    }
 
     @Operation(summary = "이벤트 통계 조회", 
                description = "배너 클릭, 신청 버튼 클릭, 공유하기 등 커스텀 이벤트 통계를 조회합니다.")
