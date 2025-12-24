@@ -56,7 +56,7 @@ public class OrganizationEntityRepository implements OrganizationRepository {
 
     @Override
     public List<Organization> findByNameContaining(String keyword) {
-        return jpaRepository.findByNameContaining(keyword).stream()
+        return jpaRepository.findByNameContainingIgnoreCase(keyword).stream()
                 .map(OrganizationEntity::toDomain)
                 .toList();
     }

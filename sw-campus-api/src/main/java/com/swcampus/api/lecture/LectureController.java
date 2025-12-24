@@ -86,17 +86,16 @@ public class LectureController {
 			throw new ConstraintViolationException(violations);
 		}
 
-		// 현재 로그인한 사용자 ID 가져오기
-		Long currentUserId = member.memberId();
-
 		Long organizationId;
-		if (member.role() == Role.ADMIN && request.orgId() != null) {
-			// 관리자는 요청받은 기관 ID 사용 (검증 필요 시 OrganizationService에서 확인 가능하지만, 여기선 존재 여부만 체크해도 됨)
-			// OrganizationService.getOrganization()은 없으면 예외 발생하므로 이를 통해 검증
+		if (member.role() == Role.ADMIN) {
+			if (request.orgId() == null) {
+				throw new IllegalArgumentException("관리자는 강의 등록 시 기관 ID를 필수적으로 입력해야 합니다.");
+			}
 			Organization organization = organizationService.getOrganization(request.orgId());
 			organizationId = organization.getId();
 		} else {
 			// 일반 기관 회원은 자신의 기관 ID 사용
+			Long currentUserId = member.memberId();
 			Organization organization = organizationService.getApprovedOrganizationByUserId(currentUserId);
 			organizationId = organization.getId();
 		}
