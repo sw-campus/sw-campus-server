@@ -7,6 +7,7 @@ import com.swcampus.domain.analytics.LectureClickStats;
 public record LectureClickStatsResponse(
     String lectureId,
     String lectureName,
+    long views,
     long applyClicks,
     long shareClicks,
     long totalClicks
@@ -15,6 +16,7 @@ public record LectureClickStatsResponse(
         return new LectureClickStatsResponse(
             stats.lectureId(),
             stats.lectureName(),
+            stats.views(),
             stats.applyClicks(),
             stats.shareClicks(),
             stats.totalClicks()
@@ -25,3 +27,4 @@ public record LectureClickStatsResponse(
         return statsList.stream().map(LectureClickStatsResponse::from).toList();
     }
 }
+

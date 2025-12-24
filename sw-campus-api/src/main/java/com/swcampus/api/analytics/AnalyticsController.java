@@ -13,6 +13,8 @@ import com.swcampus.api.analytics.response.AnalyticsReportResponse;
 import com.swcampus.api.analytics.response.BannerClickStatsResponse;
 import com.swcampus.api.analytics.response.EventStatsResponse;
 import com.swcampus.api.analytics.response.LectureClickStatsResponse;
+import com.swcampus.api.analytics.response.PopularLectureResponse;
+import com.swcampus.api.analytics.response.PopularSearchTermResponse;
 import com.swcampus.api.exception.ErrorResponse;
 import com.swcampus.domain.analytics.AnalyticsReport;
 import com.swcampus.domain.analytics.AnalyticsService;
@@ -107,6 +109,32 @@ public class AnalyticsController {
     ) {
         var stats = analyticsService.getTopLecturesByClicks(days, limit);
         return ResponseEntity.ok(LectureClickStatsResponse.fromList(stats));
+    }
+    
+    @Operation(summary = "인기 강의 조회",
+               description = "페이지 조회수가 높은 순으로 인기 강의 목록을 조회합니다.")
+    @GetMapping("/popular-lectures")
+    public ResponseEntity<List<PopularLectureResponse>> getPopularLectures(
+            @Parameter(description = "조회할 기간 (일 수). 기본값: 7")
+            @RequestParam(defaultValue = "7") int days,
+            @Parameter(description = "조회할 개수. 기본값: 5")
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        var lectures = analyticsService.getPopularLectures(days, limit);
+        return ResponseEntity.ok(PopularLectureResponse.fromList(lectures));
+    }
+    
+    @Operation(summary = "인기 검색어 조회",
+               description = "검색 횟수가 높은 순으로 인기 검색어 목록을 조회합니다.")
+    @GetMapping("/popular-search-terms")
+    public ResponseEntity<List<PopularSearchTermResponse>> getPopularSearchTerms(
+            @Parameter(description = "조회할 기간 (일 수). 기본값: 7")
+            @RequestParam(defaultValue = "7") int days,
+            @Parameter(description = "조회할 개수. 기본값: 10")
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        var terms = analyticsService.getPopularSearchTerms(days, limit);
+        return ResponseEntity.ok(PopularSearchTermResponse.fromList(terms));
     }
 }
 

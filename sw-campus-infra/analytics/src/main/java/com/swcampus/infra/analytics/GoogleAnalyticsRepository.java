@@ -6,6 +6,8 @@ import com.swcampus.domain.analytics.AnalyticsRepository;
 import com.swcampus.domain.analytics.BannerClickStats;
 import com.swcampus.domain.analytics.EventStats;
 import com.swcampus.domain.analytics.LectureClickStats;
+import com.swcampus.domain.analytics.PopularLecture;
+import com.swcampus.domain.analytics.PopularSearchTerm;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
@@ -335,6 +337,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
             .map(entry -> new LectureClickStats(
                 entry.getKey(),
                 entry.getValue().lectureName,
+                entry.getValue().views,
                 entry.getValue().applyClicks,
                 entry.getValue().shareClicks,
                 entry.getValue().applyClicks + entry.getValue().shareClicks
@@ -347,12 +350,121 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
     // Helper class for aggregating lecture data
     private static class LectureData {
         String lectureName;
+        long views = 0;
         long applyClicks = 0;
         long shareClicks = 0;
 
         LectureData(String lectureName) {
             this.lectureName = lectureName;
         }
+    }
+
+    @Override
+    public List<PopularLecture> getPopularLectures(int daysAgo, int limit) {
+        String startDate = daysAgo + "daysAgo";
+        String endDate = "today";
+        List<PopularLecture> result = new ArrayList<>();
+
+        try {
+            // 강의 상세 페이지 조회수를 pagePath 기준으로 집계
+            RunReportResponse response = analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("pagePath"))
+                    .addMetrics(Metric.newBuilder().setName("screenPageViews"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                        .setFilter(Filter.newBuilder()
+                            .setFieldName("pagePath")
+                            .setStringFilter(Filter.StringFilter.newBuilder()
+                                .setMatchType(Filter.StringFilter.MatchType.BEGINS_WITH)
+                                .setValue("/lectures/")
+                                .setCaseSensitive(false)
+                            )
+                        )
+                        .build())
+                    .addOrderBys(OrderBy.newBuilder()
+                        .setMetric(OrderBy.MetricOrderBy.newBuilder()
+                            .setMetricName("screenPageViews")
+                            .build())
+                        .setDesc(true)
+                        .build())
+                    .setLimit(limit + 10) // 여유분 확보 (search 페이지 등 제외용)
+                    .build()
+            );
+
+            for (Row row : response.getRowsList()) {
+                String pagePath = row.getDimensionValues(0).getValue();
+                long views = Long.parseLong(row.getMetricValues(0).getValue());
+
+                // /lectures/123 형태만 추출 (search, category 등 제외)
+                if (pagePath.matches("^/lectures/\\d+$")) {
+                    String lectureId = pagePath.replace("/lectures/", "");
+                    result.add(new PopularLecture(lectureId, "강의 #" + lectureId, views));
+                    
+                    if (result.size() >= limit) break;
+                }
+            }
+        } catch (ApiException e) {
+            log.error("Failed to fetch popular lectures", e);
+        }
+
+        return result;
+    }
+
+    @Override
+    public List<PopularSearchTerm> getPopularSearchTerms(int daysAgo, int limit) {
+        String startDate = daysAgo + "daysAgo";
+        String endDate = "today";
+        List<PopularSearchTerm> result = new ArrayList<>();
+
+        try {
+            RunReportResponse response = analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:search_term"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                        .setFilter(Filter.newBuilder()
+                            .setFieldName("eventName")
+                            .setStringFilter(Filter.StringFilter.newBuilder()
+                                .setMatchType(Filter.StringFilter.MatchType.EXACT)
+                                .setValue("search")
+                                .setCaseSensitive(false)
+                            )
+                        )
+                        .build())
+                    .addOrderBys(OrderBy.newBuilder()
+                        .setMetric(OrderBy.MetricOrderBy.newBuilder()
+                            .setMetricName("eventCount")
+                            .build())
+                        .setDesc(true)
+                        .build())
+                    .setLimit(limit)
+                    .build()
+            );
+
+            for (Row row : response.getRowsList()) {
+                String term = row.getDimensionValues(0).getValue();
+                long count = Long.parseLong(row.getMetricValues(0).getValue());
+                
+                // 빈 검색어 제외
+                if (term != null && !term.isBlank() && !"(not set)".equals(term)) {
+                    result.add(new PopularSearchTerm(term, count));
+                }
+            }
+        } catch (ApiException e) {
+            log.error("Failed to fetch popular search terms", e);
+        }
+
+        return result;
     }
 }
 
