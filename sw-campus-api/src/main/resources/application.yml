@@ -8,7 +8,7 @@ spring:
       max-request-size: 50MB
 
   profiles:
-    default: local
+    default: staging
     group:
       local: local
       staging: staging
