@@ -18,6 +18,7 @@ import com.swcampus.api.organization.response.AdminOrganizationDetailResponse;
 import com.swcampus.api.organization.response.AdminOrganizationSummaryResponse;
 import com.swcampus.domain.auth.EmailService;
 import com.swcampus.domain.organization.AdminOrganizationService;
+import com.swcampus.domain.storage.PresignedUrlService;
 import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.organization.ApproveOrganizationResult;
 import com.swcampus.domain.organization.Organization;
@@ -45,6 +46,7 @@ public class AdminOrganizationController {
 
     private final AdminOrganizationService adminOrganizationService;
     private final EmailService emailService;
+    private final PresignedUrlService presignedUrlService;
 
     @Operation(summary = "기관 상태별 통계 조회", description = "전체/대기/승인/반려 기관 수를 조회합니다.")
     @ApiResponses({
@@ -82,7 +84,14 @@ public class AdminOrganizationController {
     public ResponseEntity<AdminOrganizationDetailResponse> getOrganization(
             @Parameter(description = "기관 ID") @PathVariable("id") Long id) {
         Organization organization = adminOrganizationService.getOrganizationDetail(id);
-        return ResponseEntity.ok(AdminOrganizationDetailResponse.from(organization));
+
+        // Private bucket의 재직증명서 이미지에 접근하기 위한 presigned URL 생성
+        String certificateUrl = null;
+        if (organization.getCertificateKey() != null) {
+            certificateUrl = presignedUrlService.getPresignedUrl(organization.getCertificateKey(), true).url();
+        }
+
+        return ResponseEntity.ok(AdminOrganizationDetailResponse.from(organization, certificateUrl));
     }
 
     @Operation(summary = "기관 승인", description = "기관 가입을 승인합니다.")

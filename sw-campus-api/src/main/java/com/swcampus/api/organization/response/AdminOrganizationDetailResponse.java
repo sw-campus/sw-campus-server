@@ -48,4 +48,17 @@ public class AdminOrganizationDetailResponse {
                 .updatedAt(organization.getUpdatedAt())
                 .build();
     }
+
+    public static AdminOrganizationDetailResponse from(Organization organization, String presignedCertificateUrl) {
+        return AdminOrganizationDetailResponse.builder()
+                .id(organization.getId())
+                .name(organization.getName())
+                .description(organization.getDescription())
+                .certificateKey(presignedCertificateUrl)
+                .approvalStatus(organization.getApprovalStatus())
+                .homepage(organization.getHomepage())
+                .createdAt(organization.getCreatedAt())
+                .updatedAt(organization.getUpdatedAt())
+                .build();
+    }
 }
