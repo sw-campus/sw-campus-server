@@ -86,23 +86,7 @@ public class LectureController {
 			throw new ConstraintViolationException(violations);
 		}
 
-		Long organizationId;
-		if (member.role() == Role.ADMIN) {
-			if (request.orgId() == null) {
-				throw new IllegalArgumentException("관리자는 강의 등록 시 기관 ID를 필수적으로 입력해야 합니다.");
-			}
-			Organization organization = organizationService.getOrganization(request.orgId());
-			organizationId = organization.getId();
-		} else {
-			// 일반 기관 회원은 자신의 기관 ID 사용
-			Long currentUserId = member.memberId();
-			Organization organization = organizationService.getApprovedOrganizationByUserId(currentUserId);
-			organizationId = organization.getId();
-		}
-
-		Lecture lectureDomain = request.toDomain().toBuilder()
-				.orgId(organizationId)
-				.build();
+		Lecture lectureDomain = request.toDomain();
 
 		byte[] imageContent = null;
 		String imageName = null;
@@ -115,7 +99,7 @@ public class LectureController {
 
 		List<LectureService.ImageContent> teacherImageContents = processTeacherImages(teacherImages);
 
-		Lecture savedLecture = lectureService.registerLecture(lectureDomain, imageContent, imageName, contentType,
+		Lecture savedLecture = lectureService.registerLecture(lectureDomain, member.memberId(), member.role(), imageContent, imageName, contentType,
 				teacherImageContents);
 
 		return ResponseEntity.status(HttpStatus.CREATED).body(LectureResponse.from(savedLecture));
@@ -144,15 +128,8 @@ public class LectureController {
 			throw new ConstraintViolationException(violations);
 		}
 
-		// 현재 로그인한 사용자 ID 가져오기
-		Long currentUserId = member.memberId();
-
-		Organization organization = organizationService.getApprovedOrganizationByUserId(currentUserId);
-
 		// 권한 확인 및 로직 수행은 Service로 위임
-		Lecture lectureDomain = request.toDomain().toBuilder()
-				.orgId(organization.getId())
-				.build();
+		Lecture lectureDomain = request.toDomain();
 
 		byte[] imageContent = null;
 		String imageName = null;
@@ -165,7 +142,7 @@ public class LectureController {
 
 		List<LectureService.ImageContent> teacherImageContents = processTeacherImages(teacherImages);
 
-		Lecture updatedLecture = lectureService.modifyLecture(lectureId, organization.getId(), lectureDomain,
+		Lecture updatedLecture = lectureService.modifyLecture(lectureId, member.memberId(), member.role(), lectureDomain,
 				imageContent,
 				imageName,
 				contentType,

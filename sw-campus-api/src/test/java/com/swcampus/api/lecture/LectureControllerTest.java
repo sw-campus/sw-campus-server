@@ -143,9 +143,9 @@ class LectureControllerTest {
                                 .status(LectureStatus.RECRUITING)
                                 .build();
 
-                // Service method now takes 5 args: lecture, imageBytes, imageName, contentType,
+                // Service method now takes 7 args: lecture, userId, role, imageBytes, imageName, contentType,
                 // teacherImages
-                when(lectureService.registerLecture(any(Lecture.class), any(), any(), any(), anyList()))
+                when(lectureService.registerLecture(any(Lecture.class), anyLong(), any(Role.class), any(), any(), any(), anyList()))
                                 .thenReturn(lecture);
 
                 // MockMultipartFile for the JSON part

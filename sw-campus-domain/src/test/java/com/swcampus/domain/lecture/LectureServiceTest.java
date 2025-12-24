@@ -7,6 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import com.swcampus.domain.organization.Organization;
+import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.member.Role;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
@@ -16,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class LectureServiceTest {
@@ -28,6 +32,9 @@ class LectureServiceTest {
 
     @Mock
     private FileStorageService fileStorageService;
+
+    @Mock
+    private OrganizationService organizationService;
 
     @Nested
     @DisplayName("강의 수정")
@@ -53,9 +60,14 @@ class LectureServiceTest {
                     .willReturn(Optional.of(existingLecture));
             given(lectureRepository.save(any(Lecture.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
+            
+            Organization mockOrg = mock(Organization.class);
+            given(mockOrg.getId()).willReturn(orgId);
+            given(organizationService.getApprovedOrganizationByUserId(any()))
+                    .willReturn(mockOrg);
 
             // when
-            Lecture result = lectureService.modifyLecture(lectureId, orgId, updateParams, null, null, null, Collections.emptyList());
+            Lecture result = lectureService.modifyLecture(lectureId, 1L, Role.USER, updateParams, null, null, null, Collections.emptyList());
 
             // then
             assertThat(result.getLectureAuthStatus()).isEqualTo(LectureAuthStatus.PENDING);
@@ -82,8 +94,13 @@ class LectureServiceTest {
             given(lectureRepository.save(any(Lecture.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
 
+            Organization mockOrg = mock(Organization.class);
+            given(mockOrg.getId()).willReturn(orgId);
+            given(organizationService.getApprovedOrganizationByUserId(any()))
+                    .willReturn(mockOrg);
+
             // when
-            Lecture result = lectureService.modifyLecture(lectureId, orgId, updateParams, null, null, null, Collections.emptyList());
+            Lecture result = lectureService.modifyLecture(lectureId, 1L, Role.USER, updateParams, null, null, null, Collections.emptyList());
 
             // then
             assertThat(result.getLectureAuthStatus()).isEqualTo(LectureAuthStatus.APPROVED);
@@ -110,8 +127,13 @@ class LectureServiceTest {
             given(lectureRepository.save(any(Lecture.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
 
+            Organization mockOrg = mock(Organization.class);
+            given(mockOrg.getId()).willReturn(orgId);
+            given(organizationService.getApprovedOrganizationByUserId(any()))
+                    .willReturn(mockOrg);
+
             // when
-            Lecture result = lectureService.modifyLecture(lectureId, orgId, updateParams, null, null, null, Collections.emptyList());
+            Lecture result = lectureService.modifyLecture(lectureId, 1L, Role.USER, updateParams, null, null, null, Collections.emptyList());
 
             // then
             assertThat(result.getLectureAuthStatus()).isEqualTo(LectureAuthStatus.PENDING);
@@ -128,7 +150,7 @@ class LectureServiceTest {
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> lectureService.modifyLecture(lectureId, orgId, Lecture.builder().build(), null, null, null, Collections.emptyList()))
+            assertThatThrownBy(() -> lectureService.modifyLecture(lectureId, 1L, Role.USER, Lecture.builder().build(), null, null, null, Collections.emptyList()))
                     .isInstanceOf(com.swcampus.domain.common.ResourceNotFoundException.class);
         }
     }

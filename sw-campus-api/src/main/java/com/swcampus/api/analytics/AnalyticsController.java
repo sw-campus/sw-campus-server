@@ -22,6 +22,7 @@ import com.swcampus.domain.analytics.EventStats;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -113,6 +114,14 @@ public class AnalyticsController {
     
     @Operation(summary = "인기 강의 조회",
                description = "페이지 조회수가 높은 순으로 인기 강의 목록을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PopularLectureResponse.class)))),
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/popular-lectures")
     public ResponseEntity<List<PopularLectureResponse>> getPopularLectures(
             @Parameter(description = "조회할 기간 (일 수). 기본값: 7")
@@ -126,6 +135,14 @@ public class AnalyticsController {
     
     @Operation(summary = "인기 검색어 조회",
                description = "검색 횟수가 높은 순으로 인기 검색어 목록을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PopularSearchTermResponse.class)))),
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/popular-search-terms")
     public ResponseEntity<List<PopularSearchTermResponse>> getPopularSearchTerms(
             @Parameter(description = "조회할 기간 (일 수). 기본값: 7")

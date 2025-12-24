@@ -427,7 +427,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
         List<PopularLecture> result = new ArrayList<>();
 
         try {
-            // 강의 상세 페이지 조회수를 pagePath 기준으로 집계
+            // 강의 상세 페이지 조회수를 pagePath 기준으로 집계 (pageTitle 포함)
             RunReportResponse response = analyticsClient.runReport(
                 RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
@@ -436,6 +436,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
                         .setEndDate(endDate)
                         .build())
                     .addDimensions(Dimension.newBuilder().setName("pagePath"))
+                    .addDimensions(Dimension.newBuilder().setName("pageTitle"))
                     .addMetrics(Metric.newBuilder().setName("screenPageViews"))
                     .setDimensionFilter(FilterExpression.newBuilder()
                         .setFilter(Filter.newBuilder()
@@ -459,12 +460,23 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
             for (Row row : response.getRowsList()) {
                 String pagePath = row.getDimensionValues(0).getValue();
+                String pageTitle = row.getDimensionValues(1).getValue();
                 long views = Long.parseLong(row.getMetricValues(0).getValue());
 
                 // /lectures/123 형태만 추출 (search, category 등 제외)
                 if (pagePath.matches("^/lectures/\\d+$")) {
                     String lectureId = pagePath.replace("/lectures/", "");
-                    result.add(new PopularLecture(lectureId, "강의 #" + lectureId, views));
+                    
+                    String lectureName = (pageTitle != null && !pageTitle.isEmpty() && !"(not set)".equals(pageTitle)) 
+                                         ? pageTitle 
+                                         : "강의 #" + lectureId;
+                    
+                    // Clean up title (remove " | SW Campus" etc if present)
+                    if (lectureName.contains(" |")) {
+                        lectureName = lectureName.substring(0, lectureName.indexOf(" |"));
+                    }
+                    
+                    result.add(new PopularLecture(lectureId, lectureName, views));
                     
                     if (result.size() >= limit) break;
                 }
