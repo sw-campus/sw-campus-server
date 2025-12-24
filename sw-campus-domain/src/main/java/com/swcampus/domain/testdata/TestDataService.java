@@ -117,10 +117,10 @@ public class TestDataService {
 
     private List<Long> createOrganizations(String batchId, List<Long> memberIds) {
         List<Long> ids = new ArrayList<>();
-        String[] orgNames = {"테스트교육기관A", "테스트교육기관B"};
+        String[] orgNames = {"한국소프트웨어기술진흥협회 : 종로", "한국소프트웨어기술진흥협회 : 가산"};
         String[] descriptions = {
-                "테스트용 교육기관 A입니다. 소프트웨어 개발 교육을 전문으로 합니다.",
-                "테스트용 교육기관 B입니다. AI/ML 교육을 전문으로 합니다."
+                "한국소프트웨어기술진흥협회 종로센터입니다. 소프트웨어 개발 교육을 전문으로 합니다.",
+                "한국소프트웨어기술진흥협회 가산센터입니다. AI/ML 교육을 전문으로 합니다."
         };
 
         // 시설 이미지 URL (공개 S3 버킷)
