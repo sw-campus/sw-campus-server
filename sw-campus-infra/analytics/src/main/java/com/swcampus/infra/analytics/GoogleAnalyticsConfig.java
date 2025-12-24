@@ -1,6 +1,7 @@
 package com.swcampus.infra.analytics;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -16,6 +17,7 @@ import java.io.InputStream;
  * Google Analytics Data API 클라이언트 설정
  */
 @Configuration
+@ConditionalOnProperty(name = "google.analytics.credentials-path")
 public class GoogleAnalyticsConfig {
 
     private final ResourceLoader resourceLoader;

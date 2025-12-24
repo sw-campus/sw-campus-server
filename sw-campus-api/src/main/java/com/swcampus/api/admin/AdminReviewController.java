@@ -5,6 +5,7 @@ import com.swcampus.api.admin.response.*;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.review.AdminReviewService;
+import com.swcampus.domain.storage.PresignedUrlService;
 import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.dto.PendingReviewInfo;
@@ -36,6 +37,7 @@ public class AdminReviewController {
 
     private final AdminReviewService adminReviewService;
     private final LectureService lectureService;
+    private final PresignedUrlService presignedUrlService;
 
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
@@ -119,11 +121,14 @@ public class AdminReviewController {
         String lectureName = lectureService.getLectureNames(List.of(certificate.getLectureId()))
                 .getOrDefault(certificate.getLectureId(), "알 수 없음");
 
+        // Private bucket의 수료증 이미지에 접근하기 위한 presigned URL 생성
+        String imageUrl = presignedUrlService.getPresignedUrl(certificate.getImageKey(), true).url();
+
         return ResponseEntity.ok(new AdminCertificateResponse(
                 certificate.getId(),
                 certificate.getLectureId(),
                 lectureName,
-                certificate.getImageKey(),
+                imageUrl,
                 certificate.getApprovalStatus().name(),
                 certificate.getCreatedAt().format(FORMATTER)
         ));
