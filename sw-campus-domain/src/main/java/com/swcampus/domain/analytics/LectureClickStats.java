@@ -6,7 +6,9 @@ package com.swcampus.domain.analytics;
 public record LectureClickStats(
     String lectureId,
     String lectureName,
+    long views,
     long applyClicks,
     long shareClicks,
     long totalClicks
 ) {}
+

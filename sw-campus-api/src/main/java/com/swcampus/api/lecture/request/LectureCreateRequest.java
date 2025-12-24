@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "강의 등록 요청")
 public record LectureCreateRequest(
+		@Schema(description = "기관 ID (관리자용)", example = "1") Long orgId,
 		@NotBlank(message = "강의명은 필수입니다") @Schema(description = "강의명", example = "웹 개발 부트캠프") String lectureName,
 
 		@Schema(description = "수업 요일 (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY)", example = "[\"MONDAY\", \"WEDNESDAY\", \"FRIDAY\"]") Set<LectureDay> days,
@@ -99,6 +100,7 @@ public record LectureCreateRequest(
 
 	public Lecture toDomain() {
 		return Lecture.builder()
+				.orgId(orgId)
 				.lectureName(lectureName)
 				.days(days != null ? days : Collections.emptySet())
 				.startTime(startTime)

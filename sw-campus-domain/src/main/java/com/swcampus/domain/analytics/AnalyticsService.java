@@ -64,6 +64,24 @@ public class AnalyticsService {
         if (limit <= 0) limit = DEFAULT_LIMIT;
         return analyticsRepository.getTopLecturesByClicks(daysAgo, limit);
     }
+    
+    /**
+     * 페이지 조회수 기준 인기 강의 목록을 조회합니다.
+     */
+    public List<PopularLecture> getPopularLectures(int daysAgo, int limit) {
+        if (daysAgo <= 0) daysAgo = DEFAULT_DAYS;
+        if (limit <= 0) limit = DEFAULT_LIMIT;
+        return analyticsRepository.getPopularLectures(daysAgo, limit);
+    }
+    
+    /**
+     * 검색 횟수 기준 인기 검색어 목록을 조회합니다.
+     */
+    public List<PopularSearchTerm> getPopularSearchTerms(int daysAgo, int limit) {
+        if (daysAgo <= 0) daysAgo = DEFAULT_DAYS;
+        if (limit <= 0) limit = DEFAULT_LIMIT;
+        return analyticsRepository.getPopularSearchTerms(daysAgo, limit);
+    }
 }
 
 

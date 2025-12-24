@@ -28,6 +28,7 @@ import com.swcampus.api.lecture.response.LectureSummaryResponse;
 import com.swcampus.api.review.response.ReviewResponse;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
+import com.swcampus.domain.member.Role;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.organization.Organization;
@@ -68,7 +69,7 @@ public class LectureController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "등록 성공 (승인 대기)"),
 			@ApiResponse(responseCode = "401", description = "인증 필요"),
-			@ApiResponse(responseCode = "403", description = "기관 회원만 가능")
+			@ApiResponse(responseCode = "403", description = "권한 없음")
 	})
 	public ResponseEntity<LectureResponse> createLecture(
 			@CurrentMember MemberPrincipal member,
@@ -85,14 +86,7 @@ public class LectureController {
 			throw new ConstraintViolationException(violations);
 		}
 
-		// 현재 로그인한 사용자 ID 가져오기
-		Long currentUserId = member.memberId();
-
-		Organization organization = organizationService.getApprovedOrganizationByUserId(currentUserId);
-
-		Lecture lectureDomain = request.toDomain().toBuilder()
-				.orgId(organization.getId())
-				.build();
+		Lecture lectureDomain = request.toDomain();
 
 		byte[] imageContent = null;
 		String imageName = null;
@@ -105,7 +99,7 @@ public class LectureController {
 
 		List<LectureService.ImageContent> teacherImageContents = processTeacherImages(teacherImages);
 
-		Lecture savedLecture = lectureService.registerLecture(lectureDomain, imageContent, imageName, contentType,
+		Lecture savedLecture = lectureService.registerLecture(lectureDomain, member.memberId(), member.role(), imageContent, imageName, contentType,
 				teacherImageContents);
 
 		return ResponseEntity.status(HttpStatus.CREATED).body(LectureResponse.from(savedLecture));
@@ -134,15 +128,8 @@ public class LectureController {
 			throw new ConstraintViolationException(violations);
 		}
 
-		// 현재 로그인한 사용자 ID 가져오기
-		Long currentUserId = member.memberId();
-
-		Organization organization = organizationService.getApprovedOrganizationByUserId(currentUserId);
-
 		// 권한 확인 및 로직 수행은 Service로 위임
-		Lecture lectureDomain = request.toDomain().toBuilder()
-				.orgId(organization.getId())
-				.build();
+		Lecture lectureDomain = request.toDomain();
 
 		byte[] imageContent = null;
 		String imageName = null;
@@ -155,7 +142,7 @@ public class LectureController {
 
 		List<LectureService.ImageContent> teacherImageContents = processTeacherImages(teacherImages);
 
-		Lecture updatedLecture = lectureService.modifyLecture(lectureId, organization.getId(), lectureDomain,
+		Lecture updatedLecture = lectureService.modifyLecture(lectureId, member.memberId(), member.role(), lectureDomain,
 				imageContent,
 				imageName,
 				contentType,

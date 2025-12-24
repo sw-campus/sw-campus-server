@@ -11,7 +11,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 import com.swcampus.domain.lecture.LectureStep;
+
 import com.swcampus.domain.lecture.SelectionStepType;
+import com.swcampus.domain.member.Role;
+import com.swcampus.domain.auth.MemberPrincipal;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -76,8 +79,42 @@ class LectureControllerTest {
         void setUp() {
                 UsernamePasswordAuthenticationToken authentication = mock(
                                 UsernamePasswordAuthenticationToken.class);
+                // Default to USER role for other tests
+                MemberPrincipal principal = new MemberPrincipal(1L, "user@test.com", Role.USER);
+                when(authentication.getPrincipal()).thenReturn(principal);
                 when(authentication.getDetails()).thenReturn(1L); // userId
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+
+        @Test
+        @DisplayName("관리자가 기관 ID 없이 강의 생성 시 예외 발생")
+        void createLecture_AdminWithoutOrgId_ThrowsException() throws Exception {
+                // given
+                LectureCreateRequest request = new LectureCreateRequest(
+                                null, "Admin Lecture", null, null, null, OFFLINE, null, CARD_REQUIRED,
+                                null, null, null, null, 100, NONE, null, false, false, false, false, null, null, null,
+                                null, null, null, false, "2024-01-01", "2024-12-31", null, null, null,
+                                null, null, null,
+                                java.util.List.of(new LectureCreateRequest.TeacherRequest(null, "New Teacher", "Desc")),
+                                null); // orgId is null
+
+                // Mock Admin Principal
+                MemberPrincipal adminPrincipal = new MemberPrincipal(1L, "admin@test.com", Role.ADMIN);
+                UsernamePasswordAuthenticationToken authentication = mock(UsernamePasswordAuthenticationToken.class);
+                when(authentication.getPrincipal()).thenReturn(adminPrincipal);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                // MockMultipartFile
+                org.springframework.mock.web.MockMultipartFile lecturePart = new org.springframework.mock.web.MockMultipartFile(
+                                "lecture", "", "application/json", objectMapper.writeValueAsBytes(request));
+
+                // when & then
+                mockMvc.perform(multipart("/api/v1/lectures")
+                                .file(lecturePart)
+                                .with(csrf())
+                                .contentType(MediaType.MULTIPART_FORM_DATA)
+                                .accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().is4xxClientError()); // Expecting 400 Bad Request
         }
 
         @Test
@@ -87,7 +124,7 @@ class LectureControllerTest {
                 // given
                 // LectureCreateRequest의 모든 필드를 null로 설정하되 필수값만 채움
                 LectureCreateRequest request = new LectureCreateRequest(
-                                "Java Spring 강의", null, null, null, OFFLINE, null, CARD_REQUIRED,
+                                null, "Java Spring 강의", null, null, null, OFFLINE, null, CARD_REQUIRED,
                                 null, null, null, null, 100, NONE, null, false, false, false, false, null, null, null,
                                 null, null, null, false, "2024-01-01", "2024-12-31", null, null, null,
                                 null, null, null,
@@ -106,9 +143,9 @@ class LectureControllerTest {
                                 .status(LectureStatus.RECRUITING)
                                 .build();
 
-                // Service method now takes 5 args: lecture, imageBytes, imageName, contentType,
+                // Service method now takes 7 args: lecture, userId, role, imageBytes, imageName, contentType,
                 // teacherImages
-                when(lectureService.registerLecture(any(Lecture.class), any(), any(), any(), anyList()))
+                when(lectureService.registerLecture(any(Lecture.class), anyLong(), any(Role.class), any(), any(), any(), anyList()))
                                 .thenReturn(lecture);
 
                 // MockMultipartFile for the JSON part

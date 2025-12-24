@@ -40,6 +40,24 @@ public interface AnalyticsRepository {
      * @return 강의별 클릭 통계 리스트
      */
     List<LectureClickStats> getTopLecturesByClicks(int daysAgo, int limit);
+    
+    /**
+     * 페이지 조회수 기준 인기 강의 목록을 조회합니다.
+     *
+     * @param daysAgo 조회 기간
+     * @param limit 조회할 개수
+     * @return 인기 강의 리스트
+     */
+    List<PopularLecture> getPopularLectures(int daysAgo, int limit);
+    
+    /**
+     * 검색 횟수 기준 인기 검색어 목록을 조회합니다.
+     *
+     * @param daysAgo 조회 기간
+     * @param limit 조회할 개수
+     * @return 인기 검색어 리스트
+     */
+    List<PopularSearchTerm> getPopularSearchTerms(int daysAgo, int limit);
 }
 
 
