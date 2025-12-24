@@ -40,4 +40,6 @@ public interface LectureRepository {
     // Statistics methods
     long countAll();
     long countByAuthStatus(LectureAuthStatus status);
+
+    void deleteById(Long id);
 }

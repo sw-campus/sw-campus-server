@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import com.google.api.gax.rpc.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -27,6 +28,7 @@ import java.util.Map;
  * Google Analytics Data API를 사용하여 Analytics 데이터를 조회하는 Repository 구현체
  */
 @Repository
+@ConditionalOnProperty(name = "google.analytics.credentials-path")
 public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     private static final Logger log = LoggerFactory.getLogger(GoogleAnalyticsRepository.class);

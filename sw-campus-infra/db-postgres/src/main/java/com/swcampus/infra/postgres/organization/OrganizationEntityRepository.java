@@ -101,4 +101,10 @@ public class OrganizationEntityRepository implements OrganizationRepository {
     public long countByApprovalStatus(ApprovalStatus status) {
         return jpaRepository.countByApprovalStatusWithMemberRegistration(status);
     }
+
+    @Override
+    @Transactional
+    public void deleteById(Long id) {
+        jpaRepository.deleteById(id);
+    }
 }

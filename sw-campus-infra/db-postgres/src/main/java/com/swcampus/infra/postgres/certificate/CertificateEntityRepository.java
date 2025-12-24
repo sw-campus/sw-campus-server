@@ -69,4 +69,9 @@ public class CertificateEntityRepository implements CertificateRepository {
     public long countByApprovalStatus(ApprovalStatus status) {
         return jpaRepository.countByApprovalStatus(status);
     }
+
+    @Override
+    public void deleteById(Long id) {
+        jpaRepository.deleteById(id);
+    }
 }
