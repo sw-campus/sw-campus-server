@@ -56,6 +56,8 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
                     .build())
                 .addMetrics(Metric.newBuilder().setName("totalUsers"))
                 .addMetrics(Metric.newBuilder().setName("activeUsers"))
+                .addMetrics(Metric.newBuilder().setName("newUsers"))
+                .addMetrics(Metric.newBuilder().setName("averageSessionDuration"))
                 .addMetrics(Metric.newBuilder().setName("screenPageViews"))
                 .addMetrics(Metric.newBuilder().setName("sessions"))
                 .build()
@@ -63,6 +65,8 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
         long totalUsers = 0;
         long activeUsers = 0;
+        long newUsers = 0;
+        double averageEngagementTime = 0.0;
         long pageViews = 0;
         long sessions = 0;
 
@@ -70,8 +74,10 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
             Row row = summaryResponse.getRows(0);
             totalUsers = Long.parseLong(row.getMetricValues(0).getValue());
             activeUsers = Long.parseLong(row.getMetricValues(1).getValue());
-            pageViews = Long.parseLong(row.getMetricValues(2).getValue());
-            sessions = Long.parseLong(row.getMetricValues(3).getValue());
+            newUsers = Long.parseLong(row.getMetricValues(2).getValue());
+            averageEngagementTime = Double.parseDouble(row.getMetricValues(3).getValue());
+            pageViews = Long.parseLong(row.getMetricValues(4).getValue());
+            sessions = Long.parseLong(row.getMetricValues(5).getValue());
         }
 
         // 일별 통계 데이터 조회
@@ -83,7 +89,8 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
                     .setEndDate(endDate)
                     .build())
                 .addDimensions(Dimension.newBuilder().setName("date"))
-                .addMetrics(Metric.newBuilder().setName("activeUsers"))
+                .addMetrics(Metric.newBuilder().setName("totalUsers"))
+                .addMetrics(Metric.newBuilder().setName("newUsers"))
                 .addMetrics(Metric.newBuilder().setName("screenPageViews"))
                 .addOrderBys(OrderBy.newBuilder()
                     .setDimension(OrderBy.DimensionOrderBy.newBuilder()
@@ -97,12 +104,33 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
         for (Row row : dailyResponse.getRowsList()) {
             LocalDate date = LocalDate.parse(row.getDimensionValues(0).getValue(), DATE_FORMATTER);
-            long dailyActiveUsers = Long.parseLong(row.getMetricValues(0).getValue());
-            long dailyPageViews = Long.parseLong(row.getMetricValues(1).getValue());
-            dailyStats.add(new AnalyticsReport.DailyStats(date, dailyActiveUsers, dailyPageViews));
+            long dailyTotalUsers = Long.parseLong(row.getMetricValues(0).getValue());
+            long dailyNewUsers = Long.parseLong(row.getMetricValues(1).getValue());
+            long dailyPageViews = Long.parseLong(row.getMetricValues(2).getValue());
+            dailyStats.add(new AnalyticsReport.DailyStats(date, dailyTotalUsers, dailyNewUsers, dailyPageViews));
         }
 
-        return new AnalyticsReport(totalUsers, activeUsers, pageViews, sessions, dailyStats);
+        // 기기별 통계 데이터 조회 (New Request)
+        RunReportResponse deviceResponse = analyticsClient.runReport(
+            RunReportRequest.newBuilder()
+                .setProperty("properties/" + propertyId)
+                .addDateRanges(DateRange.newBuilder()
+                    .setStartDate(startDate)
+                    .setEndDate(endDate)
+                    .build())
+                .addDimensions(Dimension.newBuilder().setName("deviceCategory"))
+                .addMetrics(Metric.newBuilder().setName("activeUsers"))
+                .build()
+        );
+
+        List<AnalyticsReport.DeviceStat> deviceStats = new ArrayList<>();
+        for (Row row : deviceResponse.getRowsList()) {
+            String category = row.getDimensionValues(0).getValue();
+            long users = Long.parseLong(row.getMetricValues(0).getValue());
+            deviceStats.add(new AnalyticsReport.DeviceStat(category, users));
+        }
+
+        return new AnalyticsReport(totalUsers, activeUsers, newUsers, averageEngagementTime, pageViews, sessions, dailyStats, deviceStats);
     }
 
     @Override
