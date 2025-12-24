@@ -1,44 +1,61 @@
--- V1__init_schema.sql
--- SW Campus Database Schema (Production Ready)
--- Includes: All tables, sequences, indexes, constraints
+create schema if not exists "swcampus";
 
--- ========================================
--- 1. Schema Creation
--- ========================================
-CREATE SCHEMA IF NOT EXISTS "swcampus";
+create sequence "swcampus"."banners_banner_id_seq";
 
--- ========================================
--- 2. Sequences
--- ========================================
-CREATE SEQUENCE "swcampus"."cart_id_seq";
-CREATE SEQUENCE "swcampus"."categories_category_id_seq";
-CREATE SEQUENCE "swcampus"."certificates_certificate_id_seq";
-CREATE SEQUENCE "swcampus"."curriculums_curriculum_id_seq";
-CREATE SEQUENCE "swcampus"."email_verifications_id_seq";
-CREATE SEQUENCE "swcampus"."lecture_adds_add_id_seq";
-CREATE SEQUENCE "swcampus"."lecture_curriculums_id_seq";
-CREATE SEQUENCE "swcampus"."lecture_quals_qual_id_seq";
-CREATE SEQUENCE "swcampus"."lecture_steps_step_id_seq";
-CREATE SEQUENCE "swcampus"."lecture_teachers_id_seq";
-CREATE SEQUENCE "swcampus"."lectures_lecture_id_seq";
-CREATE SEQUENCE "swcampus"."members_user_id_seq";
-CREATE SEQUENCE "swcampus"."organizations_org_id_seq";
-CREATE SEQUENCE "swcampus"."refresh_tokens_id_seq";
-CREATE SEQUENCE "swcampus"."reviews_details_review_detail_id_seq";
-CREATE SEQUENCE "swcampus"."reviews_review_id_seq";
-CREATE SEQUENCE "swcampus"."social_accounts_id_seq";
-CREATE SEQUENCE "swcampus"."teachers_teacher_id_seq";
-CREATE SEQUENCE IF NOT EXISTS "swcampus"."banners_banner_id_seq";
+create sequence "swcampus"."cart_id_seq";
 
--- ========================================
--- 3. Tables
--- ========================================
+create sequence "swcampus"."categories_category_id_seq";
 
--- Cart
-CREATE TABLE "swcampus"."cart" (
-    "id" bigint NOT NULL,
-    "lecture_id" bigint NOT NULL,
-    "user_id" bigint NOT NULL
+create sequence "swcampus"."certificates_certificate_id_seq";
+
+create sequence "swcampus"."curriculums_curriculum_id_seq";
+
+create sequence "swcampus"."email_verifications_id_seq";
+
+create sequence "swcampus"."lecture_adds_add_id_seq";
+
+create sequence "swcampus"."lecture_curriculums_id_seq";
+
+create sequence "swcampus"."lecture_quals_qual_id_seq";
+
+create sequence "swcampus"."lecture_steps_step_id_seq";
+
+create sequence "swcampus"."lecture_teachers_id_seq";
+
+create sequence "swcampus"."lectures_lecture_id_seq";
+
+create sequence "swcampus"."members_user_id_seq";
+
+create sequence "swcampus"."organizations_org_id_seq";
+
+create sequence "swcampus"."refresh_tokens_id_seq";
+
+create sequence "swcampus"."reviews_details_review_detail_id_seq";
+
+create sequence "swcampus"."reviews_review_id_seq";
+
+create sequence "swcampus"."social_accounts_id_seq";
+
+create sequence "swcampus"."teachers_teacher_id_seq";
+
+create table "swcampus"."banners" (
+    "is_active" boolean,
+    "banner_id" bigint not null,
+    "created_at" timestamp(6) without time zone,
+    "end_date" timestamp(6) with time zone not null,
+    "lecture_id" bigint not null,
+    "start_date" timestamp(6) with time zone not null,
+    "updated_at" timestamp(6) without time zone,
+    "banner_type" character varying(255),
+    "image_url" text,
+    "url" text
+);
+
+
+create table "swcampus"."cart" (
+    "id" bigint not null,
+    "lecture_id" bigint not null,
+    "user_id" bigint not null
 );
 
 -- Categories
@@ -439,3 +456,18 @@ ALTER TABLE "swcampus"."reviews_details" VALIDATE CONSTRAINT "fk3w60sswre468d996
 ALTER TABLE "swcampus"."banners" ADD CONSTRAINT "banners_lecture_fk"
     FOREIGN KEY (lecture_id) REFERENCES lectures(lecture_id) ON DELETE CASCADE NOT VALID;
 ALTER TABLE "swcampus"."banners" VALIDATE CONSTRAINT "banners_lecture_fk";
+
+-- ========================================
+-- 9. Test Data Registry (테스트 데이터 추적)
+-- ========================================
+CREATE TABLE swcampus.test_data_registry (
+    id BIGSERIAL PRIMARY KEY,
+    batch_id VARCHAR(50) NOT NULL,
+    table_name VARCHAR(50) NOT NULL,
+    record_id BIGINT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CONSTRAINT uk_test_data_table_record UNIQUE (table_name, record_id)
+);
+
+CREATE INDEX idx_test_data_batch_id ON swcampus.test_data_registry(batch_id);
+CREATE INDEX idx_test_data_table_name ON swcampus.test_data_registry(table_name);

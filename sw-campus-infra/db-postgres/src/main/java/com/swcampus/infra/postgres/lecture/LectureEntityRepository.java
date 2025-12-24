@@ -264,4 +264,9 @@ public class LectureEntityRepository implements LectureRepository {
 	public long countByAuthStatus(LectureAuthStatus status) {
 		return jpaRepository.countByLectureAuthStatus(status);
 	}
+
+	@Override
+	public void deleteById(Long id) {
+		jpaRepository.deleteById(id);
+	}
 }

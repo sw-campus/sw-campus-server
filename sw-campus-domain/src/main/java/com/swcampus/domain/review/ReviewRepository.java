@@ -53,4 +53,6 @@ public interface ReviewRepository {
      * 수료증이 승인되고 특정 리뷰 상태인 리뷰 수를 조회합니다.
      */
     long countWithApprovedCertificateAndReviewStatus(ApprovalStatus reviewStatus);
+
+    void deleteById(Long id);
 }

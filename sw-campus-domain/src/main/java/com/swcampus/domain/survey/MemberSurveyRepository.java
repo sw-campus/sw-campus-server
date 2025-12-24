@@ -10,4 +10,5 @@ public interface MemberSurveyRepository {
     Optional<MemberSurvey> findByMemberId(Long memberId);
     boolean existsByMemberId(Long memberId);
     Page<MemberSurvey> findAll(Pageable pageable);
+    void deleteByMemberId(Long memberId);
 }
