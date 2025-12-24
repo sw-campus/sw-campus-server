@@ -15,6 +15,7 @@ import com.swcampus.domain.review.ReviewDetail;
 import com.swcampus.domain.review.ReviewRepository;
 import com.swcampus.domain.survey.MemberSurvey;
 import com.swcampus.domain.survey.MemberSurveyRepository;
+import java.time.ZoneOffset;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class TestDataService {
     private final CertificateRepository certificateRepository;
     private final ReviewRepository reviewRepository;
     private final MemberSurveyRepository memberSurveyRepository;
+    private final BannerRepository bannerRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -76,6 +78,9 @@ public class TestDataService {
         // 8. Survey 생성 (일반회원 중 처음 10명)
         List<Long> surveyMemberIds = createSurveys(batchId, userMemberIds.subList(0, 10));
 
+        // 9. Banner 생성 (BIG 1개, MIDDLE 2개, SMALL 3개)
+        List<Long> bannerIds = createBanners(batchId, lectureIds);
+
         // Member IDs 병합 (기관담당자 2명 + 일반회원 15명)
         List<Long> allMemberIds = new ArrayList<>();
         allMemberIds.addAll(orgMemberIds);
@@ -89,6 +94,7 @@ public class TestDataService {
                 .certificateIds(certificateIds)
                 .reviewIds(reviewIds)
                 .surveyMemberIds(surveyMemberIds)
+                .bannerIds(bannerIds)
                 .build();
     }
 
@@ -146,6 +152,12 @@ public class TestDataService {
                 bucketUrl + "/organizations/2024/12/24/b-logo.png"
         };
 
+        // 재직증명서 Key (Private S3 Bucket)
+        String[] certificateKeys = {
+                "employment-certificates/2024/12/24/test-employment-1.png",
+                "employment-certificates/2024/12/24/test-employment-2.png"
+        };
+
         for (int i = 0; i < 2; i++) {
             Organization org = Organization.of(
                     null,
@@ -153,7 +165,7 @@ public class TestDataService {
                     orgNames[i],
                     descriptions[i],
                     ApprovalStatus.APPROVED,
-                    null,  // certificateKey
+                    certificateKeys[i],  // certificateKey (재직증명서)
                     null,  // govAuth
                     facilityImages[i][0],  // facilityImageUrl
                     facilityImages[i][1],  // facilityImageUrl2
@@ -306,12 +318,17 @@ public class TestDataService {
             // 회원 3-15 (인덱스 2-14): 수료증 APPROVED
             ApprovalStatus certStatus = (memberIdx < 2) ? ApprovalStatus.PENDING : ApprovalStatus.APPROVED;
 
-            for (Long lectureId : lectureIds) {
+            for (int lectureIdx = 0; lectureIdx < lectureIds.size(); lectureIdx++) {
+                Long lectureId = lectureIds.get(lectureIdx);
+                // 수료증 Key (Private S3 Bucket): certificates/2024/12/24/test-cert-user{n}-lecture{m}.png
+                String imageKey = String.format("certificates/2024/12/24/test-cert-user%d-lecture%d.png",
+                        memberIdx + 1, lectureIdx + 1);
+
                 Certificate cert = Certificate.of(
                         null,
                         memberId,
                         lectureId,
-                        "test-certificate-" + memberId + "-" + lectureId + ".png",
+                        imageKey,
                         "수료",
                         certStatus,
                         LocalDateTime.now()
@@ -485,6 +502,50 @@ public class TestDataService {
         return ids;
     }
 
+    private List<Long> createBanners(String batchId, List<Long> lectureIds) {
+        List<Long> ids = new ArrayList<>();
+        String bucketUrl = "https://sw-campus-public-prod-afe42bff.s3.amazonaws.com";
+        String bannerPath = bucketUrl + "/banners/2024/12/24/";
+
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        OffsetDateTime startDate = now.minusDays(30);  // 30일 전부터 시작
+        OffsetDateTime endDate = now.plusDays(60);     // 60일 후까지 진행
+
+        // 배너 정의: [타입, 이미지 파일명, 연결할 강의 인덱스]
+        Object[][] bannerDefs = {
+                {BannerType.BIG, "test-big-1.jpg", 0},
+                {BannerType.MIDDLE, "test-middle-1.jpg", 1},
+                {BannerType.MIDDLE, "test-middle-2.jpg", 2},
+                {BannerType.SMALL, "test-small-1.jpg", 0},
+                {BannerType.SMALL, "test-small-2.jpg", 1},
+                {BannerType.SMALL, "test-small-3.jpg", 3}
+        };
+
+        for (Object[] def : bannerDefs) {
+            BannerType type = (BannerType) def[0];
+            String imageFile = (String) def[1];
+            int lectureIndex = (int) def[2];
+
+            Long lectureId = lectureIds.get(lectureIndex);
+
+            Banner banner = Banner.builder()
+                    .lectureId(lectureId)
+                    .type(type)
+                    .url("https://example.com/lectures/" + lectureId)
+                    .imageUrl(bannerPath + imageFile)
+                    .startDate(startDate)
+                    .endDate(endDate)
+                    .isActive(true)
+                    .build();
+
+            Banner saved = bannerRepository.save(banner);
+            ids.add(saved.getId());
+            registerTestData(batchId, "banners", saved.getId());
+        }
+
+        return ids;
+    }
+
     private void registerTestData(String batchId, String tableName, Long recordId) {
         TestDataRegistry registry = TestDataRegistry.create(batchId, tableName, recordId);
         testDataRepository.save(registry);
@@ -496,8 +557,9 @@ public class TestDataService {
             throw new IllegalStateException("삭제할 테스트 데이터가 없습니다.");
         }
 
-        // FK 역순으로 삭제: reviews_details → reviews → certificates → member_surveys → members → lectures → organizations
+        // FK 역순으로 삭제: banners → reviews → certificates → member_surveys → members → lectures → organizations
         // reviews_details는 Review와 cascade로 삭제되므로 reviews만 삭제
+        deleteByTable("banners", bannerRepository::deleteById);
         deleteByTable("reviews", reviewRepository::deleteById);
         deleteByTable("certificates", certificateRepository::deleteById);
         deleteByTable("member_surveys", memberSurveyRepository::deleteByMemberId);

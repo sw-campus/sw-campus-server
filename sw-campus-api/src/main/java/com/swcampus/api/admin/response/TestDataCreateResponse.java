@@ -16,7 +16,8 @@ public record TestDataCreateResponse(
             List<Long> members,
             List<Long> certificates,
             List<Long> reviews,
-            List<Long> surveys
+            List<Long> surveys,
+            List<Long> banners
     ) {}
 
     public static TestDataCreateResponse from(TestDataCreateResult result) {
@@ -28,7 +29,8 @@ public record TestDataCreateResponse(
                         result.getMemberIds(),
                         result.getCertificateIds(),
                         result.getReviewIds(),
-                        result.getSurveyMemberIds()
+                        result.getSurveyMemberIds(),
+                        result.getBannerIds()
                 ),
                 result.getTotalCount()
         );
