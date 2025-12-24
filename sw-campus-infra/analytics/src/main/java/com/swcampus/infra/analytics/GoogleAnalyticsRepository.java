@@ -334,7 +334,64 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
             log.error("Failed to fetch top lectures", e);
         }
 
-        // Convert to result list and sort by total clicks
+        // 2. Fetch Page Views (to populate views count)
+        try {
+            RunReportResponse viewResponse = analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("pagePath"))
+                    .addDimensions(Dimension.newBuilder().setName("pageTitle"))
+                    .addMetrics(Metric.newBuilder().setName("screenPageViews"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                        .setFilter(Filter.newBuilder()
+                            .setFieldName("pagePath")
+                            .setStringFilter(Filter.StringFilter.newBuilder()
+                                .setMatchType(Filter.StringFilter.MatchType.BEGINS_WITH)
+                                .setValue("/lectures/")
+                                .setCaseSensitive(false)
+                            )
+                        )
+                        .build())
+                    .setLimit(Math.max(limit * 3, 50)) // Ensure we fetch enough views to cover clicked lectures
+                    .build()
+            );
+
+            for (Row row : viewResponse.getRowsList()) {
+                String pagePath = row.getDimensionValues(0).getValue();
+                String pageTitle = row.getDimensionValues(1).getValue();
+                long views = Long.parseLong(row.getMetricValues(0).getValue());
+
+                if (pagePath.matches("^/lectures/\\d+$")) {
+                    String lectureId = pagePath.replace("/lectures/", "");
+                    
+                    LectureData data = lectureMap.get(lectureId);
+                    if (data != null) {
+                        data.views = views;
+                    } else {
+                         String name = (pageTitle != null && !pageTitle.isEmpty() && !"(not set)".equals(pageTitle)) 
+                                     ? pageTitle 
+                                     : "강의 #" + lectureId;
+                         
+                         // Clean up title (remove " | SW Campus" etc if present)
+                         if (name.contains(" |")) {
+                            name = name.substring(0, name.indexOf(" |"));
+                         }
+                         
+                         LectureData newData = new LectureData(name);
+                         newData.views = views;
+                         lectureMap.put(lectureId, newData);
+                    }
+                }
+            }
+        } catch (ApiException e) {
+            log.error("Failed to fetch lecture views", e);
+        }
+
+        // Convert to result list and sort by total clicks (descending), then views (descending)
         return lectureMap.entrySet().stream()
             .map(entry -> new LectureClickStats(
                 entry.getKey(),
@@ -344,7 +401,9 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
                 entry.getValue().shareClicks,
                 entry.getValue().applyClicks + entry.getValue().shareClicks
             ))
-            .sorted(Comparator.comparingLong(LectureClickStats::totalClicks).reversed())
+            .sorted(Comparator.comparingLong(LectureClickStats::totalClicks)
+                .thenComparingLong(LectureClickStats::views)
+                .reversed())
             .limit(limit)
             .toList();
     }

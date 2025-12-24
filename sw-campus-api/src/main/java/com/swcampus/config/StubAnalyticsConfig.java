@@ -21,7 +21,7 @@ public class StubAnalyticsConfig {
         return new AnalyticsRepository() {
             @Override
             public AnalyticsReport getReport(int daysAgo) {
-                return new AnalyticsReport(0, 0, 0, 0, Collections.emptyList());
+                return new AnalyticsReport(0, 0, 0, 0, 0, 0, Collections.emptyList(), Collections.emptyList());
             }
 
             @Override
@@ -36,6 +36,16 @@ public class StubAnalyticsConfig {
 
             @Override
             public List<LectureClickStats> getTopLecturesByClicks(int daysAgo, int limit) {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public List<PopularLecture> getPopularLectures(int daysAgo, int limit) {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public List<PopularSearchTerm> getPopularSearchTerms(int daysAgo, int limit) {
                 return Collections.emptyList();
             }
         };
