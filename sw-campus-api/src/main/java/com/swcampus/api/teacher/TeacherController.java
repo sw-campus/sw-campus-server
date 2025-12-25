@@ -36,8 +36,12 @@ public class TeacherController {
     private final TeacherService teacherService;
 
     @Operation(summary = "강사 검색", description = "강사 이름으로 검색합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
     @GetMapping
     public List<TeacherResponse> searchTeachers(
+            @Parameter(description = "강사 이름", example = "김철수")
             @RequestParam(required = false, defaultValue = "") String name) {
         return teacherService.searchTeachers(name).stream()
                 .map(TeacherResponse::from)

@@ -118,7 +118,7 @@ class MypageControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("test@example.com"))
                 .andExpect(jsonPath("$.name").value("Test User"))
-                .andExpect(jsonPath("$.hasSurvey").value(true));
+                .andExpect(jsonPath("$.has_survey").value(true));
         
         verify(memberService).getMember(1L);
         verify(memberSurveyService).existsByMemberId(1L);
@@ -172,10 +172,10 @@ class MypageControllerTest {
                         .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].lectureId").value(100))
-                .andExpect(jsonPath("$[0].lectureName").value("Test Lecture"))
-                .andExpect(jsonPath("$[0].organizationName").value("Test Org"))
-                .andExpect(jsonPath("$[0].canWriteReview").value(true));
+                .andExpect(jsonPath("$[0].lecture_id").value(100))
+                .andExpect(jsonPath("$[0].lecture_name").value("Test Lecture"))
+                .andExpect(jsonPath("$[0].organization_name").value("Test Org"))
+                .andExpect(jsonPath("$[0].can_write_review").value(true));
         
         verify(mypageService).getCompletedLectures(1L);
     }
@@ -225,11 +225,11 @@ class MypageControllerTest {
                         .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reviewId").value(1))
-                .andExpect(jsonPath("$.lectureId").value(100))
+                .andExpect(jsonPath("$.review_id").value(1))
+                .andExpect(jsonPath("$.lecture_id").value(100))
                 .andExpect(jsonPath("$.nickname").value("테스터"))
-                .andExpect(jsonPath("$.detailScores").isArray())
-                .andExpect(jsonPath("$.detailScores.length()").value(5));
+                .andExpect(jsonPath("$.detail_scores").isArray())
+                .andExpect(jsonPath("$.detail_scores.length()").value(5));
 
         verify(reviewService).getMyReviewWithNicknameByLecture(1L, lectureId);
     }
@@ -340,7 +340,7 @@ class MypageControllerTest {
                         .principal(auth))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.organizationName").value("Test Org"));
+                .andExpect(jsonPath("$.organization_name").value("Test Org"));
         
         verify(organizationService).getOrganizationByUserId(1L);
         verify(memberService).getMember(1L);

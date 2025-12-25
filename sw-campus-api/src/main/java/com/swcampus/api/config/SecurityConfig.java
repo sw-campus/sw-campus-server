@@ -33,7 +33,7 @@ public class SecurityConfig {
     private final List<String> allowedOrigins;
 
     public SecurityConfig(TokenProvider tokenProvider,
-                          @Value("${cors.allowed-origins}") List<String> allowedOrigins) {
+                          @Value("${cors.allowed-origins:http://localhost:3000}") List<String> allowedOrigins) {
         this.tokenProvider = tokenProvider;
         this.allowedOrigins = allowedOrigins;
     }
