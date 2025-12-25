@@ -52,7 +52,7 @@ public class CartController {
     @DeleteMapping
     @Operation(summary = "장바구니 삭제", description = "장바구니에서 강의를 제거합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @ApiResponse(responseCode = "204", description = "삭제 성공"),
             @ApiResponse(responseCode = "401", description = "인증 필요"),
             @ApiResponse(responseCode = "404", description = "장바구니에 해당 강의 없음")
     })
@@ -62,7 +62,7 @@ public class CartController {
             @RequestParam(name = "lectureId") Long lectureId) {
         Long currentUserId = member.memberId();
         cartService.removeCart(currentUserId, lectureId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping

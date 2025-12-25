@@ -112,7 +112,7 @@ class CartControllerTest {
         }
 
         @Test
-        @DisplayName("스크랩 삭제 성공 (200)")
+        @DisplayName("스크랩 삭제 성공 (204)")
         void removeCart_Success() throws Exception {
                 // given
                 Long lectureId = 100L;
@@ -121,7 +121,7 @@ class CartControllerTest {
                 mockMvc.perform(delete("/api/v1/carts")
                                 .param("lectureId", String.valueOf(lectureId))
                                 .with(csrf()))
-                                .andExpect(status().isOk());
+                                .andExpect(status().isNoContent());
         }
 
         @Test
