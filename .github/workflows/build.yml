@@ -104,11 +104,28 @@ jobs:
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'
         run: |
-          gh release create ${{ steps.version.outputs.version_tag }} \
-            --title "Release ${{ steps.version.outputs.version_tag }}" \
+          VERSION_TAG="${{ steps.version.outputs.version_tag }}"
+          
+          # 기존 릴리즈/태그가 있으면 삭제
+          if gh release view "$VERSION_TAG" &>/dev/null; then
+            echo "Release $VERSION_TAG already exists, deleting..."
+            gh release delete "$VERSION_TAG" --yes
+          fi
+          
+          # 기존 태그가 있으면 삭제
+          if git rev-parse "$VERSION_TAG" &>/dev/null; then
+            echo "Tag $VERSION_TAG already exists, deleting..."
+            git tag -d "$VERSION_TAG" || true
+            git push origin ":refs/tags/$VERSION_TAG" || true
+          fi
+          
+          # 새 릴리즈 생성
+          echo "Creating new release $VERSION_TAG..."
+          gh release create "$VERSION_TAG" \
+            --title "Release $VERSION_TAG" \
             --notes "Automated release from main branch
           - Version: ${{ steps.version.outputs.version }}
-          - Image tag: ${{ steps.version.outputs.version_tag }}
+          - Image tag: $VERSION_TAG
           - Commit: ${{ github.sha }}" \
             --target ${{ github.sha }}
         env:
