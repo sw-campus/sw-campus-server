@@ -100,34 +100,32 @@ jobs:
             echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
           fi
 
-      # 9) GitHub Release 생성 (main 브랜치만)
-      - name: Create GitHub Release
+      # 9) GitHub Release 생성/업데이트 (main 브랜치만)
+      - name: Create or Update GitHub Release
         if: github.ref == 'refs/heads/main'
         run: |
           VERSION_TAG="${{ steps.version.outputs.version_tag }}"
           
-          # 기존 릴리즈/태그가 있으면 삭제
+          # 기존 릴리즈가 있으면 업데이트
           if gh release view "$VERSION_TAG" &>/dev/null; then
-            echo "Release $VERSION_TAG already exists, deleting..."
-            gh release delete "$VERSION_TAG" --yes
-          fi
-          
-          # 기존 태그가 있으면 삭제
-          if git rev-parse "$VERSION_TAG" &>/dev/null; then
-            echo "Tag $VERSION_TAG already exists, deleting..."
-            git tag -d "$VERSION_TAG" || true
-            git push origin ":refs/tags/$VERSION_TAG" || true
-          fi
-          
-          # 새 릴리즈 생성
-          echo "Creating new release $VERSION_TAG..."
-          gh release create "$VERSION_TAG" \
-            --title "Release $VERSION_TAG" \
-            --notes "Automated release from main branch
+            echo "Release $VERSION_TAG already exists, updating..."
+            gh release edit "$VERSION_TAG" \
+              --title "Release $VERSION_TAG" \
+              --notes "Automated release from main branch
+          - Version: ${{ steps.version.outputs.version }}
+          - Image tag: $VERSION_TAG
+          - Commit: ${{ github.sha }}"
+          else
+            # 새 릴리즈 생성
+            echo "Creating new release $VERSION_TAG..."
+            gh release create "$VERSION_TAG" \
+              --title "Release $VERSION_TAG" \
+              --notes "Automated release from main branch
           - Version: ${{ steps.version.outputs.version }}
           - Image tag: $VERSION_TAG
           - Commit: ${{ github.sha }}" \
-            --target ${{ github.sha }}
+              --target ${{ github.sha }}
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
