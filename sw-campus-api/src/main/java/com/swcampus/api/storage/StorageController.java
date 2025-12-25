@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -65,6 +66,7 @@ public class StorageController {
     }
 
     @Operation(summary = "Presigned Upload URL 발급", description = "S3에 파일을 업로드하기 위한 Presigned PUT URL을 발급합니다. 카테고리별 권한 체크가 적용됩니다.")
+    @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "발급 성공"),
             @ApiResponse(responseCode = "400", description = "지원하지 않는 카테고리"),

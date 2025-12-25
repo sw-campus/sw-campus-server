@@ -107,8 +107,10 @@ public class LectureController {
 
 	@PutMapping(value = "/{lectureId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(summary = "강의 수정", description = "강의 정보를 수정합니다. 작성자(기관)만 수정 가능합니다.")
+	@SecurityRequirement(name = "cookieAuth")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "수정 성공"),
+			@ApiResponse(responseCode = "401", description = "인증 필요"),
 			@ApiResponse(responseCode = "403", description = "권한 없음"),
 			@ApiResponse(responseCode = "404", description = "강의 없음")
 	})
