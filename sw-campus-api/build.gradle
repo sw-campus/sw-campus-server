@@ -52,5 +52,9 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
 }
 
-bootJar.enabled = true
+bootJar {
+    enabled = true
+    mainClass = 'com.swcampus.SwCampusServerApplication'
+}
+
 jar.enabled = false
