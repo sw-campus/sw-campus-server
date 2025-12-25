@@ -13,6 +13,7 @@ dependencies {
     runtimeOnly project(':sw-campus-infra:db-redis')    // redis
     implementation project(':sw-campus-infra:oauth')    // oauth client
     implementation project(':sw-campus-infra:ocr')      // ocr client
+    runtimeOnly project(':sw-campus-infra:analytics')   // google analytics
 
     // Spring Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'

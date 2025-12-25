@@ -154,4 +154,9 @@ public class ReviewEntityRepository implements ReviewRepository {
     public long countWithApprovedCertificateAndReviewStatus(ApprovalStatus reviewStatus) {
         return jpaRepository.countWithApprovedCertificateAndReviewStatus(reviewStatus);
     }
+
+    @Override
+    public void deleteById(Long id) {
+        jpaRepository.deleteById(id);
+    }
 }

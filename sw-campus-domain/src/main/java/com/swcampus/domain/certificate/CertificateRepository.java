@@ -17,4 +17,6 @@ public interface CertificateRepository {
     // Statistics methods
     long countAll();
     long countByApprovalStatus(ApprovalStatus status);
+
+    void deleteById(Long id);
 }

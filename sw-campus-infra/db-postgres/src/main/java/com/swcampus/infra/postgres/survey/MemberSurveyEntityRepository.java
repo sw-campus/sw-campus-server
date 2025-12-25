@@ -37,4 +37,9 @@ public class MemberSurveyEntityRepository implements MemberSurveyRepository {
         return jpaRepository.findAll(pageable)
                 .map(MemberSurveyEntity::toDomain);
     }
+
+    @Override
+    public void deleteByMemberId(Long memberId) {
+        jpaRepository.deleteById(memberId);
+    }
 }

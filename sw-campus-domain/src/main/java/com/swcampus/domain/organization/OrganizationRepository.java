@@ -29,4 +29,6 @@ public interface OrganizationRepository {
     // 회원이 등록된 기관만 카운트 (통계용)
     long countAll();
     long countByApprovalStatus(ApprovalStatus status);
+
+    void deleteById(Long id);
 }

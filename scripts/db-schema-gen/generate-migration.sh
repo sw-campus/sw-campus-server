@@ -259,6 +259,7 @@ else
       -schemas=$SCHEMA_NAME \
       -defaultSchema=$SCHEMA_NAME \
       -connectRetries=60 \
+      -placeholders.defaultImageBaseUrl=https://example.com/defaults \
       migrate >> "$LOG_FILE" 2>&1
     ) &
     FLYWAY_PID=$!

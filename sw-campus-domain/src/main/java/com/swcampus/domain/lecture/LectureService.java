@@ -13,9 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.swcampus.domain.category.CategoryRepository;
 import com.swcampus.domain.common.ResourceNotFoundException;
+import com.swcampus.domain.common.ApprovalStatus;
+import com.swcampus.domain.common.BusinessException;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
 import com.swcampus.domain.lecture.dto.LectureSummaryDto;
 import com.swcampus.domain.lecture.exception.LectureNotModifiableException;
+import com.swcampus.domain.member.Role;
+import com.swcampus.domain.organization.OrganizationService;
 import com.swcampus.domain.teacher.Teacher;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -32,23 +36,27 @@ public class LectureService {
 	private final com.swcampus.domain.storage.FileStorageService fileStorageService;
 	private final com.swcampus.domain.review.ReviewRepository reviewRepository;
 	private final CategoryRepository categoryRepository;
+	private final OrganizationService organizationService;
 
 	@Value("${app.default-image.base-url:}")
 	private String defaultImageBaseUrl;
 
 	@Transactional
-	public Lecture registerLecture(Lecture lecture) {
-		return registerLecture(lecture, null, null, null);
+	public Lecture registerLecture(Lecture lecture, Long userId, Role role) {
+		return registerLecture(lecture, userId, role, null, null, null);
 	}
 
 	@Transactional
-	public Lecture registerLecture(Lecture lecture, byte[] imageContent, String imageName, String contentType) {
-		return registerLecture(lecture, imageContent, imageName, contentType, Collections.emptyList());
+	public Lecture registerLecture(Lecture lecture, Long userId, Role role, byte[] imageContent, String imageName, String contentType) {
+		return registerLecture(lecture, userId, role, imageContent, imageName, contentType, Collections.emptyList());
 	}
 
 	@Transactional
-	public Lecture registerLecture(Lecture lecture, byte[] imageContent, String imageName, String contentType,
+	public Lecture registerLecture(Lecture lecture, Long userId, Role role, byte[] imageContent, String imageName, String contentType,
 			List<ImageContent> teacherImages) {
+		
+		Long organizationId = resolveOrganizationId(userId, role, lecture.getOrgId());
+		
 		String imageUrl = lecture.getLectureImageUrl();
 
 		if (imageContent != null && imageContent.length > 0) {
@@ -60,6 +68,7 @@ public class LectureService {
 		List<Teacher> updatedTeachers = processNewTeachers(lecture.getTeachers(), teacherImages);
 
 		Lecture newLecture = lecture.toBuilder()
+				.orgId(organizationId)
 				.lectureImageUrl(imageUrl)
 				.lectureAuthStatus(LectureAuthStatus.PENDING)
 				.teachers(updatedTeachers)
@@ -71,13 +80,18 @@ public class LectureService {
 	}
 
 	@Transactional
-	public Lecture modifyLecture(Long lectureId, Long orgId, Lecture lecture, byte[] imageContent, String imageName,
+	public Lecture modifyLecture(Long lectureId, Long userId, Role role, Lecture lecture, byte[] imageContent, String imageName,
 			String contentType,
 			List<ImageContent> teacherImages) {
 		Lecture existingLecture = getLecture(lectureId);
-
-		if (!existingLecture.getOrgId().equals(orgId)) {
-			throw new AccessDeniedException("해당 강의를 수정할 권한이 없습니다.");
+		
+		// ADMIN은 모든 강의 수정 가능, 권한 체크 건너뜀
+		if (role != Role.ADMIN) {
+			// 일반 회원은 자신의 기관 ID로 확인
+			Long organizationId = resolveOrganizationId(userId, role, null);
+			if (!existingLecture.getOrgId().equals(organizationId)) {
+				throw new AccessDeniedException("해당 강의를 수정할 권한이 없습니다.");
+			}
 		}
 
 //		if (existingLecture.getLectureAuthStatus() == LectureAuthStatus.APPROVED) {
@@ -254,6 +268,17 @@ public class LectureService {
 			}
 		}
 		return updatedTeachers;
+	}
+
+	private Long resolveOrganizationId(Long userId, Role role, Long requestOrgId) {
+		if (role == Role.ADMIN) {
+			if (requestOrgId == null) {
+				throw new BusinessException("관리자는 강의 등록 시 기관 ID를 필수적으로 입력해야 합니다.");
+			}
+			return organizationService.getOrganization(requestOrgId).getId();
+		} else {
+			return organizationService.getApprovedOrganizationByUserId(userId).getId();
+		}
 	}
 
 	private String resolveDefaultImageUrl(Lecture lecture) {

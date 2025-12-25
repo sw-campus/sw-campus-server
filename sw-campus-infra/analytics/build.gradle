@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+    id 'io.spring.dependency-management'
+}
+
+dependencies {
+    implementation project(':sw-campus-domain')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+
+    // Google Analytics Data API
+    implementation 'com.google.analytics:google-analytics-data:0.53.0'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}

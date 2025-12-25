@@ -56,7 +56,7 @@ public class OrganizationEntityRepository implements OrganizationRepository {
 
     @Override
     public List<Organization> findByNameContaining(String keyword) {
-        return jpaRepository.findByNameContaining(keyword).stream()
+        return jpaRepository.findByNameContainingIgnoreCase(keyword).stream()
                 .map(OrganizationEntity::toDomain)
                 .toList();
     }
@@ -100,5 +100,11 @@ public class OrganizationEntityRepository implements OrganizationRepository {
     @Override
     public long countByApprovalStatus(ApprovalStatus status) {
         return jpaRepository.countByApprovalStatusWithMemberRegistration(status);
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(Long id) {
+        jpaRepository.deleteById(id);
     }
 }

@@ -11,6 +11,7 @@ import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.review.*;
+import com.swcampus.domain.storage.PresignedUrlService;
 import com.swcampus.domain.review.dto.PendingReviewInfo;
 import com.swcampus.domain.review.exception.ReviewNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,6 +70,9 @@ class AdminReviewControllerTest {
 
     @MockitoBean
     private LectureService lectureService;
+
+    @MockitoBean
+    private PresignedUrlService presignedUrlService;
 
     private void setAdminAuthentication(Long memberId) {
         MemberPrincipal principal = new MemberPrincipal(memberId, "admin@example.com", Role.ADMIN);
@@ -258,13 +262,15 @@ class AdminReviewControllerTest {
             Certificate certificate = createMockCertificate(certificateId, 1L, 1L, ApprovalStatus.PENDING);
             given(adminReviewService.getCertificate(certificateId)).willReturn(certificate);
             given(lectureService.getLectureNames(List.of(1L))).willReturn(Map.of(1L, "Java 풀스택 과정"));
+            given(presignedUrlService.getPresignedUrl(any(), eq(true)))
+                    .willReturn(new PresignedUrlService.PresignedUrl("https://presigned.s3.../certificate.jpg", 3600));
 
             // when & then
             mockMvc.perform(get("/api/v1/admin/certificates/{certificateId}", certificateId))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.certificate_id").value(1))
                     .andExpect(jsonPath("$.lecture_name").value("Java 풀스택 과정"))
-                    .andExpect(jsonPath("$.image_url").value("https://s3.../certificate.jpg"));
+                    .andExpect(jsonPath("$.image_url").value("https://presigned.s3.../certificate.jpg"));
         }
 
         @Test
