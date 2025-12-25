@@ -25,22 +25,38 @@ jobs:
         uses: actions/checkout@v4
 
       # 2) 이미지 태그 계산
-      # - release 이벤트: 버전 태그
-      # - 그 외(main/develop): 커밋 SHA
+      # - main 브랜치: 버전 태그 (gradle.properties에서 읽기)
+      # - develop 브랜치: 커밋 SHA
       - name: Determine image tag
         id: tag
         run: |
-          if [ "${{ github.event_name }}" = "workflow_run" ] && \
-             [ "${{ github.event.workflow_run.event }}" = "release" ]; then
-            TAG="${{ github.event.workflow_run.release.tag_name }}"
-            TAG="${TAG#v}"
-          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
-            TAG="${{ github.event.workflow_run.head_sha }}"
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+            SHA="${{ github.event.workflow_run.head_sha }}"
           else
-            # workflow_dispatch → 현재 커밋 SHA
-            TAG="${{ github.sha }}"
+            # workflow_dispatch → 현재 브랜치/커밋
+            BRANCH="${{ github.ref_name }}"
+            SHA="${{ github.sha }}"
           fi
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+          echo "Branch: $BRANCH"
+          echo "SHA: $SHA"
+
+          if [ "$BRANCH" = "main" ]; then
+            # main 브랜치일 때는 gradle.properties에서 버전을 읽어서 버전 태그 사용
+            if [ ! -f "gradle.properties" ]; then
+              echo "Error: gradle.properties not found!"
+              ls -la
+              exit 1
+            fi
+            VERSION=$(grep "applicationVersion=" gradle.properties | cut -d'=' -f2 | sed 's/-SNAPSHOT//')
+            VERSION_TAG="v${VERSION}"
+            echo "Version: $VERSION"
+            echo "Version tag: $VERSION_TAG"
+            echo "tag=$VERSION_TAG" >> $GITHUB_OUTPUT
+          else
+            echo "tag=$SHA" >> $GITHUB_OUTPUT
+          fi
 
       # 3) 대상 manifest 브랜치 결정 (dev / prod)
       # - server/develop → manifest/develop (VM)
@@ -95,7 +111,9 @@ jobs:
             - Environment: ${{ steps.target.outputs.env }}
             - Image tag: `${{ steps.tag.outputs.tag }}`
           base: ${{ steps.target.outputs.branch }}
-          branch: chore/server-image-${{ steps.target.outputs.env }}-${{ steps.tag.outputs.tag }}
+          branch: chore/server-image-${{ steps.target.outputs.env }}-${{ github.run_id }}
+          delete-branch: true
           add-paths: |
             k8s/environments/develop/values.yaml
             k8s/environments/release/values.yaml
+        continue-on-error: true
