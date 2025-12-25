@@ -6,6 +6,8 @@ import com.swcampus.domain.analytics.AnalyticsRepository;
 import com.swcampus.domain.analytics.BannerClickStats;
 import com.swcampus.domain.analytics.EventStats;
 import com.swcampus.domain.analytics.LectureClickStats;
+import com.swcampus.domain.analytics.PopularLecture;
+import com.swcampus.domain.analytics.PopularSearchTerm;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
@@ -58,6 +60,8 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
                     .build())
                 .addMetrics(Metric.newBuilder().setName("totalUsers"))
                 .addMetrics(Metric.newBuilder().setName("activeUsers"))
+                .addMetrics(Metric.newBuilder().setName("newUsers"))
+                .addMetrics(Metric.newBuilder().setName("averageSessionDuration"))
                 .addMetrics(Metric.newBuilder().setName("screenPageViews"))
                 .addMetrics(Metric.newBuilder().setName("sessions"))
                 .build()
@@ -65,6 +69,8 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
         long totalUsers = 0;
         long activeUsers = 0;
+        long newUsers = 0;
+        double averageEngagementTime = 0.0;
         long pageViews = 0;
         long sessions = 0;
 
@@ -72,8 +78,10 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
             Row row = summaryResponse.getRows(0);
             totalUsers = Long.parseLong(row.getMetricValues(0).getValue());
             activeUsers = Long.parseLong(row.getMetricValues(1).getValue());
-            pageViews = Long.parseLong(row.getMetricValues(2).getValue());
-            sessions = Long.parseLong(row.getMetricValues(3).getValue());
+            newUsers = Long.parseLong(row.getMetricValues(2).getValue());
+            averageEngagementTime = Double.parseDouble(row.getMetricValues(3).getValue());
+            pageViews = Long.parseLong(row.getMetricValues(4).getValue());
+            sessions = Long.parseLong(row.getMetricValues(5).getValue());
         }
 
         // 일별 통계 데이터 조회
@@ -85,7 +93,8 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
                     .setEndDate(endDate)
                     .build())
                 .addDimensions(Dimension.newBuilder().setName("date"))
-                .addMetrics(Metric.newBuilder().setName("activeUsers"))
+                .addMetrics(Metric.newBuilder().setName("totalUsers"))
+                .addMetrics(Metric.newBuilder().setName("newUsers"))
                 .addMetrics(Metric.newBuilder().setName("screenPageViews"))
                 .addOrderBys(OrderBy.newBuilder()
                     .setDimension(OrderBy.DimensionOrderBy.newBuilder()
@@ -99,12 +108,33 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
         for (Row row : dailyResponse.getRowsList()) {
             LocalDate date = LocalDate.parse(row.getDimensionValues(0).getValue(), DATE_FORMATTER);
-            long dailyActiveUsers = Long.parseLong(row.getMetricValues(0).getValue());
-            long dailyPageViews = Long.parseLong(row.getMetricValues(1).getValue());
-            dailyStats.add(new AnalyticsReport.DailyStats(date, dailyActiveUsers, dailyPageViews));
+            long dailyTotalUsers = Long.parseLong(row.getMetricValues(0).getValue());
+            long dailyNewUsers = Long.parseLong(row.getMetricValues(1).getValue());
+            long dailyPageViews = Long.parseLong(row.getMetricValues(2).getValue());
+            dailyStats.add(new AnalyticsReport.DailyStats(date, dailyTotalUsers, dailyNewUsers, dailyPageViews));
         }
 
-        return new AnalyticsReport(totalUsers, activeUsers, pageViews, sessions, dailyStats);
+        // 기기별 통계 데이터 조회 (New Request)
+        RunReportResponse deviceResponse = analyticsClient.runReport(
+            RunReportRequest.newBuilder()
+                .setProperty("properties/" + propertyId)
+                .addDateRanges(DateRange.newBuilder()
+                    .setStartDate(startDate)
+                    .setEndDate(endDate)
+                    .build())
+                .addDimensions(Dimension.newBuilder().setName("deviceCategory"))
+                .addMetrics(Metric.newBuilder().setName("activeUsers"))
+                .build()
+        );
+
+        List<AnalyticsReport.DeviceStat> deviceStats = new ArrayList<>();
+        for (Row row : deviceResponse.getRowsList()) {
+            String category = row.getDimensionValues(0).getValue();
+            long users = Long.parseLong(row.getMetricValues(0).getValue());
+            deviceStats.add(new AnalyticsReport.DeviceStat(category, users));
+        }
+
+        return new AnalyticsReport(totalUsers, activeUsers, newUsers, averageEngagementTime, pageViews, sessions, dailyStats, deviceStats);
     }
 
     @Override
@@ -304,16 +334,76 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
             log.error("Failed to fetch top lectures", e);
         }
 
-        // Convert to result list and sort by total clicks
+        // 2. Fetch Page Views (to populate views count)
+        try {
+            RunReportResponse viewResponse = analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("pagePath"))
+                    .addDimensions(Dimension.newBuilder().setName("pageTitle"))
+                    .addMetrics(Metric.newBuilder().setName("screenPageViews"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                        .setFilter(Filter.newBuilder()
+                            .setFieldName("pagePath")
+                            .setStringFilter(Filter.StringFilter.newBuilder()
+                                .setMatchType(Filter.StringFilter.MatchType.BEGINS_WITH)
+                                .setValue("/lectures/")
+                                .setCaseSensitive(false)
+                            )
+                        )
+                        .build())
+                    .setLimit(Math.max(limit * 3, 50)) // Ensure we fetch enough views to cover clicked lectures
+                    .build()
+            );
+
+            for (Row row : viewResponse.getRowsList()) {
+                String pagePath = row.getDimensionValues(0).getValue();
+                String pageTitle = row.getDimensionValues(1).getValue();
+                long views = Long.parseLong(row.getMetricValues(0).getValue());
+
+                if (pagePath.matches("^/lectures/\\d+$")) {
+                    String lectureId = pagePath.replace("/lectures/", "");
+                    
+                    LectureData data = lectureMap.get(lectureId);
+                    if (data != null) {
+                        data.views = views;
+                    } else {
+                         String name = (pageTitle != null && !pageTitle.isEmpty() && !"(not set)".equals(pageTitle)) 
+                                     ? pageTitle 
+                                     : "강의 #" + lectureId;
+                         
+                         // Clean up title (remove " | SW Campus" etc if present)
+                         if (name.contains(" |")) {
+                            name = name.substring(0, name.indexOf(" |"));
+                         }
+                         
+                         LectureData newData = new LectureData(name);
+                         newData.views = views;
+                         lectureMap.put(lectureId, newData);
+                    }
+                }
+            }
+        } catch (ApiException e) {
+            log.error("Failed to fetch lecture views", e);
+        }
+
+        // Convert to result list and sort by total clicks (descending), then views (descending)
         return lectureMap.entrySet().stream()
             .map(entry -> new LectureClickStats(
                 entry.getKey(),
                 entry.getValue().lectureName,
+                entry.getValue().views,
                 entry.getValue().applyClicks,
                 entry.getValue().shareClicks,
                 entry.getValue().applyClicks + entry.getValue().shareClicks
             ))
-            .sorted(Comparator.comparingLong(LectureClickStats::totalClicks).reversed())
+            .sorted(Comparator.comparingLong(LectureClickStats::totalClicks)
+                .thenComparingLong(LectureClickStats::views)
+                .reversed())
             .limit(limit)
             .toList();
     }
@@ -321,12 +411,133 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
     // Helper class for aggregating lecture data
     private static class LectureData {
         String lectureName;
+        long views = 0;
         long applyClicks = 0;
         long shareClicks = 0;
 
         LectureData(String lectureName) {
             this.lectureName = lectureName;
         }
+    }
+
+    @Override
+    public List<PopularLecture> getPopularLectures(int daysAgo, int limit) {
+        String startDate = daysAgo + "daysAgo";
+        String endDate = "today";
+        List<PopularLecture> result = new ArrayList<>();
+
+        try {
+            // 강의 상세 페이지 조회수를 pagePath 기준으로 집계 (pageTitle 포함)
+            RunReportResponse response = analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("pagePath"))
+                    .addDimensions(Dimension.newBuilder().setName("pageTitle"))
+                    .addMetrics(Metric.newBuilder().setName("screenPageViews"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                        .setFilter(Filter.newBuilder()
+                            .setFieldName("pagePath")
+                            .setStringFilter(Filter.StringFilter.newBuilder()
+                                .setMatchType(Filter.StringFilter.MatchType.BEGINS_WITH)
+                                .setValue("/lectures/")
+                                .setCaseSensitive(false)
+                            )
+                        )
+                        .build())
+                    .addOrderBys(OrderBy.newBuilder()
+                        .setMetric(OrderBy.MetricOrderBy.newBuilder()
+                            .setMetricName("screenPageViews")
+                            .build())
+                        .setDesc(true)
+                        .build())
+                    .setLimit(limit + 10) // 여유분 확보 (search 페이지 등 제외용)
+                    .build()
+            );
+
+            for (Row row : response.getRowsList()) {
+                String pagePath = row.getDimensionValues(0).getValue();
+                String pageTitle = row.getDimensionValues(1).getValue();
+                long views = Long.parseLong(row.getMetricValues(0).getValue());
+
+                // /lectures/123 형태만 추출 (search, category 등 제외)
+                if (pagePath.matches("^/lectures/\\d+$")) {
+                    String lectureId = pagePath.replace("/lectures/", "");
+                    
+                    String lectureName = (pageTitle != null && !pageTitle.isEmpty() && !"(not set)".equals(pageTitle)) 
+                                         ? pageTitle 
+                                         : "강의 #" + lectureId;
+                    
+                    // Clean up title (remove " | SW Campus" etc if present)
+                    if (lectureName.contains(" |")) {
+                        lectureName = lectureName.substring(0, lectureName.indexOf(" |"));
+                    }
+                    
+                    result.add(new PopularLecture(lectureId, lectureName, views));
+                    
+                    if (result.size() >= limit) break;
+                }
+            }
+        } catch (ApiException e) {
+            log.error("Failed to fetch popular lectures", e);
+        }
+
+        return result;
+    }
+
+    @Override
+    public List<PopularSearchTerm> getPopularSearchTerms(int daysAgo, int limit) {
+        String startDate = daysAgo + "daysAgo";
+        String endDate = "today";
+        List<PopularSearchTerm> result = new ArrayList<>();
+
+        try {
+            RunReportResponse response = analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:search_term"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                        .setFilter(Filter.newBuilder()
+                            .setFieldName("eventName")
+                            .setStringFilter(Filter.StringFilter.newBuilder()
+                                .setMatchType(Filter.StringFilter.MatchType.EXACT)
+                                .setValue("search")
+                                .setCaseSensitive(false)
+                            )
+                        )
+                        .build())
+                    .addOrderBys(OrderBy.newBuilder()
+                        .setMetric(OrderBy.MetricOrderBy.newBuilder()
+                            .setMetricName("eventCount")
+                            .build())
+                        .setDesc(true)
+                        .build())
+                    .setLimit(limit)
+                    .build()
+            );
+
+            for (Row row : response.getRowsList()) {
+                String term = row.getDimensionValues(0).getValue();
+                long count = Long.parseLong(row.getMetricValues(0).getValue());
+                
+                // 빈 검색어 제외
+                if (term != null && !term.isBlank() && !"(not set)".equals(term)) {
+                    result.add(new PopularSearchTerm(term, count));
+                }
+            }
+        } catch (ApiException e) {
+            log.error("Failed to fetch popular search terms", e);
+        }
+
+        return result;
     }
 }
 

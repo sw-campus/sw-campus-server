@@ -15,7 +15,7 @@ public interface OrganizationJpaRepository extends JpaRepository<OrganizationEnt
 
     boolean existsByUserId(Long userId);
 
-    List<OrganizationEntity> findByNameContaining(String name);
+    List<OrganizationEntity> findByNameContainingIgnoreCase(String name);
 
     // 회원이 등록된 기관만 목록 조회 (Member.orgId가 존재하는 경우만)
     @Query("SELECT o FROM OrganizationEntity o WHERE EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id) AND LOWER(o.name) LIKE LOWER(CONCAT('%', :name, '%'))")
