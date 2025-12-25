@@ -154,9 +154,9 @@ class CartControllerTest {
                 mockMvc.perform(get("/api/v1/carts")
                                 .with(csrf()))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$[0].lecture_id").value(dummyLectureId))
-                                .andExpect(jsonPath("$[0].lecture_name").value("Test Lecture"))
-                                .andExpect(jsonPath("$[0].category_id").value(dummyCategoryId));
+                                .andExpect(jsonPath("$[0].lectureId").value(dummyLectureId))
+                                .andExpect(jsonPath("$[0].lectureName").value("Test Lecture"))
+                                .andExpect(jsonPath("$[0].categoryId").value(dummyCategoryId));
 
                 verify(cartService).getCartList(dummyUserId);
         }

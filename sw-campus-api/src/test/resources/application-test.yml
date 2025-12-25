@@ -23,9 +23,6 @@ spring:
     host: localhost
     port: 3025
 
-  jackson:
-    property-naming-strategy: SNAKE_CASE
-
 jwt:
   secret: test-secret-key-for-testing-purpose-only-32bytes!!
   access-token-validity: 3600

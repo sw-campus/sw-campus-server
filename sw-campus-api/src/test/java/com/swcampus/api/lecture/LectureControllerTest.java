@@ -183,8 +183,8 @@ class LectureControllerTest {
                                 .contentType(MediaType.MULTIPART_FORM_DATA)
                                 .accept(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isCreated())
-                                .andExpect(jsonPath("$.lecture_id").value(100))
-                                .andExpect(jsonPath("$.lecture_name").value("Java Spring 강의"));
+                                .andExpect(jsonPath("$.lectureId").value(100))
+                                .andExpect(jsonPath("$.lectureName").value("Java Spring 강의"));
         }
 
         @Test
@@ -203,9 +203,9 @@ class LectureControllerTest {
                 mockMvc.perform(get("/api/v1/lectures/{lectureId}", 100L)
                                 .with(csrf()))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.lecture_id").value(100))
-                                .andExpect(jsonPath("$.lecture_name").value("Test Lecture"))
-                                .andExpect(jsonPath("$.average_score").value(4.5));
+                                .andExpect(jsonPath("$.lectureId").value(100))
+                                .andExpect(jsonPath("$.lectureName").value("Test Lecture"))
+                                .andExpect(jsonPath("$.averageScore").value(4.5));
         }
 
         @Test
@@ -235,9 +235,9 @@ class LectureControllerTest {
                                 .param("page", "0")
                                 .param("size", "10"))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.content[0].lecture_id").value(100))
-                                .andExpect(jsonPath("$.content[0].lecture_name").value("Search Result"))
-                                .andExpect(jsonPath("$.content[0].steps[0].step_type").value("CODING_TEST"))
-                                .andExpect(jsonPath("$.content[0].average_score").value(4.2));
+                                .andExpect(jsonPath("$.content[0].lectureId").value(100))
+                                .andExpect(jsonPath("$.content[0].lectureName").value("Search Result"))
+                                .andExpect(jsonPath("$.content[0].steps[0].stepType").value("CODING_TEST"))
+                                .andExpect(jsonPath("$.content[0].averageScore").value(4.2));
         }
 }
