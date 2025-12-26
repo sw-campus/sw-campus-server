@@ -43,16 +43,11 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
 
-  # Mail (SMTP)
+spring:
   mail:
-    host: smtp.gmail.com
-    port: 587
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT}
+
 
 # 로그 관련 설정
 otel:
