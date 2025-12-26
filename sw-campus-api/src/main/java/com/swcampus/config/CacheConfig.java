@@ -33,7 +33,8 @@ public class CacheConfig {
         
         manager.setCaffeine(Caffeine.newBuilder()
             .expireAfterWrite(5, TimeUnit.MINUTES)  // 5분 TTL
-            .maximumSize(100));                      // 최대 100개 엔트리
+            .maximumSize(100)                       // 최대 100개 엔트리
+            .recordStats());                        // 캐시 통계 활성화 (Micrometer 연동)
         
         return manager;
     }
