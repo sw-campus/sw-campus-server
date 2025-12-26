@@ -103,7 +103,7 @@ class AdminOrganizationServiceTest {
     }
 
     @Test
-    @DisplayName("기관 반려 성공 - Member 삭제 및 관리자 연락처 반환")
+    @DisplayName("기관 반려 성공 - REJECTED 상태로 변경 및 관리자 연락처 반환")
     void rejectOrganization_Success() {
         // given
         Long orgId = 1L;
@@ -122,6 +122,7 @@ class AdminOrganizationServiceTest {
         assertThat(result.getMemberEmail()).isEqualTo("test@test.com");
         assertThat(result.getAdminEmail()).isEqualTo("admin@test.com");
         assertThat(result.getAdminPhone()).isEqualTo("010-9999-9999");
-        verify(memberRepository).deleteById(member.getId());
+        assertThat(organization.getApprovalStatus()).isEqualTo(ApprovalStatus.REJECTED);
+        verify(organizationRepository).save(organization);
     }
 }
