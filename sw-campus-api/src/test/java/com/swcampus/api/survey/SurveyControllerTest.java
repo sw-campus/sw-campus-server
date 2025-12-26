@@ -104,13 +104,13 @@ class SurveyControllerTest {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.member_id").value(MEMBER_ID))
+                    .andExpect(jsonPath("$.memberId").value(MEMBER_ID))
                     .andExpect(jsonPath("$.major").value("컴퓨터공학"))
-                    .andExpect(jsonPath("$.bootcamp_completed").value(true))
-                    .andExpect(jsonPath("$.wanted_jobs").value("백엔드 개발자"))
+                    .andExpect(jsonPath("$.bootcampCompleted").value(true))
+                    .andExpect(jsonPath("$.wantedJobs").value("백엔드 개발자"))
                     .andExpect(jsonPath("$.licenses").value("정보처리기사"))
-                    .andExpect(jsonPath("$.has_gov_card").value(true))
-                    .andExpect(jsonPath("$.affordable_amount").value(500000));
+                    .andExpect(jsonPath("$.hasGovCard").value(true))
+                    .andExpect(jsonPath("$.affordableAmount").value(500000));
         }
 
         @Test
@@ -154,7 +154,7 @@ class SurveyControllerTest {
             // when & then
             mockMvc.perform(get(BASE_URL))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.member_id").value(MEMBER_ID))
+                    .andExpect(jsonPath("$.memberId").value(MEMBER_ID))
                     .andExpect(jsonPath("$.major").value("컴퓨터공학"));
         }
 
@@ -201,7 +201,7 @@ class SurveyControllerTest {
                             .with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.major").value("소프트웨어공학"))
-                    .andExpect(jsonPath("$.wanted_jobs").value("풀스택 개발자"));
+                    .andExpect(jsonPath("$.wantedJobs").value("풀스택 개발자"));
         }
 
         @Test
