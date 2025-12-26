@@ -47,6 +47,12 @@ spring:
   mail:
     host: ${MAIL_HOST:}
     port: ${MAIL_PORT}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 
 # 로그 관련 설정
