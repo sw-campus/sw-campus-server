@@ -9,4 +9,6 @@ public interface TeacherRepository {
 	Optional<Teacher> findById(Long id);
 
 	List<Teacher> searchTeachers(String name);
+
+	void deleteById(Long id);
 }

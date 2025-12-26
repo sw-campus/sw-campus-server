@@ -34,4 +34,9 @@ public class TeacherEntityRepository implements TeacherRepository {
 				.map(TeacherEntity::toDomain)
 				.toList();
 	}
+
+	@Override
+	public void deleteById(Long id) {
+		jpaRepository.deleteById(id);
+	}
 }
