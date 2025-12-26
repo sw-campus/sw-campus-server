@@ -2,6 +2,12 @@ plugins {
     id 'java'
     id 'org.springframework.boot' apply false
     id 'io.spring.dependency-management' apply false
+    id 'eclipse'
+}
+
+// VSCode Java Extension 지원을 위한 Eclipse 프로젝트 파일 생성
+allprojects {
+    apply plugin: 'eclipse'
 }
 
 java {
