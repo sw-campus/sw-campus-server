@@ -19,8 +19,10 @@ public interface MemberRepository {
     Page<Member> searchByRoleAndKeyword(Role role, String keyword, Pageable pageable);
     boolean existsByNicknameIgnoreCase(String nickname);
     boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long id);
+    Optional<Member> findByEmailAndNameAndPhone(String email, String name, String phone);
     
     // Statistics methods
     long countAll();
     long countByRole(Role role);
 }
+

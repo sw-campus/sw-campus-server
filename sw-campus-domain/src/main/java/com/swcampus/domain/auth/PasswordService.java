@@ -51,13 +51,15 @@ public class PasswordService {
 
     /**
      * 임시 비밀번호 발급 (비밀번호 찾기)
+     * 이메일, 이름, 전화번호가 모두 일치하는 경우에만 발급
      */
-    public void issueTemporaryPassword(String email) {
-        Member member = memberRepository.findByEmail(email).orElse(null);
+    public void issueTemporaryPassword(String email, String name, String phone) {
+        Member member = memberRepository.findByEmailAndNameAndPhone(email, name, phone)
+                .orElseThrow(() -> new IllegalArgumentException("입력하신 정보와 일치하는 사용자가 없습니다."));
 
-        // 사용자 없음 또는 OAuth 사용자 → 조용히 종료 (보안)
-        if (member == null || member.getPassword() == null) {
-            return;
+        // OAuth 사용자는 비밀번호 발급 불가
+        if (member.getPassword() == null) {
+            throw new InvalidPasswordException("소셜 로그인 사용자는 비밀번호 찾기를 사용할 수 없습니다. 소셜 계정으로 로그인해주세요.");
         }
 
         // 임시 비밀번호 생성

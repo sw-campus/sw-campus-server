@@ -299,7 +299,9 @@ class AuthIntegrationTest {
         @Test
         @DisplayName("임시 비밀번호 발급 요청")
         void requestTemporaryPassword_success() throws Exception {
-            TemporaryPasswordRequest request = new TemporaryPasswordRequest(testMember.getEmail());
+            TemporaryPasswordRequest request = new TemporaryPasswordRequest(
+                    "테스트유저", "010-0000-0000", testMember.getEmail()
+            );
 
             mockMvc.perform(post("/api/v1/auth/password/temporary")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -311,9 +313,11 @@ class AuthIntegrationTest {
         }
 
         @Test
-        @DisplayName("존재하지 않는 이메일로 임시 비밀번호 요청해도 동일 응답 (보안)")
+        @DisplayName("존재하지 않는 정보로 임시 비밀번호 요청해도 동일 응답 (보안)")
         void requestTemporaryPasswordForNonExistent_sameResponse() throws Exception {
-            TemporaryPasswordRequest request = new TemporaryPasswordRequest("nonexistent@example.com");
+            TemporaryPasswordRequest request = new TemporaryPasswordRequest(
+                    "존재하지않음", "010-9999-9999", "nonexistent@example.com"
+            );
 
             mockMvc.perform(post("/api/v1/auth/password/temporary")
                             .contentType(MediaType.APPLICATION_JSON)
