@@ -27,6 +27,10 @@ dependencies {
     // AOP for infra exception translation aspect
     implementation 'org.springframework.boot:spring-boot-starter-aop'
 
+    // Cache with Caffeine
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
