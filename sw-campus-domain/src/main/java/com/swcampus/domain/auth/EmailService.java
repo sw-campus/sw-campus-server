@@ -6,6 +6,7 @@ import com.swcampus.domain.auth.exception.InvalidTokenException;
 import com.swcampus.domain.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,12 +67,14 @@ public class EmailService {
         return emailVerificationRepository.findByEmailAndVerified(email, true).isPresent();
     }
 
+    @Async
     public void sendApprovalEmail(String memberEmail, String organizationName) {
         String subject = "[SW Campus] 기관 회원가입 승인 완료";
         String content = buildApprovalEmailContent(organizationName);
         mailSender.send(memberEmail, subject, content);
     }
 
+    @Async
     public void sendRejectionEmail(String memberEmail, String adminEmail, String adminPhone) {
         String subject = "[SW Campus] 기관 회원가입 반려 안내";
         String content = buildRejectionEmailContent(adminEmail, adminPhone);
