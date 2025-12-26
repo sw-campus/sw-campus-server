@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -47,6 +48,7 @@ public class TestDataService {
     private final BannerRepository bannerRepository;
     private final TeacherRepository teacherRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EntityManager entityManager;
 
     @Transactional
     public TestDataCreateResult createTestData() {
@@ -647,15 +649,25 @@ public class TestDataService {
             throw new IllegalStateException("삭제할 테스트 데이터가 없습니다.");
         }
 
-        // FK 역순으로 삭제: banners → reviews → certificates → member_surveys → members → lectures → teachers → organizations
+        // FK 역순으로 삭제: banners → reviews → certificates → member_surveys → members → lectures → lecture_teachers → teachers → organizations
         // reviews_details는 Review와 cascade로 삭제되므로 reviews만 삭제
-        // lecture_teachers는 Lecture와 cascade로 삭제되므로 lectures만 삭제
         deleteByTable("banners", bannerRepository::deleteById);
         deleteByTable("reviews", reviewRepository::deleteById);
         deleteByTable("certificates", certificateRepository::deleteById);
         deleteByTable("member_surveys", memberSurveyRepository::deleteByMemberId);
         deleteByTable("members", memberRepository::deleteById);
         deleteByTable("lectures", lectureRepository::deleteById);
+
+        // lecture_teachers 삭제 (테스트 데이터 teacher를 참조하는 모든 연결 삭제)
+        List<Long> teacherIds = testDataRepository.findByTableName("teachers").stream()
+                .map(TestDataRegistry::getRecordId)
+                .toList();
+        if (!teacherIds.isEmpty()) {
+            entityManager.createNativeQuery("DELETE FROM lecture_teachers WHERE teacher_id IN :teacherIds")
+                    .setParameter("teacherIds", teacherIds)
+                    .executeUpdate();
+        }
+
         deleteByTable("teachers", teacherRepository::deleteById);
         deleteByTable("organizations", organizationRepository::deleteById);
 
