@@ -155,15 +155,20 @@ public class LectureEntityRepository implements LectureRepository {
 
 	@Override
 	public Optional<Lecture> findById(Long id) {
-		return jpaRepository.findByIdWithCategory(id)
-				.map(entity -> {
-					Double avgScore = reviewRepository.getAverageScoreByLectureId(id);
-					Long reviewCount = reviewRepository.countReviewsByLectureId(id);
-					return entity.toDomain().toBuilder()
-							.averageScore(avgScore != null ? avgScore : 0.0)
-							.reviewCount(reviewCount != null ? reviewCount : 0L)
-							.build();
-				});
+		List<Object[]> results = jpaRepository.findByIdWithReviewStats(id);
+		if (results.isEmpty()) {
+			return Optional.empty();
+		}
+
+		Object[] row = results.get(0);
+		LectureEntity entity = (LectureEntity) row[0];
+		Double avgScore = (Double) row[1];
+		Long reviewCount = (Long) row[2];
+
+		return Optional.of(entity.toDomain().toBuilder()
+				.averageScore(avgScore != null ? avgScore : 0.0)
+				.reviewCount(reviewCount != null ? reviewCount : 0L)
+				.build());
 	}
 
 	@Override
@@ -240,13 +245,15 @@ public class LectureEntityRepository implements LectureRepository {
 			return lectures;
 		}
 
-		Map<Long, Double> avgScores = reviewRepository.getAverageScoresByLectureIds(lectureIds);
-		Map<Long, Long> reviewCounts = reviewRepository.countReviewsByLectureIds(lectureIds);
+		// 2 쿼리 → 1 쿼리 최적화: 평균 점수와 리뷰 수를 한 번에 조회
+		Map<Long, Map<String, Number>> reviewStats = ((com.swcampus.infra.postgres.review.ReviewEntityRepository) reviewRepository)
+				.getReviewStatsByLectureIds(lectureIds);
 
 		return lectures.stream()
 				.map(l -> {
-					Double avg = avgScores.getOrDefault(l.getLectureId(), 0.0);
-					Long count = reviewCounts.getOrDefault(l.getLectureId(), 0L);
+					Map<String, Number> stats = reviewStats.getOrDefault(l.getLectureId(), Map.of());
+					Double avg = stats.getOrDefault("avgScore", 0.0).doubleValue();
+					Long count = stats.getOrDefault("reviewCount", 0L).longValue();
 					return l.toBuilder()
 							.averageScore(avg)
 							.reviewCount(count)

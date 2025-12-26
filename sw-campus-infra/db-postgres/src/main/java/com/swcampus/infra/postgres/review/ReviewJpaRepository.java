@@ -1,7 +1,6 @@
 package com.swcampus.infra.postgres.review;
 
 import com.swcampus.domain.common.ApprovalStatus;
-import com.swcampus.infra.postgres.lecture.LectureEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,8 +26,9 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         @Param("status") ApprovalStatus status);
 
         @Query("SELECT r FROM ReviewEntity r LEFT JOIN FETCH r.details WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId) AND r.approvalStatus = :status")
-        List<ReviewEntity> findByOrganizationIdAndApprovalStatusWithDetails(@Param("organizationId") Long organizationId,
-                                                                            @Param("status") ApprovalStatus status);
+        List<ReviewEntity> findByOrganizationIdAndApprovalStatusWithDetails(
+                        @Param("organizationId") Long organizationId,
+                        @Param("status") ApprovalStatus status);
 
         @Query("SELECT r FROM ReviewEntity r LEFT JOIN FETCH r.details WHERE r.approvalStatus = :status")
         List<ReviewEntity> findByApprovalStatusWithDetails(@Param("status") ApprovalStatus status);
@@ -54,15 +54,26 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
         List<Object[]> countReviewsByLectureIds(@Param("lectureIds") List<Long> lectureIds,
                         @Param("status") ApprovalStatus status);
 
+        /**
+         * 여러 강의의 리뷰 통계(평균점수, 리뷰수)를 한 번에 조회 (2 쿼리 → 1 쿼리 최적화)
+         * 반환: List of Object[] { lectureId, avgScore, reviewCount }
+         */
+        @Query("SELECT r.lectureId, COALESCE(AVG(r.score), 0.0), COUNT(r) " +
+                        "FROM ReviewEntity r " +
+                        "WHERE r.lectureId IN :lectureIds AND r.approvalStatus = :status " +
+                        "GROUP BY r.lectureId")
+        List<Object[]> findReviewStatsByLectureIds(@Param("lectureIds") List<Long> lectureIds,
+                        @Param("status") ApprovalStatus status);
+
         @Query(value = "SELECT DISTINCT r FROM ReviewEntity r " +
                         "LEFT JOIN FETCH r.details " +
                         "LEFT JOIN LectureEntity l ON l.lectureId = r.lectureId " +
                         "WHERE (:status IS NULL OR r.approvalStatus = :status) " +
-                        "AND (:keyword IS NULL OR :keyword = '' OR l.lectureName ILIKE CONCAT('%', :keyword, '%'))",
-                countQuery = "SELECT COUNT(DISTINCT r) FROM ReviewEntity r " +
-                        "LEFT JOIN LectureEntity l ON l.lectureId = r.lectureId " +
-                        "WHERE (:status IS NULL OR r.approvalStatus = :status) " +
-                        "AND (:keyword IS NULL OR :keyword = '' OR l.lectureName ILIKE CONCAT('%', :keyword, '%'))")
+                        "AND (:keyword IS NULL OR :keyword = '' OR l.lectureName ILIKE CONCAT('%', :keyword, '%'))", countQuery = "SELECT COUNT(DISTINCT r) FROM ReviewEntity r "
+                                        +
+                                        "LEFT JOIN LectureEntity l ON l.lectureId = r.lectureId " +
+                                        "WHERE (:status IS NULL OR r.approvalStatus = :status) " +
+                                        "AND (:keyword IS NULL OR :keyword = '' OR l.lectureName ILIKE CONCAT('%', :keyword, '%'))")
         Page<ReviewEntity> findAllWithDetailsAndKeyword(
                         @Param("status") ApprovalStatus status,
                         @Param("keyword") String keyword,
@@ -70,11 +81,12 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
 
         @Query(value = "SELECT DISTINCT r FROM ReviewEntity r " +
                         "LEFT JOIN FETCH r.details " +
-                        "WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId) " +
-                        "AND r.approvalStatus = :status",
-                countQuery = "SELECT COUNT(DISTINCT r) FROM ReviewEntity r " +
-                        "WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId) " +
-                        "AND r.approvalStatus = :status")
+                        "WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId) "
+                        +
+                        "AND r.approvalStatus = :status", countQuery = "SELECT COUNT(DISTINCT r) FROM ReviewEntity r " +
+                                        "WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId) "
+                                        +
+                                        "AND r.approvalStatus = :status")
         Page<ReviewEntity> findByOrganizationIdAndApprovalStatusWithPagination(
                         @Param("organizationId") Long organizationId,
                         @Param("status") ApprovalStatus status,
