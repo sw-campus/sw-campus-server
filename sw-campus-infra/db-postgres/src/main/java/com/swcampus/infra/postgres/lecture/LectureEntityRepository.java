@@ -250,8 +250,7 @@ public class LectureEntityRepository implements LectureRepository {
 		}
 
 		// 2 쿼리 → 1 쿼리 최적화: 평균 점수와 리뷰 수를 한 번에 조회
-		Map<Long, Map<String, Number>> reviewStats = ((com.swcampus.infra.postgres.review.ReviewEntityRepository) reviewRepository)
-				.getReviewStatsByLectureIds(lectureIds);
+		Map<Long, Map<String, Number>> reviewStats = reviewRepository.getReviewStatsByLectureIds(lectureIds);
 
 		return lectures.stream()
 				.map(l -> {

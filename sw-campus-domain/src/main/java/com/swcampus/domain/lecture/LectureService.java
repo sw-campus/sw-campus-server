@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -138,7 +139,7 @@ public class LectureService {
 	 */
 	public Lecture getLecture(Long lectureId) {
 		// 1. 캐시 조회
-		java.util.Optional<Lecture> cached = lectureCacheRepository.getLecture(lectureId);
+		Optional<Lecture> cached = lectureCacheRepository.getLecture(lectureId);
 		if (cached.isPresent()) {
 			return cached.get();
 		}

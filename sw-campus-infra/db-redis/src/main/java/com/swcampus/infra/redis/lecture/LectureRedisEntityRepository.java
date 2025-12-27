@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Redis를 사용한 강의 캐시 저장소 구현체
+ * Redis-based lecture cache repository implementation
  */
 @Slf4j
 @Repository
@@ -26,7 +26,7 @@ public class LectureRedisEntityRepository implements LectureCacheRepository {
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String KEY_PREFIX = "lecture:";
-    private static final long TTL_MINUTES = 30;  // 캐시 히트율 향상을 위해 10분 → 30분
+    private static final long TTL_MINUTES = 30;
 
     @Override
     public Optional<Lecture> getLecture(Long lectureId) {
@@ -70,10 +70,25 @@ public class LectureRedisEntityRepository implements LectureCacheRepository {
     @Override
     public Map<Long, Lecture> getLectures(List<Long> lectureIds) {
         Map<Long, Lecture> result = new HashMap<>();
+        if (lectureIds == null || lectureIds.isEmpty()) {
+            return result;
+        }
         try {
-            for (Long id : lectureIds) {
-                getLecture(id).ifPresent(lecture -> result.put(id, lecture));
+            // Fetch all keys in a single MGET command
+            List<String> keys = lectureIds.stream()
+                    .map(this::getKey)
+                    .toList();
+            List<Object> values = redisTemplate.opsForValue().multiGet(keys);
+            
+            if (values != null) {
+                for (int i = 0; i < lectureIds.size(); i++) {
+                    Object value = values.get(i);
+                    if (value instanceof Lecture lecture) {
+                        result.put(lectureIds.get(i), lecture);
+                    }
+                }
             }
+            log.debug("Cache multiGet for {} lectures, found {}", lectureIds.size(), result.size());
         } catch (Exception e) {
             log.error("Failed to get lectures from cache", e);
         }
@@ -82,10 +97,22 @@ public class LectureRedisEntityRepository implements LectureCacheRepository {
 
     @Override
     public void saveLectures(List<Lecture> lectures) {
+        if (lectures == null || lectures.isEmpty()) {
+            return;
+        }
         try {
+            // Use multiSet for bulk save, then set TTL for each key
+            Map<String, Object> map = new HashMap<>();
             for (Lecture lecture : lectures) {
-                saveLecture(lecture);
+                map.put(getKey(lecture.getLectureId()), lecture);
             }
+            redisTemplate.opsForValue().multiSet(map);
+            
+            // Set TTL for each key (Redis doesn't support TTL with MSET)
+            for (String key : map.keySet()) {
+                redisTemplate.expire(key, TTL_MINUTES, TimeUnit.MINUTES);
+            }
+            log.debug("Cached {} lectures via multiSet", lectures.size());
         } catch (Exception e) {
             log.error("Failed to cache lectures", e);
         }
