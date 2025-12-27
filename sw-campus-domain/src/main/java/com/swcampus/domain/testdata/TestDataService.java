@@ -15,12 +15,15 @@ import com.swcampus.domain.review.ReviewDetail;
 import com.swcampus.domain.review.ReviewRepository;
 import com.swcampus.domain.survey.MemberSurvey;
 import com.swcampus.domain.survey.MemberSurveyRepository;
+import com.swcampus.domain.teacher.Teacher;
+import com.swcampus.domain.teacher.TeacherRepository;
 import java.time.ZoneOffset;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -43,7 +46,9 @@ public class TestDataService {
     private final ReviewRepository reviewRepository;
     private final MemberSurveyRepository memberSurveyRepository;
     private final BannerRepository bannerRepository;
+    private final TeacherRepository teacherRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EntityManager entityManager;
 
     @Transactional
     public TestDataCreateResult createTestData() {
@@ -63,22 +68,27 @@ public class TestDataService {
         // 3. 기관담당자의 orgId 업데이트
         updateMembersWithOrgId(orgMemberIds, organizationIds);
 
-        // 4. Lecture 생성 (기관당 2개 = 4개)
-        List<Long> lectureIds = createLectures(batchId, organizationIds);
+        // 4. Teacher 생성 (10명)
+        List<Long> teacherIds = createTeachers(batchId);
 
-        // 5. 일반회원 Member 생성 (15명)
+        // 5. Lecture 생성 (승인된 기관만, 기관당 2개 = 4개, 각 강의에 Teacher 2~3명 배치)
+        // 분당센터(3번째)는 PENDING 상태이므로 강의 생성 제외
+        List<Long> approvedOrgIds = organizationIds.subList(0, 2);
+        List<Long> lectureIds = createLectures(batchId, approvedOrgIds, teacherIds);
+
+        // 6. 일반회원 Member 생성 (15명)
         List<Long> userMemberIds = createUserMembers(batchId, encodedPassword);
 
-        // 6. Certificate 생성 (일반회원 15명 × 강의 4개 = 60건)
+        // 7. Certificate 생성 (일반회원 15명 × 강의 4개 = 60건)
         List<Long> certificateIds = createCertificates(batchId, userMemberIds, lectureIds);
 
-        // 7. Review 생성 (일반회원 15명 × 강의 4개 = 60건)
+        // 8. Review 생성 (일반회원 15명 × 강의 4개 = 60건)
         List<Long> reviewIds = createReviews(batchId, userMemberIds, lectureIds, certificateIds);
 
-        // 8. Survey 생성 (일반회원 중 처음 10명)
+        // 9. Survey 생성 (일반회원 중 처음 10명)
         List<Long> surveyMemberIds = createSurveys(batchId, userMemberIds.subList(0, 10));
 
-        // 9. Banner 생성 (BIG 1개, MIDDLE 2개, SMALL 3개)
+        // 10. Banner 생성 (BIG 3개, MIDDLE 2개, SMALL 3개)
         List<Long> bannerIds = createBanners(batchId, lectureIds);
 
         // Member IDs 병합 (기관담당자 2명 + 일반회원 15명)
@@ -95,12 +105,14 @@ public class TestDataService {
                 .reviewIds(reviewIds)
                 .surveyMemberIds(surveyMemberIds)
                 .bannerIds(bannerIds)
+                .teacherIds(teacherIds)
                 .build();
     }
 
     private List<Long> createOrganizationMembers(String batchId, String encodedPassword) {
         List<Long> ids = new ArrayList<>();
-        for (int i = 1; i <= 2; i++) {
+        String[] regions = {"서울", "서울", "경기"};
+        for (int i = 1; i <= 3; i++) {
             Member member = Member.of(
                     null,
                     "test_org_" + i + "@test.com",
@@ -110,7 +122,7 @@ public class TestDataService {
                     "010-0000-000" + i,
                     Role.ORGANIZATION,
                     null,  // orgId - 나중에 업데이트
-                    "서울",
+                    regions[i - 1],
                     LocalDateTime.now(),
                     LocalDateTime.now()
             );
@@ -123,10 +135,20 @@ public class TestDataService {
 
     private List<Long> createOrganizations(String batchId, List<Long> memberIds) {
         List<Long> ids = new ArrayList<>();
-        String[] orgNames = {"한국소프트웨어기술진흥협회 : 종로", "한국소프트웨어기술진흥협회 : 가산"};
+        String[] orgNames = {
+                "한국소프트웨어기술진흥협회 : 종로",
+                "한국소프트웨어기술진흥협회 : 가산",
+                "한국소프트웨어기술진흥협회 : 분당"
+        };
         String[] descriptions = {
                 "한국소프트웨어기술진흥협회 종로센터입니다. 소프트웨어 개발 교육을 전문으로 합니다.",
-                "한국소프트웨어기술진흥협회 가산센터입니다. AI/ML 교육을 전문으로 합니다."
+                "한국소프트웨어기술진흥협회 가산센터입니다. AI/ML 교육을 전문으로 합니다.",
+                "한국소프트웨어기술진흥협회 분당센터입니다. 클라우드/DevOps 교육을 전문으로 합니다."
+        };
+        ApprovalStatus[] statuses = {
+                ApprovalStatus.APPROVED,
+                ApprovalStatus.APPROVED,
+                ApprovalStatus.PENDING  // 분당센터는 승인 대기 상태
         };
 
         // 시설 이미지 URL (공개 S3 버킷)
@@ -143,28 +165,36 @@ public class TestDataService {
                         bucketUrl + "/organizations/2024/12/24/b-test-2.jpg",
                         bucketUrl + "/organizations/2024/12/24/b-test-3.jpg",
                         bucketUrl + "/organizations/2024/12/24/b-test-4.jpg"
+                },
+                {
+                        bucketUrl + "/organizations/2024/12/24/c-test-1.jpg",
+                        bucketUrl + "/organizations/2024/12/24/c-test-2.jpg",
+                        bucketUrl + "/organizations/2024/12/24/c-test-3.jpg",
+                        bucketUrl + "/organizations/2024/12/24/c-test-4.jpg"
                 }
         };
 
         // 로고 URL (S3)
         String[] logoUrls = {
                 bucketUrl + "/organizations/2024/12/24/a-logo.png",
-                bucketUrl + "/organizations/2024/12/24/b-logo.png"
+                bucketUrl + "/organizations/2024/12/24/b-logo.png",
+                bucketUrl + "/organizations/2024/12/24/c-logo.png"
         };
 
         // 재직증명서 Key (Private S3 Bucket)
         String[] certificateKeys = {
                 "employment-certificates/2024/12/24/test-employment-1.png",
-                "employment-certificates/2024/12/24/test-employment-2.png"
+                "employment-certificates/2024/12/24/test-employment-2.png",
+                "employment-certificates/2024/12/24/test-employment-3.png"
         };
 
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 3; i++) {
             Organization org = Organization.of(
                     null,
                     memberIds.get(i),
                     orgNames[i],
                     descriptions[i],
-                    ApprovalStatus.APPROVED,
+                    statuses[i],
                     certificateKeys[i],  // certificateKey (재직증명서)
                     null,  // govAuth
                     facilityImages[i][0],  // facilityImageUrl
@@ -192,7 +222,41 @@ public class TestDataService {
         }
     }
 
-    private List<Long> createLectures(String batchId, List<Long> organizationIds) {
+    private List<Long> createTeachers(String batchId) {
+        List<Long> ids = new ArrayList<>();
+        String bucketUrl = "https://sw-campus-public-prod-afe42bff.s3.amazonaws.com";
+        String teacherPath = bucketUrl + "/teachers/2024/12/24/";
+
+        // 10명의 선생님 정보: [이름, 설명, 이미지 파일명]
+        String[][] teacherData = {
+                {"김영수", "Java/Spring 전문 강사. 10년 이상 백엔드 개발 경험 보유.", "teacher-1.png"},
+                {"이미경", "풀스택 개발자 출신 강사. AWS 공인 솔루션 아키텍트.", "teacher-2.png"},
+                {"박준호", "AI/ML 연구원 출신. 딥러닝 분야 논문 다수 게재.", "teacher-3.png"},
+                {"최수진", "데이터 사이언티스트. 대기업 데이터 분석 프로젝트 리드 경험.", "teacher-4.png"},
+                {"정민우", "Python/Django 전문가. 오픈소스 컨트리뷰터.", "teacher-5.png"},
+                {"한서연", "프론트엔드 개발자 출신. React/Vue 전문 강사.", "teacher-6.png"},
+                {"강동현", "DevOps 엔지니어. CI/CD 파이프라인 구축 전문가.", "teacher-7.png"},
+                {"윤지현", "클라우드 아키텍트. GCP/Azure 공인 자격 보유.", "teacher-8.png"},
+                {"송태영", "보안 전문가. 정보보안기사, CISSP 자격 보유.", "teacher-9.png"},
+                {"임하나", "모바일 개발자. iOS/Android 네이티브 앱 개발 경험.", "teacher-10.png"}
+        };
+
+        for (String[] data : teacherData) {
+            Teacher teacher = Teacher.builder()
+                    .teacherName(data[0])
+                    .teacherDescription(data[1])
+                    .teacherImageUrl(teacherPath + data[2])
+                    .build();
+
+            Teacher saved = teacherRepository.save(teacher);
+            ids.add(saved.getTeacherId());
+            registerTestData(batchId, "teachers", saved.getTeacherId());
+        }
+
+        return ids;
+    }
+
+    private List<Long> createLectures(String batchId, List<Long> organizationIds, List<Long> teacherIds) {
         List<Long> ids = new ArrayList<>();
         // 각 기관에 백엔드 1개 + AI 1개 강의 (같은 카테고리끼리 비교 가능)
         String[][] lectureNames = {
@@ -223,11 +287,24 @@ public class TestDataService {
                 defaultImageBaseUrl + "/data-ai.png"           // AI
         };
 
+        // 각 강의에 배치할 선생님 인덱스 (10명을 4개 강의에 2~3명씩 중복 없이 배치)
+        // 강의 0 (기관A-백엔드): 선생님 0, 1 (2명)
+        // 강의 1 (기관A-AI): 선생님 2, 3, 4 (3명)
+        // 강의 2 (기관B-백엔드): 선생님 5, 6 (2명)
+        // 강의 3 (기관B-AI): 선생님 7, 8, 9 (3명)
+        int[][] teacherIndices = {
+                {0, 1},       // 강의 0
+                {2, 3, 4},    // 강의 1
+                {5, 6},       // 강의 2
+                {7, 8, 9}     // 강의 3
+        };
+
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startDate = now.plusDays(30);
         LocalDateTime endDate = now.plusDays(120);
         LocalDateTime deadline = now.plusDays(25);
 
+        int lectureCount = 0;
         for (int orgIdx = 0; orgIdx < organizationIds.size(); orgIdx++) {
             Long orgId = organizationIds.get(orgIdx);
             for (int lectIdx = 0; lectIdx < 2; lectIdx++) {
@@ -243,6 +320,19 @@ public class TestDataService {
                             .level(level)
                             .build());
                 }
+
+                // 현재 강의에 배치할 선생님 목록 생성
+                List<Teacher> teachers = new ArrayList<>();
+                for (int teacherIdx : teacherIndices[lectureCount]) {
+                    teachers.add(Teacher.builder()
+                            .teacherId(teacherIds.get(teacherIdx))
+                            .build());
+                }
+
+                // 마지막 강의(4번째)는 PENDING 상태로 생성
+                LectureAuthStatus authStatus = (lectureCount == 3)
+                        ? LectureAuthStatus.PENDING
+                        : LectureAuthStatus.APPROVED;
 
                 Lecture lecture = Lecture.builder()
                         .orgId(orgId)
@@ -268,7 +358,7 @@ public class TestDataService {
                         .afterCompletion(true)
                         .url("https://example.com/apply")
                         .status(LectureStatus.RECRUITING)
-                        .lectureAuthStatus(LectureAuthStatus.APPROVED)
+                        .lectureAuthStatus(authStatus)
                         .startAt(startDate)
                         .endAt(endDate)
                         .deadline(deadline)
@@ -277,11 +367,13 @@ public class TestDataService {
                         .createdAt(now)
                         .updatedAt(now)
                         .lectureCurriculums(lectureCurriculums)
+                        .teachers(teachers)
                         .build();
 
                 Lecture saved = lectureRepository.save(lecture);
                 ids.add(saved.getLectureId());
                 registerTestData(batchId, "lectures", saved.getLectureId());
+                lectureCount++;
             }
         }
         return ids;
@@ -388,23 +480,21 @@ public class TestDataService {
         );
 
         int certIndex = 0;
+        int reviewCount = 0;
         for (int memberIdx = 0; memberIdx < userMemberIds.size(); memberIdx++) {
             Long memberId = userMemberIds.get(memberIdx);
 
-            // 회원별 후기 상태 결정
-            // 회원 1-2 (인덱스 0,1): 후기 PENDING
-            // 회원 3 (인덱스 2): 후기 REJECTED
-            // 회원 4-15 (인덱스 3-14): 후기 APPROVED
-            ApprovalStatus reviewStatus;
-            if (memberIdx < 2) {
-                reviewStatus = ApprovalStatus.PENDING;
-            } else if (memberIdx == 2) {
-                reviewStatus = ApprovalStatus.REJECTED;
-            } else {
-                reviewStatus = ApprovalStatus.APPROVED;
-            }
-
             for (int lectIdx = 0; lectIdx < lectureIds.size(); lectIdx++) {
+                // 리뷰별 상태 결정
+                // 회원 인덱스 3의 첫 번째 강의 리뷰만 PENDING (수료증이 APPROVED인 회원)
+                // (리뷰 통계는 수료증이 APPROVED인 리뷰만 카운트하므로)
+                ApprovalStatus reviewStatus;
+                if (memberIdx == 3 && lectIdx == 0) {
+                    reviewStatus = ApprovalStatus.PENDING;
+                } else {
+                    reviewStatus = ApprovalStatus.APPROVED;
+                }
+                reviewCount++;
                 Long lectureId = lectureIds.get(lectIdx);
                 Long certificateId = certificateIds.get(certIndex++);
 
@@ -514,6 +604,8 @@ public class TestDataService {
         // 배너 정의: [타입, 이미지 파일명, 연결할 강의 인덱스]
         Object[][] bannerDefs = {
                 {BannerType.BIG, "test-big-1.jpg", 0},
+                {BannerType.BIG, "test-big-2.jpg", 1},
+                {BannerType.BIG, "test-big-3.jpg", 2},
                 {BannerType.MIDDLE, "test-middle-1.jpg", 1},
                 {BannerType.MIDDLE, "test-middle-2.jpg", 2},
                 {BannerType.SMALL, "test-small-1.jpg", 0},
@@ -531,7 +623,7 @@ public class TestDataService {
             Banner banner = Banner.builder()
                     .lectureId(lectureId)
                     .type(type)
-                    .url("https://example.com/lectures/" + lectureId)
+                    .url("https://edu.kosta.or.kr/")
                     .imageUrl(bannerPath + imageFile)
                     .startDate(startDate)
                     .endDate(endDate)
@@ -557,7 +649,7 @@ public class TestDataService {
             throw new IllegalStateException("삭제할 테스트 데이터가 없습니다.");
         }
 
-        // FK 역순으로 삭제: banners → reviews → certificates → member_surveys → members → lectures → organizations
+        // FK 역순으로 삭제: banners → reviews → certificates → member_surveys → members → lectures → lecture_teachers → teachers → organizations
         // reviews_details는 Review와 cascade로 삭제되므로 reviews만 삭제
         deleteByTable("banners", bannerRepository::deleteById);
         deleteByTable("reviews", reviewRepository::deleteById);
@@ -565,6 +657,18 @@ public class TestDataService {
         deleteByTable("member_surveys", memberSurveyRepository::deleteByMemberId);
         deleteByTable("members", memberRepository::deleteById);
         deleteByTable("lectures", lectureRepository::deleteById);
+
+        // lecture_teachers 삭제 (테스트 데이터 teacher를 참조하는 모든 연결 삭제)
+        List<Long> teacherIds = testDataRepository.findByTableName("teachers").stream()
+                .map(TestDataRegistry::getRecordId)
+                .toList();
+        if (!teacherIds.isEmpty()) {
+            entityManager.createNativeQuery("DELETE FROM lecture_teachers WHERE teacher_id IN :teacherIds")
+                    .setParameter("teacherIds", teacherIds)
+                    .executeUpdate();
+        }
+
+        deleteByTable("teachers", teacherRepository::deleteById);
         deleteByTable("organizations", organizationRepository::deleteById);
 
         // Registry 비우기

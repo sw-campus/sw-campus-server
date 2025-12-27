@@ -35,12 +35,21 @@ public interface ReviewRepository {
 
     Map<Long, Long> countReviewsByLectureIds(List<Long> lectureIds);
 
+    /**
+     * 여러 강의의 리뷰 통계(평균점수, 리뷰수)를 한 번에 조회 (2 쿼리 → 1 쿼리 최적화)
+     * 
+     * @return Map<lectureId, Map<"avgScore"|"reviewCount", value>>
+     */
+    Map<Long, Map<String, Number>> getReviewStatsByLectureIds(List<Long> lectureIds);
+
     Page<Review> findAllWithDetails(ApprovalStatus status, String keyword, Pageable pageable);
 
-    Page<Review> findByOrganizationIdAndApprovalStatusWithPagination(Long organizationId, ApprovalStatus status, Pageable pageable);
+    Page<Review> findByOrganizationIdAndApprovalStatusWithPagination(Long organizationId, ApprovalStatus status,
+            Pageable pageable);
 
     // Statistics methods
     long countAll();
+
     long countByApprovalStatus(ApprovalStatus status);
 
     /**

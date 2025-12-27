@@ -23,6 +23,7 @@ public class CertificateService {
     private final LectureRepository lectureRepository;
     private final FileStorageService fileStorageService;
     private final OcrClient ocrClient;
+    private final LectureNameMatcher lectureNameMatcher;
 
     /**
      * 수료증 인증 여부 확인
@@ -50,11 +51,8 @@ public class CertificateService {
         // 3. OCR로 텍스트 추출
         List<String> extractedLines = ocrClient.extractText(imageBytes, fileName);
 
-        // 4. 강의명 매칭 검증
-        boolean isValid = validateLectureName(lecture.getLectureName(), extractedLines);
-        if (!isValid) {
-            throw new CertificateLectureMismatchException();
-        }
+        // 4. 강의명 다단계 매칭 검증
+        validateLectureName(lecture.getLectureName(), extractedLines);
 
         // 5. S3 Private Bucket에 이미지 업로드
         String imageKey = fileStorageService.uploadPrivate(imageBytes, "certificates", fileName, contentType);
@@ -65,28 +63,17 @@ public class CertificateService {
     }
 
     /**
-     * 강의명 유연한 매칭
-     * - 공백 제거
-     * - 소문자 변환
-     * - 부분 일치 확인
+     * 강의명 다단계 매칭 검증
+     * - 0단계: OCR 유효성 검사
+     * - 1차: 정확한 매칭
+     * - 2차: 유사 문자 정규화 매칭
+     * - 3차: Jaro-Winkler 유사도 매칭 (>= 0.8)
      */
-    private boolean validateLectureName(String lectureName, List<String> ocrLines) {
-        if (ocrLines == null || ocrLines.isEmpty()) {
-            return false;
+    private void validateLectureName(String lectureName, List<String> ocrLines) {
+        // 다단계 매칭 시도 (0단계~3차)
+        if (!lectureNameMatcher.match(lectureName, ocrLines)) {
+            throw new CertificateLectureMismatchException();
         }
-
-        String normalizedLectureName = normalize(lectureName);
-        String ocrText = String.join("", ocrLines);
-        String normalizedOcrText = normalize(ocrText);
-
-        return normalizedOcrText.contains(normalizedLectureName);
-    }
-
-    private String normalize(String text) {
-        if (text == null) {
-            return "";
-        }
-        return text.replaceAll("\\s+", "").toLowerCase();
     }
 
     /**

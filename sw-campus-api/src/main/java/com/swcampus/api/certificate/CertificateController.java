@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -28,6 +29,7 @@ public class CertificateController {
     private final CertificateService certificateService;
 
     @Operation(summary = "수료증 인증 여부 확인", description = "해당 강의에 대한 수료증 인증 여부를 확인합니다.")
+    @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
         @ApiResponse(responseCode = "401", description = "인증 필요")
@@ -51,6 +53,7 @@ public class CertificateController {
     }
 
     @Operation(summary = "수료증 인증", description = "수료증 이미지를 업로드하여 OCR 검증 후 인증합니다.")
+    @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "인증 성공"),
         @ApiResponse(responseCode = "400", description = "강의명 불일치"),
