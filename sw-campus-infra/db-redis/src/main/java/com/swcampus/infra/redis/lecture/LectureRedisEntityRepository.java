@@ -26,7 +26,7 @@ public class LectureRedisEntityRepository implements LectureCacheRepository {
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String KEY_PREFIX = "lecture:";
-    private static final long TTL_MINUTES = 10;
+    private static final long TTL_MINUTES = 30;  // 캐시 히트율 향상을 위해 10분 → 30분
 
     @Override
     public Optional<Lecture> getLecture(Long lectureId) {
