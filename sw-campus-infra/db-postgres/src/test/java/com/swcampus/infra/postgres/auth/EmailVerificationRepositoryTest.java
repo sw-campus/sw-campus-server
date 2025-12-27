@@ -3,6 +3,7 @@ package com.swcampus.infra.postgres.auth;
 import com.swcampus.domain.auth.EmailVerification;
 import com.swcampus.domain.auth.EmailVerificationRepository;
 import com.swcampus.infra.postgres.TestApplication;
+import com.swcampus.infra.postgres.TestJpaConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ContextConfiguration(classes = TestApplication.class)
-@Import(EmailVerificationEntityRepository.class)
+@Import({EmailVerificationEntityRepository.class, TestJpaConfig.class})
 @ActiveProfiles("test")
 class EmailVerificationRepositoryTest {
 

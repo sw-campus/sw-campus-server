@@ -46,7 +46,7 @@ public class OrganizationController {
                         @ApiResponse(responseCode = "200", description = "조회 성공")
         })
         public ResponseEntity<List<OrganizationSummaryResponse>> getOrganizationList(
-                        @Parameter(description = "검색 키워드 (기관명)", example = "패스트캠퍼스") @RequestParam(required = false) String keyword) {
+                        @Parameter(description = "검색 키워드 (기관명)", example = "패스트캠퍼스") @RequestParam(name = "keyword", required = false) String keyword) {
 
                 List<Organization> result = organizationService.getOrganizationList(keyword);
 
