@@ -89,11 +89,11 @@ public class AdminBannerController {
         })
         @GetMapping
         public ResponseEntity<Page<AdminBannerResponse>> getBanners(
-                        @Parameter(description = "강의명 검색어") @RequestParam(required = false) String keyword,
-                        @Parameter(description = "기간 상태 (SCHEDULED, ACTIVE, ENDED)") @RequestParam(required = false) String periodStatus,
-                        @Parameter(description = "배너 타입 (BIG, MIDDLE, SMALL)") @RequestParam(required = false) BannerType type,
-                        @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
-                        @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+                        @Parameter(description = "강의명 검색어") @RequestParam(name = "keyword", required = false) String keyword,
+                        @Parameter(description = "기간 상태 (SCHEDULED, ACTIVE, ENDED)") @RequestParam(name = "periodStatus", required = false) String periodStatus,
+                        @Parameter(description = "배너 타입 (BIG, MIDDLE, SMALL)") @RequestParam(name = "type", required = false) BannerType type,
+                        @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
+                        @Parameter(description = "페이지 크기") @RequestParam(name = "size", defaultValue = "10") int size) {
                 Pageable pageable = PageRequest.of(page, size);
                 BannerPeriodStatus status = BannerPeriodStatus.fromString(periodStatus);
                 Page<BannerDetailsDto> bannerPage = adminBannerService.searchBanners(keyword, status, type, pageable);

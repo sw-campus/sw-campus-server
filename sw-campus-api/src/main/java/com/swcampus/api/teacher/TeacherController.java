@@ -42,7 +42,7 @@ public class TeacherController {
     @GetMapping
     public List<TeacherResponse> searchTeachers(
             @Parameter(description = "강사 이름", example = "김철수")
-            @RequestParam(required = false, defaultValue = "") String name) {
+            @RequestParam(name = "name", required = false, defaultValue = "") String name) {
         return teacherService.searchTeachers(name).stream()
                 .map(TeacherResponse::from)
                 .toList();
