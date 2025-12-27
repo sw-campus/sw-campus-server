@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,7 @@ public class LectureService {
 	private static final Long ROOT_CATEGORY_ID = 1L;
 
 	private final LectureRepository lectureRepository;
+	private final LectureCacheRepository lectureCacheRepository;
 	private final com.swcampus.domain.storage.FileStorageService fileStorageService;
 	private final com.swcampus.domain.review.ReviewRepository reviewRepository;
 	private final CategoryRepository categoryRepository;
@@ -47,16 +49,18 @@ public class LectureService {
 	}
 
 	@Transactional
-	public Lecture registerLecture(Lecture lecture, Long userId, Role role, byte[] imageContent, String imageName, String contentType) {
+	public Lecture registerLecture(Lecture lecture, Long userId, Role role, byte[] imageContent, String imageName,
+			String contentType) {
 		return registerLecture(lecture, userId, role, imageContent, imageName, contentType, Collections.emptyList());
 	}
 
 	@Transactional
-	public Lecture registerLecture(Lecture lecture, Long userId, Role role, byte[] imageContent, String imageName, String contentType,
+	public Lecture registerLecture(Lecture lecture, Long userId, Role role, byte[] imageContent, String imageName,
+			String contentType,
 			List<ImageContent> teacherImages) {
-		
+
 		Long organizationId = resolveOrganizationId(userId, role, lecture.getOrgId());
-		
+
 		String imageUrl = lecture.getLectureImageUrl();
 
 		if (imageContent != null && imageContent.length > 0) {
@@ -80,11 +84,12 @@ public class LectureService {
 	}
 
 	@Transactional
-	public Lecture modifyLecture(Long lectureId, Long userId, Role role, Lecture lecture, byte[] imageContent, String imageName,
+	public Lecture modifyLecture(Long lectureId, Long userId, Role role, Lecture lecture, byte[] imageContent,
+			String imageName,
 			String contentType,
 			List<ImageContent> teacherImages) {
 		Lecture existingLecture = getLecture(lectureId);
-		
+
 		// ADMIN은 모든 강의 수정 가능, 권한 체크 건너뜀
 		if (role != Role.ADMIN) {
 			// 일반 회원은 자신의 기관 ID로 확인
@@ -94,9 +99,9 @@ public class LectureService {
 			}
 		}
 
-//		if (existingLecture.getLectureAuthStatus() == LectureAuthStatus.APPROVED) {
-//			throw new LectureNotModifiableException();
-//		}
+		// if (existingLecture.getLectureAuthStatus() == LectureAuthStatus.APPROVED) {
+		// throw new LectureNotModifiableException();
+		// }
 
 		String imageUrl = existingLecture.getLectureImageUrl();
 
@@ -120,12 +125,33 @@ public class LectureService {
 				.createdAt(existingLecture.getCreatedAt())
 				.teachers(updatedTeachers)
 				.build();
-		return lectureRepository.save(updatedLecture);
+		Lecture saved = lectureRepository.save(updatedLecture);
+
+		// 캐시 무효화
+		lectureCacheRepository.deleteLecture(lectureId);
+
+		return saved;
 	}
 
+	/**
+	 * 강의 조회 (Cache-Aside 패턴)
+	 * 1. 캐시 조회 -> 2. 캐시 미스 시 DB 조회 -> 3. 캐시 저장
+	 */
 	public Lecture getLecture(Long lectureId) {
-		return lectureRepository.findById(lectureId)
+		// 1. 캐시 조회
+		Optional<Lecture> cached = lectureCacheRepository.getLecture(lectureId);
+		if (cached.isPresent()) {
+			return cached.get();
+		}
+
+		// 2. DB 조회
+		Lecture lecture = lectureRepository.findById(lectureId)
 				.orElseThrow(() -> new ResourceNotFoundException("Lecture not found with id: " + lectureId));
+
+		// 3. 캐시 저장
+		lectureCacheRepository.saveLecture(lecture);
+
+		return lecture;
 	}
 
 	public List<Lecture> findAllByOrgId(Long orgId) {
@@ -177,13 +203,16 @@ public class LectureService {
 		List<Long> lectureIds = lectures.getContent().stream()
 				.map(Lecture::getLectureId)
 				.toList();
-		Map<Long, Double> averageScores = getAverageScoresByLectureIds(lectureIds);
-		Map<Long, Long> reviewCounts = getReviewCountsByLectureIds(lectureIds);
 
-		return lectures.map(lecture -> LectureSummaryDto.from(
-				lecture,
-				averageScores.get(lecture.getLectureId()),
-				reviewCounts.get(lecture.getLectureId())));
+		// 2 쿼리 → 1 쿼리 최적화: 평균 점수와 리뷰 수를 한 번에 조회
+		Map<Long, Map<String, Number>> reviewStats = reviewRepository.getReviewStatsByLectureIds(lectureIds);
+
+		return lectures.map(lecture -> {
+			Map<String, Number> stats = reviewStats.getOrDefault(lecture.getLectureId(), Map.of());
+			Double avgScore = stats.getOrDefault("avgScore", 0.0).doubleValue();
+			Long reviewCount = stats.getOrDefault("reviewCount", 0L).longValue();
+			return LectureSummaryDto.from(lecture, avgScore, reviewCount);
+		});
 	}
 
 	/**
@@ -195,14 +224,17 @@ public class LectureService {
 		List<Long> lectureIds = lectures.stream()
 				.map(Lecture::getLectureId)
 				.toList();
-		Map<Long, Double> averageScores = getAverageScoresByLectureIds(lectureIds);
-		Map<Long, Long> reviewCounts = getReviewCountsByLectureIds(lectureIds);
+
+		// 2 쿼리 → 1 쿼리 최적화
+		Map<Long, Map<String, Number>> reviewStats = reviewRepository.getReviewStatsByLectureIds(lectureIds);
 
 		return lectures.stream()
-				.map(lecture -> LectureSummaryDto.from(
-						lecture,
-						averageScores.get(lecture.getLectureId()),
-						reviewCounts.get(lecture.getLectureId())))
+				.map(lecture -> {
+					Map<String, Number> stats = reviewStats.getOrDefault(lecture.getLectureId(), Map.of());
+					Double avgScore = stats.getOrDefault("avgScore", 0.0).doubleValue();
+					Long reviewCount = stats.getOrDefault("reviewCount", 0L).longValue();
+					return LectureSummaryDto.from(lecture, avgScore, reviewCount);
+				})
 				.toList();
 	}
 
@@ -215,7 +247,7 @@ public class LectureService {
 			return java.util.Collections.emptyMap();
 		}
 		return lectureRepository.findAllByIds(lectureIds).stream()
-			.collect(Collectors.toMap(Lecture::getLectureId, lecture -> lecture));
+				.collect(Collectors.toMap(Lecture::getLectureId, lecture -> lecture));
 	}
 
 	@Transactional(readOnly = true)
