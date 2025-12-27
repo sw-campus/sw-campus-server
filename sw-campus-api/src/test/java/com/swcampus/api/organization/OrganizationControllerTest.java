@@ -80,7 +80,7 @@ class OrganizationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10))
                 .andExpect(jsonPath("$[0].name").value("Test Org"))
-                .andExpect(jsonPath("$[0].recruiting_lecture_count").value(5));
+                .andExpect(jsonPath("$[0].recruitingLectureCount").value(5));
     }
 
     @Test
@@ -120,9 +120,9 @@ class OrganizationControllerTest {
         // when & then
         mockMvc.perform(get("/api/v1/organizations/{organizationId}/lectures", 10L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].lecture_id").value(100))
-                .andExpect(jsonPath("$[0].lecture_name").value("Org Lecture"))
-                .andExpect(jsonPath("$[0].average_score").value(4.3));
+                .andExpect(jsonPath("$[0].lectureId").value(100))
+                .andExpect(jsonPath("$[0].lectureName").value("Org Lecture"))
+                .andExpect(jsonPath("$[0].averageScore").value(4.3));
     }
 
     @Test
@@ -152,11 +152,11 @@ class OrganizationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].review_id").value(1))
+                .andExpect(jsonPath("$.content[0].reviewId").value(1))
                 .andExpect(jsonPath("$.content[0].comment").value("좋은 강의였습니다"))
                 .andExpect(jsonPath("$.content[0].score").value(4.5))
                 .andExpect(jsonPath("$.content[0].nickname").value("사용자1"))
-                .andExpect(jsonPath("$.content[1].review_id").value(2));
+                .andExpect(jsonPath("$.content[1].reviewId").value(2));
     }
 
     @Test
@@ -220,6 +220,6 @@ class OrganizationControllerTest {
                         .param("page", "1")
                         .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].review_id").value(11));
+                .andExpect(jsonPath("$.content[0].reviewId").value(11));
     }
 }

@@ -29,4 +29,7 @@ public interface MemberJpaRepository extends JpaRepository<MemberEntity, Long> {
     boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long id);
 
     long countByRole(Role role);
+
+    Optional<MemberEntity> findByEmailAndNameAndPhone(String email, String name, String phone);
 }
+

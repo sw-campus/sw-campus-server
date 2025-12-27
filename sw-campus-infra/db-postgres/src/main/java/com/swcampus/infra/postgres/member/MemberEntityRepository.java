@@ -94,4 +94,11 @@ public class MemberEntityRepository implements MemberRepository {
     public long countByRole(Role role) {
         return jpaRepository.countByRole(role);
     }
+
+    @Override
+    public Optional<Member> findByEmailAndNameAndPhone(String email, String name, String phone) {
+        return jpaRepository.findByEmailAndNameAndPhone(email, name, phone)
+                .map(MemberEntity::toDomain);
+    }
 }
+

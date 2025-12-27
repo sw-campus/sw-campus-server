@@ -73,7 +73,9 @@ class PasswordControllerTest {
     @DisplayName("POST /api/v1/auth/password/temporary - 임시 비밀번호 발급")
     void issueTemporaryPassword() throws Exception {
         // given
-        TemporaryPasswordRequest request = new TemporaryPasswordRequest("user@example.com");
+        TemporaryPasswordRequest request = new TemporaryPasswordRequest(
+                "홍길동", "01012345678", "user@example.com"
+        );
 
         // when & then
         mockMvc.perform(post("/api/v1/auth/password/temporary")
@@ -82,14 +84,16 @@ class PasswordControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("임시 비밀번호가 이메일로 발송되었습니다"));
 
-        verify(passwordService).issueTemporaryPassword("user@example.com");
+        verify(passwordService).issueTemporaryPassword("user@example.com", "홍길동", "01012345678");
     }
 
     @Test
     @DisplayName("임시 비밀번호 발급 - 이메일 형식 오류")
     void issueTemporaryPassword_invalidEmail() throws Exception {
         // given
-        TemporaryPasswordRequest request = new TemporaryPasswordRequest("invalid-email");
+        TemporaryPasswordRequest request = new TemporaryPasswordRequest(
+                "홍길동", "01012345678", "invalid-email"
+        );
 
         // when & then
         mockMvc.perform(post("/api/v1/auth/password/temporary")

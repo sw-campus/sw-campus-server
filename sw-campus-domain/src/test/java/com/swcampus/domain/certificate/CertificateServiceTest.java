@@ -44,6 +44,9 @@ class CertificateServiceTest {
     @Mock
     private OcrClient ocrClient;
 
+    @Mock
+    private LectureNameMatcher lectureNameMatcher;
+
     @Nested
     @DisplayName("수료증 인증 여부 확인")
     class CheckCertificateTest {
@@ -132,13 +135,16 @@ class CertificateServiceTest {
             Long memberId = 1L;
             Long lectureId = 1L;
             Lecture lecture = createLecture("Java 풀스택 개발자 과정");
+            List<String> ocrLines = List.of("Python", "백엔드", "과정");
 
             given(certificateRepository.existsByMemberIdAndLectureId(memberId, lectureId))
                     .willReturn(false);
             given(lectureRepository.findById(lectureId))
                     .willReturn(Optional.of(lecture));
             given(ocrClient.extractText(any(), anyString()))
-                    .willReturn(List.of("Python", "백엔드", "과정"));
+                    .willReturn(ocrLines);
+            given(lectureNameMatcher.match(anyString(), any()))
+                    .willReturn(false);
 
             // when & then
             assertThatThrownBy(() -> certificateService.verifyCertificate(
@@ -160,6 +166,8 @@ class CertificateServiceTest {
                     .willReturn(Optional.of(lecture));
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of());
+            given(lectureNameMatcher.match(anyString(), any()))
+                    .willReturn(false);
 
             // when & then
             assertThatThrownBy(() -> certificateService.verifyCertificate(
@@ -181,6 +189,8 @@ class CertificateServiceTest {
                     .willReturn(Optional.of(lecture));
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "Java 풀스택 개발자 과정", "홍길동"));
+            given(lectureNameMatcher.match(anyString(), any()))
+                    .willReturn(true);
             given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
@@ -215,6 +225,8 @@ class CertificateServiceTest {
             // OCR 결과: 공백이 다름
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "Java풀스택개발자과정", "홍길동"));
+            given(lectureNameMatcher.match(anyString(), any()))
+                    .willReturn(true);
             given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
@@ -247,6 +259,8 @@ class CertificateServiceTest {
             // OCR 결과: 대소문자가 다름
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "JAVA 풀스택 개발자 과정", "홍길동"));
+            given(lectureNameMatcher.match(anyString(), any()))
+                    .willReturn(true);
             given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 

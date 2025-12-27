@@ -1,0 +1,6 @@
+# 테스트용 기본 설정 - 메인 application.yml을 오버라이드
+spring:
+  profiles:
+    active: test
+  config:
+    import: [] # config import 비활성화
