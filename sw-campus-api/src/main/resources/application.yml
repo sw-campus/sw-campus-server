@@ -43,6 +43,17 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
 
+spring:
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 
 # 로그 관련 설정
 otel:
