@@ -1,7 +1,7 @@
-# CORS 설정 (환경별로 override)
-cors:
-  allowed-origins:
-    - http://localhost:3000
+# 수료증 검증 설정
+certificate:
+  matching:
+    similarity-threshold: 0.8  # Jaro-Winkler 유사도 임계값 (0.0 ~ 1.0)
 
 spring:
   application:
@@ -43,16 +43,6 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
 
-  # Mail (SMTP)
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
 
 # 로그 관련 설정
 otel:
