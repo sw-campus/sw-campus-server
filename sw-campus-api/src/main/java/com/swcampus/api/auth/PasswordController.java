@@ -51,15 +51,15 @@ public class PasswordController {
     }
 
     @PostMapping("/temporary")
-    @Operation(summary = "임시 비밀번호 발급", description = "이메일로 임시 비밀번호를 발송합니다. 비밀번호 찾기 기능에 사용됩니다.")
+    @Operation(summary = "임시 비밀번호 발급", description = "이름, 전화번호, 이메일이 모두 일치하는 경우 임시 비밀번호를 이메일로 발송합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "발송 성공"),
-        @ApiResponse(responseCode = "404", description = "존재하지 않는 이메일")
+        @ApiResponse(responseCode = "404", description = "일치하는 사용자 없음")
     })
     public ResponseEntity<Map<String, String>> issueTemporaryPassword(
             @Valid @RequestBody TemporaryPasswordRequest request) {
 
-        passwordService.issueTemporaryPassword(request.getEmail());
+        passwordService.issueTemporaryPassword(request.getEmail(), request.getName(), request.getPhone());
         return ResponseEntity.ok(Map.of("message", "임시 비밀번호가 이메일로 발송되었습니다"));
     }
 }

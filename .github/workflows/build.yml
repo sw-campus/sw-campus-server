@@ -1,14 +1,14 @@
-name: Build Image
+name: Build Server Image
 
 on:
   push:
     branches:
-      - main
       - develop
+      - main
   workflow_dispatch:
 
 permissions:
-  contents: write  # GitHub Release 생성용
+  contents: write
   packages: write
 
 jobs:
@@ -16,13 +16,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) 코드 체크아웃
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          submodules: false
 
-      # 2) config 레포 체크아웃
       - name: Checkout config repository
         uses: actions/checkout@v4
         with:
@@ -30,102 +26,62 @@ jobs:
           token: ${{ secrets.CONFIG_REPO_TOKEN }}
           path: config
 
-      # 3) 브랜치에 따른 설정 파일 주입
-      - name: Copy config files
+      - name: Inject config by branch
         run: |
-          if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
-            CONFIG_FILE="application-staging.yml"
-            SPRING_PROFILE="staging"
+          if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            cp ./config/application-staging.yml ./sw-campus-api/src/main/resources/application.yml
           else
-            CONFIG_FILE="application-prod.yml"
-            SPRING_PROFILE="prod"
+            cp ./config/application-prod.yml ./sw-campus-api/src/main/resources/application.yml
           fi
 
-          cp ./config/$CONFIG_FILE ./sw-campus-api/src/main/resources/application.yml
-          echo "Using config: $CONFIG_FILE"
-          echo "Profile: $SPRING_PROFILE"
-
-      # 4) JDK 설정
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 5) Gradle 빌드
       - name: Build with Gradle
         run: |
           chmod +x gradlew
           ./gradlew build -x test
 
-      # 6) 버전 읽기 (gradle.properties에서)
-      - name: Read version from gradle.properties
+      - name: Read version (main only)
         id: version
+        if: github.ref == 'refs/heads/main'
         run: |
           VERSION=$(grep "applicationVersion=" gradle.properties | cut -d'=' -f2 | sed 's/-SNAPSHOT//')
-          VERSION_TAG="v${VERSION}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "version_tag=$VERSION_TAG" >> $GITHUB_OUTPUT
-          echo "Version: $VERSION"
-          echo "Version tag: $VERSION_TAG"
+          echo "version_tag=v$VERSION" >> $GITHUB_OUTPUT
 
-      # 7) 레지스트리 로그인 (GHCR 예시)
-      - name: Log in to GitHub Container Registry
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 8) 이미지 빌드 & 푸시
-      - name: Build and push Docker image
+      - name: Build & Push Image
         run: |
-          IMAGE="ghcr.io/sw-campus/sw-campus-server"
-          SHA_TAG="${{ github.sha }}"
-          
-          docker build -t $IMAGE:$SHA_TAG .
-          docker push $IMAGE:$SHA_TAG
-          
-          # develop 브랜치일 때 develop 태그로도 푸시
-          if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
-            docker tag $IMAGE:$SHA_TAG $IMAGE:develop
+          IMAGE=ghcr.io/sw-campus/sw-campus-server
+
+          if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            TAG=dev-${{ github.sha }}
+            docker build -t $IMAGE:$TAG .
+            docker push $IMAGE:$TAG
+            docker tag $IMAGE:$TAG $IMAGE:develop
             docker push $IMAGE:develop
-          fi
-          
-          # main 브랜치일 때 버전 태그로도 푸시
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            VERSION_TAG="${{ steps.version.outputs.version_tag }}"
-            docker tag $IMAGE:$SHA_TAG $IMAGE:$VERSION_TAG
-            docker push $IMAGE:$VERSION_TAG
-            echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
+          else
+            TAG=${{ steps.version.outputs.version_tag }}
+            docker build -t $IMAGE:$TAG .
+            docker push $IMAGE:$TAG
           fi
 
-      # 9) GitHub Release 생성/업데이트 (main 브랜치만)
-      - name: Create or Update GitHub Release
+      - name: Create GitHub Release (main only)
         if: github.ref == 'refs/heads/main'
         run: |
-          VERSION_TAG="${{ steps.version.outputs.version_tag }}"
-          
-          # 기존 릴리즈가 있으면 업데이트
-          if gh release view "$VERSION_TAG" &>/dev/null; then
-            echo "Release $VERSION_TAG already exists, updating..."
-            gh release edit "$VERSION_TAG" \
-              --title "Release $VERSION_TAG" \
-              --notes "Automated release from main branch
-          - Version: ${{ steps.version.outputs.version }}
-          - Image tag: $VERSION_TAG
-          - Commit: ${{ github.sha }}"
-          else
-            # 새 릴리즈 생성
-            echo "Creating new release $VERSION_TAG..."
-            gh release create "$VERSION_TAG" \
-              --title "Release $VERSION_TAG" \
-              --notes "Automated release from main branch
-          - Version: ${{ steps.version.outputs.version }}
-          - Image tag: $VERSION_TAG
-          - Commit: ${{ github.sha }}" \
-              --target ${{ github.sha }}
-          fi
+          TAG=${{ steps.version.outputs.version_tag }}
+          gh release create "$TAG" \
+            --title "Release $TAG" \
+            --notes "Server release $TAG"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

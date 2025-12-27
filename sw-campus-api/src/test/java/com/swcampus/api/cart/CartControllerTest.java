@@ -112,7 +112,7 @@ class CartControllerTest {
         }
 
         @Test
-        @DisplayName("스크랩 삭제 성공 (200)")
+        @DisplayName("스크랩 삭제 성공 (204)")
         void removeCart_Success() throws Exception {
                 // given
                 Long lectureId = 100L;
@@ -121,7 +121,7 @@ class CartControllerTest {
                 mockMvc.perform(delete("/api/v1/carts")
                                 .param("lectureId", String.valueOf(lectureId))
                                 .with(csrf()))
-                                .andExpect(status().isOk());
+                                .andExpect(status().isNoContent());
         }
 
         @Test
@@ -154,9 +154,9 @@ class CartControllerTest {
                 mockMvc.perform(get("/api/v1/carts")
                                 .with(csrf()))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$[0].lecture_id").value(dummyLectureId))
-                                .andExpect(jsonPath("$[0].lecture_name").value("Test Lecture"))
-                                .andExpect(jsonPath("$[0].category_id").value(dummyCategoryId));
+                                .andExpect(jsonPath("$[0].lectureId").value(dummyLectureId))
+                                .andExpect(jsonPath("$[0].lectureName").value("Test Lecture"))
+                                .andExpect(jsonPath("$[0].categoryId").value(dummyCategoryId));
 
                 verify(cartService).getCartList(dummyUserId);
         }

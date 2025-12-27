@@ -91,9 +91,9 @@ class AdminSurveyControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content").isArray())
                     .andExpect(jsonPath("$.content.length()").value(2))
-                    .andExpect(jsonPath("$.content[0].member_id").value(1))
+                    .andExpect(jsonPath("$.content[0].memberId").value(1))
                     .andExpect(jsonPath("$.content[0].major").value("컴퓨터공학"))
-                    .andExpect(jsonPath("$.content[1].member_id").value(2))
+                    .andExpect(jsonPath("$.content[1].memberId").value(2))
                     .andExpect(jsonPath("$.content[1].major").value("전자공학"));
         }
 
@@ -132,9 +132,9 @@ class AdminSurveyControllerTest {
             // when & then
             mockMvc.perform(get("/api/v1/admin/surveys/members/{memberId}", targetUserId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.member_id").value(targetUserId))
+                    .andExpect(jsonPath("$.memberId").value(targetUserId))
                     .andExpect(jsonPath("$.major").value("컴퓨터공학"))
-                    .andExpect(jsonPath("$.bootcamp_completed").value(true));
+                    .andExpect(jsonPath("$.bootcampCompleted").value(true));
         }
 
         @Test

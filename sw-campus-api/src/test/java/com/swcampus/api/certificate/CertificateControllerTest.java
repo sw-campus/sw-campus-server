@@ -88,9 +88,9 @@ class CertificateControllerTest {
                             .param("lectureId", String.valueOf(lectureId)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.certified").value(true))
-                    .andExpect(jsonPath("$.certificate_id").value(1))
-                    .andExpect(jsonPath("$.image_url").value("https://s3.../image.jpg"))
-                    .andExpect(jsonPath("$.approval_status").value("PENDING"));
+                    .andExpect(jsonPath("$.certificateId").value(1))
+                    .andExpect(jsonPath("$.imageUrl").value("https://s3.../image.jpg"))
+                    .andExpect(jsonPath("$.approvalStatus").value("PENDING"));
         }
 
         @Test
@@ -109,7 +109,7 @@ class CertificateControllerTest {
                             .param("lectureId", String.valueOf(lectureId)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.certified").value(false))
-                    .andExpect(jsonPath("$.certificate_id").doesNotExist());
+                    .andExpect(jsonPath("$.certificateId").doesNotExist());
         }
     }
 
@@ -154,9 +154,9 @@ class CertificateControllerTest {
                             .file(image)
                             .file(lectureIdPart))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.certificate_id").value(1))
-                    .andExpect(jsonPath("$.lecture_id").value(1))
-                    .andExpect(jsonPath("$.approval_status").value("PENDING"));
+                    .andExpect(jsonPath("$.certificateId").value(1))
+                    .andExpect(jsonPath("$.lectureId").value(1))
+                    .andExpect(jsonPath("$.approvalStatus").value("PENDING"));
         }
 
         @Test

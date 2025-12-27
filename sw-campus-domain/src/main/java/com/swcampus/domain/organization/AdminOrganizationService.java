@@ -50,25 +50,22 @@ public class AdminOrganizationService {
 
     @Transactional
     public RejectOrganizationResult rejectOrganization(Long id) {
-        // 기관 존재 여부 확인
-        getOrganizationDetail(id);
+        Organization organization = getOrganizationDetail(id);
 
         // 해당 기관에 연결된 Member 조회
         Member member = memberRepository.findByOrgId(id)
                 .orElseThrow(() -> new MemberNotFoundException("해당 기관에 연결된 회원이 없습니다: " + id));
 
-        // 반려 메일 발송을 위해 삭제 전 이메일 저장
-        String memberEmail = member.getEmail();
-
         // 관리자 연락처 조회
         Member admin = memberRepository.findFirstByRole(Role.ADMIN)
                 .orElseThrow(AdminNotFoundException::new);
 
-        // Organization은 PENDING 상태 유지 (reject() 호출하지 않음)
-        // Member만 삭제
-        memberRepository.deleteById(member.getId());
+        // Organization을 REJECTED 상태로 변경 (Member는 유지)
+        // REJECTED 상태에서는 강의 생성 등 기능이 자동으로 제한됨
+        organization.reject();
+        organizationRepository.save(organization);
 
-        return new RejectOrganizationResult(memberEmail, admin.getEmail(), admin.getPhone());
+        return new RejectOrganizationResult(member.getEmail(), admin.getEmail(), admin.getPhone());
     }
 
     /**
