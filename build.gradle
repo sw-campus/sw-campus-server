@@ -63,4 +63,16 @@ subprojects {
 
 project(':sw-campus-api') {
     apply plugin: 'org.springframework.boot'
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+    }
+
+    bootJar {
+        enabled = true
+    }
+
+    jar {
+        enabled = false
+    }
 }
