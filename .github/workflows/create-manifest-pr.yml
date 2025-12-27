@@ -2,7 +2,7 @@ name: Create Manifest PR (server)
 
 on:
   workflow_run:
-    workflows: ["Build Image"]
+    workflows: ["Build Server Image"]
     types:
       - completed
   workflow_dispatch:
