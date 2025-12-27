@@ -36,6 +36,9 @@ COPY --from=builder /app/sw-campus-api/build/libs/*.jar app.jar
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
+# IPv4 우선 사용 설정
+ENV JAVA_TOOL_OPTIONS="-Djava.net.preferIPv4Stack=true"
+
 EXPOSE 8080
 
 # Health check
