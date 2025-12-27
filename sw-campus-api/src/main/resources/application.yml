@@ -1,3 +1,8 @@
+# 수료증 검증 설정
+certificate:
+  matching:
+    similarity-threshold: 0.8  # Jaro-Winkler 유사도 임계값 (0.0 ~ 1.0)
+
 spring:
   application:
     name: sw-campus-server

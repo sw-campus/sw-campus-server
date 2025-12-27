@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -16,6 +17,7 @@ class LectureNameMatcherTest {
     @BeforeEach
     void setUp() {
         lectureNameMatcher = new LectureNameMatcher();
+        ReflectionTestUtils.setField(lectureNameMatcher, "similarityThreshold", 0.8);
     }
 
     @Nested

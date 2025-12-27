@@ -2,6 +2,7 @@ package com.swcampus.domain.certificate;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.JaroWinklerSimilarity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,7 +20,8 @@ import java.util.Map;
 @Component
 public class LectureNameMatcher {
 
-    private static final double SIMILARITY_THRESHOLD = 0.8;
+    @Value("${certificate.matching.similarity-threshold:0.8}")
+    private double similarityThreshold;
 
     private static final Map<Character, Character> HOMOGLYPH_MAP = Map.of(
             '\u00D7', 'x',   // × → x (곱셈 기호 → 알파벳)
@@ -125,10 +127,10 @@ public class LectureNameMatcher {
      */
     boolean similarityMatch(String normalizedOcrText, String normalizedLectureName) {
         double similarity = jaroWinkler.apply(normalizedOcrText, normalizedLectureName);
-        boolean matched = similarity >= SIMILARITY_THRESHOLD;
+        boolean matched = similarity >= similarityThreshold;
 
         log.info("[수료증 검증] 3차 유사도 매칭: similarity={}, threshold={}, matched={}",
-                String.format("%.2f", similarity), SIMILARITY_THRESHOLD, matched);
+                String.format("%.2f", similarity), similarityThreshold, matched);
 
         return matched;
     }
