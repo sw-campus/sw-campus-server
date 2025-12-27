@@ -76,12 +76,30 @@ jobs:
             docker push $IMAGE:$TAG
           fi
 
-      - name: Create GitHub Release (main only)
+      - name: Create or Update GitHub Release (main only)
         if: github.ref == 'refs/heads/main'
         run: |
           TAG=${{ steps.version.outputs.version_tag }}
-          gh release create "$TAG" \
-            --title "Release $TAG" \
-            --notes "Server release $TAG"
+          
+          # 기존 릴리즈가 있으면 업데이트
+          if gh release view "$TAG" &>/dev/null; then
+            echo "Release $TAG already exists, updating..."
+            gh release edit "$TAG" \
+              --title "Release $TAG" \
+              --notes "Server release $TAG
+          - Version: ${{ steps.version.outputs.version }}
+          - Image tag: $TAG
+          - Commit: ${{ github.sha }}"
+          else
+            # 새 릴리즈 생성
+            echo "Creating new release $TAG..."
+            gh release create "$TAG" \
+              --title "Release $TAG" \
+              --notes "Server release $TAG
+          - Version: ${{ steps.version.outputs.version }}
+          - Image tag: $TAG
+          - Commit: ${{ github.sha }}" \
+              --target ${{ github.sha }}
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
