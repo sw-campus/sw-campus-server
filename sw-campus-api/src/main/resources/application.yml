@@ -13,7 +13,7 @@ spring:
       max-request-size: 50MB
 
   profiles:
-    default: staging
+    default: local
     group:
       local: local
       staging: staging
@@ -43,17 +43,16 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
 
-spring:
+  # Mail 설정
   mail:
     host: ${MAIL_HOST:}
-    port: ${MAIL_PORT}
+    port: ${MAIL_PORT:587}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-
 
 # 로그 관련 설정
 otel:

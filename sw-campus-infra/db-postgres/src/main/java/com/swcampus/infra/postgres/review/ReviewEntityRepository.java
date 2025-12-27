@@ -96,7 +96,7 @@ public class ReviewEntityRepository implements ReviewRepository {
         return results.stream()
                 .collect(java.util.stream.Collectors.toMap(
                         row -> (Long) row[0],
-                        row -> (Double) row[1]));
+                        row -> ((Number) row[1]).doubleValue()));
     }
 
     @Override
@@ -123,6 +123,25 @@ public class ReviewEntityRepository implements ReviewRepository {
                         row -> (Long) row[1]));
     }
 
+    /**
+     * 여러 강의의 리뷰 통계(평균점수, 리뷰수)를 한 번에 조회 (2 쿼리 → 1 쿼리 최적화)
+     * 
+     * @return Map<lectureId, Map<"avgScore"|"reviewCount", value>>
+     */
+    @Override
+    public Map<Long, Map<String, Number>> getReviewStatsByLectureIds(List<Long> lectureIds) {
+        if (lectureIds == null || lectureIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        List<Object[]> results = jpaRepository.findReviewStatsByLectureIds(lectureIds, ApprovalStatus.APPROVED);
+        return results.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> Map.of(
+                                "avgScore", (Number) row[1],
+                                "reviewCount", (Number) row[2])));
+    }
+
     @Override
     public Page<Review> findAllWithDetails(ApprovalStatus status, String keyword, Pageable pageable) {
         return jpaRepository.findAllWithDetailsAndKeyword(status, keyword, pageable)
@@ -130,7 +149,8 @@ public class ReviewEntityRepository implements ReviewRepository {
     }
 
     @Override
-    public Page<Review> findByOrganizationIdAndApprovalStatusWithPagination(Long organizationId, ApprovalStatus status, Pageable pageable) {
+    public Page<Review> findByOrganizationIdAndApprovalStatusWithPagination(Long organizationId, ApprovalStatus status,
+            Pageable pageable) {
         return jpaRepository.findByOrganizationIdAndApprovalStatusWithPagination(organizationId, status, pageable)
                 .map(ReviewEntity::toDomain);
     }
