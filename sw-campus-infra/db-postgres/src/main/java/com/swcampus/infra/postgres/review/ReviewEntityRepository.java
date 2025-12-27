@@ -96,7 +96,7 @@ public class ReviewEntityRepository implements ReviewRepository {
         return results.stream()
                 .collect(java.util.stream.Collectors.toMap(
                         row -> (Long) row[0],
-                        row -> (Double) row[1]));
+                        row -> ((Number) row[1]).doubleValue()));
     }
 
     @Override

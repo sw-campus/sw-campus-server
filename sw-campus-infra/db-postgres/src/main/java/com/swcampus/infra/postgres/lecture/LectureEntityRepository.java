@@ -155,15 +155,19 @@ public class LectureEntityRepository implements LectureRepository {
 
 	@Override
 	public Optional<Lecture> findById(Long id) {
-		List<Object[]> results = jpaRepository.findByIdWithReviewStats(id);
-		if (results.isEmpty()) {
+		// 1. Lecture + 연관 엔티티 조회 (FETCH JOIN)
+		Optional<LectureEntity> entityOpt = jpaRepository.findByIdWithCategory(id);
+		if (entityOpt.isEmpty()) {
 			return Optional.empty();
 		}
 
-		Object[] row = results.get(0);
-		LectureEntity entity = (LectureEntity) row[0];
-		Double avgScore = (Double) row[1];
-		Long reviewCount = (Long) row[2];
+		LectureEntity entity = entityOpt.get();
+
+		// 2. 리뷰 통계 별도 조회 (GROUP BY 충돌 방지)
+		List<Object[]> reviewStatsList = jpaRepository.findReviewStatsByLectureId(id);
+		Object[] reviewStats = reviewStatsList.isEmpty() ? null : reviewStatsList.get(0);
+		Double avgScore = reviewStats != null && reviewStats[0] != null ? ((Number) reviewStats[0]).doubleValue() : 0.0;
+		Long reviewCount = reviewStats != null && reviewStats[1] != null ? ((Number) reviewStats[1]).longValue() : 0L;
 
 		return Optional.of(entity.toDomain().toBuilder()
 				.averageScore(avgScore != null ? avgScore : 0.0)
@@ -259,6 +263,20 @@ public class LectureEntityRepository implements LectureRepository {
 							.reviewCount(count)
 							.build();
 				})
+				.toList();
+	}
+
+	/**
+	 * 리뷰 통계 없이 강의 목록 조회 (장바구니 등 리뷰 불필요한 경우)
+	 * findAllByIds() 대비 1회 쿼리 감소
+	 */
+	@Override
+	public List<Lecture> findAllByIdsWithoutReviewStats(List<Long> lectureIds) {
+		if (lectureIds == null || lectureIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return jpaRepository.findAllByIdInWithCurriculums(lectureIds).stream()
+				.map(LectureEntity::toDomain)
 				.toList();
 	}
 

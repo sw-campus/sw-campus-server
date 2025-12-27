@@ -80,7 +80,8 @@ public class CartService {
         List<Long> cachedIds = cartCacheRepository.getCartLectureIds(userId);
 
         if (cachedIds != null && !cachedIds.isEmpty()) {
-            return lectureRepository.findAllByIds(cachedIds);
+            // 장바구니에서는 리뷰 통계 불필요 → 쿼리 1회 절약
+            return lectureRepository.findAllByIdsWithoutReviewStats(cachedIds);
         }
 
         // 2. Fallback DB
@@ -96,6 +97,7 @@ public class CartService {
             return List.of();
         }
 
-        return lectureRepository.findAllByIds(lectureIds);
+        // 장바구니에서는 리뷰 통계 불필요 → 쿼리 1회 절약
+        return lectureRepository.findAllByIdsWithoutReviewStats(lectureIds);
     }
 }

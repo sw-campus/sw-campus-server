@@ -32,6 +32,11 @@ public interface LectureRepository {
     List<Lecture> findAllByIds(List<Long> lectureIds);
 
     /**
+     * 리뷰 통계 없이 강의 목록 조회 (장바구니 등 리뷰 불필요한 경우 사용)
+     */
+    List<Lecture> findAllByIdsWithoutReviewStats(List<Long> lectureIds);
+
+    /**
      * 강의의 승인 상태만 업데이트합니다.
      * 자식 컬렉션(quals, steps, adds 등)은 건드리지 않습니다.
      */

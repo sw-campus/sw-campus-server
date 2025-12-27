@@ -55,18 +55,13 @@ public interface LectureJpaRepository extends JpaRepository<LectureEntity, Long>
         Optional<LectureEntity> findByIdWithCategory(@Param("id") Long id);
 
         /**
-         * Lecture 상세 조회 시 리뷰 평균 점수와 리뷰 수를 함께 조회 (3 쿼리 → 1 쿼리 최적화)
-         * 반환: Object[] { LectureEntity, Double avgScore, Long reviewCount }
+         * 단일 Lecture의 리뷰 평균 점수와 리뷰 수를 조회
+         * 반환: Object[] { Double avgScore, Long reviewCount }
          */
-        @Query("SELECT l, COALESCE(AVG(r.score), 0.0), COUNT(r) " +
-                        "FROM LectureEntity l " +
-                        "LEFT JOIN FETCH l.lectureCurriculums lc " +
-                        "LEFT JOIN FETCH lc.curriculum c " +
-                        "LEFT JOIN FETCH c.category " +
-                        "LEFT JOIN ReviewEntity r ON r.lectureId = l.lectureId AND r.approvalStatus = 'APPROVED' " +
-                        "WHERE l.lectureId = :id " +
-                        "GROUP BY l")
-        List<Object[]> findByIdWithReviewStats(@Param("id") Long id);
+        @Query("SELECT COALESCE(AVG(r.score), 0.0), COUNT(r) " +
+                        "FROM ReviewEntity r " +
+                        "WHERE r.lectureId = :lectureId AND r.approvalStatus = 'APPROVED'")
+        List<Object[]> findReviewStatsByLectureId(@Param("lectureId") Long lectureId);
 
         /**
          * 여러 Lecture를 ID 목록으로 조회 시 Curriculum → Category까지 함께 fetch
