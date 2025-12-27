@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 @EnableScheduling
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.swcampus")
 public class SwCampusServerApplication {
 
 	public static void main(String[] args) {
