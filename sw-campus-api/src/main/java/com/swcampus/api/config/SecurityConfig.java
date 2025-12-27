@@ -66,6 +66,7 @@ public class SecurityConfig {
 
                 // ✅ ALB / Kubernetes Health Check (무조건 허용)
                 .requestMatchers(
+                    "/health",
                     "/internal/health",
                     "/actuator/health",
                     "/actuator/health/**"
