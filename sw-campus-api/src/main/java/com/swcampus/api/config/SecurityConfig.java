@@ -70,10 +70,11 @@ public class SecurityConfig {
                 // - /actuator/health/liveness: Kubernetes liveness probe용
                 // - /actuator/health: 기본 health check
                 // ⚠️ 인증 없이 접근 가능해야 ALB/Kubernetes probe가 정상 작동
-                // ⚠️ SecurityConstants.HEALTH_CHECK_PATTERNS를 사용하여 JwtAuthenticationFilter와 일관성 보장
+                // ⚠️ permitAll()만으로는 부족 - JwtAuthenticationFilter에서도 shouldNotFilter로 제외해야 함
                 .requestMatchers(
-                    "/actuator/health",
-                    "/actuator/health/**"
+                    "/actuator/health/**",
+                    "/actuator/health/readiness",
+                    "/actuator/health/liveness"
                 ).permitAll()
 
                 // Auth
