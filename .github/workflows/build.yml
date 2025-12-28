@@ -16,23 +16,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Checkout config repository
+      - name: Checkout code with submodules
         uses: actions/checkout@v4
         with:
-          repository: sw-campus/config
+          submodules: recursive
           token: ${{ secrets.CONFIG_REPO_TOKEN }}
-          path: config
-
-      - name: Inject config by branch
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
-            cp ./config/application-staging.yml ./sw-campus-api/src/main/resources/config/application-staging.yml
-          else
-            cp ./config/application-prod.yml ./sw-campus-api/src/main/resources/config/application-prod.yml
-          fi
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
