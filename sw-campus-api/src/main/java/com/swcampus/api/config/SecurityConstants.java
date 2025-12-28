@@ -13,12 +13,11 @@ public final class SecurityConstants {
     /**
      * Health check 엔드포인트 경로 패턴
      * SecurityConfig의 permitAll()과 JwtAuthenticationFilter의 shouldNotFilter()에서 동일하게 사용
+     * 실제 사용 경로: /actuator/health/readiness
      */
     public static final String[] HEALTH_CHECK_PATTERNS = {
         "/actuator/health",
-        "/actuator/health/**",
-        "/api/actuator/health",
-        "/api/actuator/health/**"
+        "/actuator/health/**"
     };
 }
 

@@ -69,10 +69,12 @@ public class SecurityConfig {
                 // - /actuator/health/readiness: Kubernetes readiness probe용
                 // - /actuator/health/liveness: Kubernetes liveness probe용
                 // - /actuator/health: 기본 health check
-                // - /api/actuator/health: base-path가 /api/actuator인 경우 대비
                 // ⚠️ 인증 없이 접근 가능해야 ALB/Kubernetes probe가 정상 작동
                 // ⚠️ SecurityConstants.HEALTH_CHECK_PATTERNS를 사용하여 JwtAuthenticationFilter와 일관성 보장
-                .requestMatchers(SecurityConstants.HEALTH_CHECK_PATTERNS).permitAll()
+                .requestMatchers(
+                    "/actuator/health",
+                    "/actuator/health/**"
+                ).permitAll()
 
                 // Auth
                 .requestMatchers("/api/v1/auth/**").permitAll()
