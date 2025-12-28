@@ -4,7 +4,7 @@ import java.util.List;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,17 +28,18 @@ import com.swcampus.domain.auth.TokenProvider;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@EnableConfigurationProperties(CorsProperties.class)
 public class SecurityConfig {
 
     private final TokenProvider tokenProvider;
-    private final List<String> allowedOrigins;
+    private final CorsProperties corsProperties;
 
     public SecurityConfig(
             TokenProvider tokenProvider,
-            @Value("${cors.allowed-origins}") List<String> allowedOrigins
+            CorsProperties corsProperties
     ) {
         this.tokenProvider = tokenProvider;
-        this.allowedOrigins = allowedOrigins;
+        this.corsProperties = corsProperties;
     }
 
     @Bean
@@ -118,7 +119,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedOrigins(corsProperties.allowedOrigins());
         configuration.setAllowedMethods(
             List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         );
