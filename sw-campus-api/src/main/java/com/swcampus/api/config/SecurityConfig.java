@@ -46,6 +46,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
+            .securityMatcher("/**")  // 모든 요청에 대해 이 SecurityFilterChain 적용
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session ->
@@ -64,17 +65,20 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-
-                // ✅ ALB / Kubernetes Health Check (무조건 허용)
+                // ✅ ALB / Kubernetes Health Check (무조건 허용 - 제일 먼저 체크)
                 // - /actuator/health/readiness: Kubernetes readiness probe용
                 // - /actuator/health/liveness: Kubernetes liveness probe용
                 // - /actuator/health: 기본 health check
+                // - /api/actuator/health: base-path가 /api/actuator인 경우 대비
                 // ⚠️ 인증 없이 접근 가능해야 ALB/Kubernetes probe가 정상 작동
+                // ⚠️ 401 에러 방지를 위해 모든 가능한 경로 포함
                 .requestMatchers(
                     "/health",
                     "/internal/health",
                     "/actuator/health",
-                    "/actuator/health/**"
+                    "/actuator/health/**",
+                    "/api/actuator/health",
+                    "/api/actuator/health/**"
                 ).permitAll()
 
                 // Auth
