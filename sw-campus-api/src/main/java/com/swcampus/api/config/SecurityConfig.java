@@ -65,16 +65,14 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                // ✅ ALB / Kubernetes Health Check (무조건 허용 - 제일 먼저 체크)
-                // - /actuator/health/readiness: Kubernetes readiness probe용
-                // - /actuator/health/liveness: Kubernetes liveness probe용
-                // - /actuator/health: 기본 health check
-                // ⚠️ 인증 없이 접근 가능해야 ALB/Kubernetes probe가 정상 작동
-                // ⚠️ permitAll()만으로는 부족 - JwtAuthenticationFilter에서도 shouldNotFilter로 제외해야 함
-                .requestMatchers(
-                    "/actuator/health",
-                    "/actuator/health/**"
-                ).permitAll()
+                // ❌ Actuator는 별도 포트(9090)로 분리되어 더 이상 필요 없음
+                // - 메인 API 포트(8080)와 헬스체크 포트(9090) 물리적 분리
+                // - JWT / Security / Filter 전부 무시됨 (포트 자체가 다르므로 인증 개입 불가)
+                // - 아래 설정은 유지해도 무방하지만 실제로는 사용되지 않음
+                // .requestMatchers(
+                //     "/actuator/health",
+                //     "/actuator/health/**"
+                // ).permitAll()
 
                 // Auth
                 .requestMatchers("/api/v1/auth/**").permitAll()
