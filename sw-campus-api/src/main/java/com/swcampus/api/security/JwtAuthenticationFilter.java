@@ -31,8 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // AntPathMatcher를 사용하여 SecurityConfig의 requestMatchers와 동일한 방식으로 매칭
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        
+        String path = request.getRequestURI();
         return Arrays.stream(SecurityConstants.HEALTH_CHECK_PATTERNS)
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
