@@ -24,11 +24,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // ✅ 헬스체크 / actuator 는 JWT 필터 자체를 타지 않음
     // ⚠️ SecurityConfig의 permitAll()과 반드시 동일한 범위여야 함
-    // 이거 안 하면 필터가 먼저 가로채서 401 에러 발생
+    // ⚠️ 이거 없으면 permitAll 해도 필터가 먼저 실행돼서 막힘
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return path.startsWith("/actuator/health");
+        return request.getRequestURI().startsWith("/actuator/health");
     }
 
     @Override
