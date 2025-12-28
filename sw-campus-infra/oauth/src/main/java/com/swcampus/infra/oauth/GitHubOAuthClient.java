@@ -69,12 +69,14 @@ public class GitHubOAuthClient implements OAuthClient {
         Map<String, Object> body = response.getBody();
 
         String email = fetchEmail(accessToken);
+        String name = (String) body.get("name");
+        String login = (String) body.get("login");  // username, 항상 존재
 
         return OAuthUserInfo.builder()
             .provider(OAuthProvider.GITHUB)
             .providerId(String.valueOf(body.get("id")))
             .email(email)
-            .name((String) body.get("name"))
+            .name(name != null ? name : login)  // name 없으면 username 사용
             .build();
     }
 
