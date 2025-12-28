@@ -22,14 +22,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenProvider tokenProvider;
 
-    // ❌ Actuator는 별도 포트(9090)로 분리되어 더 이상 필요 없음
-    // - 메인 API 포트(8080)와 헬스체크 포트(9090) 물리적 분리
-    // - JWT / Security / Filter 전부 무시됨 (포트 자체가 다르므로 인증 개입 불가)
-    // - 아래 설정은 유지해도 무방하지만 실제로는 사용되지 않음
-    // @Override
-    // protected boolean shouldNotFilter(HttpServletRequest request) {
-    //     return request.getRequestURI().startsWith("/actuator/health");
-    // }
+    // ✅ ALB 헬스체크 전용 엔드포인트는 JWT 필터 자체를 타지 않음
+    // - SecurityConfig의 permitAll()과 반드시 동일한 범위여야 함
+    // - 이거 없으면 permitAll 해도 필터가 먼저 실행돼서 막힘
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/actuator/health");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
