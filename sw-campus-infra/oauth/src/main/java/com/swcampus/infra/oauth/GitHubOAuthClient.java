@@ -76,7 +76,7 @@ public class GitHubOAuthClient implements OAuthClient {
             .provider(OAuthProvider.GITHUB)
             .providerId(String.valueOf(body.get("id")))
             .email(email)
-            .name(name != null ? name : login)  // name 없으면 username 사용
+            .name(name != null && !name.isBlank() ? name : login)  // name 없으면 username 사용
             .build();
     }
 
