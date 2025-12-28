@@ -27,7 +27,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // - 이거 없으면 permitAll 해도 필터가 먼저 실행돼서 막힘
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/actuator/health");
+        String uri = request.getRequestURI();
+        return uri.equals("/healthz") || uri.startsWith("/actuator/health");
     }
 
     @Override
