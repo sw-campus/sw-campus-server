@@ -23,12 +23,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokenProvider tokenProvider;
 
     // ✅ 헬스체크 / actuator 는 JWT 필터 자체를 타지 않음
+    // SecurityConfig의 permitAll과 일관성 유지
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         return path.equals("/internal/health")
             || path.equals("/health")
-            || path.startsWith("/actuator/health");
+            || path.startsWith("/actuator/health")
+            || path.startsWith("/api/actuator/health");  // base-path가 /api/actuator인 경우 대비
     }
 
     @Override
