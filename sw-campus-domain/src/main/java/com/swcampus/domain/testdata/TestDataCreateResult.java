@@ -16,6 +16,7 @@ public class TestDataCreateResult {
     private final List<Long> reviewIds;
     private final List<Long> surveyMemberIds;
     private final List<Long> bannerIds;
+    private final List<Long> teacherIds;
 
     public int getTotalCount() {
         int count = 0;
@@ -26,6 +27,7 @@ public class TestDataCreateResult {
         if (reviewIds != null) count += reviewIds.size();
         if (surveyMemberIds != null) count += surveyMemberIds.size();
         if (bannerIds != null) count += bannerIds.size();
+        if (teacherIds != null) count += teacherIds.size();
         return count;
     }
 }

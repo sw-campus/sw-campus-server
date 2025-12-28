@@ -15,7 +15,7 @@ spring:
       max-request-size: 50MB
 
   profiles:
-    default: staging
+    default: local
     group:
       local: local
       staging: staging
@@ -45,7 +45,7 @@ spring:
 
   mail:
     host: ${MAIL_HOST:}
-    port: ${MAIL_PORT}
+    port: ${MAIL_PORT:587}
     properties:
       mail:
         smtp:

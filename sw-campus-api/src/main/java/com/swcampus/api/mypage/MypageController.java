@@ -261,7 +261,7 @@ public class MypageController {
         @Parameter(description = "전화번호", example = "02-1234-5678")
         @RequestPart(name = "phone", required = false) String phone,
         @Parameter(description = "주소", example = "서울시 강남구 테헤란로 123")
-        @RequestPart(name = "location") String location,
+        @RequestPart(name = "location", required = false) String location,
         @Parameter(description = "홈페이지 URL", example = "https://example.com")
         @RequestPart(name = "homepage", required = false) String homepage,
         @Parameter(description = "정부 인증 정보", example = "HRD-Net 인증")
@@ -279,8 +279,8 @@ public class MypageController {
         @Parameter(description = "시설 이미지 4")
         @RequestPart(name = "facilityImage4", required = false) MultipartFile facilityImage4
     ) {
-        // Update Organization Info (승인된 기관만 수정 가능)
-        Organization org = organizationService.getApprovedOrganizationByUserId(member.memberId());
+        // Update Organization Info (APPROVED 또는 REJECTED 상태의 기관 수정 가능, REJECTED는 수정 시 PENDING으로 변경됨)
+        Organization org = organizationService.getOrganizationByUserId(member.memberId());
 
         // Update Member Info (Phone, Address)
         memberService.updateProfile(member.memberId(), null, phone, location);

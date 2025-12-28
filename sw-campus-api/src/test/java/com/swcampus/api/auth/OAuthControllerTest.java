@@ -89,7 +89,7 @@ class OAuthControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.member_id").value(1))
+                    .andExpect(jsonPath("$.memberId").value(1))
                     .andExpect(jsonPath("$.email").value("user@gmail.com"))
                     .andExpect(jsonPath("$.name").value("홍길동"))
                     .andExpect(jsonPath("$.nickname").value("사용자_a1b2c3d4"))
@@ -124,7 +124,7 @@ class OAuthControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.member_id").value(1))
+                    .andExpect(jsonPath("$.memberId").value(1))
                     .andExpect(jsonPath("$.nickname").value("사용자_b2c3d4e5"));
         }
 

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +45,7 @@ public class MemberSurveyService {
                 .orElseThrow(() -> new SurveyNotFoundException(memberId));
     }
 
-    public java.util.Optional<MemberSurvey> findSurveyByMemberId(Long memberId) {
+    public Optional<MemberSurvey> findSurveyByMemberId(Long memberId) {
         return surveyRepository.findByMemberId(memberId);
     }
 

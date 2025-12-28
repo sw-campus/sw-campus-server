@@ -117,6 +117,9 @@ public class OrganizationService {
             facilityUrl4 != null ? facilityUrl4 : organization.getFacilityImageUrl4()
         );
         
+        // 반려된 기관이 정보 수정 시 승인 대기 상태로 변경
+        organization.resubmit();
+        
         return organizationRepository.save(organization);
     }
 

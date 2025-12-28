@@ -116,7 +116,7 @@ class CartServiceTest {
             Lecture l2 = mock(Lecture.class);
 
             when(cartCacheRepository.getCartLectureIds(userId)).thenReturn(cachedIds);
-            when(lectureRepository.findAllByIds(cachedIds)).thenReturn(List.of(l1, l2));
+            when(lectureRepository.findAllByIdsWithoutReviewStats(cachedIds)).thenReturn(List.of(l1, l2));
 
             // when
             List<Lecture> result = cartService.getCartList(userId);
@@ -139,7 +139,7 @@ class CartServiceTest {
 
             Lecture l1 = mock(Lecture.class);
             Lecture l2 = mock(Lecture.class);
-            when(lectureRepository.findAllByIds(anyList())).thenReturn(List.of(l1, l2));
+            when(lectureRepository.findAllByIdsWithoutReviewStats(anyList())).thenReturn(List.of(l1, l2));
 
             // when
             List<Lecture> result = cartService.getCartList(userId);
@@ -163,7 +163,7 @@ class CartServiceTest {
             // then
             assertThat(result).isEmpty();
             verify(cartCacheRepository).saveCartLectureIds(userId, Collections.emptyList());
-            verify(lectureRepository, never()).findAllByIds(anyList());
+            verify(lectureRepository, never()).findAllByIdsWithoutReviewStats(anyList());
         }
     }
 }

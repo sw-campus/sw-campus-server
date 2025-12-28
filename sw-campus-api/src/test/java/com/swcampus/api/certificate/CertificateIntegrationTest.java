@@ -157,17 +157,17 @@ class CertificateIntegrationTest {
                             .file(imageFile)
                             .file(lectureIdPart))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.certificate_id").exists())
-                    .andExpect(jsonPath("$.lecture_id").value(testLecture.getLectureId()))
-                    .andExpect(jsonPath("$.image_url").value("https://s3.example.com/certificate/test.jpg"))
-                    .andExpect(jsonPath("$.approval_status").value("PENDING"));
+                    .andExpect(jsonPath("$.certificateId").exists())
+                    .andExpect(jsonPath("$.lectureId").value(testLecture.getLectureId()))
+                    .andExpect(jsonPath("$.imageUrl").value("https://s3.example.com/certificate/test.jpg"))
+                    .andExpect(jsonPath("$.approvalStatus").value("PENDING"));
 
             // === 3단계: 인증 후 - 인증 상태 확인 ===
             mockMvc.perform(get("/api/v1/certificates/check")
                             .param("lectureId", testLecture.getLectureId().toString()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.certified").value(true))
-                    .andExpect(jsonPath("$.image_url").value("https://s3.example.com/certificate/test.jpg"));
+                    .andExpect(jsonPath("$.imageUrl").value("https://s3.example.com/certificate/test.jpg"));
         }
     }
 
@@ -303,7 +303,7 @@ class CertificateIntegrationTest {
                             .file(imageFile)
                             .file(lectureIdPart))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.certificate_id").exists());
+                    .andExpect(jsonPath("$.certificateId").exists());
         }
 
         @Test
@@ -339,7 +339,7 @@ class CertificateIntegrationTest {
                             .file(imageFile)
                             .file(lectureIdPart))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.certificate_id").exists());
+                    .andExpect(jsonPath("$.certificateId").exists());
         }
     }
 }
