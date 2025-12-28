@@ -71,15 +71,8 @@ public class SecurityConfig {
                 // - /actuator/health: 기본 health check
                 // - /api/actuator/health: base-path가 /api/actuator인 경우 대비
                 // ⚠️ 인증 없이 접근 가능해야 ALB/Kubernetes probe가 정상 작동
-                // ⚠️ 401 에러 방지를 위해 모든 가능한 경로 포함
-                .requestMatchers(
-                    "/health",
-                    "/internal/health",
-                    "/actuator/health",
-                    "/actuator/health/**",
-                    "/api/actuator/health",
-                    "/api/actuator/health/**"
-                ).permitAll()
+                // ⚠️ SecurityConstants.HEALTH_CHECK_PATTERNS를 사용하여 JwtAuthenticationFilter와 일관성 보장
+                .requestMatchers(SecurityConstants.HEALTH_CHECK_PATTERNS).permitAll()
 
                 // Auth
                 .requestMatchers("/api/v1/auth/**").permitAll()

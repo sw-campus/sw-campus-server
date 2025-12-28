@@ -1,5 +1,6 @@
 package com.swcampus.api.security;
 
+import com.swcampus.api.config.SecurityConstants;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.member.Role;
@@ -12,25 +13,28 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenProvider tokenProvider;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     // ✅ 헬스체크 / actuator 는 JWT 필터 자체를 타지 않음
-    // SecurityConfig의 permitAll과 일관성 유지
+    // ⚠️ SecurityConstants.HEALTH_CHECK_PATTERNS를 사용하여 SecurityConfig의 permitAll()과 동일한 패턴 매칭
+    // AntPathMatcher를 사용하여 SecurityConfig의 requestMatchers와 동일한 방식으로 매칭
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return path.equals("/internal/health")
-            || path.equals("/health")
-            || path.startsWith("/actuator/health")
-            || path.startsWith("/api/actuator/health");  // base-path가 /api/actuator인 경우 대비
+        String path = request.getServletPath();
+        
+        return Arrays.stream(SecurityConstants.HEALTH_CHECK_PATTERNS)
+                .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
     @Override
