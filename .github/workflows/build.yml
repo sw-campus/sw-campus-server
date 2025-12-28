@@ -29,9 +29,9 @@ jobs:
       - name: Inject config by branch
         run: |
           if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
-            cp ./config/application-staging.yml ./sw-campus-api/src/main/resources/application.yml
+            cp ./config/application-staging.yml ./sw-campus-api/src/main/resources/config/application-staging.yml
           else
-            cp ./config/application-prod.yml ./sw-campus-api/src/main/resources/application.yml
+            cp ./config/application-prod.yml ./sw-campus-api/src/main/resources/config/application-prod.yml
           fi
 
       - name: Set up JDK 17
