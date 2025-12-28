@@ -66,6 +66,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
 
                 // ✅ ALB / Kubernetes Health Check (무조건 허용)
+                // - /actuator/health/readiness: Kubernetes readiness probe용
+                // - /actuator/health/liveness: Kubernetes liveness probe용
+                // - /actuator/health: 기본 health check
+                // ⚠️ 인증 없이 접근 가능해야 ALB/Kubernetes probe가 정상 작동
                 .requestMatchers(
                     "/health",
                     "/internal/health",
