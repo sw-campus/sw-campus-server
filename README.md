@@ -1,5 +1,7 @@
 # SW Campus Server
 
+// trigger build
+
 Spring Boot 기반 **멀티모듈 구조**로, **Layered Architecture** (presentation → business → persistence →
 database) 를 따른다.
 
