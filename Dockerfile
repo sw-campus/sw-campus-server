@@ -25,8 +25,8 @@ RUN gradle :sw-campus-api:bootJar --no-daemon
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-# bootJar만 하나 복사
-COPY --from=builder /app/sw-campus-api/build/libs/*boot.jar app.jar
+# 모든 jar 복사
+COPY --from=builder /app/sw-campus-api/build/libs/*.jar app.jar
 
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
