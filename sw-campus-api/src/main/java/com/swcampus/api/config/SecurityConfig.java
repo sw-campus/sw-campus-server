@@ -65,14 +65,16 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                // ❌ Actuator는 별도 포트(9090)로 분리되어 더 이상 필요 없음
-                // - 메인 API 포트(8080)와 헬스체크 포트(9090) 물리적 분리
-                // - JWT / Security / Filter 전부 무시됨 (포트 자체가 다르므로 인증 개입 불가)
-                // - 아래 설정은 유지해도 무방하지만 실제로는 사용되지 않음
-                // .requestMatchers(
-                //     "/actuator/health",
-                //     "/actuator/health/**"
-                // ).permitAll()
+                // ✅ ALB 헬스체크 전용 엔드포인트 완전 공개 (가장 정석적인 해결)
+                // - ALB가 Spring Security 걸린 경로를 체크하면 401/403 반환
+                // - ALB는 200~399 아니면 무조건 UNHEALTHY
+                // - permitAll()은 JWT 필터보다 앞에서 처리됨
+                .requestMatchers(
+                    "/healthz"  // ALB 헬스체크 전용 엔드포인트 (가장 정석) - 유지
+                    // actuator 관련은 주석 처리 (나중에 필요하면 주석 해제)
+                    // "/actuator/health",
+                    // "/actuator/health/**"
+                ).permitAll()
 
                 // Auth
                 .requestMatchers("/api/v1/auth/**").permitAll()
