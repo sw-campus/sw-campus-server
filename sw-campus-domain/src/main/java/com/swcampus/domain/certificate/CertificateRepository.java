@@ -19,4 +19,5 @@ public interface CertificateRepository {
     long countByApprovalStatus(ApprovalStatus status);
 
     void deleteById(Long id);
+    void deleteByMemberId(Long memberId);
 }

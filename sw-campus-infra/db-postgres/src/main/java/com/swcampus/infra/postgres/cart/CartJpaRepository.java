@@ -8,6 +8,8 @@ public interface CartJpaRepository extends JpaRepository<CartEntity, Long> {
 
     void deleteByUserIdAndLectureId(Long userId, Long lectureId);
 
+    void deleteByUserId(Long userId);
+
     boolean existsByUserIdAndLectureId(Long userId, Long lectureId);
 
     long countByUserId(Long userId);

@@ -7,4 +7,5 @@ public interface SocialAccountRepository {
     SocialAccount save(SocialAccount socialAccount);
     Optional<SocialAccount> findByProviderAndProviderId(OAuthProvider provider, String providerId);
     List<SocialAccount> findByMemberId(Long memberId);
+    void deleteByMemberId(Long memberId);
 }

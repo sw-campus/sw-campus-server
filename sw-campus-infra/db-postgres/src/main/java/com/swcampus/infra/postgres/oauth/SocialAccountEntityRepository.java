@@ -34,4 +34,9 @@ public class SocialAccountEntityRepository implements SocialAccountRepository {
                 .map(SocialAccountEntity::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteByMemberId(Long memberId) {
+        jpaRepository.deleteByMemberId(memberId);
+    }
 }
