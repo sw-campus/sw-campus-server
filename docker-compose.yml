@@ -1,6 +1,6 @@
 services:
   # Redis Cache
-  redis:
+  prod-redis:
     image: redis:alpine
     container_name: sw-campus-redis
     ports:
@@ -33,12 +33,12 @@ services:
       - .env
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - REDIS_HOST=redis
+      - REDIS_HOST=prod-redis
       - REDIS_PORT=6379
       - OCR_SERVER_URL=http://ocr:8000
     volumes:
       - ./config:/app/config:ro
     depends_on:
-      - redis
+      - prod-redis
       - ocr
     restart: unless-stopped
