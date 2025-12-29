@@ -8,9 +8,13 @@ COPY gradle ./gradle
 COPY sw-campus-api/build.gradle ./sw-campus-api/
 COPY sw-campus-domain/build.gradle ./sw-campus-domain/
 COPY sw-campus-shared/logging/build.gradle ./sw-campus-shared/logging/
+COPY sw-campus-shared/error/build.gradle ./sw-campus-shared/error/
 COPY sw-campus-infra/db-postgres/build.gradle ./sw-campus-infra/db-postgres/
+COPY sw-campus-infra/db-redis/build.gradle ./sw-campus-infra/db-redis/
 COPY sw-campus-infra/oauth/build.gradle ./sw-campus-infra/oauth/
+COPY sw-campus-infra/ocr/build.gradle ./sw-campus-infra/ocr/
 COPY sw-campus-infra/s3/build.gradle ./sw-campus-infra/s3/
+COPY sw-campus-infra/analytics/build.gradle ./sw-campus-infra/analytics/
 
 # 캐시(의존성)만 먼저 당겨놓기
 RUN gradle :sw-campus-api:dependencies --no-daemon || true
