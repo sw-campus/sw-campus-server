@@ -1,21 +1,11 @@
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16
-    container_name: sw-campus-postgres
-    environment:
-      POSTGRES_DB: swcampus
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: sw-campus-redis
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "6379:6379"
+    restart: unless-stopped
 
   # OCR AI Service
   ocr:
@@ -26,38 +16,20 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
       interval: 30s
       timeout: 10s
       start_period: 60s
       retries: 3
     restart: unless-stopped
 
-  # Spring Boot Server (optional - for full stack local dev)
-  # server:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: sw-campus-server
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     - SPRING_PROFILES_ACTIVE=local
-  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/sw-campus
-  #     - SPRING_DATASOURCE_USERNAME=postgres
-  #     - SPRING_DATASOURCE_PASSWORD=postgres
-  #     - OCR_SERVICE_URL=http://ocr:8000
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     ocr:
-  #       condition: service_healthy
-
-  redis:
-    image: redis:alpine
-    container_name: sw-campus-redis
+  # Spring Boot Server
+  server:
+    image: ghcr.io/sw-campus/sw-campus-server:${SERVER_TAG}
+    container_name: sw-campus-server
     ports:
-      - "6379:6379"
-
-volumes:
-  postgres_data:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - ocr
+    restart: unless-stopped
