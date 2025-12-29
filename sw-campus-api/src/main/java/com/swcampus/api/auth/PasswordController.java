@@ -15,7 +15,11 @@ import com.swcampus.api.auth.request.TemporaryPasswordRequest;
 import com.swcampus.domain.auth.PasswordService;
 import com.swcampus.domain.auth.TokenProvider;
 
+import com.swcampus.api.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -37,8 +41,16 @@ public class PasswordController {
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "변경 성공"),
-        @ApiResponse(responseCode = "400", description = "현재 비밀번호 불일치"),
-        @ApiResponse(responseCode = "401", description = "인증 필요")
+        @ApiResponse(responseCode = "400", description = "현재 비밀번호 불일치",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 400, "message": "현재 비밀번호가 일치하지 않습니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
     })
     public ResponseEntity<Void> changePassword(
             @CookieValue(name = "accessToken") String accessToken,

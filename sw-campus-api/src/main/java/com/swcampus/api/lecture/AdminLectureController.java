@@ -47,8 +47,16 @@ public class AdminLectureController {
     @Operation(summary = "강의 상태별 통계 조회", description = "전체/대기/승인/반려 강의 수를 조회합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "관리자 권한 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(value = """
+                                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(value = """
+                                    {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """)))
     })
     @GetMapping("/stats")
     public ResponseEntity<ApprovalStatsResponse> getStats() {
@@ -59,8 +67,16 @@ public class AdminLectureController {
     @Operation(summary = "강의 목록 조회/검색", description = "강의 목록을 조회하고 검색합니다. 승인 상태와 강의명으로 필터링할 수 있습니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "관리자 권한 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(value = """
+                                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(value = """
+                                    {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """)))
     })
     @GetMapping
     public ResponseEntity<Page<AdminLectureSummaryResponse>> getLectures(
