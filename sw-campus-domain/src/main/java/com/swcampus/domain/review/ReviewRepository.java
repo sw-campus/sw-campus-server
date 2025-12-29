@@ -64,4 +64,5 @@ public interface ReviewRepository {
     long countWithApprovedCertificateAndReviewStatus(ApprovalStatus reviewStatus);
 
     void deleteById(Long id);
+    void deleteByMemberId(Long memberId);
 }

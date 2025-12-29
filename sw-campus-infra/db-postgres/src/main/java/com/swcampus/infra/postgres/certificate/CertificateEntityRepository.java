@@ -74,4 +74,9 @@ public class CertificateEntityRepository implements CertificateRepository {
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
     }
+
+    @Override
+    public void deleteByMemberId(Long memberId) {
+        jpaRepository.deleteByMemberId(memberId);
+    }
 }

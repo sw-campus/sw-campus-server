@@ -117,6 +117,16 @@ public class Organization {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * 기관 비활성화 (담당자 탈퇴 시 호출)
+     * 상태를 PENDING으로 변경하여 새로운 담당자가 인수할 수 있도록 합니다.
+     */
+    public void deactivate() {
+        this.userId = null;
+        this.approvalStatus = ApprovalStatus.PENDING;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void setUserId(Long userId) {
         this.userId = userId;
         this.updatedAt = LocalDateTime.now();

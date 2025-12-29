@@ -40,4 +40,9 @@ public class CartEntityRepository implements CartRepository {
                 .map(CartEntity::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteByUserId(Long userId) {
+        cartJpaRepository.deleteByUserId(userId);
+    }
 }
