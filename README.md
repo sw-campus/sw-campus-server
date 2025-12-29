@@ -137,3 +137,4 @@ JPA 엔티티 변경 사항을 기반으로 Flyway 마이그레이션 SQL 파일
 ```
 sw-campus-infra/db-postgres/src/main/resources/db/migration/V{n}__{변경내용}.sql
 ```
+// test commit for image build trigger - Mon Dec 29 12:21:11 KST 2025
