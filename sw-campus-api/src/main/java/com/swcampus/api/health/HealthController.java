@@ -12,13 +12,13 @@ public class HealthController {
         return ResponseEntity.ok("OK");
     }
 
-    // ❌ /healthz 엔드포인트 주석 처리 (actuator health 사용)
-    // - ALB 헬스체크 경로: /actuator/health 사용
-    // - SecurityConfig에서 /actuator/health/** permitAll()로 허용
-    // - JwtAuthenticationFilter에서 shouldNotFilter로 제외
-    // @GetMapping("/healthz")
-    // public ResponseEntity<String> healthz() {
-    //     return ResponseEntity.ok("OK");
-    // }
+    // ✅ ALB 헬스체크 전용 엔드포인트 (가장 정석적인 해결)
+    // - Spring Security에서 permitAll()로 완전 공개
+    // - JWT 필터보다 앞에서 처리됨
+    // - ALB 헬스체크 경로로 사용
+    @GetMapping("/healthz")
+    public ResponseEntity<String> healthz() {
+        return ResponseEntity.ok("OK");
+    }
 }
 

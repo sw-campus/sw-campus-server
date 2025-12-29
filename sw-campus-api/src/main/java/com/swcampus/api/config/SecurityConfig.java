@@ -65,15 +65,15 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                // ✅ ALB 헬스체크 전용 엔드포인트 완전 공개 (유일한 정답 루트)
+                // ✅ ALB 헬스체크 전용 엔드포인트 완전 공개 (가장 정석적인 해결)
                 // - ALB가 Spring Security 걸린 경로를 체크하면 401/403 반환
                 // - ALB는 200~399 아니면 무조건 UNHEALTHY
                 // - permitAll()은 JWT 필터보다 앞에서 처리됨
-                // 1. ALB 헬스체크 경로를 명시: /actuator/health
-                // 2. 그 경로를 인증에서 제외: /actuator/health/** permitAll()
                 .requestMatchers(
-                    "/actuator/health",
-                    "/actuator/health/**"
+                    "/healthz"  // ALB 헬스체크 전용 엔드포인트 (가장 정석) - 유지
+                    // actuator 관련은 주석 처리 (나중에 필요하면 주석 해제)
+                    // "/actuator/health",
+                    // "/actuator/health/**"
                 ).permitAll()
 
                 // Auth

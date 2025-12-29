@@ -22,13 +22,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenProvider tokenProvider;
 
-    // ✅ ALB 헬스체크 전용 엔드포인트는 JWT 필터 자체를 타지 않음 (유일한 정답 루트)
+    // ✅ ALB 헬스체크 전용 엔드포인트는 JWT 필터 자체를 타지 않음
     // - SecurityConfig의 permitAll()과 반드시 동일한 범위여야 함
     // - 이거 없으면 permitAll 해도 필터가 먼저 실행돼서 막힘
-    // 3. JWT 필터에서 스킵: shouldNotFilter() → /actuator/health
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/actuator/health");
+        String uri = request.getRequestURI();
+        // /healthz는 유지 (ALB 헬스체크 전용)
+        // actuator 관련은 주석 처리 (나중에 필요하면 주석 해제)
+        return uri.equals("/healthz");
+        // return uri.equals("/healthz") || uri.startsWith("/actuator/health");
     }
 
     @Override
