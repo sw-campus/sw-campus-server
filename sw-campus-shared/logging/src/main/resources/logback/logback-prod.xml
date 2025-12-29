@@ -9,5 +9,6 @@
 
     <root level="INFO">
         <appender-ref ref="OTEL"/>
+        <appender-ref ref="CONSOLE"/>
     </root>
 </configuration>
