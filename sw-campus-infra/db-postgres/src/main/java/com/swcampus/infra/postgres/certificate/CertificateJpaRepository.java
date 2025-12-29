@@ -15,4 +15,6 @@ public interface CertificateJpaRepository extends JpaRepository<CertificateEntit
     List<CertificateEntity> findAllByMemberIdAndApprovalStatus(Long memberId, ApprovalStatus approvalStatus);
 
     long countByApprovalStatus(ApprovalStatus approvalStatus);
+
+    void deleteByMemberId(Long memberId);
 }

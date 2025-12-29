@@ -7,6 +7,8 @@ public interface CartRepository {
 
     void deleteByUserIdAndLectureId(Long userId, Long lectureId);
 
+    void deleteByUserId(Long userId);
+
     boolean existsByUserIdAndLectureId(Long userId, Long lectureId);
 
     long countByUserId(Long userId);

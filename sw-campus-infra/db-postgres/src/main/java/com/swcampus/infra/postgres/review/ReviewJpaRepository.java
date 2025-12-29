@@ -131,4 +131,6 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         AND r.approvalStatus = :reviewStatus
                         """)
         long countWithApprovedCertificateAndReviewStatus(@Param("reviewStatus") ApprovalStatus reviewStatus);
+
+        void deleteByMemberId(Long memberId);
 }

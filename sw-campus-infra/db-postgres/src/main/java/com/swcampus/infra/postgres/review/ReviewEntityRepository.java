@@ -179,4 +179,9 @@ public class ReviewEntityRepository implements ReviewRepository {
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
     }
+
+    @Override
+    public void deleteByMemberId(Long memberId) {
+        jpaRepository.deleteByMemberId(memberId);
+    }
 }
