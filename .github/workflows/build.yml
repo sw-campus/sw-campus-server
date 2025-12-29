@@ -45,7 +45,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: minji-yoon
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & Push Image
@@ -53,11 +53,14 @@ jobs:
           IMAGE=ghcr.io/sw-campus/sw-campus-server
 
           if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
-            TAG=dev-${{ github.sha }}
+            TAG=RHSA-${{ github.sha }}
+            echo "Building DEV image with tag $TAG"
             docker build -t $IMAGE:$TAG .
             docker push $IMAGE:$TAG
-          else
+
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
             TAG=${{ steps.version.outputs.version_tag }}
+            echo "Building RELEASE image with tag $TAG"
             docker build -t $IMAGE:$TAG .
             docker push $IMAGE:$TAG
           fi
