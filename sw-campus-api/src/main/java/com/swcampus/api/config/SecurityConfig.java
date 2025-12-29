@@ -70,10 +70,9 @@ public class SecurityConfig {
                 // - ALB는 200~399 아니면 무조건 UNHEALTHY
                 // - permitAll()은 JWT 필터보다 앞에서 처리됨
                 .requestMatchers(
-                    "/healthz"  // ALB 헬스체크 전용 엔드포인트 (가장 정석) - 유지
-                    // actuator 관련은 주석 처리 (나중에 필요하면 주석 해제)
-                    // "/actuator/health",
-                    // "/actuator/health/**"
+                    "/healthz",  // ALB 헬스체크 전용 엔드포인트 (가장 정석)
+                    "/actuator/health",
+                    "/actuator/health/**"
                 ).permitAll()
 
                 // Auth

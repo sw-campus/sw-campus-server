@@ -28,10 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        // /healthz는 유지 (ALB 헬스체크 전용)
-        // actuator 관련은 주석 처리 (나중에 필요하면 주석 해제)
-        return uri.equals("/healthz");
-        // return uri.equals("/healthz") || uri.startsWith("/actuator/health");
+        return uri.equals("/healthz") || uri.startsWith("/actuator/health");
     }
 
     @Override
