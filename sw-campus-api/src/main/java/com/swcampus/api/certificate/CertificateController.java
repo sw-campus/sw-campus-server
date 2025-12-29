@@ -6,8 +6,12 @@ import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.certificate.Certificate;
 import com.swcampus.domain.certificate.CertificateService;
+import com.swcampus.api.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -32,7 +36,11 @@ public class CertificateController {
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 필요")
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
     })
     @GetMapping("/check")
     public ResponseEntity<CertificateCheckResponse> checkCertificate(
@@ -56,9 +64,21 @@ public class CertificateController {
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "인증 성공"),
-        @ApiResponse(responseCode = "400", description = "강의명 불일치"),
-        @ApiResponse(responseCode = "401", description = "인증 필요"),
-        @ApiResponse(responseCode = "409", description = "이미 인증된 수료증")
+        @ApiResponse(responseCode = "400", description = "강의명 불일치",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 400, "message": "강의명이 일치하지 않습니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "409", description = "이미 인증된 수료증",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 409, "message": "이미 인증된 수료증입니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
     })
     @PostMapping(value = "/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CertificateVerifyResponse> verifyCertificate(

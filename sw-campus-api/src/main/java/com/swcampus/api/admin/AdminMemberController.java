@@ -21,6 +21,7 @@ import com.swcampus.domain.member.Role;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -41,8 +42,16 @@ public class AdminMemberController {
     @Operation(summary = "회원 역할별 통계 조회", description = "전체/일반/기관/관리자 회원 수를 조회합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "관리자 권한 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """)))
     })
     @GetMapping("/stats")
     public ResponseEntity<MemberRoleStatsResponse> getStats() {
@@ -53,8 +62,16 @@ public class AdminMemberController {
     @Operation(summary = "회원 목록 조회/검색", description = "회원 목록을 조회하고 검색합니다. 역할과 이름, 닉네임, 이메일로 필터링할 수 있습니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "관리자 권한 필요", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """)))
     })
     @GetMapping
     public ResponseEntity<Page<AdminMemberResponse>> getMembers(
