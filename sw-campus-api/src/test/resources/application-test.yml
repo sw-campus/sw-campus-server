@@ -2,6 +2,10 @@ cors:
   allowed-origins:
     - http://localhost:3000
 
+app:
+  default-image:
+    base-url: https://test-bucket.s3.ap-northeast-2.amazonaws.com/defaults
+
 spring:
   config:
     import: # 테스트에서는 config import 비활성화
@@ -22,6 +26,7 @@ spring:
   mail:
     host: localhost
     port: 3025
+    from: test@example.com
 
 jwt:
   secret: test-secret-key-for-testing-purpose-only-32bytes!!

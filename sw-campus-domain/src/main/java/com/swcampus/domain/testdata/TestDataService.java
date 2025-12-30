@@ -19,6 +19,7 @@ import com.swcampus.domain.teacher.Teacher;
 import com.swcampus.domain.teacher.TeacherRepository;
 import java.time.ZoneOffset;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,9 @@ public class TestDataService {
 
     private static final String TEST_PASSWORD = "admin123";
     private static final DateTimeFormatter BATCH_ID_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+
+    @Value("${app.default-image.base-url}")
+    private String defaultImageBaseUrl;
 
     private final TestDataRepository testDataRepository;
     private final OrganizationRepository organizationRepository;
@@ -152,7 +156,7 @@ public class TestDataService {
         };
 
         // 시설 이미지 URL (공개 S3 버킷)
-        String bucketUrl = "https://sw-campus-public-prod-afe42bff.s3.amazonaws.com";
+        String bucketUrl = defaultImageBaseUrl.replace("/defaults", "");
         String[][] facilityImages = {
                 {
                         bucketUrl + "/organizations/2024/12/24/a-test-1.jpg",
@@ -224,7 +228,7 @@ public class TestDataService {
 
     private List<Long> createTeachers(String batchId) {
         List<Long> ids = new ArrayList<>();
-        String bucketUrl = "https://sw-campus-public-prod-afe42bff.s3.amazonaws.com";
+        String bucketUrl = defaultImageBaseUrl.replace("/defaults", "");
         String teacherPath = bucketUrl + "/teachers/2024/12/24/";
 
         // 10명의 선생님 정보: [이름, 설명, 이미지 파일명]
@@ -280,8 +284,7 @@ public class TestDataService {
                 }
         };
 
-        // 기본 이미지 URL (prod 환경)
-        String defaultImageBaseUrl = "https://sw-campus-public-prod-afe42bff.s3.amazonaws.com/defaults";
+        // 기본 이미지 URL (설정에서 주입)
         String[] defaultImages = {
                 defaultImageBaseUrl + "/web-development.png",  // 백엔드
                 defaultImageBaseUrl + "/data-ai.png"           // AI
@@ -594,7 +597,7 @@ public class TestDataService {
 
     private List<Long> createBanners(String batchId, List<Long> lectureIds) {
         List<Long> ids = new ArrayList<>();
-        String bucketUrl = "https://sw-campus-public-prod-afe42bff.s3.amazonaws.com";
+        String bucketUrl = defaultImageBaseUrl.replace("/defaults", "");
         String bannerPath = bucketUrl + "/banners/2024/12/24/";
 
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
