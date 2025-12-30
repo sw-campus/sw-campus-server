@@ -414,8 +414,8 @@ public class TestDataService {
         data0.location = "서울시 종로구 종로 33, 그랑서울타워 15층";
         data0.recruitType = RecruitType.CARD_REQUIRED;
         data0.subsidy = BigDecimal.valueOf(6100000);  // 정부지원금 610만원
-        data0.lectureFee = BigDecimal.valueOf(6500000);  // 총 훈련비 650만원 (자기부담금 40만원)
-        data0.eduSubsidy = BigDecimal.valueOf(316000);
+        data0.lectureFee = BigDecimal.valueOf(400000);  // 자기부담금 40만원
+        data0.eduSubsidy = BigDecimal.valueOf(316000);  // 훈련수당 31.6만원
         data0.goal = "Java와 Spring Boot를 활용한 엔터프라이즈급 백엔드 개발자 양성";
         data0.maxCapacity = 30;
         data0.equipPc = EquipmentType.PC;
@@ -451,9 +451,9 @@ public class TestDataService {
         data1.lectureLoc = LectureLocation.MIXED;
         data1.location = "서울시 종로구 종로 33, 그랑서울타워 16층 (온라인 병행)";
         data1.recruitType = RecruitType.GENERAL;
-        data1.subsidy = BigDecimal.valueOf(0);
-        data1.lectureFee = BigDecimal.valueOf(3200000);
-        data1.eduSubsidy = BigDecimal.valueOf(0);
+        data1.subsidy = BigDecimal.valueOf(0);  // 정부지원금 없음 (일반과정)
+        data1.lectureFee = BigDecimal.valueOf(3200000);  // 자기부담금 320만원 (전액)
+        data1.eduSubsidy = BigDecimal.valueOf(0);  // 훈련수당 없음
         data1.goal = "Python 기반 머신러닝과 딥러닝 기초 역량 확보";
         data1.maxCapacity = 25;
         data1.equipPc = EquipmentType.LAPTOP;
@@ -490,8 +490,8 @@ public class TestDataService {
         data2.location = "서울시 금천구 가산디지털1로 168, 우림라이온스밸리 B동 12층";
         data2.recruitType = RecruitType.CARD_REQUIRED;
         data2.subsidy = BigDecimal.valueOf(5450000);  // 정부지원금 545만원
-        data2.lectureFee = BigDecimal.valueOf(5800000);  // 총 훈련비 580만원 (자기부담금 35만원)
-        data2.eduSubsidy = BigDecimal.valueOf(280000);
+        data2.lectureFee = BigDecimal.valueOf(350000);  // 자기부담금 35만원
+        data2.eduSubsidy = BigDecimal.valueOf(280000);  // 훈련수당 28만원
         data2.goal = "Spring Boot 기반 MSA 아키텍처 설계 및 구현 역량 강화";
         data2.maxCapacity = 24;
         data2.equipPc = EquipmentType.PC;
@@ -527,9 +527,9 @@ public class TestDataService {
         data3.lectureLoc = LectureLocation.ONLINE;
         data3.location = null;
         data3.recruitType = RecruitType.GENERAL;
-        data3.subsidy = BigDecimal.valueOf(0);
-        data3.lectureFee = BigDecimal.valueOf(4500000);
-        data3.eduSubsidy = BigDecimal.valueOf(0);
+        data3.subsidy = BigDecimal.valueOf(0);  // 정부지원금 없음 (일반과정)
+        data3.lectureFee = BigDecimal.valueOf(4500000);  // 자기부담금 450만원 (전액)
+        data3.eduSubsidy = BigDecimal.valueOf(0);  // 훈련수당 없음
         data3.goal = "실무 데이터 분석 프로젝트 수행 능력 및 ML 모델 배포 역량 확보";
         data3.maxCapacity = 40;
         data3.equipPc = EquipmentType.LAPTOP;
