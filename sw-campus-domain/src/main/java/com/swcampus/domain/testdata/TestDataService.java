@@ -309,15 +309,14 @@ public class TestDataService {
             for (int lectIdx = 0; lectIdx < 2; lectIdx++) {
                 LectureTestData data = lectureDataList.get(lectureCount);
 
-                // LectureCurriculum 목록 생성
+                // LectureCurriculum 목록 생성 (강의별로 다른 레벨 패턴)
                 List<LectureCurriculum> lectureCurriculums = new ArrayList<>();
                 Long[] currIds = (lectIdx == 0) ? backendCurriculums[orgIdx] : aiCurriculums[orgIdx];
+                CurriculumLevel[] levelPattern = getCurriculumLevelPattern(lectureCount);
                 for (int i = 0; i < currIds.length; i++) {
-                    CurriculumLevel level = (i < 4) ? CurriculumLevel.BASIC :
-                            (i < 8) ? CurriculumLevel.ADVANCED : CurriculumLevel.NONE;
                     lectureCurriculums.add(LectureCurriculum.builder()
                             .curriculumId(currIds[i])
-                            .level(level)
+                            .level(levelPattern[i])
                             .build());
                 }
 
@@ -414,8 +413,8 @@ public class TestDataService {
         data0.lectureLoc = LectureLocation.OFFLINE;
         data0.location = "서울시 종로구 종로 33, 그랑서울타워 15층";
         data0.recruitType = RecruitType.CARD_REQUIRED;
-        data0.subsidy = BigDecimal.valueOf(400000);
-        data0.lectureFee = BigDecimal.valueOf(6500000);
+        data0.subsidy = BigDecimal.valueOf(6100000);  // 정부지원금 610만원
+        data0.lectureFee = BigDecimal.valueOf(6500000);  // 총 훈련비 650만원 (자기부담금 40만원)
         data0.eduSubsidy = BigDecimal.valueOf(316000);
         data0.goal = "Java와 Spring Boot를 활용한 엔터프라이즈급 백엔드 개발자 양성";
         data0.maxCapacity = 30;
@@ -490,8 +489,8 @@ public class TestDataService {
         data2.lectureLoc = LectureLocation.OFFLINE;
         data2.location = "서울시 금천구 가산디지털1로 168, 우림라이온스밸리 B동 12층";
         data2.recruitType = RecruitType.CARD_REQUIRED;
-        data2.subsidy = BigDecimal.valueOf(350000);
-        data2.lectureFee = BigDecimal.valueOf(5800000);
+        data2.subsidy = BigDecimal.valueOf(5450000);  // 정부지원금 545만원
+        data2.lectureFee = BigDecimal.valueOf(5800000);  // 총 훈련비 580만원 (자기부담금 35만원)
         data2.eduSubsidy = BigDecimal.valueOf(280000);
         data2.goal = "Spring Boot 기반 MSA 아키텍처 설계 및 구현 역량 강화";
         data2.maxCapacity = 24;
@@ -598,6 +597,42 @@ public class TestDataService {
         List<String> addNames;
         List<String> requiredQuals;
         List<String> preferredQuals;
+    }
+
+    /**
+     * 강의별로 다른 커리큘럼 레벨 패턴 반환 (10개 커리큘럼)
+     */
+    private CurriculumLevel[] getCurriculumLevelPattern(int lectureIndex) {
+        return switch (lectureIndex) {
+            // 강의 0: Java 백엔드 - 기본 6개, 심화 4개 (입문자 친화적)
+            case 0 -> new CurriculumLevel[]{
+                    CurriculumLevel.BASIC, CurriculumLevel.BASIC, CurriculumLevel.BASIC,
+                    CurriculumLevel.BASIC, CurriculumLevel.BASIC, CurriculumLevel.BASIC,
+                    CurriculumLevel.ADVANCED, CurriculumLevel.ADVANCED,
+                    CurriculumLevel.ADVANCED, CurriculumLevel.ADVANCED
+            };
+            // 강의 1: AI/ML 입문 - 기본 8개, 심화 2개 (완전 입문 과정)
+            case 1 -> new CurriculumLevel[]{
+                    CurriculumLevel.BASIC, CurriculumLevel.BASIC, CurriculumLevel.BASIC,
+                    CurriculumLevel.BASIC, CurriculumLevel.BASIC, CurriculumLevel.BASIC,
+                    CurriculumLevel.BASIC, CurriculumLevel.BASIC,
+                    CurriculumLevel.ADVANCED, CurriculumLevel.ADVANCED
+            };
+            // 강의 2: Spring Boot 마스터 - 기본 3개, 심화 7개 (심화 과정)
+            case 2 -> new CurriculumLevel[]{
+                    CurriculumLevel.BASIC, CurriculumLevel.BASIC, CurriculumLevel.BASIC,
+                    CurriculumLevel.ADVANCED, CurriculumLevel.ADVANCED, CurriculumLevel.ADVANCED,
+                    CurriculumLevel.ADVANCED, CurriculumLevel.ADVANCED,
+                    CurriculumLevel.ADVANCED, CurriculumLevel.ADVANCED
+            };
+            // 강의 3: 데이터 사이언스 - 기본 5개, 심화 5개 (균형)
+            default -> new CurriculumLevel[]{
+                    CurriculumLevel.BASIC, CurriculumLevel.BASIC, CurriculumLevel.BASIC,
+                    CurriculumLevel.BASIC, CurriculumLevel.BASIC,
+                    CurriculumLevel.ADVANCED, CurriculumLevel.ADVANCED, CurriculumLevel.ADVANCED,
+                    CurriculumLevel.ADVANCED, CurriculumLevel.ADVANCED
+            };
+        };
     }
 
     private List<LectureStep> createLectureSteps(List<SelectionStepType> stepTypes) {
