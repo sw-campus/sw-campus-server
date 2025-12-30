@@ -10,6 +10,6 @@
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="OTEL"/>
+        <!-- <appender-ref ref="OTEL"/> TODO: 나중에 사용 예정 -->
     </root>
 </configuration>
