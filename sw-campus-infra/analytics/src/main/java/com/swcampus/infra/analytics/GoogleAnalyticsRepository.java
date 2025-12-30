@@ -48,8 +48,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     @Override
     public AnalyticsReport getReport(int daysAgo) {
-        // daysAgo=1이면 오늘만, daysAgo=7이면 오늘 포함 7일 (6일 전부터)
-        String startDate = (daysAgo - 1) + "daysAgo";
+        String startDate = daysAgo + "daysAgo";
         String endDate = "today";
 
         // 병렬 실행: 3개의 GA API 요청을 동시에 실행
@@ -154,7 +153,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     @Override
     public EventStats getEventStats(int daysAgo) {
-        String startDate = (daysAgo - 1) + "daysAgo";
+        String startDate = daysAgo + "daysAgo";
         String endDate = "today";
 
         // 병렬 실행: 2개의 GA API 요청을 동시에 실행
@@ -252,7 +251,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     @Override
     public List<BannerClickStats> getTopBannersByClicks(int daysAgo, int limit) {
-        String startDate = (daysAgo - 1) + "daysAgo";
+        String startDate = daysAgo + "daysAgo";
         String endDate = "today";
         List<BannerClickStats> result = new ArrayList<>();
 
@@ -305,7 +304,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     @Override
     public List<LectureClickStats> getTopLecturesByClicks(int daysAgo, int limit) {
-        String startDate = (daysAgo - 1) + "daysAgo";
+        String startDate = daysAgo + "daysAgo";
         String endDate = "today";
 
         // 병렬 실행: 2개의 GA API 요청을 동시에 실행
@@ -444,7 +443,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     @Override
     public List<PopularLecture> getPopularLectures(int daysAgo, int limit) {
-        String startDate = (daysAgo - 1) + "daysAgo";
+        String startDate = daysAgo + "daysAgo";
         String endDate = "today";
         List<PopularLecture> result = new ArrayList<>();
 
@@ -512,7 +511,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     @Override
     public List<PopularSearchTerm> getPopularSearchTerms(int daysAgo, int limit) {
-        String startDate = (daysAgo - 1) + "daysAgo";
+        String startDate = daysAgo + "daysAgo";
         String endDate = "today";
         List<PopularSearchTerm> result = new ArrayList<>();
 
