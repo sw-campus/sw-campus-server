@@ -95,10 +95,15 @@ public class TestDataService {
         // 10. Banner 생성 (BIG 3개, MIDDLE 2개, SMALL 3개)
         List<Long> bannerIds = createBanners(batchId, lectureIds);
 
-        // Member IDs 병합 (기관담당자 2명 + 일반회원 15명)
+        // 11. 시연용 계정 생성 (수료증/리뷰 없음, 설문조사 있음)
+        Long demoMemberId = createDemoMember(batchId, encodedPassword);
+        createDemoSurvey(batchId, demoMemberId);
+
+        // Member IDs 병합 (기관담당자 3명 + 일반회원 15명 + 시연용 1명)
         List<Long> allMemberIds = new ArrayList<>();
         allMemberIds.addAll(orgMemberIds);
         allMemberIds.addAll(userMemberIds);
+        allMemberIds.add(demoMemberId);
 
         return TestDataCreateResult.builder()
                 .batchId(batchId)
@@ -262,60 +267,52 @@ public class TestDataService {
 
     private List<Long> createLectures(String batchId, List<Long> organizationIds, List<Long> teacherIds) {
         List<Long> ids = new ArrayList<>();
-        // 각 기관에 백엔드 1개 + AI 1개 강의 (같은 카테고리끼리 비교 가능)
-        String[][] lectureNames = {
-                {"Java 백엔드 개발 부트캠프", "AI/ML 입문 과정"},      // 기관 A
-                {"Spring Boot 마스터 과정", "데이터 사이언스 실무"}    // 기관 B
-        };
+        LocalDateTime now = LocalDateTime.now();
 
-        // 커리큘럼 ID 매핑 (기존 seed 데이터 기준) - 각 강의당 10개 커리큘럼
+        // 4개 강의 데이터 정의 (각 기관에 2개씩)
+        // 강의 0: Java 백엔드 개발 부트캠프 (기관 A - 종로)
+        // 강의 1: AI/ML 입문 과정 (기관 A - 종로)
+        // 강의 2: Spring Boot 마스터 과정 (기관 B - 가산)
+        // 강의 3: 데이터 사이언스 실무 (기관 B - 가산)
+
+        List<LectureTestData> lectureDataList = createLectureTestDataList();
+
+        // 커리큘럼 ID 매핑 (기존 seed 데이터 기준)
         // 백엔드(Category 4): curriculums 11-20
         // AI(Category 11): curriculums 61-70
-        Long[][][] curriculumIds = {
-                // 기관 A: 백엔드 + AI
-                {
-                        {11L, 12L, 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L},  // 백엔드
-                        {61L, 62L, 63L, 64L, 65L, 66L, 67L, 68L, 69L, 70L}   // AI
-                },
-                // 기관 B: 백엔드 + AI
-                {
-                        {11L, 12L, 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L},  // 백엔드
-                        {61L, 62L, 63L, 64L, 65L, 66L, 67L, 68L, 69L, 70L}   // AI
-                }
+        Long[][] backendCurriculums = {
+                {11L, 12L, 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L},
+                {11L, 12L, 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L}
+        };
+        Long[][] aiCurriculums = {
+                {61L, 62L, 63L, 64L, 65L, 66L, 67L, 68L, 69L, 70L},
+                {61L, 62L, 63L, 64L, 65L, 66L, 67L, 68L, 69L, 70L}
         };
 
-        // 기본 이미지 URL (설정에서 주입)
+        // 기본 이미지 URL
         String[] defaultImages = {
-                defaultImageBaseUrl + "/web-development.png",  // 백엔드
-                defaultImageBaseUrl + "/data-ai.png"           // AI
+                defaultImageBaseUrl + "/web-development.png",
+                defaultImageBaseUrl + "/data-ai.png"
         };
 
-        // 각 강의에 배치할 선생님 인덱스 (10명을 4개 강의에 2~3명씩 중복 없이 배치)
-        // 강의 0 (기관A-백엔드): 선생님 0, 1 (2명)
-        // 강의 1 (기관A-AI): 선생님 2, 3, 4 (3명)
-        // 강의 2 (기관B-백엔드): 선생님 5, 6 (2명)
-        // 강의 3 (기관B-AI): 선생님 7, 8, 9 (3명)
+        // 각 강의에 배치할 선생님 인덱스
         int[][] teacherIndices = {
-                {0, 1},       // 강의 0
-                {2, 3, 4},    // 강의 1
-                {5, 6},       // 강의 2
-                {7, 8, 9}     // 강의 3
+                {0, 1},
+                {2, 3, 4},
+                {5, 6},
+                {7, 8, 9}
         };
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startDate = now.plusDays(30);
-        LocalDateTime endDate = now.plusDays(120);
-        LocalDateTime deadline = now.plusDays(25);
 
         int lectureCount = 0;
         for (int orgIdx = 0; orgIdx < organizationIds.size(); orgIdx++) {
             Long orgId = organizationIds.get(orgIdx);
             for (int lectIdx = 0; lectIdx < 2; lectIdx++) {
-                // LectureCurriculum 목록 생성 (10개 커리큘럼)
+                LectureTestData data = lectureDataList.get(lectureCount);
+
+                // LectureCurriculum 목록 생성
                 List<LectureCurriculum> lectureCurriculums = new ArrayList<>();
-                Long[] currIds = curriculumIds[orgIdx][lectIdx];
+                Long[] currIds = (lectIdx == 0) ? backendCurriculums[orgIdx] : aiCurriculums[orgIdx];
                 for (int i = 0; i < currIds.length; i++) {
-                    // 0-3: BASIC, 4-7: ADVANCED, 8-9: NONE
                     CurriculumLevel level = (i < 4) ? CurriculumLevel.BASIC :
                             (i < 8) ? CurriculumLevel.ADVANCED : CurriculumLevel.NONE;
                     lectureCurriculums.add(LectureCurriculum.builder()
@@ -324,13 +321,22 @@ public class TestDataService {
                             .build());
                 }
 
-                // 현재 강의에 배치할 선생님 목록 생성
+                // 선생님 목록 생성
                 List<Teacher> teachers = new ArrayList<>();
                 for (int teacherIdx : teacherIndices[lectureCount]) {
                     teachers.add(Teacher.builder()
                             .teacherId(teacherIds.get(teacherIdx))
                             .build());
                 }
+
+                // 선발절차 생성
+                List<LectureStep> steps = createLectureSteps(data.stepTypes);
+
+                // 추가혜택 생성
+                List<LectureAdd> adds = createLectureAdds(data.addNames);
+
+                // 지원자격 생성
+                List<LectureQual> quals = createLectureQuals(data.requiredQuals, data.preferredQuals);
 
                 // 마지막 강의(4번째)는 PENDING 상태로 생성
                 LectureAuthStatus authStatus = (lectureCount == 3)
@@ -339,38 +345,48 @@ public class TestDataService {
 
                 Lecture lecture = Lecture.builder()
                         .orgId(orgId)
-                        .lectureName(lectureNames[orgIdx][lectIdx])
+                        .lectureName(data.name)
                         .lectureImageUrl(defaultImages[lectIdx])
-                        .days(Set.of(LectureDay.MONDAY, LectureDay.WEDNESDAY, LectureDay.FRIDAY))
-                        .startTime(LocalTime.of(9, 0))
-                        .endTime(LocalTime.of(18, 0))
-                        .lectureLoc(LectureLocation.OFFLINE)
-                        .location("서울시 강남구 테헤란로 123")
-                        .recruitType(RecruitType.CARD_REQUIRED)
-                        .subsidy(BigDecimal.valueOf(300000))
-                        .lectureFee(BigDecimal.valueOf(5000000))
-                        .eduSubsidy(BigDecimal.valueOf(200000))
-                        .goal("실무 개발자 양성")
-                        .maxCapacity(30)
-                        .equipPc(EquipmentType.PC)
-                        .equipMerit("최신 개발 환경")
-                        .books(true)
-                        .resume(true)
-                        .mockInterview(true)
-                        .employmentHelp(true)
-                        .afterCompletion(true)
-                        .url("https://example.com/apply")
+                        .days(data.days)
+                        .startTime(data.startTime)
+                        .endTime(data.endTime)
+                        .lectureLoc(data.lectureLoc)
+                        .location(data.location)
+                        .recruitType(data.recruitType)
+                        .subsidy(data.subsidy)
+                        .lectureFee(data.lectureFee)
+                        .eduSubsidy(data.eduSubsidy)
+                        .goal(data.goal)
+                        .maxCapacity(data.maxCapacity)
+                        .equipPc(data.equipPc)
+                        .equipMerit(data.equipMerit)
+                        .books(data.books)
+                        // 취업지원서비스
+                        .resume(data.resume)
+                        .mockInterview(data.mockInterview)
+                        .employmentHelp(data.employmentHelp)
+                        .afterCompletion(data.afterCompletion)
+                        // 프로젝트
+                        .projectNum(data.projectNum)
+                        .projectTime(data.projectTime)
+                        .projectTeam(data.projectTeam)
+                        .projectTool(data.projectTool)
+                        .projectMentor(data.projectMentor)
+                        .url(data.url)
                         .status(LectureStatus.RECRUITING)
                         .lectureAuthStatus(authStatus)
-                        .startAt(startDate)
-                        .endAt(endDate)
-                        .deadline(deadline)
-                        .totalDays(90)
-                        .totalTimes(720)
+                        .startAt(data.startAt)
+                        .endAt(data.endAt)
+                        .deadline(data.deadline)
+                        .totalDays(data.totalDays)
+                        .totalTimes(data.totalTimes)
                         .createdAt(now)
                         .updatedAt(now)
                         .lectureCurriculums(lectureCurriculums)
                         .teachers(teachers)
+                        .steps(steps)
+                        .adds(adds)
+                        .quals(quals)
                         .build();
 
                 Lecture saved = lectureRepository.save(lecture);
@@ -380,6 +396,249 @@ public class TestDataService {
             }
         }
         return ids;
+    }
+
+    /**
+     * 4개 강의에 대한 차별화된 테스트 데이터 생성
+     */
+    private List<LectureTestData> createLectureTestDataList() {
+        LocalDateTime now = LocalDateTime.now();
+        List<LectureTestData> list = new ArrayList<>();
+
+        // 강의 0: Java 백엔드 개발 부트캠프 (기관 A - 종로) - 가장 체계적인 풀타임 과정
+        LectureTestData data0 = new LectureTestData();
+        data0.name = "Java 백엔드 개발 부트캠프";
+        data0.days = Set.of(LectureDay.MONDAY, LectureDay.TUESDAY, LectureDay.WEDNESDAY, LectureDay.THURSDAY, LectureDay.FRIDAY);
+        data0.startTime = LocalTime.of(9, 0);
+        data0.endTime = LocalTime.of(18, 0);
+        data0.lectureLoc = LectureLocation.OFFLINE;
+        data0.location = "서울시 종로구 종로 33, 그랑서울타워 15층";
+        data0.recruitType = RecruitType.CARD_REQUIRED;
+        data0.subsidy = BigDecimal.valueOf(400000);
+        data0.lectureFee = BigDecimal.valueOf(6500000);
+        data0.eduSubsidy = BigDecimal.valueOf(316000);
+        data0.goal = "Java와 Spring Boot를 활용한 엔터프라이즈급 백엔드 개발자 양성";
+        data0.maxCapacity = 30;
+        data0.equipPc = EquipmentType.PC;
+        data0.equipMerit = "듀얼 모니터, 인체공학 의자, 개인 사물함 제공";
+        data0.books = true;
+        data0.resume = true;
+        data0.mockInterview = true;
+        data0.employmentHelp = true;
+        data0.afterCompletion = true;
+        data0.projectNum = 4;
+        data0.projectTime = 320;
+        data0.projectTeam = "4~5인 팀 프로젝트";
+        data0.projectTool = "Git, Jira, Notion, Slack";
+        data0.projectMentor = true;
+        data0.url = "https://edu.kosta.or.kr/java-backend";
+        data0.startAt = now.plusDays(45);
+        data0.endAt = now.plusDays(165);
+        data0.deadline = now.plusDays(40);
+        data0.totalDays = 120;
+        data0.totalTimes = 960;
+        data0.stepTypes = List.of(SelectionStepType.DOCUMENT, SelectionStepType.CODING_TEST, SelectionStepType.INTERVIEW);
+        data0.addNames = List.of("노트북 대여", "취업축하금 100만원", "우수 수료생 해외연수", "자격증 응시료 지원");
+        data0.requiredQuals = List.of("내일배움카드 소지자", "6개월 이상 풀타임 참여 가능자");
+        data0.preferredQuals = List.of("프로그래밍 언어 학습 경험자", "IT 관련 전공자", "팀 프로젝트 경험자");
+        list.add(data0);
+
+        // 강의 1: AI/ML 입문 과정 (기관 A - 종로) - 파트타임 온라인 병행 과정
+        LectureTestData data1 = new LectureTestData();
+        data1.name = "AI/ML 입문 과정";
+        data1.days = Set.of(LectureDay.MONDAY, LectureDay.WEDNESDAY, LectureDay.FRIDAY);
+        data1.startTime = LocalTime.of(19, 0);
+        data1.endTime = LocalTime.of(22, 0);
+        data1.lectureLoc = LectureLocation.MIXED;
+        data1.location = "서울시 종로구 종로 33, 그랑서울타워 16층 (온라인 병행)";
+        data1.recruitType = RecruitType.GENERAL;
+        data1.subsidy = BigDecimal.valueOf(0);
+        data1.lectureFee = BigDecimal.valueOf(3200000);
+        data1.eduSubsidy = BigDecimal.valueOf(0);
+        data1.goal = "Python 기반 머신러닝과 딥러닝 기초 역량 확보";
+        data1.maxCapacity = 25;
+        data1.equipPc = EquipmentType.LAPTOP;
+        data1.equipMerit = "GPU 서버 원격 접속 환경, Jupyter Hub 제공";
+        data1.books = true;
+        data1.resume = false;
+        data1.mockInterview = false;
+        data1.employmentHelp = false;
+        data1.afterCompletion = true;
+        data1.projectNum = 2;
+        data1.projectTime = 80;
+        data1.projectTeam = "2~3인 팀 프로젝트";
+        data1.projectTool = "GitHub, Google Colab";
+        data1.projectMentor = true;
+        data1.url = "https://edu.kosta.or.kr/ai-ml-basic";
+        data1.startAt = now.plusDays(30);
+        data1.endAt = now.plusDays(90);
+        data1.deadline = now.plusDays(25);
+        data1.totalDays = 60;
+        data1.totalTimes = 180;
+        data1.stepTypes = List.of(SelectionStepType.DOCUMENT, SelectionStepType.PRE_TASK);
+        data1.addNames = List.of("AI 관련 도서 제공", "수료 후 심화과정 할인");
+        data1.requiredQuals = List.of("Python 기초 문법 이해자", "개인 노트북 지참 가능자");
+        data1.preferredQuals = List.of("수학/통계 기초 지식 보유자", "데이터 분석 관심자");
+        list.add(data1);
+
+        // 강의 2: Spring Boot 마스터 과정 (기관 B - 가산) - 실무 중심 풀타임 과정
+        LectureTestData data2 = new LectureTestData();
+        data2.name = "Spring Boot 마스터 과정";
+        data2.days = Set.of(LectureDay.MONDAY, LectureDay.TUESDAY, LectureDay.WEDNESDAY, LectureDay.THURSDAY, LectureDay.FRIDAY);
+        data2.startTime = LocalTime.of(9, 30);
+        data2.endTime = LocalTime.of(18, 30);
+        data2.lectureLoc = LectureLocation.OFFLINE;
+        data2.location = "서울시 금천구 가산디지털1로 168, 우림라이온스밸리 B동 12층";
+        data2.recruitType = RecruitType.CARD_REQUIRED;
+        data2.subsidy = BigDecimal.valueOf(350000);
+        data2.lectureFee = BigDecimal.valueOf(5800000);
+        data2.eduSubsidy = BigDecimal.valueOf(280000);
+        data2.goal = "Spring Boot 기반 MSA 아키텍처 설계 및 구현 역량 강화";
+        data2.maxCapacity = 24;
+        data2.equipPc = EquipmentType.PC;
+        data2.equipMerit = "최신 사양 PC, 스탠딩 데스크 옵션, 카페테리아 무료 이용";
+        data2.books = false;
+        data2.resume = true;
+        data2.mockInterview = true;
+        data2.employmentHelp = true;
+        data2.afterCompletion = false;
+        data2.projectNum = 3;
+        data2.projectTime = 240;
+        data2.projectTeam = "3~4인 스크럼 팀";
+        data2.projectTool = "Git, GitHub Actions, AWS, Docker";
+        data2.projectMentor = true;
+        data2.url = "https://edu.kosta.or.kr/spring-master";
+        data2.startAt = now.plusDays(60);
+        data2.endAt = now.plusDays(150);
+        data2.deadline = now.plusDays(55);
+        data2.totalDays = 90;
+        data2.totalTimes = 720;
+        data2.stepTypes = List.of(SelectionStepType.DOCUMENT, SelectionStepType.CODING_TEST, SelectionStepType.INTERVIEW);
+        data2.addNames = List.of("AWS 크레딧 $100 제공", "협력사 인턴십 연계", "기술 블로그 운영 지원");
+        data2.requiredQuals = List.of("내일배움카드 소지자", "Java 기초 문법 이해자", "3개월 이상 풀타임 참여 가능자");
+        data2.preferredQuals = List.of("웹 개발 경험자", "Spring Framework 사용 경험자", "CS 기초 지식 보유자");
+        list.add(data2);
+
+        // 강의 3: 데이터 사이언스 실무 (기관 B - 가산) - 온라인 중심 과정
+        LectureTestData data3 = new LectureTestData();
+        data3.name = "데이터 사이언스 실무";
+        data3.days = Set.of(LectureDay.TUESDAY, LectureDay.THURSDAY, LectureDay.SATURDAY);
+        data3.startTime = LocalTime.of(10, 0);
+        data3.endTime = LocalTime.of(17, 0);
+        data3.lectureLoc = LectureLocation.ONLINE;
+        data3.location = null;
+        data3.recruitType = RecruitType.GENERAL;
+        data3.subsidy = BigDecimal.valueOf(0);
+        data3.lectureFee = BigDecimal.valueOf(4500000);
+        data3.eduSubsidy = BigDecimal.valueOf(0);
+        data3.goal = "실무 데이터 분석 프로젝트 수행 능력 및 ML 모델 배포 역량 확보";
+        data3.maxCapacity = 40;
+        data3.equipPc = EquipmentType.LAPTOP;
+        data3.equipMerit = "클라우드 GPU 인스턴스 제공, 실습 데이터셋 무제한 접근";
+        data3.books = true;
+        data3.resume = true;
+        data3.mockInterview = false;
+        data3.employmentHelp = true;
+        data3.afterCompletion = true;
+        data3.projectNum = 5;
+        data3.projectTime = 200;
+        data3.projectTeam = "개인 프로젝트 + 2인 페어 프로젝트";
+        data3.projectTool = "Python, Pandas, Scikit-learn, TensorFlow, MLflow";
+        data3.projectMentor = false;
+        data3.url = "https://edu.kosta.or.kr/data-science";
+        data3.startAt = now.plusDays(21);
+        data3.endAt = now.plusDays(105);
+        data3.deadline = now.plusDays(18);
+        data3.totalDays = 84;
+        data3.totalTimes = 504;
+        data3.stepTypes = List.of(SelectionStepType.DOCUMENT, SelectionStepType.PRE_TASK, SelectionStepType.INTERVIEW);
+        data3.addNames = List.of("Kaggle 대회 참가 지원", "데이터 분석 자격증 응시료 지원", "포트폴리오 제작 지원");
+        data3.requiredQuals = List.of("Python 중급 이상 활용 가능자", "통계학 기초 이해자");
+        data3.preferredQuals = List.of("SQL 활용 경험자", "데이터 분석 프로젝트 경험자", "관련 분야 실무 경험자", "Kaggle 참여 경험자");
+        list.add(data3);
+
+        return list;
+    }
+
+    /**
+     * 강의 테스트 데이터를 담는 내부 클래스
+     */
+    private static class LectureTestData {
+        String name;
+        Set<LectureDay> days;
+        LocalTime startTime;
+        LocalTime endTime;
+        LectureLocation lectureLoc;
+        String location;
+        RecruitType recruitType;
+        BigDecimal subsidy;
+        BigDecimal lectureFee;
+        BigDecimal eduSubsidy;
+        String goal;
+        Integer maxCapacity;
+        EquipmentType equipPc;
+        String equipMerit;
+        Boolean books;
+        Boolean resume;
+        Boolean mockInterview;
+        Boolean employmentHelp;
+        Boolean afterCompletion;
+        Integer projectNum;
+        Integer projectTime;
+        String projectTeam;
+        String projectTool;
+        Boolean projectMentor;
+        String url;
+        LocalDateTime startAt;
+        LocalDateTime endAt;
+        LocalDateTime deadline;
+        Integer totalDays;
+        Integer totalTimes;
+        List<SelectionStepType> stepTypes;
+        List<String> addNames;
+        List<String> requiredQuals;
+        List<String> preferredQuals;
+    }
+
+    private List<LectureStep> createLectureSteps(List<SelectionStepType> stepTypes) {
+        List<LectureStep> steps = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        for (int i = 0; i < stepTypes.size(); i++) {
+            steps.add(LectureStep.builder()
+                    .stepType(stepTypes.get(i))
+                    .stepOrder(i + 1)
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .build());
+        }
+        return steps;
+    }
+
+    private List<LectureAdd> createLectureAdds(List<String> addNames) {
+        List<LectureAdd> adds = new ArrayList<>();
+        for (String name : addNames) {
+            adds.add(LectureAdd.builder()
+                    .addName(name)
+                    .build());
+        }
+        return adds;
+    }
+
+    private List<LectureQual> createLectureQuals(List<String> requiredQuals, List<String> preferredQuals) {
+        List<LectureQual> quals = new ArrayList<>();
+        for (String text : requiredQuals) {
+            quals.add(LectureQual.builder()
+                    .type(LectureQualType.REQUIRED)
+                    .text(text)
+                    .build());
+        }
+        for (String text : preferredQuals) {
+            quals.add(LectureQual.builder()
+                    .type(LectureQualType.PREFERRED)
+                    .text(text)
+                    .build());
+        }
+        return quals;
     }
 
     private List<Long> createUserMembers(String batchId, String encodedPassword) {
@@ -403,6 +662,45 @@ public class TestDataService {
             registerTestData(batchId, "members", saved.getId());
         }
         return ids;
+    }
+
+    /**
+     * 시연용 계정 생성 (수료증/리뷰 없음)
+     */
+    private Long createDemoMember(String batchId, String encodedPassword) {
+        Member member = Member.of(
+                null,
+                "sw.campus2025@gmail.com",
+                encodedPassword,
+                "SW캠퍼스",
+                "캠퍼스지기",
+                "010-0000-0000",
+                Role.USER,
+                null,
+                "서울",
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        Member saved = memberRepository.save(member);
+        registerTestData(batchId, "members", saved.getId());
+        return saved.getId();
+    }
+
+    /**
+     * 시연용 계정 설문조사 생성
+     */
+    private void createDemoSurvey(String batchId, Long memberId) {
+        MemberSurvey survey = MemberSurvey.create(
+                memberId,
+                "컴퓨터공학",           // 전공
+                false,                  // 부트캠프 수료 여부
+                "백엔드 개발자",         // 희망 직무
+                "정보처리기사, SQLD",    // 자격증
+                true,                   // 국비카드 보유
+                BigDecimal.valueOf(3000000)  // 희망 금액
+        );
+        memberSurveyRepository.save(survey);
+        registerTestData(batchId, "member_surveys", memberId);
     }
 
     private List<Long> createCertificates(String batchId, List<Long> userMemberIds, List<Long> lectureIds) {
