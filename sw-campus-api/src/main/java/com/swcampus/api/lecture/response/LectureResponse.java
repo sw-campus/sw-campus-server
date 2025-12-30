@@ -127,7 +127,7 @@ public record LectureResponse(
 				lecture.getLectureId(),
 				lecture.extractCategoryId(), // categoryId 추가
 				lecture.getOrgId(),
-				lecture.getOrgName(),
+				organization != null ? organization.getName() : lecture.getOrgName(),
 				lecture.getLectureName(),
 				lecture.getDays() != null
 						? lecture.getDays().stream().map(Enum::name).collect(Collectors.toSet())
