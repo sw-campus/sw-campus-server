@@ -42,7 +42,7 @@ public class CertificateEntityRepository implements CertificateRepository {
 
     @Override
     public List<Certificate> findAllByMemberId(Long memberId) {
-        return jpaRepository.findAllByMemberId(memberId)
+        return jpaRepository.findAllByMemberIdAndApprovalStatus(memberId, ApprovalStatus.APPROVED)
             .stream()
             .map(CertificateEntity::toDomain)
             .toList();
