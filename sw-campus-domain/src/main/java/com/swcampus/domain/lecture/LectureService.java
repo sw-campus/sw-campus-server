@@ -119,10 +119,20 @@ public class LectureService {
 			newAuthStatus = LectureAuthStatus.PENDING;
 		}
 
+		// deadline 기준으로 status 결정
+		LectureStatus newStatus;
+		if (lecture.getDeadline() == null) {
+			newStatus = existingLecture.getStatus();
+		} else if (lecture.getDeadline().isAfter(java.time.LocalDateTime.now())) {
+			newStatus = LectureStatus.RECRUITING;
+		} else {
+			newStatus = LectureStatus.FINISHED;
+		}
+
 		Lecture updatedLecture = lecture.toBuilder()
 				.lectureId(lectureId)
 				.lectureImageUrl(imageUrl)
-				.status(existingLecture.getStatus())
+				.status(newStatus)
 				.lectureAuthStatus(newAuthStatus)
 				.createdAt(existingLecture.getCreatedAt())
 				.teachers(updatedTeachers)
