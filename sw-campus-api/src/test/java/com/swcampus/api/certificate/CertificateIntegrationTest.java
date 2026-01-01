@@ -14,6 +14,7 @@ import com.swcampus.domain.member.Role;
 import com.swcampus.domain.ocr.OcrClient;
 import com.swcampus.domain.storage.FileStorageService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -211,6 +212,7 @@ class CertificateIntegrationTest {
         }
 
         @Test
+        @Disabled("OCR 기능 일시 비활성화 (certificate.ocr.enabled=false)")
         @DisplayName("OCR 강의명 불일치 - 실패")
         void ocrMismatch_fails() throws Exception {
             // OCR이 다른 강의명을 추출
@@ -275,6 +277,7 @@ class CertificateIntegrationTest {
     class OcrFlexibleMatching {
 
         @Test
+        @Disabled("OCR 기능 일시 비활성화 (certificate.ocr.enabled=false)")
         @DisplayName("공백/대소문자가 달라도 매칭 성공")
         void flexibleMatchingSuccess() throws Exception {
             // 강의명: "Spring Boot 실전 강의"
@@ -307,6 +310,7 @@ class CertificateIntegrationTest {
         }
 
         @Test
+        @Disabled("OCR 기능 일시 비활성화 (certificate.ocr.enabled=false)")
         @DisplayName("강의명이 여러 줄에 걸쳐 추출되어도 매칭 성공")
         void multiLineMatchingSuccess() throws Exception {
             // 강의명이 OCR에서 여러 줄로 분리된 경우
