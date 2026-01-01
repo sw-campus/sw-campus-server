@@ -2,11 +2,16 @@ package com.swcampus.domain.lecture;
 
 import com.swcampus.domain.category.Curriculum;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor
 public class LectureCurriculum {
 	private Long lectureId;
 	private Long curriculumId;
