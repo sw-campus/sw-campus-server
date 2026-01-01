@@ -207,6 +207,11 @@ public class LectureEntityRepository implements LectureRepository {
 	}
 
 	@Override
+	public int closeExpiredLectures(LocalDateTime now) {
+		return jpaRepository.closeExpiredLectures(now);
+	}
+
+	@Override
 	public List<Lecture> findAllByOrgId(Long orgId) {
 		return jpaRepository.findAllByOrgIdWithCurriculums(orgId)
 				.stream()

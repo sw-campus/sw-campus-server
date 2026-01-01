@@ -24,6 +24,15 @@ public interface LectureRepository {
 
     List<Lecture> findAllExpiredAndRecruiting(LocalDateTime now);
 
+    /**
+     * 마감일이 지난 모집중인 강의들의 상태를 일괄 변경합니다.
+     * N:M 연관관계(teachers, curriculums)를 건드리지 않고 status만 업데이트합니다.
+     *
+     * @param now 현재 시간
+     * @return 변경된 강의 수
+     */
+    int closeExpiredLectures(LocalDateTime now);
+
     List<Lecture> findAllByOrgIdAndLectureAuthStatus(Long orgId, LectureAuthStatus status);
 
     Map<Long, Long> countLecturesByStatusAndAuthStatusAndOrgIdIn(LectureStatus status, LectureAuthStatus authStatus,
