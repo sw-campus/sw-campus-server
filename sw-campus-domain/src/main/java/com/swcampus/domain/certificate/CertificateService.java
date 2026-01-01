@@ -8,16 +8,22 @@ import com.swcampus.domain.lecture.LectureRepository;
 import com.swcampus.domain.ocr.OcrClient;
 import com.swcampus.domain.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CertificateService {
+
+    @Value("${certificate.ocr.enabled:false}")
+    private boolean ocrEnabled;
 
     private final CertificateRepository certificateRepository;
     private final LectureRepository lectureRepository;
@@ -48,11 +54,13 @@ public class CertificateService {
         Lecture lecture = lectureRepository.findById(lectureId)
                 .orElseThrow(() -> new ResourceNotFoundException("강의를 찾을 수 없습니다. ID: " + lectureId));
 
-        // 3. OCR로 텍스트 추출
-        List<String> extractedLines = ocrClient.extractText(imageBytes, fileName);
-
-        // 4. 강의명 다단계 매칭 검증
-        validateLectureName(lecture.getLectureName(), extractedLines);
+        // 3-4. OCR 검증 (설정에 따라 스킵)
+        if (ocrEnabled) {
+            List<String> extractedLines = ocrClient.extractText(imageBytes, fileName);
+            validateLectureName(lecture.getLectureName(), extractedLines);
+        } else {
+            log.info("OCR 검증 비활성화 상태 - 수료증 이미지만 저장합니다. memberId={}, lectureId={}", memberId, lectureId);
+        }
 
         // 5. S3 Private Bucket에 이미지 업로드
         String imageKey = fileStorageService.uploadPrivate(imageBytes, "certificates", fileName, contentType);
