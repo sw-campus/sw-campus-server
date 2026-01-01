@@ -4,6 +4,7 @@ import com.swcampus.domain.ocr.OcrClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +19,7 @@ import java.util.List;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "certificate.ocr.enabled", havingValue = "true")
 public class OcrClientImpl implements OcrClient {
 
     private final RestTemplate ocrRestTemplate;

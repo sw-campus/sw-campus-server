@@ -7,8 +7,8 @@ import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureRepository;
 import com.swcampus.domain.ocr.OcrClient;
 import com.swcampus.domain.storage.FileStorageService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +18,6 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CertificateService {
 
@@ -28,8 +27,21 @@ public class CertificateService {
     private final CertificateRepository certificateRepository;
     private final LectureRepository lectureRepository;
     private final FileStorageService fileStorageService;
-    private final OcrClient ocrClient;
+    private final OcrClient ocrClient;  // nullable - OCR 비활성화 시 null
     private final LectureNameMatcher lectureNameMatcher;
+
+    public CertificateService(
+            CertificateRepository certificateRepository,
+            LectureRepository lectureRepository,
+            FileStorageService fileStorageService,
+            @Autowired(required = false) OcrClient ocrClient,
+            LectureNameMatcher lectureNameMatcher) {
+        this.certificateRepository = certificateRepository;
+        this.lectureRepository = lectureRepository;
+        this.fileStorageService = fileStorageService;
+        this.ocrClient = ocrClient;
+        this.lectureNameMatcher = lectureNameMatcher;
+    }
 
     /**
      * 수료증 인증 여부 확인
@@ -55,7 +67,7 @@ public class CertificateService {
                 .orElseThrow(() -> new ResourceNotFoundException("강의를 찾을 수 없습니다. ID: " + lectureId));
 
         // 3-4. OCR 검증 (설정에 따라 스킵)
-        if (ocrEnabled) {
+        if (ocrEnabled && ocrClient != null) {
             List<String> extractedLines = ocrClient.extractText(imageBytes, fileName);
             validateLectureName(lecture.getLectureName(), extractedLines);
         } else {
