@@ -16,7 +16,7 @@ public interface LectureJpaRepository extends JpaRepository<LectureEntity, Long>
         List<LectureEntity> findAllByDeadlineBeforeAndStatus(LocalDateTime now, LectureStatus status);
 
         @Modifying
-        @Query("UPDATE LectureEntity l SET l.status = 'FINISHED', l.updatedAt = :now " +
+        @Query("UPDATE LectureEntity l SET l.status = com.swcampus.domain.lecture.LectureStatus.FINISHED, l.updatedAt = :now " +
                         "WHERE l.deadline < :now AND l.status = com.swcampus.domain.lecture.LectureStatus.RECRUITING")
         int closeExpiredLectures(@Param("now") LocalDateTime now);
 
