@@ -48,7 +48,7 @@ public class StorageController {
             @Parameter(description = "S3 객체 key", required = true, example = "lectures/2024/01/01/uuid.jpg")
             @RequestParam("key") String key,
             @Parameter(hidden = true)
-            @AuthenticationPrincipal MemberPrincipal member) {
+            @AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") MemberPrincipal member) {
 
         boolean isAdmin = isAdmin(member);
         var presignedUrl = presignedUrlService.getPresignedUrl(key, isAdmin);
@@ -69,7 +69,7 @@ public class StorageController {
     public ResponseEntity<Map<String, String>> getPresignedUrlBatch(
             @Valid @RequestBody PresignedUrlBatchRequest request,
             @Parameter(hidden = true)
-            @AuthenticationPrincipal MemberPrincipal member) {
+            @AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") MemberPrincipal member) {
 
         boolean isAdmin = isAdmin(member);
         var urls = presignedUrlService.getPresignedUrls(request.keys(), isAdmin);
