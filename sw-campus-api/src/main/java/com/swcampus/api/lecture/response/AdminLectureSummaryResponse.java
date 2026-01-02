@@ -25,8 +25,8 @@ public class AdminLectureSummaryResponse {
     @Schema(description = "승인 상태", example = "PENDING")
     private LectureAuthStatus lectureAuthStatus;
 
-    @Schema(description = "신청일시 (수정된 적 있으면 수정일, 없으면 생성일)", example = "2025-12-15T10:00:00")
-    private LocalDateTime createdAt;
+    @Schema(description = "신청 또는 최종 수정일시", example = "2025-12-15T10:00:00")
+    private LocalDateTime lastUpdatedAt;
 
     public static AdminLectureSummaryResponse from(Lecture lecture) {
         // updatedAt이 있으면 updatedAt을, 없으면 createdAt을 사용
@@ -39,7 +39,7 @@ public class AdminLectureSummaryResponse {
                 .lectureName(lecture.getLectureName())
                 .orgName(lecture.getOrgName())
                 .lectureAuthStatus(lecture.getLectureAuthStatus())
-                .createdAt(displayDate)
+                .lastUpdatedAt(displayDate)
                 .build();
     }
 }
