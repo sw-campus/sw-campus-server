@@ -1,6 +1,7 @@
 package com.swcampus.api.storage;
 
 import com.swcampus.api.security.CurrentMember;
+import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.api.storage.request.PresignedUrlBatchRequest;
 import com.swcampus.api.storage.request.PresignedUploadRequest;
 import com.swcampus.api.storage.response.PresignedUploadResponse;
@@ -21,7 +22,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -47,8 +47,7 @@ public class StorageController {
     public ResponseEntity<PresignedUrlResponse> getPresignedUrl(
             @Parameter(description = "S3 객체 key", required = true, example = "lectures/2024/01/01/uuid.jpg")
             @RequestParam("key") String key,
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") MemberPrincipal member) {
+            @OptionalCurrentMember MemberPrincipal member) {
 
         boolean isAdmin = isAdmin(member);
         var presignedUrl = presignedUrlService.getPresignedUrl(key, isAdmin);
@@ -68,8 +67,7 @@ public class StorageController {
     @PostMapping("/presigned-urls/batch")
     public ResponseEntity<Map<String, String>> getPresignedUrlBatch(
             @Valid @RequestBody PresignedUrlBatchRequest request,
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") MemberPrincipal member) {
+            @OptionalCurrentMember MemberPrincipal member) {
 
         boolean isAdmin = isAdmin(member);
         var urls = presignedUrlService.getPresignedUrls(request.keys(), isAdmin);
