@@ -20,8 +20,8 @@ public class BatchScheduler {
     private final JobLauncher jobLauncher;
     private final Job lectureStatusUpdateJob;
 
-    // 매일 새벽 4시 실행
-    @Scheduled(cron = "0 0 4 * * *")
+    // 매일 새벽 4시 실행 (KST)
+    @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul")
     public void runLectureStatusUpdateJob() {
         try {
             log.info("Batch Scheduler Started at {}", LocalDateTime.now());
