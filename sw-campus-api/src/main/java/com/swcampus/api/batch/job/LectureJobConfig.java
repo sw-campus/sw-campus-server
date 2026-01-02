@@ -2,6 +2,7 @@ package com.swcampus.api.batch.job;
 
 import com.swcampus.domain.lecture.LectureRepository;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -18,6 +19,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Configuration
 @RequiredArgsConstructor
 public class LectureJobConfig {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
@@ -36,7 +39,8 @@ public class LectureJobConfig {
             .tasklet((contribution, chunkContext) -> {
                 log.info(">>>>> Start lectureStatusUpdateStep");
 
-                LocalDateTime now = LocalDateTime.now();
+                LocalDateTime now = LocalDateTime.now(KST);
+                log.info("Current time (KST): {}", now);
                 int closedCount = lectureRepository.closeExpiredLectures(now);
 
                 log.info("Closed {} expired lectures.", closedCount);

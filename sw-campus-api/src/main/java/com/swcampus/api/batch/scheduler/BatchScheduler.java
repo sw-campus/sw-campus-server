@@ -1,6 +1,7 @@
 package com.swcampus.api.batch.scheduler;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
@@ -20,20 +21,23 @@ public class BatchScheduler {
     private final JobLauncher jobLauncher;
     private final Job lectureStatusUpdateJob;
 
-    // 매일 새벽 4시 실행
-    @Scheduled(cron = "0 0 4 * * *")
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
+    // 매일 새벽 4시 실행 (KST)
+    @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul")
     public void runLectureStatusUpdateJob() {
         try {
-            log.info("Batch Scheduler Started at {}", LocalDateTime.now());
-            
+            LocalDateTime now = LocalDateTime.now(KST);
+            log.info("Batch Scheduler Started at {} (KST)", now);
+
             JobParameters jobParameters = new JobParametersBuilder()
-                .addString("datetime", LocalDateTime.now().toString())
+                .addString("datetime", now.toString())
                 .toJobParameters();
 
             jobLauncher.run(lectureStatusUpdateJob, jobParameters);
-            
+
         } catch (Exception e) {
-            log.error("Lecture Status Update Batch Job Failed at {}", LocalDateTime.now(), e);
+            log.error("Lecture Status Update Batch Job Failed at {} (KST)", LocalDateTime.now(KST), e);
         }
     }
 }
