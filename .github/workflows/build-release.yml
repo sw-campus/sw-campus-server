@@ -84,7 +84,9 @@ jobs:
           git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]"
           git push
 
-          # Create and push tag
+          # Create and push tag (delete if exists)
+          git tag -d "$VERSION_TAG" 2>/dev/null || true
+          git push origin :refs/tags/"$VERSION_TAG" 2>/dev/null || true
           git tag "$VERSION_TAG"
           git push origin "$VERSION_TAG"
 
