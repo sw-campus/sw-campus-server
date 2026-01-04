@@ -58,3 +58,33 @@ jobs:
           docker build -t $IMAGE:$TAG .
           docker push $IMAGE:$TAG
 
+      # Manifest 업데이트
+      - name: Checkout manifest repo
+        uses: actions/checkout@v4
+        with:
+          repository: sw-campus/sw-campus-manifest
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
+          ref: develop
+          path: manifest
+
+      - name: Update server image tag in manifest
+        run: |
+          cd manifest
+          TAG=${{ steps.meta.outputs.tag }}
+          sed -i '/repository: ghcr.io\/sw-campus\/sw-campus-server$/,/pullPolicy:/ s|tag: ".*"|tag: "'$TAG'"|' k8s/environments/develop/values.yaml
+
+      - name: Create PR to manifest repo
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
+          path: manifest
+          commit-message: "chore(server): update dev image to ${{ steps.meta.outputs.tag }}"
+          title: "Deploy Server (dev) – ${{ steps.meta.outputs.tag }}"
+          body: |
+            - Service: Server
+            - Environment: dev
+            - Image tag: `${{ steps.meta.outputs.tag }}`
+          base: develop
+          branch: chore/server-image-dev-${{ github.run_id }}
+          delete-branch: true
+
