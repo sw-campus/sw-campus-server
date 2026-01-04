@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          token: ${{ secrets.CONFIG_REPO_TOKEN }}
+          token: ${{ secrets.RELEASE }}
           fetch-depth: 0
 
       - name: Set up JDK 17
