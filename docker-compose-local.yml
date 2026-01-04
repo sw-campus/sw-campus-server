@@ -17,21 +17,22 @@ services:
       timeout: 5s
       retries: 5
 
-  # OCR AI Service
-  ocr:
-    image: zionge2k/sw-campus-ocr:latest
-    container_name: sw-campus-ocr
-    ports:
-      - "8000:8000"
-    environment:
-      - PYTHONUNBUFFERED=1
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 10s
-      start_period: 60s
-      retries: 3
-    restart: unless-stopped
+  # OCR AI Service (일시 비활성화 - certificate.ocr.enabled=false)
+  # CPU 사용량 최적화를 위해 비활성화, 재활성화 시 주석 해제
+  # ocr:
+  #   image: zionge2k/sw-campus-ocr:latest
+  #   container_name: sw-campus-ocr
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #   healthcheck:
+  #     test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     start_period: 60s
+  #     retries: 3
+  #   restart: unless-stopped
 
   # Spring Boot Server (optional - for full stack local dev)
   # server:

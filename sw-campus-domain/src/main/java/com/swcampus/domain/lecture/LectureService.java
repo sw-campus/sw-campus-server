@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.swcampus.domain.category.CategoryRepository;
+import com.swcampus.domain.category.CurriculumRepository;
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.common.BusinessException;
@@ -38,6 +39,7 @@ public class LectureService {
 	private final com.swcampus.domain.storage.FileStorageService fileStorageService;
 	private final com.swcampus.domain.review.ReviewRepository reviewRepository;
 	private final CategoryRepository categoryRepository;
+	private final CurriculumRepository curriculumRepository;
 	private final OrganizationService organizationService;
 
 	@Value("${app.default-image.base-url:}")
@@ -117,10 +119,20 @@ public class LectureService {
 			newAuthStatus = LectureAuthStatus.PENDING;
 		}
 
+		// deadline 기준으로 status 결정
+		LectureStatus newStatus;
+		if (lecture.getDeadline() == null) {
+			newStatus = existingLecture.getStatus();
+		} else if (lecture.getDeadline().isAfter(java.time.LocalDateTime.now())) {
+			newStatus = LectureStatus.RECRUITING;
+		} else {
+			newStatus = LectureStatus.FINISHED;
+		}
+
 		Lecture updatedLecture = lecture.toBuilder()
 				.lectureId(lectureId)
 				.lectureImageUrl(imageUrl)
-				.status(existingLecture.getStatus())
+				.status(newStatus)
 				.lectureAuthStatus(newAuthStatus)
 				.createdAt(existingLecture.getCreatedAt())
 				.teachers(updatedTeachers)
@@ -313,53 +325,59 @@ public class LectureService {
 		}
 	}
 
+	/**
+	 * 강의의 커리큘럼 카테고리(중분류)에 맞는 기본 이미지 URL을 반환합니다.
+	 * 흐름: 커리큘럼 → categoryId → 중분류 → 이미지 파일명
+	 */
 	private String resolveDefaultImageUrl(Lecture lecture) {
 		if (defaultImageBaseUrl == null || defaultImageBaseUrl.isBlank()) {
 			return null;
 		}
 
-		Long categoryId = lecture.extractCategoryId();
-		if (categoryId == null) {
-			return null;
-		}
-
-		Long middleCategoryId = findMiddleCategoryId(categoryId);
-		if (middleCategoryId == null) {
-			return null;
-		}
-
-		String fileName = getDefaultImageFileName(middleCategoryId);
-		if (fileName == null) {
-			return null;
-		}
-
-		return defaultImageBaseUrl + "/" + fileName;
-	}
-
-	private Long findMiddleCategoryId(Long categoryId) {
-		return categoryRepository.findById(categoryId)
-				.map(category -> {
-					Long pid = category.getPid();
-					if (pid == null || pid.equals(ROOT_CATEGORY_ID)) {
-						return categoryId;
-					}
-					return pid;
-				})
+		return findCategoryIdFromCurriculum(lecture)
+				.flatMap(this::findMiddleCategoryId)
+				.map(this::getDefaultImageFileName)
+				.map(fileName -> defaultImageBaseUrl + "/" + fileName)
 				.orElse(null);
 	}
 
+	private Optional<Long> findCategoryIdFromCurriculum(Lecture lecture) {
+		// 1. Lecture에 Curriculum 객체가 있는 경우
+		Long categoryId = lecture.extractCategoryId();
+		if (categoryId != null) {
+			return Optional.of(categoryId);
+		}
+
+		// 2. curriculumId로 DB 조회
+		return Optional.ofNullable(lecture.getLectureCurriculums())
+				.filter(list -> !list.isEmpty())
+				.map(list -> list.get(0).getCurriculumId())
+				.flatMap(curriculumRepository::findById)
+				.map(curriculum -> curriculum.getCategoryId());
+	}
+
+	private Optional<Long> findMiddleCategoryId(Long categoryId) {
+		return categoryRepository.findById(categoryId)
+				.map(category -> {
+					Long pid = category.getPid();
+					// 부모가 없거나 루트면 본인이 중분류
+					return (pid == null || pid.equals(ROOT_CATEGORY_ID)) ? categoryId : pid;
+				});
+	}
+
+	private static final Map<Long, String> CATEGORY_IMAGE_MAP = Map.of(
+			2L, "web-development.png",
+			6L, "mobile.png",
+			8L, "data-ai.png",
+			12L, "cloud.png",
+			14L, "security.png",
+			16L, "embedded-iot.png",
+			19L, "game-blockchain.png",
+			22L, "planning-marketing-design.png"
+	);
+
 	private String getDefaultImageFileName(Long middleCategoryId) {
-		return switch (middleCategoryId.intValue()) {
-			case 2 -> "web-development.png";
-			case 6 -> "mobile.png";
-			case 8 -> "data-ai.png";
-			case 12 -> "cloud.png";
-			case 14 -> "security.png";
-			case 16 -> "embedded-iot.png";
-			case 19 -> "game-blockchain.png";
-			case 22 -> "planning-marketing-design.png";
-			default -> null;
-		};
+		return CATEGORY_IMAGE_MAP.get(middleCategoryId);
 	}
 
 }

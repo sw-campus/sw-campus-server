@@ -16,7 +16,7 @@ public class SmtpMailSender implements MailSender {
 
     private final JavaMailSender javaMailSender;
 
-    @Value("${spring.mail.username:noreply@swcampus.com}")
+    @Value("${spring.mail.from}")
     private String from;
 
     @Override

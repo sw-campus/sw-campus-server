@@ -324,6 +324,27 @@ public class GlobalExceptionHandler {
                                 .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
         }
 
+        // === 데이터 무결성 예외 ===
+
+        @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+        public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(
+                        org.springframework.dao.DataIntegrityViolationException e) {
+                String message = e.getMostSpecificCause().getMessage();
+
+                // VARCHAR 길이 초과 에러 감지 (PostgreSQL)
+                if (message != null && message.contains("value too long")) {
+                        log.warn("데이터 길이 초과: {}", message);
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                        .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(),
+                                                        "입력값이 허용된 길이를 초과했습니다"));
+                }
+
+                // 기타 데이터 무결성 위반
+                log.error("데이터 무결성 위반: {}", message, e);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "데이터 저장 중 오류가 발생했습니다"));
+        }
+
         @ExceptionHandler(FileProcessingException.class)
         public ResponseEntity<ErrorResponse> handleFileProcessingException(FileProcessingException e) {
                 log.error("파일 처리 오류: {}", e.getMessage(), e);

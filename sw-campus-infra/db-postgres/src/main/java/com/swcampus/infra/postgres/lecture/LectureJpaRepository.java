@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -13,6 +14,11 @@ import com.swcampus.domain.lecture.LectureStatus;
 
 public interface LectureJpaRepository extends JpaRepository<LectureEntity, Long> {
         List<LectureEntity> findAllByDeadlineBeforeAndStatus(LocalDateTime now, LectureStatus status);
+
+        @Modifying
+        @Query("UPDATE LectureEntity l SET l.status = com.swcampus.domain.lecture.LectureStatus.FINISHED, l.updatedAt = :now " +
+                        "WHERE l.deadline < :now AND l.status = com.swcampus.domain.lecture.LectureStatus.RECRUITING")
+        int closeExpiredLectures(@Param("now") LocalDateTime now);
 
         /**
          * 기관별 강의 조회 시 Curriculum → Category까지 함께 fetch

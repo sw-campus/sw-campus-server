@@ -10,7 +10,8 @@
         </encoder>
     </appender>
 
-    <!-- OpenTelemetry -->
+    <!-- OpenTelemetry (TODO: 나중에 사용 예정)
     <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender"/>
+    -->
 
 </configuration>

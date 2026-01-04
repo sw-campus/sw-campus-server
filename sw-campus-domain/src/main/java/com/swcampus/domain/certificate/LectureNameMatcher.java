@@ -68,8 +68,8 @@ public class LectureNameMatcher {
             return true;
         }
 
-        // 3차: 유사도 매칭
-        if (similarityMatch(normalizedOcrText, normalizedLectureName)) {
+        // 3차: 유사도 매칭 (전체 + 라인별)
+        if (similarityMatch(normalizedOcrText, normalizedLectureName, ocrLines)) {
             log.info("[수료증 검증] 최종 결과: lectureName='{}', matchedStep={}", lectureName, 3);
             return true;
         }
@@ -124,15 +124,36 @@ public class LectureNameMatcher {
 
     /**
      * 3차: Jaro-Winkler 유사도 매칭
+     * - 전체 텍스트 비교 후 실패 시 각 라인별로도 비교
      */
-    boolean similarityMatch(String normalizedOcrText, String normalizedLectureName) {
-        double similarity = jaroWinkler.apply(normalizedOcrText, normalizedLectureName);
-        boolean matched = similarity >= similarityThreshold;
+    boolean similarityMatch(String normalizedOcrText, String normalizedLectureName, List<String> ocrLines) {
+        // 1. 전체 텍스트 비교
+        double fullSimilarity = jaroWinkler.apply(normalizedOcrText, normalizedLectureName);
+        if (fullSimilarity >= similarityThreshold) {
+            log.info("[수료증 검증] 3차 유사도 매칭 (전체): similarity={}, threshold={}, matched=true",
+                    String.format("%.2f", fullSimilarity), similarityThreshold);
+            return true;
+        }
 
-        log.info("[수료증 검증] 3차 유사도 매칭: similarity={}, threshold={}, matched={}",
-                String.format("%.2f", similarity), similarityThreshold, matched);
+        // 2. 각 라인별 비교
+        if (ocrLines != null) {
+            for (String line : ocrLines) {
+                String normalizedLine = normalize(line);
+                if (normalizedLine.isEmpty()) {
+                    continue;
+                }
+                double lineSimilarity = jaroWinkler.apply(normalizedLine, normalizedLectureName);
+                if (lineSimilarity >= similarityThreshold) {
+                    log.info("[수료증 검증] 3차 유사도 매칭 (라인): line='{}', similarity={}, threshold={}, matched=true",
+                            line, String.format("%.2f", lineSimilarity), similarityThreshold);
+                    return true;
+                }
+            }
+        }
 
-        return matched;
+        log.info("[수료증 검증] 3차 유사도 매칭: fullSimilarity={}, threshold={}, matched=false",
+                String.format("%.2f", fullSimilarity), similarityThreshold);
+        return false;
     }
 
     /**
