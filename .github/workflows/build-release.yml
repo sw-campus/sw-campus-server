@@ -143,10 +143,10 @@ jobs:
             - **Commit**: ${{ github.sha }}
           delete-branch: true
 
-      - name: Auto-merge PR
+      - name: Merge PR
         if: steps.cpr.outputs.pull-request-number
         run: |
           cd manifest
-          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --auto
+          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --delete-branch
         env:
           GH_TOKEN: ${{ secrets.MANIFEST_REPO_TOKEN }}
