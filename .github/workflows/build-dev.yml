@@ -74,6 +74,7 @@ jobs:
           sed -i '/repository: ghcr.io\/sw-campus\/sw-campus-server$/,/pullPolicy:/ s|tag: ".*"|tag: "'$TAG'"|' k8s/environments/develop/values.yaml
 
       - name: Create Pull Request to manifest repo
+        id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.MANIFEST_REPO_TOKEN }}
@@ -87,4 +88,12 @@ jobs:
             - **Image**: `ghcr.io/sw-campus/sw-campus-server:${{ steps.meta.outputs.tag }}`
             - **Commit**: ${{ github.sha }}
           delete-branch: true
+
+      - name: Merge PR
+        if: steps.cpr.outputs.pull-request-number
+        run: |
+          cd manifest
+          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --delete-branch
+        env:
+          GH_TOKEN: ${{ secrets.MANIFEST_REPO_TOKEN }}
 
