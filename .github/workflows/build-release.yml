@@ -1,0 +1,143 @@
+name: Build Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.RELEASE }}
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Bump version
+        id: version
+        run: |
+          # Read current version from gradle.properties (remove -SNAPSHOT suffix)
+          CURRENT_VERSION=$(grep "applicationVersion=" gradle.properties | cut -d'=' -f2 | sed 's/-SNAPSHOT//')
+          echo "Current version: $CURRENT_VERSION"
+
+          # Parse version components
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+          # Increment patch version
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          VERSION_TAG="v${NEW_VERSION}"
+          echo "New version: $NEW_VERSION (tag: $VERSION_TAG)"
+
+          # Update gradle.properties
+          sed -i "s/applicationVersion=.*/applicationVersion=${NEW_VERSION}-SNAPSHOT/" gradle.properties
+
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "version_tag=$VERSION_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build with Gradle
+        run: |
+          chmod +x gradlew
+          ./gradlew build -x test
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Image
+        run: |
+          IMAGE=ghcr.io/sw-campus/sw-campus-server
+          TAG=${{ steps.version.outputs.version_tag }}
+          echo "Building RELEASE image with tag $TAG"
+          docker build -t $IMAGE:$TAG .
+          docker push $IMAGE:$TAG
+
+      - name: Commit version bump and create tag
+        run: |
+          VERSION_TAG=${{ steps.version.outputs.version_tag }}
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Commit version bump
+          git add gradle.properties
+          git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]"
+          git push
+
+          # Create and push tag (delete if exists)
+          git tag -d "$VERSION_TAG" 2>/dev/null || true
+          git push origin :refs/tags/"$VERSION_TAG" 2>/dev/null || true
+          git tag "$VERSION_TAG"
+          git push origin "$VERSION_TAG"
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=${{ steps.version.outputs.version_tag }}
+          
+          if gh release view "$TAG" &>/dev/null; then
+            echo "Release $TAG already exists, updating..."
+            gh release edit "$TAG" \
+              --title "Release $TAG" \
+              --notes "Server release $TAG
+          - Image: ghcr.io/sw-campus/sw-campus-server:$TAG
+          - Commit: ${{ github.sha }}"
+          else
+            echo "Creating new release $TAG..."
+            gh release create "$TAG" \
+              --title "Release $TAG" \
+              --notes "Server release $TAG
+          - Image: ghcr.io/sw-campus/sw-campus-server:$TAG
+          - Commit: ${{ github.sha }}"
+          fi
+
+      # Manifest 업데이트
+      - name: Checkout manifest repo
+        uses: actions/checkout@v4
+        with:
+          repository: sw-campus/sw-campus-manifest
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
+          ref: release
+          path: manifest
+
+      - name: Update server image tag in manifest
+        run: |
+          cd manifest
+          TAG=${{ steps.version.outputs.version_tag }}
+          sed -i '/repository: ghcr.io\/sw-campus\/sw-campus-server$/,/pullPolicy:/ s|tag: ".*"|tag: "'$TAG'"|' k8s/environments/release/values.yaml
+
+      - name: Create Pull Request to manifest repo
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
+          path: manifest
+          branch: auto-update/server-${{ steps.version.outputs.version_tag }}
+          base: release
+          title: "chore(server): update prod image to ${{ steps.version.outputs.version_tag }}"
+          body: |
+            🤖 Auto-generated PR from server build
+            
+            - **Image**: `ghcr.io/sw-campus/sw-campus-server:${{ steps.version.outputs.version_tag }}`
+            - **Commit**: ${{ github.sha }}
+          delete-branch: true
