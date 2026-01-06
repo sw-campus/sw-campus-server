@@ -73,12 +73,18 @@ jobs:
           TAG=${{ steps.meta.outputs.tag }}
           sed -i '/repository: ghcr.io\/sw-campus\/sw-campus-server$/,/pullPolicy:/ s|tag: ".*"|tag: "'$TAG'"|' k8s/environments/develop/values.yaml
 
-      - name: Push to manifest repo
-        run: |
-          cd manifest
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git diff --staged --quiet || git commit -m "chore(server): update dev image to ${{ steps.meta.outputs.tag }}"
-          git push
+      - name: Create Pull Request to manifest repo
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
+          path: manifest
+          branch: auto-update/server-dev-${{ github.sha }}
+          base: develop
+          title: "chore(server): update dev image to ${{ steps.meta.outputs.tag }}"
+          body: |
+            🤖 Auto-generated PR from server dev build
+            
+            - **Image**: `ghcr.io/sw-campus/sw-campus-server:${{ steps.meta.outputs.tag }}`
+            - **Commit**: ${{ github.sha }}
+          delete-branch: true
 
