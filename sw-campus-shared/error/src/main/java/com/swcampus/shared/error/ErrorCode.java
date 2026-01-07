@@ -3,6 +3,23 @@ package com.swcampus.shared.error;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 에러 코드를 정의하는 Enum 클래스입니다.
+ * <p>
+ * 코드 접두사 규칙:
+ * <ul>
+ *     <li>C: Common (공통)</li>
+ *     <li>M: Member (회원)</li>
+ *     <li>A: Auth (인증)</li>
+ *     <li>O: Organization (기관)</li>
+ *     <li>T: Certificate (수료증)</li>
+ *     <li>R: Review (후기)</li>
+ *     <li>B: Cart (장바구니)</li>
+ *     <li>S: Survey (설문)</li>
+ *     <li>F: File/Storage (파일)</li>
+ *     <li>L: Lecture (강의)</li>
+ * </ul>
+ */
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
