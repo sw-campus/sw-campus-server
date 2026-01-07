@@ -1,12 +1,16 @@
 package com.swcampus.domain.review.exception;
 
-public class ReviewAlreadyExistsException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public ReviewAlreadyExistsException() {
-        super("이미 후기를 작성한 강의입니다");
-    }
+public class ReviewAlreadyExistsException extends BusinessException {
 
-    public ReviewAlreadyExistsException(Long memberId, Long lectureId) {
-        super(String.format("이미 후기를 작성한 강의입니다. memberId: %d, lectureId: %d", memberId, lectureId));
-    }
+	public ReviewAlreadyExistsException() {
+		super(ErrorCode.REVIEW_ALREADY_EXISTS);
+	}
+
+	public ReviewAlreadyExistsException(Long memberId, Long lectureId) {
+		super(ErrorCode.REVIEW_ALREADY_EXISTS,
+				String.format("이미 후기를 작성한 강의입니다. memberId: %d, lectureId: %d", memberId, lectureId));
+	}
 }

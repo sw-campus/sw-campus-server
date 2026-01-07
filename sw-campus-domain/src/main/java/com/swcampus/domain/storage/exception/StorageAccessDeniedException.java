@@ -1,8 +1,11 @@
 package com.swcampus.domain.storage.exception;
 
-public class StorageAccessDeniedException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public StorageAccessDeniedException() {
-        super("관리자만 접근 가능합니다");
-    }
+public class StorageAccessDeniedException extends BusinessException {
+
+	public StorageAccessDeniedException() {
+		super(ErrorCode.STORAGE_ACCESS_DENIED);
+	}
 }

@@ -1,8 +1,11 @@
 package com.swcampus.domain.auth.exception;
 
-public class CertificateRequiredException extends RuntimeException {
-    
-    public CertificateRequiredException() {
-        super("재직증명서는 필수입니다");
-    }
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
+
+public class CertificateRequiredException extends BusinessException {
+
+	public CertificateRequiredException() {
+		super(ErrorCode.CERTIFICATE_REQUIRED);
+	}
 }

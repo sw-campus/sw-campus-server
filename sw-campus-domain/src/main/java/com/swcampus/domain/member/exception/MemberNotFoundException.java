@@ -1,16 +1,19 @@
 package com.swcampus.domain.member.exception;
 
-public class MemberNotFoundException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public MemberNotFoundException() {
-        super("회원을 찾을 수 없습니다");
-    }
+public class MemberNotFoundException extends BusinessException {
 
-    public MemberNotFoundException(Long id) {
-        super(String.format("회원을 찾을 수 없습니다. ID: %d", id));
-    }
+	public MemberNotFoundException() {
+		super(ErrorCode.MEMBER_NOT_FOUND);
+	}
 
-    public MemberNotFoundException(String message) {
-        super(message);
-    }
+	public MemberNotFoundException(Long id) {
+		super(ErrorCode.MEMBER_NOT_FOUND, String.format("회원을 찾을 수 없습니다. ID: %d", id));
+	}
+
+	public MemberNotFoundException(String message) {
+		super(ErrorCode.MEMBER_NOT_FOUND, message);
+	}
 }

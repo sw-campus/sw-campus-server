@@ -1,12 +1,15 @@
 package com.swcampus.domain.auth.exception;
 
-public class EmailNotVerifiedException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public EmailNotVerifiedException() {
-        super("이메일 인증이 완료되지 않았습니다");
-    }
+public class EmailNotVerifiedException extends BusinessException {
 
-    public EmailNotVerifiedException(String email) {
-        super(String.format("이메일 인증이 완료되지 않았습니다: %s", email));
-    }
+	public EmailNotVerifiedException() {
+		super(ErrorCode.EMAIL_NOT_VERIFIED);
+	}
+
+	public EmailNotVerifiedException(String email) {
+		super(ErrorCode.EMAIL_NOT_VERIFIED, String.format("이메일 인증이 완료되지 않았습니다: %s", email));
+	}
 }

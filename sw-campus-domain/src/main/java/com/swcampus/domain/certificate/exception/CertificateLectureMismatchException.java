@@ -1,8 +1,11 @@
 package com.swcampus.domain.certificate.exception;
 
-public class CertificateLectureMismatchException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public CertificateLectureMismatchException() {
-        super("해당 강의의 수료증이 아닙니다");
-    }
+public class CertificateLectureMismatchException extends BusinessException {
+
+	public CertificateLectureMismatchException() {
+		super(ErrorCode.CERTIFICATE_LECTURE_MISMATCH);
+	}
 }

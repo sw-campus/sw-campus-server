@@ -134,7 +134,7 @@ class AuthServiceLoginTest {
             // when & then
             assertThatThrownBy(() -> authService.login("unknown@example.com", "password"))
                     .isInstanceOf(InvalidCredentialsException.class)
-                    .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다");
+                    .hasMessage("이메일 또는 비밀번호가 올바르지 않습니다");
         }
 
         @Test

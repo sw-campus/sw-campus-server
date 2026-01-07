@@ -1,8 +1,11 @@
 package com.swcampus.domain.review.exception;
 
-public class ReviewNotOwnerException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public ReviewNotOwnerException() {
-        super("본인의 후기만 수정할 수 있습니다");
-    }
+public class ReviewNotOwnerException extends BusinessException {
+
+	public ReviewNotOwnerException() {
+		super(ErrorCode.REVIEW_NOT_OWNER);
+	}
 }
