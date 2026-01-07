@@ -1,12 +1,15 @@
 package com.swcampus.domain.organization.exception;
 
-public class OrganizationNotApprovedException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public OrganizationNotApprovedException() {
-        super("기관 승인이 완료되지 않아 해당 기능을 사용할 수 없습니다");
-    }
+public class OrganizationNotApprovedException extends BusinessException {
 
-    public OrganizationNotApprovedException(String message) {
-        super(message);
-    }
+	public OrganizationNotApprovedException() {
+		super(ErrorCode.ORGANIZATION_NOT_APPROVED);
+	}
+
+	public OrganizationNotApprovedException(String message) {
+		super(ErrorCode.ORGANIZATION_NOT_APPROVED, message);
+	}
 }

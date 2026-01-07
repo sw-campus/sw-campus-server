@@ -1,12 +1,16 @@
 package com.swcampus.domain.survey.exception;
 
-public class SurveyAlreadyExistsException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public SurveyAlreadyExistsException() {
-        super("이미 설문조사를 작성하셨습니다");
-    }
+public class SurveyAlreadyExistsException extends BusinessException {
 
-    public SurveyAlreadyExistsException(Long memberId) {
-        super(String.format("이미 설문조사를 작성하셨습니다. memberId: %d", memberId));
-    }
+	public SurveyAlreadyExistsException() {
+		super(ErrorCode.SURVEY_ALREADY_EXISTS);
+	}
+
+	public SurveyAlreadyExistsException(Long memberId) {
+		super(ErrorCode.SURVEY_ALREADY_EXISTS,
+				String.format("이미 설문조사를 작성하셨습니다. memberId: %d", memberId));
+	}
 }

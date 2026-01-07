@@ -16,7 +16,8 @@ import com.swcampus.domain.category.CategoryRepository;
 import com.swcampus.domain.category.CurriculumRepository;
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.common.ApprovalStatus;
-import com.swcampus.domain.common.BusinessException;
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
 import com.swcampus.domain.lecture.dto.LectureSummaryDto;
 import com.swcampus.domain.lecture.exception.LectureNotModifiableException;
@@ -317,7 +318,7 @@ public class LectureService {
 	private Long resolveOrganizationId(Long userId, Role role, Long requestOrgId) {
 		if (role == Role.ADMIN) {
 			if (requestOrgId == null) {
-				throw new BusinessException("관리자는 강의 등록 시 기관 ID를 필수적으로 입력해야 합니다.");
+				throw new BusinessException(ErrorCode.INVALID_INPUT, "관리자는 강의 등록 시 기관 ID를 필수적으로 입력해야 합니다.");
 			}
 			return organizationService.getOrganization(requestOrgId).getId();
 		} else {
