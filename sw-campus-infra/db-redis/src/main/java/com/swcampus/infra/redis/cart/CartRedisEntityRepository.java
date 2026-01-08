@@ -35,7 +35,8 @@ public class CartRedisEntityRepository implements CartCacheRepository {
             }
             return null;
         } catch (Exception e) {
-            log.error("Failed to get cart lecture ids for userId: {}", userId, e);
+            log.warn("Corrupted cart cache for userId: {}, deleting and will be regenerated", userId);
+            deleteCart(userId);
             return null;
         }
     }
