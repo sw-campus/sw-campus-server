@@ -46,3 +46,5 @@ scripts/data-migration/output/
 
 ### Google Analytics ###
 *-ga-credentials.json
+
+.sdkmanrc
