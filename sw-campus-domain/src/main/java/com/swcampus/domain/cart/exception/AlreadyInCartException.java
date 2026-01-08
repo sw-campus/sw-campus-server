@@ -1,7 +1,15 @@
 package com.swcampus.domain.cart.exception;
 
-public class AlreadyInCartException extends RuntimeException {
-    public AlreadyInCartException(String message) {
-        super(message);
-    }
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
+
+public class AlreadyInCartException extends BusinessException {
+
+	public AlreadyInCartException() {
+		super(ErrorCode.ALREADY_IN_CART);
+	}
+
+	public AlreadyInCartException(String message) {
+		super(ErrorCode.ALREADY_IN_CART, message);
+	}
 }

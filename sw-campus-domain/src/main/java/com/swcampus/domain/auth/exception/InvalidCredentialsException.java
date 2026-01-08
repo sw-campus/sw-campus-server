@@ -1,8 +1,11 @@
 package com.swcampus.domain.auth.exception;
 
-public class InvalidCredentialsException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public InvalidCredentialsException() {
-        super("이메일 또는 비밀번호가 일치하지 않습니다");
-    }
+public class InvalidCredentialsException extends BusinessException {
+
+	public InvalidCredentialsException() {
+		super(ErrorCode.INVALID_CREDENTIALS);
+	}
 }

@@ -1,7 +1,11 @@
 package com.swcampus.domain.lecture.exception;
 
-public class LectureNotModifiableException extends RuntimeException {
-    public LectureNotModifiableException() {
-        super("승인 완료된 강의는 수정할 수 없습니다.");
-    }
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
+
+public class LectureNotModifiableException extends BusinessException {
+
+	public LectureNotModifiableException() {
+		super(ErrorCode.LECTURE_NOT_MODIFIABLE);
+	}
 }

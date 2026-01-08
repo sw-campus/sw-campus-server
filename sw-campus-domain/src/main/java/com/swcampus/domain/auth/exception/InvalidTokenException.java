@@ -1,12 +1,15 @@
 package com.swcampus.domain.auth.exception;
 
-public class InvalidTokenException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public InvalidTokenException() {
-        super("유효하지 않은 토큰입니다");
-    }
+public class InvalidTokenException extends BusinessException {
 
-    public InvalidTokenException(String message) {
-        super(message);
-    }
+	public InvalidTokenException() {
+		super(ErrorCode.INVALID_TOKEN);
+	}
+
+	public InvalidTokenException(String message) {
+		super(ErrorCode.INVALID_TOKEN, message);
+	}
 }

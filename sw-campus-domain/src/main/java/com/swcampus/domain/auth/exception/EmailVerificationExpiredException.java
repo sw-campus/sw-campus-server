@@ -1,12 +1,15 @@
 package com.swcampus.domain.auth.exception;
 
-public class EmailVerificationExpiredException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public EmailVerificationExpiredException() {
-        super("인증 코드가 만료되었습니다");
-    }
+public class EmailVerificationExpiredException extends BusinessException {
 
-    public EmailVerificationExpiredException(String email) {
-        super(String.format("인증 코드가 만료되었습니다: %s", email));
-    }
+	public EmailVerificationExpiredException() {
+		super(ErrorCode.EMAIL_VERIFICATION_EXPIRED);
+	}
+
+	public EmailVerificationExpiredException(String email) {
+		super(ErrorCode.EMAIL_VERIFICATION_EXPIRED, String.format("인증 코드가 만료되었습니다: %s", email));
+	}
 }

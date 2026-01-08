@@ -239,7 +239,7 @@
                     ORDER BY lecture_fee DESC, updated_at DESC
                 </when>
                 <when test="cond.sort.name() == 'START_SOON'">
-                    ORDER BY deadline ASC NULLS LAST, updated_at DESC
+                    ORDER BY CASE WHEN status = 'RECRUITING' THEN 0 ELSE 1 END, deadline ASC NULLS LAST, updated_at DESC
                 </when>
                 <when test="cond.sort.name() == 'DURATION_ASC'">
                     ORDER BY total_days ASC NULLS LAST, updated_at DESC
@@ -254,7 +254,7 @@
                     ORDER BY average_score DESC, updated_at DESC
                 </when>
                 <otherwise>
-                    ORDER BY updated_at DESC
+                    ORDER BY CASE WHEN status = 'RECRUITING' THEN 0 ELSE 1 END, updated_at DESC
                 </otherwise>
             </choose>
             
@@ -272,7 +272,7 @@
                 ORDER BY paged.lecture_fee DESC, paged.updated_at DESC, s_steps.step_order ASC
             </when>
             <when test="cond.sort.name() == 'START_SOON'">
-                ORDER BY paged.deadline ASC NULLS LAST, paged.updated_at DESC, s_steps.step_order ASC
+                ORDER BY CASE WHEN paged.status = 'RECRUITING' THEN 0 ELSE 1 END, paged.deadline ASC NULLS LAST, paged.updated_at DESC, s_steps.step_order ASC
             </when>
             <when test="cond.sort.name() == 'DURATION_ASC'">
                 ORDER BY paged.total_days ASC NULLS LAST, paged.updated_at DESC, s_steps.step_order ASC
@@ -287,7 +287,7 @@
                 ORDER BY paged.average_score DESC, paged.updated_at DESC, s_steps.step_order ASC
             </when>
             <otherwise>
-                ORDER BY paged.updated_at DESC, s_steps.step_order ASC
+                ORDER BY CASE WHEN paged.status = 'RECRUITING' THEN 0 ELSE 1 END, paged.updated_at DESC, s_steps.step_order ASC
             </otherwise>
         </choose>
     </select>

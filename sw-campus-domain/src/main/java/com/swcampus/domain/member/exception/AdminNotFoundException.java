@@ -1,8 +1,11 @@
 package com.swcampus.domain.member.exception;
 
-public class AdminNotFoundException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public AdminNotFoundException() {
-        super("관리자를 찾을 수 없습니다");
-    }
+public class AdminNotFoundException extends BusinessException {
+
+	public AdminNotFoundException() {
+		super(ErrorCode.ADMIN_NOT_FOUND);
+	}
 }
