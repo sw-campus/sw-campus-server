@@ -28,7 +28,8 @@ public class CacheConfig {
             "topBanners",
             "topLectures",
             "popularLectures",
-            "popularSearchTerms"
+            "popularSearchTerms",
+            "trafficSources"
         );
         
         manager.setCaffeine(Caffeine.newBuilder()

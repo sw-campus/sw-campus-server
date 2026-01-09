@@ -8,6 +8,7 @@ import com.swcampus.domain.analytics.EventStats;
 import com.swcampus.domain.analytics.LectureClickStats;
 import com.swcampus.domain.analytics.PopularLecture;
 import com.swcampus.domain.analytics.PopularSearchTerm;
+import com.swcampus.domain.analytics.TrafficSource;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
@@ -557,6 +558,49 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
             }
         } catch (ApiException e) {
             log.error("Failed to fetch popular search terms", e);
+        }
+
+        return result;
+    }
+
+    @Override
+    public List<TrafficSource> getTrafficSources(int daysAgo, int limit) {
+        String startDate = (daysAgo - 1) + "daysAgo";
+        String endDate = "today";
+        List<TrafficSource> result = new ArrayList<>();
+
+        try {
+            RunReportResponse response = analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("sessionSource"))
+                    .addDimensions(Dimension.newBuilder().setName("sessionMedium"))
+                    .addMetrics(Metric.newBuilder().setName("sessions"))
+                    .addMetrics(Metric.newBuilder().setName("totalUsers"))
+                    .addOrderBys(OrderBy.newBuilder()
+                        .setMetric(OrderBy.MetricOrderBy.newBuilder()
+                            .setMetricName("sessions")
+                            .build())
+                        .setDesc(true)
+                        .build())
+                    .setLimit(limit)
+                    .build()
+            );
+
+            for (Row row : response.getRowsList()) {
+                String source = row.getDimensionValues(0).getValue();
+                String medium = row.getDimensionValues(1).getValue();
+                long sessions = Long.parseLong(row.getMetricValues(0).getValue());
+                long users = Long.parseLong(row.getMetricValues(1).getValue());
+
+                result.add(new TrafficSource(source, medium, sessions, users));
+            }
+        } catch (ApiException e) {
+            log.error("Failed to fetch traffic sources", e);
         }
 
         return result;

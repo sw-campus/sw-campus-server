@@ -49,6 +49,11 @@ public class TestAnalyticsConfig {
             public List<PopularSearchTerm> getPopularSearchTerms(int daysAgo, int limit) {
                 return Collections.emptyList();
             }
+
+            @Override
+            public List<TrafficSource> getTrafficSources(int daysAgo, int limit) {
+                return Collections.emptyList();
+            }
         };
     }
 }
