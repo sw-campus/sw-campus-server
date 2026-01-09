@@ -17,6 +17,8 @@ public record BannerRequest(
 
         @Schema(description = "배너 이미지 URL", example = "https://example.com/banner.jpg") String imageUrl,
 
+        @Schema(description = "배너 배경색 (HEX)", example = "#FF5733") String backgroundColor,
+
         @Schema(description = "시작일", required = true) @NotNull(message = "시작일은 필수입니다") OffsetDateTime startDate,
 
         @Schema(description = "종료일", required = true) @NotNull(message = "종료일은 필수입니다") OffsetDateTime endDate,
@@ -28,6 +30,7 @@ public record BannerRequest(
                 .type(type)
                 .url(url)
                 .imageUrl(imageUrl)
+                .backgroundColor(backgroundColor)
                 .startDate(startDate)
                 .endDate(endDate)
                 .isActive(isActive)
