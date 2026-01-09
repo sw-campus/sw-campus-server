@@ -15,6 +15,7 @@ import com.swcampus.api.analytics.response.EventStatsResponse;
 import com.swcampus.api.analytics.response.LectureClickStatsResponse;
 import com.swcampus.api.analytics.response.PopularLectureResponse;
 import com.swcampus.api.analytics.response.PopularSearchTermResponse;
+import com.swcampus.api.analytics.response.TrafficSourceResponse;
 import com.swcampus.api.exception.ErrorResponse;
 import com.swcampus.domain.analytics.AnalyticsReport;
 import com.swcampus.domain.analytics.AnalyticsService;
@@ -152,6 +153,27 @@ public class AnalyticsController {
     ) {
         var terms = analyticsService.getPopularSearchTerms(days, limit);
         return ResponseEntity.ok(PopularSearchTermResponse.fromList(terms));
+    }
+
+    @Operation(summary = "트래픽 소스 조회",
+               description = "세션 수 기준으로 트래픽 소스/미디엄 통계를 조회합니다. (예: google/cpc, direct/none)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = TrafficSourceResponse.class)))),
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/traffic-sources")
+    public ResponseEntity<List<TrafficSourceResponse>> getTrafficSources(
+            @Parameter(description = "조회할 기간 (일 수). 기본값: 7")
+            @RequestParam(defaultValue = "7") int days,
+            @Parameter(description = "조회할 개수. 기본값: 10")
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        var sources = analyticsService.getTrafficSources(days, limit);
+        return ResponseEntity.ok(TrafficSourceResponse.fromList(sources));
     }
 }
 

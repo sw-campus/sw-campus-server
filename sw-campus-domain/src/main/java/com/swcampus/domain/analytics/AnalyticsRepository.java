@@ -58,6 +58,15 @@ public interface AnalyticsRepository {
      * @return 인기 검색어 리스트
      */
     List<PopularSearchTerm> getPopularSearchTerms(int daysAgo, int limit);
+    
+    /**
+     * 트래픽 소스별 세션/사용자 통계를 조회합니다.
+     *
+     * @param daysAgo 조회 기간
+     * @param limit 조회할 개수
+     * @return 트래픽 소스 리스트
+     */
+    List<TrafficSource> getTrafficSources(int daysAgo, int limit);
 }
 
 

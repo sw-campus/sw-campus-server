@@ -37,6 +37,9 @@ public class BannerEntity extends BaseEntity {
     @Column(name = "IMAGE_URL", columnDefinition = "TEXT")
     private String imageUrl;
 
+    @Column(name = "BACKGROUND_COLOR")
+    private String backgroundColor;
+
     @Column(name = "START_DATE", nullable = false)
     private OffsetDateTime startDate;
 
@@ -55,6 +58,7 @@ public class BannerEntity extends BaseEntity {
                 .bannerType(banner.getType())
                 .url(banner.getUrl())
                 .imageUrl(banner.getImageUrl())
+                .backgroundColor(banner.getBackgroundColor())
                 .startDate(banner.getStartDate())
                 .endDate(banner.getEndDate())
                 .isActive(banner.getIsActive())
@@ -68,6 +72,7 @@ public class BannerEntity extends BaseEntity {
                 .type(this.bannerType)
                 .url(this.url)
                 .imageUrl(this.imageUrl)
+                .backgroundColor(this.backgroundColor)
                 .startDate(this.startDate)
                 .endDate(this.endDate)
                 .isActive(this.isActive)
@@ -79,6 +84,7 @@ public class BannerEntity extends BaseEntity {
         this.bannerType = banner.getType();
         this.url = banner.getUrl();
         this.imageUrl = banner.getImageUrl();
+        this.backgroundColor = banner.getBackgroundColor();
         this.startDate = banner.getStartDate();
         this.endDate = banner.getEndDate();
         this.isActive = banner.getIsActive();

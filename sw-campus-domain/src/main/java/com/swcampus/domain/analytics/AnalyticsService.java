@@ -89,6 +89,16 @@ public class AnalyticsService {
         if (limit <= 0) limit = DEFAULT_LIMIT;
         return analyticsRepository.getPopularSearchTerms(daysAgo, limit);
     }
+    
+    /**
+     * 트래픽 소스별 세션/사용자 통계를 조회합니다.
+     */
+    @Cacheable(value = "trafficSources", key = "#daysAgo + '-' + #limit")
+    public List<TrafficSource> getTrafficSources(int daysAgo, int limit) {
+        if (daysAgo <= 0) daysAgo = DEFAULT_DAYS;
+        if (limit <= 0) limit = DEFAULT_LIMIT;
+        return analyticsRepository.getTrafficSources(daysAgo, limit);
+    }
 }
 
 

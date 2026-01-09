@@ -17,6 +17,8 @@ public record BannerRequest(
 
         @Schema(description = "배너 이미지 URL", example = "https://example.com/banner.jpg") String imageUrl,
 
+        @Schema(description = "배너 배경색 (HEX)", example = "#FF5733") @jakarta.validation.constraints.Pattern(regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", message = "유효한 HEX 색상 코드가 아닙니다.") String backgroundColor,
+
         @Schema(description = "시작일", required = true) @NotNull(message = "시작일은 필수입니다") OffsetDateTime startDate,
 
         @Schema(description = "종료일", required = true) @NotNull(message = "종료일은 필수입니다") OffsetDateTime endDate,
@@ -28,6 +30,7 @@ public record BannerRequest(
                 .type(type)
                 .url(url)
                 .imageUrl(imageUrl)
+                .backgroundColor(backgroundColor)
                 .startDate(startDate)
                 .endDate(endDate)
                 .isActive(isActive)
