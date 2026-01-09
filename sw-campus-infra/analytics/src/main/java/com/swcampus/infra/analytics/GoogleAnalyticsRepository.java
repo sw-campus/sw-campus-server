@@ -591,11 +591,17 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
                     .build()
             );
 
+            // 헤더 기반 인덱스 조회로 순서 변경에 안전하게 대응
+            int sourceIndex = findDimensionIndex(response, "sessionSource");
+            int mediumIndex = findDimensionIndex(response, "sessionMedium");
+            int sessionsIndex = findMetricIndex(response, "sessions");
+            int usersIndex = findMetricIndex(response, "totalUsers");
+
             for (Row row : response.getRowsList()) {
-                String source = row.getDimensionValues(0).getValue();
-                String medium = row.getDimensionValues(1).getValue();
-                long sessions = Long.parseLong(row.getMetricValues(0).getValue());
-                long users = Long.parseLong(row.getMetricValues(1).getValue());
+                String source = row.getDimensionValues(sourceIndex).getValue();
+                String medium = row.getDimensionValues(mediumIndex).getValue();
+                long sessions = Long.parseLong(row.getMetricValues(sessionsIndex).getValue());
+                long users = Long.parseLong(row.getMetricValues(usersIndex).getValue());
 
                 result.add(new TrafficSource(source, medium, sessions, users));
             }
@@ -604,6 +610,40 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
         }
 
         return result;
+    }
+
+    /**
+     * 응답 헤더에서 dimension 이름으로 인덱스를 찾습니다.
+     * @param response GA API 응답
+     * @param dimensionName 찾을 dimension 이름
+     * @return dimension 인덱스 (찾지 못하면 -1)
+     */
+    private int findDimensionIndex(RunReportResponse response, String dimensionName) {
+        List<DimensionHeader> headers = response.getDimensionHeadersList();
+        for (int i = 0; i < headers.size(); i++) {
+            if (headers.get(i).getName().equals(dimensionName)) {
+                return i;
+            }
+        }
+        log.warn("Dimension '{}' not found in response headers", dimensionName);
+        return -1;
+    }
+
+    /**
+     * 응답 헤더에서 metric 이름으로 인덱스를 찾습니다.
+     * @param response GA API 응답
+     * @param metricName 찾을 metric 이름
+     * @return metric 인덱스 (찾지 못하면 -1)
+     */
+    private int findMetricIndex(RunReportResponse response, String metricName) {
+        List<MetricHeader> headers = response.getMetricHeadersList();
+        for (int i = 0; i < headers.size(); i++) {
+            if (headers.get(i).getName().equals(metricName)) {
+                return i;
+            }
+        }
+        log.warn("Metric '{}' not found in response headers", metricName);
+        return -1;
     }
 }
 
