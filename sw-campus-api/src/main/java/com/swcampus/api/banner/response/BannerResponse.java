@@ -20,6 +20,8 @@ public record BannerResponse(
 
         @Schema(description = "배너 이미지 URL", example = "https://example.com/banner.jpg") String imageUrl,
 
+        @Schema(description = "배너 배경색 (HEX)", example = "#FF5733") String backgroundColor,
+
         @Schema(description = "시작일") OffsetDateTime startDate,
 
         @Schema(description = "종료일") OffsetDateTime endDate,
@@ -44,6 +46,7 @@ public record BannerResponse(
                 dto.getType(),
                 dto.getUrl(),
                 dto.getImageUrl(),
+                dto.getBackgroundColor(),
                 dto.getStartDate(),
                 dto.getEndDate(),
                 dto.getIsActive(),
