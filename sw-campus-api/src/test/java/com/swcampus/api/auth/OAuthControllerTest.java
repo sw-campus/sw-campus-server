@@ -147,8 +147,8 @@ class OAuthControllerTest {
             // given
             OAuthCallbackRequest request = new OAuthCallbackRequest("some-code");
 
-            // when & then
-            mockMvc.perform(post("/api/v1/auth/oauth/kakao")
+            // when & then - facebook은 지원하지 않는 provider
+            mockMvc.perform(post("/api/v1/auth/oauth/facebook")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
