@@ -1,5 +1,6 @@
 package com.swcampus.domain.mypage.dto;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import java.time.LocalDateTime;
 
 /**
@@ -12,6 +13,8 @@ public record CompletedLectureInfo(
     String lectureImageUrl,
     String organizationName,
     LocalDateTime certifiedAt,
-    boolean canWriteReview
+    boolean canWriteReview,
+    String certificateImageUrl,
+    ApprovalStatus certificateStatus
 ) {
 }

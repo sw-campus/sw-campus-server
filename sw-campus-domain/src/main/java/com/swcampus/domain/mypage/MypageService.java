@@ -10,6 +10,7 @@ import com.swcampus.domain.organization.OrganizationService;
 import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewService;
+import com.swcampus.domain.storage.PresignedUrlService;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +32,7 @@ public class MypageService {
     private final LectureService lectureService;
     private final ReviewService reviewService;
     private final OrganizationService organizationService;
+    private final PresignedUrlService presignedUrlService;
 
     /**
      * 수강 완료 강의 목록 조회 (수료증 인증이 승인된 강의)
@@ -65,6 +67,14 @@ public class MypageService {
             .map(Review::getLectureId)
             .collect(Collectors.toSet());
 
+        // 수료증 이미지 Presigned URL 일괄 생성 (N+1 방지)
+        List<String> imageKeys = certificates.stream()
+            .map(Certificate::getImageKey)
+            .filter(key -> key != null && !key.isEmpty())
+            .toList();
+        // 마이페이지에서 본인 수료증 조회 시 Private 접근 허용 (소유권 이미 검증됨)
+        Map<String, String> presignedUrls = presignedUrlService.getPresignedUrls(imageKeys, true);
+
         // 응답 생성
         return certificates.stream()
             .filter(cert -> lectureMap.containsKey(cert.getLectureId()))
@@ -72,6 +82,7 @@ public class MypageService {
                 Lecture lecture = lectureMap.get(cert.getLectureId());
                 String orgName = orgNames.getOrDefault(lecture.getOrgId(), "Unknown");
                 boolean hasReview = reviewedLectureIds.contains(cert.getLectureId());
+                String certificateImageUrl = presignedUrls.get(cert.getImageKey());
                 return new CompletedLectureInfo(
                     cert.getId(),
                     lecture.getLectureId(),
@@ -79,7 +90,9 @@ public class MypageService {
                     lecture.getLectureImageUrl(),
                     orgName,
                     cert.getCreatedAt(),
-                    !hasReview  // 후기가 없으면 작성 가능
+                    !hasReview,  // 후기가 없으면 작성 가능
+                    certificateImageUrl,
+                    cert.getApprovalStatus()
                 );
             })
             .toList();

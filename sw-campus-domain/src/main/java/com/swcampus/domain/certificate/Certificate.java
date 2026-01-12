@@ -58,4 +58,21 @@ public class Certificate {
     public boolean isApproved() {
         return this.approvalStatus == ApprovalStatus.APPROVED;
     }
+
+    /**
+     * 수료증 이미지 수정 가능 여부 확인
+     * APPROVED 상태가 아닌 경우에만 수정 가능
+     */
+    public boolean canEdit() {
+        return this.approvalStatus != ApprovalStatus.APPROVED;
+    }
+
+    /**
+     * 수료증 이미지 키 업데이트
+     * 이미지 수정 시 상태를 PENDING으로 초기화하여 재검증 필요
+     */
+    public void updateImageKey(String newImageKey) {
+        this.imageKey = newImageKey;
+        this.approvalStatus = ApprovalStatus.PENDING;
+    }
 }

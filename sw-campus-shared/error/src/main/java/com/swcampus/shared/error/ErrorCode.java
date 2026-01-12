@@ -57,6 +57,7 @@ public enum ErrorCode {
 	CERTIFICATE_ALREADY_EXISTS(409, "T002", "이미 인증된 수료증입니다"),
 	CERTIFICATE_NOT_VERIFIED(403, "T003", "인증되지 않은 수료증입니다"),
 	CERTIFICATE_LECTURE_MISMATCH(400, "T004", "수료증 강의명이 일치하지 않습니다"),
+	CERTIFICATE_NOT_EDITABLE(403, "T005", "수정할 수 없는 수료증입니다"),
 
 	// Review (R)
 	REVIEW_NOT_FOUND(404, "R001", "후기를 찾을 수 없습니다"),
