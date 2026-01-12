@@ -134,9 +134,9 @@ public class AuthService {
 
             // Organization에 새 회원 ID 연결
             organization.setUserId(savedMember.getId());
-            organizationRepository.save(organization);
+            Organization savedOrganization = organizationRepository.save(organization);
 
-            return new OrganizationSignupResult(savedMember, organization);
+            return new OrganizationSignupResult(savedMember, savedOrganization);
         } else {
             // 신규 기관 생성
             Member savedMember = memberRepository.save(member);
