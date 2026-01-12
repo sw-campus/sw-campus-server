@@ -1,23 +1,35 @@
 package com.swcampus.infra.oauth;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.swcampus.domain.oauth.OAuthClient;
 import com.swcampus.domain.oauth.OAuthProvider;
 import com.swcampus.domain.oauth.OAuthUserInfo;
+import com.swcampus.domain.oauth.exception.OAuthAuthenticationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 public class KakaoOAuthClient implements OAuthClient {
+
+    private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
+    private static final String USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
+    private static final String GRANT_TYPE = "authorization_code";
+    private static final String GRANT_TYPE_KEY = "grant_type";
+    private static final String CLIENT_ID_KEY = "client_id";
+    private static final String CLIENT_SECRET_KEY = "client_secret";
+    private static final String REDIRECT_URI_KEY = "redirect_uri";
+    private static final String CODE_KEY = "code";
 
     private final RestTemplate restTemplate;
 
@@ -38,54 +50,82 @@ public class KakaoOAuthClient implements OAuthClient {
 
     private String getAccessToken(String code) {
         String decodedCode = URLDecoder.decode(code, StandardCharsets.UTF_8);
-        String tokenUrl = "https://kauth.kakao.com/oauth/token";
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "authorization_code");
-        params.add("client_id", clientId);
-        params.add("client_secret", clientSecret);
-        params.add("redirect_uri", redirectUri);
-        params.add("code", decodedCode);
+        params.add(GRANT_TYPE_KEY, GRANT_TYPE);
+        params.add(CLIENT_ID_KEY, clientId);
+        params.add(CLIENT_SECRET_KEY, clientSecret);
+        params.add(REDIRECT_URI_KEY, redirectUri);
+        params.add(CODE_KEY, decodedCode);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
-        return (String) response.getBody().get("access_token");
+        try {
+            ResponseEntity<KakaoTokenResponse> response = restTemplate.postForEntity(
+                TOKEN_URL, request, KakaoTokenResponse.class);
+
+            KakaoTokenResponse body = response.getBody();
+            if (body == null || body.accessToken() == null) {
+                throw new OAuthAuthenticationException();
+            }
+            return body.accessToken();
+        } catch (RestClientException e) {
+            throw new OAuthAuthenticationException(e);
+        }
     }
 
-    @SuppressWarnings("unchecked")
     private OAuthUserInfo fetchUserInfo(String accessToken) {
-        String userInfoUrl = "https://kapi.kakao.com/v2/user/me";
-
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
 
         HttpEntity<Void> request = new HttpEntity<>(headers);
 
-        ResponseEntity<Map> response = restTemplate.exchange(
-            userInfoUrl, HttpMethod.GET, request, Map.class);
+        try {
+            ResponseEntity<KakaoUserInfoResponse> response = restTemplate.exchange(
+                USER_INFO_URL, HttpMethod.GET, request, KakaoUserInfoResponse.class);
 
-        Map<String, Object> body = response.getBody();
+            KakaoUserInfoResponse body = response.getBody();
+            if (body == null) {
+                throw new OAuthAuthenticationException();
+            }
 
-        // 카카오 응답 구조: { id, kakao_account: { email, profile: { nickname } } }
-        String providerId = String.valueOf(body.get("id"));
+            return OAuthUserInfo.builder()
+                .provider(OAuthProvider.KAKAO)
+                .providerId(String.valueOf(body.id()))
+                .email(body.getEmail())
+                .name(body.getNickname())
+                .build();
+        } catch (RestClientException e) {
+            throw new OAuthAuthenticationException(e);
+        }
+    }
 
-        Map<String, Object> kakaoAccount = (Map<String, Object>) body.get("kakao_account");
-        String email = kakaoAccount != null ? (String) kakaoAccount.get("email") : null;
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record KakaoTokenResponse(
+        @JsonProperty("access_token") String accessToken
+    ) {}
 
-        Map<String, Object> profile = kakaoAccount != null
-            ? (Map<String, Object>) kakaoAccount.get("profile")
-            : null;
-        String nickname = profile != null ? (String) profile.get("nickname") : null;
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record KakaoUserInfoResponse(
+        Long id,
+        @JsonProperty("kakao_account") KakaoAccount kakaoAccount
+    ) {
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        private record KakaoAccount(String email, Profile profile) {}
 
-        return OAuthUserInfo.builder()
-            .provider(OAuthProvider.KAKAO)
-            .providerId(providerId)
-            .email(email)
-            .name(nickname)
-            .build();
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        private record Profile(String nickname) {}
+
+        public String getEmail() {
+            return kakaoAccount != null ? kakaoAccount.email() : null;
+        }
+
+        public String getNickname() {
+            return (kakaoAccount != null && kakaoAccount.profile() != null)
+                ? kakaoAccount.profile().nickname() : null;
+        }
     }
 }
