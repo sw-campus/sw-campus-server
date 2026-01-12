@@ -1,6 +1,7 @@
 package com.swcampus.api.certificate;
 
 import com.swcampus.api.certificate.response.CertificateCheckResponse;
+import com.swcampus.api.certificate.response.CertificateImageUpdateResponse;
 import com.swcampus.api.certificate.response.CertificateVerifyResponse;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
@@ -102,6 +103,51 @@ public class CertificateController {
         return ResponseEntity.ok(CertificateVerifyResponse.of(
                 certificate.getId(),
                 certificate.getLectureId(),
+                certificate.getImageKey(),
+                certificate.getApprovalStatus().name()
+        ));
+    }
+
+    @Operation(summary = "수료증 이미지 수정", description = "수료증 이미지를 수정합니다. PENDING/REJECTED 상태만 수정 가능합니다.")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "수정 성공"),
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "403", description = "수정 권한 없음 또는 수정 불가 상태",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 403, "message": "수정할 수 없는 수료증입니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "404", description = "수료증을 찾을 수 없음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 404, "message": "수료증을 찾을 수 없습니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
+    })
+    @PatchMapping(value = "/{certificateId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CertificateImageUpdateResponse> updateCertificateImage(
+            @CurrentMember MemberPrincipal member,
+            @Parameter(description = "수료증 ID", example = "1", required = true)
+            @PathVariable("certificateId") Long certificateId,
+            @Parameter(description = "새 수료증 이미지", required = true)
+            @RequestPart(name = "image") MultipartFile image) throws IOException {
+
+        Long memberId = member.memberId();
+
+        Certificate certificate = certificateService.updateCertificateImage(
+                memberId,
+                certificateId,
+                image.getBytes(),
+                image.getOriginalFilename(),
+                image.getContentType()
+        );
+
+        return ResponseEntity.ok(CertificateImageUpdateResponse.of(
+                certificate.getId(),
                 certificate.getImageKey(),
                 certificate.getApprovalStatus().name()
         ));

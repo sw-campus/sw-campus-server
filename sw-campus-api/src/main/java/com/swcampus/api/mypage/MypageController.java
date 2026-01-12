@@ -129,7 +129,7 @@ public class MypageController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "[일반 사용자 전용] 내 수강 완료 강의 조회", description = "[일반 사용자 전용] 수료증 인증이 승인된 강의 목록을 조회합니다. 각 강의에 대해 후기 작성 가능 여부(canWriteReview)를 함께 반환합니다.")
+    @Operation(summary = "[일반 사용자 전용] 내 수강 완료 강의 조회", description = "[일반 사용자 전용] 수료증을 등록한 강의 목록을 조회합니다. 수료증 승인 상태(PENDING/APPROVED/REJECTED)와 관계없이 모든 등록된 수료증을 반환합니다. 각 강의에 대해 후기 작성 가능 여부(canWriteReview)를 함께 반환합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공 (없을 경우 빈 배열)"),
         @ApiResponse(responseCode = "401", description = "인증 필요",

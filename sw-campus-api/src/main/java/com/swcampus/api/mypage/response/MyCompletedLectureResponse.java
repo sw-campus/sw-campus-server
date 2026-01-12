@@ -1,5 +1,6 @@
 package com.swcampus.api.mypage.response;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.mypage.dto.CompletedLectureInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
@@ -25,7 +26,13 @@ public record MyCompletedLectureResponse(
     LocalDateTime certifiedAt,
 
     @Schema(description = "후기 작성 가능 여부")
-    Boolean canWriteReview
+    Boolean canWriteReview,
+
+    @Schema(description = "수료증 이미지 URL (Presigned, 15분 유효)")
+    String certificateImageUrl,
+
+    @Schema(description = "수료증 승인 상태")
+    ApprovalStatus certificateStatus
 ) {
     public static MyCompletedLectureResponse from(CompletedLectureInfo info) {
         return new MyCompletedLectureResponse(
@@ -35,7 +42,9 @@ public record MyCompletedLectureResponse(
             info.lectureImageUrl(),
             info.organizationName(),
             info.certifiedAt(),
-            info.canWriteReview()
+            info.canWriteReview(),
+            info.certificateImageUrl(),
+            info.certificateStatus()
         );
     }
 }

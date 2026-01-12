@@ -182,7 +182,7 @@ class CertificateIntegrationTest {
             // 이미 인증된 수료증이 있는 경우
             certificateRepository.save(
                     Certificate.create(testMember.getId(), testLecture.getLectureId(),
-                            "https://s3.example.com/old-certificate.jpg", "SUCCESS")
+                            "https://s3.example.com/old-certificate.jpg")
             );
 
             // 중복 인증 시도

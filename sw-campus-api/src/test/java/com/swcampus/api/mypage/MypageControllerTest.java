@@ -163,7 +163,8 @@ class MypageControllerTest {
     void getMyCompletedLectures_Success() throws Exception {
         // given
         CompletedLectureInfo lectureInfo = new CompletedLectureInfo(
-            1L, 100L, "Test Lecture", "image.jpg", "Test Org", LocalDateTime.now(), true
+            1L, 100L, "Test Lecture", "image.jpg", "Test Org", LocalDateTime.now(), true,
+            "https://s3.example.com/cert.jpg", ApprovalStatus.PENDING
         );
         given(mypageService.getCompletedLectures(1L)).willReturn(List.of(lectureInfo));
 

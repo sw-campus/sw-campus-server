@@ -17,7 +17,7 @@ class CertificateTest {
         @DisplayName("수료증 생성 시 PENDING 상태로 생성된다")
         void createCertificate_statusIsPending() {
             // when
-            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg");
 
             // then
             assertThat(certificate.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
@@ -32,16 +32,14 @@ class CertificateTest {
             Long memberId = 1L;
             Long lectureId = 2L;
             String imageKey = "certificates/2024/01/01/image.jpg";
-            String status = "SUCCESS";
 
             // when
-            Certificate certificate = Certificate.create(memberId, lectureId, imageKey, status);
+            Certificate certificate = Certificate.create(memberId, lectureId, imageKey);
 
             // then
             assertThat(certificate.getMemberId()).isEqualTo(memberId);
             assertThat(certificate.getLectureId()).isEqualTo(lectureId);
             assertThat(certificate.getImageKey()).isEqualTo(imageKey);
-            assertThat(certificate.getStatus()).isEqualTo(status);
             assertThat(certificate.getCreatedAt()).isNotNull();
         }
     }
@@ -54,7 +52,7 @@ class CertificateTest {
         @DisplayName("수료증 승인 시 APPROVED로 변경된다")
         void approveCertificate_changesStatusToApproved() {
             // given
-            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg");
 
             // when
             certificate.approve();
@@ -74,7 +72,7 @@ class CertificateTest {
         @DisplayName("수료증 반려 시 REJECTED로 변경된다")
         void rejectCertificate_changesStatusToRejected() {
             // given
-            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg");
 
             // when
             certificate.reject();
@@ -94,7 +92,7 @@ class CertificateTest {
         @DisplayName("isPending - PENDING 상태일 때 true 반환")
         void isPending_whenPending_returnsTrue() {
             // given
-            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg");
 
             // then
             assertThat(certificate.isPending()).isTrue();
@@ -104,7 +102,7 @@ class CertificateTest {
         @DisplayName("isPending - APPROVED 상태일 때 false 반환")
         void isPending_whenApproved_returnsFalse() {
             // given
-            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg");
             certificate.approve();
 
             // then
@@ -115,7 +113,7 @@ class CertificateTest {
         @DisplayName("isApproved - APPROVED 상태일 때 true 반환")
         void isApproved_whenApproved_returnsTrue() {
             // given
-            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg");
             certificate.approve();
 
             // then
@@ -126,7 +124,7 @@ class CertificateTest {
         @DisplayName("isApproved - REJECTED 상태일 때 false 반환")
         void isApproved_whenRejected_returnsFalse() {
             // given
-            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(1L, 1L, "certificates/2024/01/01/image.jpg");
             certificate.reject();
 
             // then
@@ -146,12 +144,11 @@ class CertificateTest {
             Long memberId = 2L;
             Long lectureId = 3L;
             String imageKey = "certificates/2024/01/01/image.jpg";
-            String status = "SUCCESS";
             ApprovalStatus approvalStatus = ApprovalStatus.APPROVED;
 
             // when
             Certificate certificate = Certificate.of(
-                    id, memberId, lectureId, imageKey, status, approvalStatus, null
+                    id, memberId, lectureId, imageKey, approvalStatus, null
             );
 
             // then
@@ -159,7 +156,6 @@ class CertificateTest {
             assertThat(certificate.getMemberId()).isEqualTo(memberId);
             assertThat(certificate.getLectureId()).isEqualTo(lectureId);
             assertThat(certificate.getImageKey()).isEqualTo(imageKey);
-            assertThat(certificate.getStatus()).isEqualTo(status);
             assertThat(certificate.getApprovalStatus()).isEqualTo(approvalStatus);
         }
     }

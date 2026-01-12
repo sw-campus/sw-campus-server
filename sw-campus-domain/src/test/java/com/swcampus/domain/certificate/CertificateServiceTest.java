@@ -59,7 +59,7 @@ class CertificateServiceTest {
             // given
             Long memberId = 1L;
             Long lectureId = 1L;
-            Certificate certificate = Certificate.create(memberId, lectureId, "certificates/image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(memberId, lectureId, "certificates/image.jpg");
 
             given(certificateRepository.findByMemberIdAndLectureId(memberId, lectureId))
                     .willReturn(Optional.of(certificate));
@@ -199,7 +199,7 @@ class CertificateServiceTest {
             given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
-            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg", "SUCCESS");
+            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
             given(certificateRepository.save(any(Certificate.class)))
                     .willReturn(savedCertificate);
 
@@ -236,7 +236,7 @@ class CertificateServiceTest {
             given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
-            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg", "SUCCESS");
+            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
             given(certificateRepository.save(any(Certificate.class)))
                     .willReturn(savedCertificate);
 
@@ -271,7 +271,7 @@ class CertificateServiceTest {
             given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
-            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg", "SUCCESS");
+            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
             given(certificateRepository.save(any(Certificate.class)))
                     .willReturn(savedCertificate);
 
@@ -302,7 +302,7 @@ class CertificateServiceTest {
             given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
-            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg", "SUCCESS");
+            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
             given(certificateRepository.save(any(Certificate.class)))
                     .willReturn(savedCertificate);
 

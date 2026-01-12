@@ -2,6 +2,9 @@ package com.swcampus.domain.certificate;
 
 import com.swcampus.domain.certificate.exception.CertificateAlreadyExistsException;
 import com.swcampus.domain.certificate.exception.CertificateLectureMismatchException;
+import com.swcampus.domain.certificate.exception.CertificateNotEditableException;
+import com.swcampus.domain.certificate.exception.CertificateNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureRepository;
@@ -77,8 +80,8 @@ public class CertificateService {
         // 5. S3 Private Bucket에 이미지 업로드
         String imageKey = fileStorageService.uploadPrivate(imageBytes, "certificates", fileName, contentType);
 
-        // 6. 수료증 저장 (OCR 검증 성공 시 status = "SUCCESS")
-        Certificate certificate = Certificate.create(memberId, lectureId, imageKey, "SUCCESS");
+        // 6. 수료증 저장
+        Certificate certificate = Certificate.create(memberId, lectureId, imageKey);
         return certificateRepository.save(certificate);
     }
 
@@ -97,9 +100,53 @@ public class CertificateService {
     }
 
     /**
-     * 회원의 승인된 수료증 목록 조회
+     * 회원의 모든 수료증 목록 조회 (상태와 무관하게 PENDING/APPROVED/REJECTED 모두 포함)
      */
     public List<Certificate> findAllByMemberId(Long memberId) {
         return certificateRepository.findAllByMemberId(memberId);
+    }
+
+    /**
+     * 수료증 이미지 수정
+     * - 소유권 검증: 본인 수료증만 수정 가능
+     * - 상태 검증: PENDING/REJECTED만 수정 가능, APPROVED는 수정 불가
+     * - 기존 이미지 S3에서 삭제 후 새 이미지 업로드
+     * - 상태 PENDING으로 초기화 (재검증 필요)
+     */
+    @Transactional
+    public Certificate updateCertificateImage(Long memberId, Long certificateId,
+            byte[] imageBytes, String fileName, String contentType) {
+        // 1. 수료증 조회
+        Certificate certificate = certificateRepository.findById(certificateId)
+                .orElseThrow(() -> new CertificateNotFoundException(certificateId));
+
+        // 2. 소유권 검증
+        if (!certificate.getMemberId().equals(memberId)) {
+            throw new AccessDeniedException("수료증 수정 권한이 없습니다.");
+        }
+
+        // 3. 상태 검증 (APPROVED는 수정 불가)
+        if (!certificate.canEdit()) {
+            throw new CertificateNotEditableException(certificateId);
+        }
+
+        // 4. 기존 이미지 S3에서 삭제
+        String oldImageKey = certificate.getImageKey();
+        if (oldImageKey != null && !oldImageKey.isEmpty()) {
+            try {
+                fileStorageService.deletePrivate(oldImageKey);
+            } catch (RuntimeException e) {
+                log.warn("기존 수료증 이미지 삭제 실패: {}", oldImageKey, e);
+            }
+        }
+
+        // 5. 새 이미지 S3에 업로드
+        String newImageKey = fileStorageService.uploadPrivate(imageBytes, "certificates", fileName, contentType);
+
+        // 6. imageKey 업데이트 + 상태 PENDING으로 초기화
+        certificate.updateImageKey(newImageKey);
+
+        // 7. 저장 및 반환
+        return certificateRepository.save(certificate);
     }
 }
