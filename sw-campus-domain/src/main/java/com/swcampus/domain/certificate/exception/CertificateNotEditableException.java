@@ -9,10 +9,6 @@ import com.swcampus.shared.error.ErrorCode;
  */
 public class CertificateNotEditableException extends BusinessException {
 
-	public CertificateNotEditableException() {
-		super(ErrorCode.CERTIFICATE_NOT_EDITABLE);
-	}
-
 	public CertificateNotEditableException(Long certificateId) {
 		super(ErrorCode.CERTIFICATE_NOT_EDITABLE,
 			String.format("승인된 수료증은 수정할 수 없습니다. ID: %d", certificateId));

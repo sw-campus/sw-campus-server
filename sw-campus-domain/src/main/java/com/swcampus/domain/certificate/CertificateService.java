@@ -135,7 +135,7 @@ public class CertificateService {
         if (oldImageKey != null && !oldImageKey.isEmpty()) {
             try {
                 fileStorageService.deletePrivate(oldImageKey);
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 log.warn("기존 수료증 이미지 삭제 실패: {}", oldImageKey, e);
             }
         }
