@@ -100,7 +100,7 @@ public class CertificateService {
     }
 
     /**
-     * 회원의 승인된 수료증 목록 조회
+     * 회원의 모든 수료증 목록 조회 (상태와 무관하게 PENDING/APPROVED/REJECTED 모두 포함)
      */
     public List<Certificate> findAllByMemberId(Long memberId) {
         return certificateRepository.findAllByMemberId(memberId);

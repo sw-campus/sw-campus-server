@@ -41,7 +41,7 @@ public class MypageService {
      * @return 수강 완료 강의 목록
      */
     public List<CompletedLectureInfo> getCompletedLectures(Long memberId) {
-        // 승인된 수료증 목록 조회
+        // 회원의 모든 수료증 목록 조회 (상태와 무관하게 PENDING/APPROVED/REJECTED 모두 포함)
         List<Certificate> certificates = certificateService.findAllByMemberId(memberId);
 
         if (certificates.isEmpty()) {
