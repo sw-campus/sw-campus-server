@@ -127,11 +127,14 @@ public class AuthService {
 
             // 재직증명서 Key 업데이트
             organization.updateCertificateKey(certificateKey);
-            organization = organizationRepository.save(organization);
 
             // Member에 orgId 연결
             member.setOrgId(organization.getId());
             Member savedMember = memberRepository.save(member);
+
+            // Organization에 새 회원 ID 연결
+            organization.setUserId(savedMember.getId());
+            organizationRepository.save(organization);
 
             return new OrganizationSignupResult(savedMember, organization);
         } else {
