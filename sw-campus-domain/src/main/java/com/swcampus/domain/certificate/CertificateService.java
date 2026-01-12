@@ -80,8 +80,8 @@ public class CertificateService {
         // 5. S3 Private Bucket에 이미지 업로드
         String imageKey = fileStorageService.uploadPrivate(imageBytes, "certificates", fileName, contentType);
 
-        // 6. 수료증 저장 (OCR 검증 성공 시 status = "SUCCESS")
-        Certificate certificate = Certificate.create(memberId, lectureId, imageKey, "SUCCESS");
+        // 6. 수료증 저장
+        Certificate certificate = Certificate.create(memberId, lectureId, imageKey);
         return certificateRepository.save(certificate);
     }
 

@@ -106,7 +106,7 @@ class AdminReviewControllerTest {
     private Certificate createMockCertificate(Long certificateId, Long memberId, Long lectureId, ApprovalStatus status) {
         return Certificate.of(
                 certificateId, memberId, lectureId,
-                "https://s3.../certificate.jpg", "SUCCESS",
+                "https://s3.../certificate.jpg",
                 status, LocalDateTime.now()
         );
     }

@@ -14,30 +14,27 @@ public class Certificate {
     private Long memberId;
     private Long lectureId;
     private String imageKey;
-    private String status;
     private ApprovalStatus approvalStatus;
     private LocalDateTime createdAt;
 
-    public static Certificate create(Long memberId, Long lectureId, String imageKey, String status) {
+    public static Certificate create(Long memberId, Long lectureId, String imageKey) {
         Certificate certificate = new Certificate();
         certificate.memberId = memberId;
         certificate.lectureId = lectureId;
         certificate.imageKey = imageKey;
-        certificate.status = status;
         certificate.approvalStatus = ApprovalStatus.PENDING;
         certificate.createdAt = LocalDateTime.now();
         return certificate;
     }
 
     public static Certificate of(Long id, Long memberId, Long lectureId,
-                                  String imageKey, String status,
+                                  String imageKey,
                                   ApprovalStatus approvalStatus, LocalDateTime createdAt) {
         Certificate certificate = new Certificate();
         certificate.id = id;
         certificate.memberId = memberId;
         certificate.lectureId = lectureId;
         certificate.imageKey = imageKey;
-        certificate.status = status;
         certificate.approvalStatus = approvalStatus;
         certificate.createdAt = createdAt;
         return certificate;

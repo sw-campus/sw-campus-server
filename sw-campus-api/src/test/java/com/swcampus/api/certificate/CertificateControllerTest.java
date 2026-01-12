@@ -77,7 +77,7 @@ class CertificateControllerTest {
 
             Certificate certificate = Certificate.of(
                     1L, memberId, lectureId,
-                    "https://s3.../image.jpg", "SUCCESS",
+                    "https://s3.../image.jpg",
                     ApprovalStatus.PENDING, LocalDateTime.now()
             );
             given(certificateService.checkCertificate(memberId, lectureId))
@@ -141,7 +141,7 @@ class CertificateControllerTest {
 
             Certificate certificate = Certificate.of(
                     1L, memberId, lectureId,
-                    "https://s3.../certificates/certificate.jpg", "SUCCESS",
+                    "https://s3.../certificates/certificate.jpg",
                     ApprovalStatus.PENDING, LocalDateTime.now()
             );
 

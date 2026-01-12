@@ -29,9 +29,6 @@ public class CertificateEntity extends BaseEntity {
     @Column(name = "image_url", nullable = false)  // TODO: DB 마이그레이션 후 image_key로 변경
     private String imageKey;
 
-    @Column(nullable = false)
-    private String status;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "approval_status", nullable = false)
     private ApprovalStatus approvalStatus;
@@ -42,7 +39,6 @@ public class CertificateEntity extends BaseEntity {
         entity.memberId = certificate.getMemberId();
         entity.lectureId = certificate.getLectureId();
         entity.imageKey = certificate.getImageKey();
-        entity.status = certificate.getStatus();
         entity.approvalStatus = certificate.getApprovalStatus();
         return entity;
     }
@@ -53,7 +49,6 @@ public class CertificateEntity extends BaseEntity {
             this.memberId,
             this.lectureId,
             this.imageKey,
-            this.status,
             this.approvalStatus,
             this.getCreatedAt()
         );

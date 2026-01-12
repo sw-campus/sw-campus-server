@@ -132,7 +132,7 @@ public class CertificateController {
     public ResponseEntity<CertificateImageUpdateResponse> updateCertificateImage(
             @CurrentMember MemberPrincipal member,
             @Parameter(description = "수료증 ID", example = "1", required = true)
-            @PathVariable Long certificateId,
+            @PathVariable("certificateId") Long certificateId,
             @Parameter(description = "새 수료증 이미지", required = true)
             @RequestPart(name = "image") MultipartFile image) throws IOException {
 
