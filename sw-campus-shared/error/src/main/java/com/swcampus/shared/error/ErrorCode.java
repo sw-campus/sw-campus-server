@@ -44,6 +44,7 @@ public enum ErrorCode {
 	EMAIL_VERIFICATION_EXPIRED(400, "A005", "이메일 인증이 만료되었습니다"),
 	INVALID_PASSWORD(400, "A006", "비밀번호 정책을 위반했습니다"),
 	MAIL_SEND_FAILED(500, "A007", "이메일 발송에 실패했습니다"),
+	OAUTH_AUTHENTICATION_FAILED(401, "A008", "소셜 로그인 인증에 실패했습니다"),
 
 	// Organization (O)
 	ORGANIZATION_NOT_FOUND(404, "O001", "기관을 찾을 수 없습니다"),
