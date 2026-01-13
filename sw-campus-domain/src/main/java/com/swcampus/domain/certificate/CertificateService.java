@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,7 +59,7 @@ public class CertificateService {
      */
     @Transactional
     public Certificate verifyCertificate(Long memberId, Long lectureId,
-            byte[] imageBytes, String fileName,
+            InputStream imageStream, long contentLength, String fileName,
             String contentType) {
         // 1. 이미 인증했는지 확인
         if (certificateRepository.existsByMemberIdAndLectureId(memberId, lectureId)) {
@@ -69,16 +70,17 @@ public class CertificateService {
         Lecture lecture = lectureRepository.findById(lectureId)
                 .orElseThrow(() -> new ResourceNotFoundException("강의를 찾을 수 없습니다. ID: " + lectureId));
 
-        // 3-4. OCR 검증 (설정에 따라 스킵)
+        // 3-4. OCR 검증 (현재 비활성화 상태)
+        // TODO(#384): OCR 활성화 시 InputStream 기반으로 변경 필요
         if (ocrEnabled && ocrClient != null) {
-            List<String> extractedLines = ocrClient.extractText(imageBytes, fileName);
-            validateLectureName(lecture.getLectureName(), extractedLines);
-        } else {
-            log.info("OCR 검증 비활성화 상태 - 수료증 이미지만 저장합니다. memberId={}, lectureId={}", memberId, lectureId);
+            throw new UnsupportedOperationException(
+                    "OCR 검증은 현재 InputStream 기반 처리와 호환되지 않습니다. " +
+                    "OCR 활성화 전 OcrClient를 InputStream 기반으로 변경해야 합니다. (Issue #384)");
         }
+        log.info("OCR 검증 비활성화 상태 - 수료증 이미지만 저장합니다. memberId={}, lectureId={}", memberId, lectureId);
 
-        // 5. S3 Private Bucket에 이미지 업로드
-        String imageKey = fileStorageService.uploadPrivate(imageBytes, "certificates", fileName, contentType);
+        // 5. S3 Private Bucket에 이미지 업로드 (InputStream 기반)
+        String imageKey = fileStorageService.uploadPrivate(imageStream, contentLength, "certificates", fileName, contentType);
 
         // 6. 수료증 저장
         Certificate certificate = Certificate.create(memberId, lectureId, imageKey);
@@ -115,7 +117,7 @@ public class CertificateService {
      */
     @Transactional
     public Certificate updateCertificateImage(Long memberId, Long certificateId,
-            byte[] imageBytes, String fileName, String contentType) {
+            InputStream imageStream, long contentLength, String fileName, String contentType) {
         // 1. 수료증 조회
         Certificate certificate = certificateRepository.findById(certificateId)
                 .orElseThrow(() -> new CertificateNotFoundException(certificateId));
@@ -140,8 +142,8 @@ public class CertificateService {
             }
         }
 
-        // 5. 새 이미지 S3에 업로드
-        String newImageKey = fileStorageService.uploadPrivate(imageBytes, "certificates", fileName, contentType);
+        // 5. 새 이미지 S3에 업로드 (InputStream 기반)
+        String newImageKey = fileStorageService.uploadPrivate(imageStream, contentLength, "certificates", fileName, contentType);
 
         // 6. imageKey 업데이트 + 상태 PENDING으로 초기화
         certificate.updateImageKey(newImageKey);

@@ -18,6 +18,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
@@ -107,7 +109,7 @@ class CertificateServiceTest {
 
             // when & then
             assertThatThrownBy(() -> certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             )).isInstanceOf(CertificateAlreadyExistsException.class);
         }
 
@@ -125,7 +127,7 @@ class CertificateServiceTest {
 
             // when & then
             assertThatThrownBy(() -> certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             )).isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("강의를 찾을 수 없습니다");
         }
@@ -151,7 +153,7 @@ class CertificateServiceTest {
 
             // when & then
             assertThatThrownBy(() -> certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             )).isInstanceOf(CertificateLectureMismatchException.class);
         }
 
@@ -175,7 +177,7 @@ class CertificateServiceTest {
 
             // when & then
             assertThatThrownBy(() -> certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             )).isInstanceOf(CertificateLectureMismatchException.class);
         }
 
@@ -196,7 +198,7 @@ class CertificateServiceTest {
                     .willReturn(List.of("수료증", "Java 풀스택 개발자 과정", "홍길동"));
             given(lectureNameMatcher.match(anyString(), any()))
                     .willReturn(true);
-            given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
+            given(fileStorageService.uploadPrivate(any(InputStream.class), eq(0L), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
             Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
@@ -205,7 +207,7 @@ class CertificateServiceTest {
 
             // when
             Certificate result = certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             );
 
             // then
@@ -233,7 +235,7 @@ class CertificateServiceTest {
                     .willReturn(List.of("수료증", "Java풀스택개발자과정", "홍길동"));
             given(lectureNameMatcher.match(anyString(), any()))
                     .willReturn(true);
-            given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
+            given(fileStorageService.uploadPrivate(any(InputStream.class), eq(0L), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
             Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
@@ -242,7 +244,7 @@ class CertificateServiceTest {
 
             // when
             Certificate result = certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             );
 
             // then
@@ -268,7 +270,7 @@ class CertificateServiceTest {
                     .willReturn(List.of("수료증", "JAVA 풀스택 개발자 과정", "홍길동"));
             given(lectureNameMatcher.match(anyString(), any()))
                     .willReturn(true);
-            given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
+            given(fileStorageService.uploadPrivate(any(InputStream.class), eq(0L), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
             Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
@@ -277,7 +279,7 @@ class CertificateServiceTest {
 
             // when
             Certificate result = certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             );
 
             // then
@@ -299,7 +301,7 @@ class CertificateServiceTest {
                     .willReturn(false);
             given(lectureRepository.findById(lectureId))
                     .willReturn(Optional.of(lecture));
-            given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
+            given(fileStorageService.uploadPrivate(any(InputStream.class), eq(0L), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
             Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
@@ -308,7 +310,7 @@ class CertificateServiceTest {
 
             // when
             Certificate result = certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             );
 
             // then

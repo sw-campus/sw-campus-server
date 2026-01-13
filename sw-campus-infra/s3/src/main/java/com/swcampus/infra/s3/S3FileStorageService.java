@@ -9,6 +9,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
@@ -46,6 +47,12 @@ public class S3FileStorageService implements FileStorageService {
     }
 
     @Override
+    public String uploadPrivate(InputStream inputStream, long contentLength, String directory, String fileName, String contentType) {
+        return performUploadAndGetKey(directory, fileName, contentType, privateBucketName,
+                RequestBody.fromInputStream(inputStream, contentLength), contentLength);
+    }
+
+    @Override
     public void deletePrivate(String fileKey) {
         performDeleteByKey(fileKey, privateBucketName);
     }
@@ -65,15 +72,24 @@ public class S3FileStorageService implements FileStorageService {
     }
 
     private String performUploadAndGetKey(byte[] content, String directory, String fileName, String contentType, String targetBucket) {
+        return performUploadAndGetKey(directory, fileName, contentType, targetBucket,
+                RequestBody.fromBytes(content), null);
+    }
+
+    private String performUploadAndGetKey(String directory, String fileName, String contentType,
+            String targetBucket, RequestBody requestBody, Long contentLength) {
         String key = generateKey(directory, fileName);
 
-        PutObjectRequest request = PutObjectRequest.builder()
+        PutObjectRequest.Builder requestBuilder = PutObjectRequest.builder()
                 .bucket(targetBucket)
                 .key(key)
-                .contentType(contentType)
-                .build();
+                .contentType(contentType);
 
-        s3Client.putObject(request, RequestBody.fromBytes(content));
+        if (contentLength != null) {
+            requestBuilder.contentLength(contentLength);
+        }
+
+        s3Client.putObject(requestBuilder.build(), requestBody);
 
         return key;
     }
