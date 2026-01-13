@@ -95,7 +95,8 @@ public class CertificateController {
         Certificate certificate = certificateService.verifyCertificate(
                 memberId,
                 lectureId,
-                image.getBytes(),
+                image.getInputStream(),
+                image.getSize(),
                 image.getOriginalFilename(),
                 image.getContentType()
         );
@@ -141,7 +142,8 @@ public class CertificateController {
         Certificate certificate = certificateService.updateCertificateImage(
                 memberId,
                 certificateId,
-                image.getBytes(),
+                image.getInputStream(),
+                image.getSize(),
                 image.getOriginalFilename(),
                 image.getContentType()
         );

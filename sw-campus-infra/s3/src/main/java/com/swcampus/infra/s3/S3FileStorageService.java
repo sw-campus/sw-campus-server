@@ -9,6 +9,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
@@ -43,6 +44,22 @@ public class S3FileStorageService implements FileStorageService {
     @Override
     public String uploadPrivate(byte[] content, String directory, String fileName, String contentType) {
         return performUploadAndGetKey(content, directory, fileName, contentType, privateBucketName);
+    }
+
+    @Override
+    public String uploadPrivate(InputStream inputStream, long contentLength, String directory, String fileName, String contentType) {
+        String key = generateKey(directory, fileName);
+
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(privateBucketName)
+                .key(key)
+                .contentType(contentType)
+                .contentLength(contentLength)
+                .build();
+
+        s3Client.putObject(request, RequestBody.fromInputStream(inputStream, contentLength));
+
+        return key;
     }
 
     @Override
