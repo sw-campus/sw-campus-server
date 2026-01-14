@@ -20,8 +20,8 @@ public record DetailScoreRequest(
     @DecimalMax(value = "5.0", message = "점수는 5.0 이하여야 합니다")
     Double score,
 
-    @Schema(description = "카테고리별 후기 (10~500자)", example = "강사님이 친절하고 설명을 잘 해주셔서 이해하기 쉬웠습니다.")
+    @Schema(description = "카테고리별 후기 (10~250자)", example = "강사님이 친절하고 설명을 잘 해주셔서 이해하기 쉬웠습니다.")
     @NotBlank(message = "카테고리별 후기는 필수입니다")
-    @Size(min = 10, max = 500, message = "카테고리별 후기는 10~500자입니다")
+    @Size(min = 10, max = 250, message = "카테고리별 후기는 10~250자입니다")
     String comment
 ) {}

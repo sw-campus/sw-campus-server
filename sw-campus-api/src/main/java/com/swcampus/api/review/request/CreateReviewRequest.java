@@ -13,8 +13,8 @@ public record CreateReviewRequest(
     @NotNull(message = "강의 ID는 필수입니다")
     Long lectureId,
 
-    @Schema(description = "총평 (선택, 최대 500자)", example = "전체적으로 만족스러운 강의였습니다.")
-    @Size(max = 500, message = "총평은 최대 500자입니다")
+    @Schema(description = "총평 (선택, 최대 250자)", example = "전체적으로 만족스러운 강의였습니다.")
+    @Size(max = 250, message = "총평은 최대 250자입니다")
     String comment,
 
     @Schema(description = "카테고리별 상세 점수 (5개 모두 필수)")
