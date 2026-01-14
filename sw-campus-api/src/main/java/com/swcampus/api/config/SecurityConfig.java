@@ -2,8 +2,6 @@ package com.swcampus.api.config;
 
 import java.util.List;
 
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,19 +9,20 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.swcampus.api.security.JwtAuthenticationFilter;
 import com.swcampus.domain.auth.TokenProvider;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
@@ -70,10 +69,10 @@ public class SecurityConfig {
                 // - ALB는 200~399 아니면 무조건 UNHEALTHY
                 // - permitAll()은 JWT 필터보다 앞에서 처리됨
                 .requestMatchers(
-                    "/healthz"  // ALB 헬스체크 전용 엔드포인트 (가장 정석) - 유지
-                    // actuator 관련은 주석 처리 (나중에 필요하면 주석 해제)
+                    "/healthz",  // ALB 헬스체크 전용 엔드포인트 (가장 정석) - 유지
                     // "/actuator/health",
                     // "/actuator/health/**"
+                    "/actuator/prometheus"
                 ).permitAll()
 
                 // Auth
