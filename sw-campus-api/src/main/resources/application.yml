@@ -47,23 +47,24 @@ spring:
           starttls:
             enable: true
 
-# 🔥 추가 (ALB HealthCheck 필수)
+# ALB HealthCheck 필수
 server:
   address: 0.0.0.0
   port: 8080
 
+# Actuator
 management:
   endpoints:
     web:
       base-path: /actuator
       exposure:
-        include: health
-  endpoint:
-    health:
-      probes:
-        enabled: true
+        include: health,prometheus
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
 
-# Observability
+# OTEL
 otel:
   resource:
     attributes:

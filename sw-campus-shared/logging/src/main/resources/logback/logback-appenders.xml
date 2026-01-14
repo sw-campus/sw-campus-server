@@ -4,14 +4,13 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
-                %clr(%d{HH:mm:ss.SSS}){faint} | %clr(%-5level){highlight} | %clr(%mdc{traceId:-}){cyan} | %logger{36} - %msg%n
+                %clr(%d{HH:mm:ss.SSS}){faint} | %clr(%-5level){highlight} | %clr(%mdc{traceId:-}){cyan} | %logger{36} -
+                %msg%n
             </pattern>
             <charset>utf8</charset>
         </encoder>
     </appender>
 
-    <!-- OpenTelemetry (TODO: 나중에 사용 예정)
     <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender"/>
-    -->
 
 </configuration>
