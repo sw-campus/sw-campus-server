@@ -5,10 +5,12 @@ plugins {
 dependencies {
     api 'org.slf4j:slf4j-api'
 
-    // OpenTelemetry Logback Appender (TODO: 나중에 사용 예정)
-    // implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.10.0-alpha'
+    // OpenTelemetry Logback Appender
+    // Log에 traceId, spanId 자동 주입
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.10.0-alpha'
 
-    // OpenTelemetry SDK (TODO: 나중에 사용 예정)
-    // implementation 'io.opentelemetry:opentelemetry-sdk:1.32.0'
-    // implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.32.0'
+    // OpenTelemetry SDK
+    // Trace/Span 생성 및 관리, OTLP로 데이터 전송
+    implementation 'io.opentelemetry:opentelemetry-sdk:1.32.0'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.32.0'
 }
