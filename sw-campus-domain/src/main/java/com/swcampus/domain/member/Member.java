@@ -82,8 +82,8 @@ public class Member {
     public static Member createOAuthUser(String email, String name) {
         Member member = new Member();
         member.email = email;
-        member.name = name;
         member.nickname = generateRandomNickname();  // 랜덤 닉네임 생성
+        member.name = (name != null && !name.isBlank()) ? name : member.nickname;  // name이 null이면 닉네임 사용
         member.password = null;  // OAuth 사용자는 비밀번호 없음
         member.phone = null;     // nullable
         member.location = null;  // nullable
