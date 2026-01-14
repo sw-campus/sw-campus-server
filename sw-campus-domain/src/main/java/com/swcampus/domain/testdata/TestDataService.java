@@ -757,7 +757,6 @@ public class TestDataService {
                         memberId,
                         lectureId,
                         imageKey,
-                        "수료",
                         certStatus,
                         LocalDateTime.now()
                 );

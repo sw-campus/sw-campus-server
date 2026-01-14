@@ -2,6 +2,9 @@ package com.swcampus.domain.certificate;
 
 import com.swcampus.domain.certificate.exception.CertificateAlreadyExistsException;
 import com.swcampus.domain.certificate.exception.CertificateLectureMismatchException;
+import com.swcampus.domain.certificate.exception.CertificateNotEditableException;
+import com.swcampus.domain.certificate.exception.CertificateNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureRepository;
@@ -13,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,7 +59,7 @@ public class CertificateService {
      */
     @Transactional
     public Certificate verifyCertificate(Long memberId, Long lectureId,
-            byte[] imageBytes, String fileName,
+            InputStream imageStream, long contentLength, String fileName,
             String contentType) {
         // 1. 이미 인증했는지 확인
         if (certificateRepository.existsByMemberIdAndLectureId(memberId, lectureId)) {
@@ -66,19 +70,20 @@ public class CertificateService {
         Lecture lecture = lectureRepository.findById(lectureId)
                 .orElseThrow(() -> new ResourceNotFoundException("강의를 찾을 수 없습니다. ID: " + lectureId));
 
-        // 3-4. OCR 검증 (설정에 따라 스킵)
+        // 3-4. OCR 검증 (현재 비활성화 상태)
+        // TODO(#384): OCR 활성화 시 InputStream 기반으로 변경 필요
         if (ocrEnabled && ocrClient != null) {
-            List<String> extractedLines = ocrClient.extractText(imageBytes, fileName);
-            validateLectureName(lecture.getLectureName(), extractedLines);
-        } else {
-            log.info("OCR 검증 비활성화 상태 - 수료증 이미지만 저장합니다. memberId={}, lectureId={}", memberId, lectureId);
+            throw new UnsupportedOperationException(
+                    "OCR 검증은 현재 InputStream 기반 처리와 호환되지 않습니다. " +
+                    "OCR 활성화 전 OcrClient를 InputStream 기반으로 변경해야 합니다. (Issue #384)");
         }
+        log.info("OCR 검증 비활성화 상태 - 수료증 이미지만 저장합니다. memberId={}, lectureId={}", memberId, lectureId);
 
-        // 5. S3 Private Bucket에 이미지 업로드
-        String imageKey = fileStorageService.uploadPrivate(imageBytes, "certificates", fileName, contentType);
+        // 5. S3 Private Bucket에 이미지 업로드 (InputStream 기반)
+        String imageKey = fileStorageService.uploadPrivate(imageStream, contentLength, "certificates", fileName, contentType);
 
-        // 6. 수료증 저장 (OCR 검증 성공 시 status = "SUCCESS")
-        Certificate certificate = Certificate.create(memberId, lectureId, imageKey, "SUCCESS");
+        // 6. 수료증 저장
+        Certificate certificate = Certificate.create(memberId, lectureId, imageKey);
         return certificateRepository.save(certificate);
     }
 
@@ -97,9 +102,53 @@ public class CertificateService {
     }
 
     /**
-     * 회원의 승인된 수료증 목록 조회
+     * 회원의 모든 수료증 목록 조회 (상태와 무관하게 PENDING/APPROVED/REJECTED 모두 포함)
      */
     public List<Certificate> findAllByMemberId(Long memberId) {
         return certificateRepository.findAllByMemberId(memberId);
+    }
+
+    /**
+     * 수료증 이미지 수정
+     * - 소유권 검증: 본인 수료증만 수정 가능
+     * - 상태 검증: PENDING/REJECTED만 수정 가능, APPROVED는 수정 불가
+     * - 기존 이미지 S3에서 삭제 후 새 이미지 업로드
+     * - 상태 PENDING으로 초기화 (재검증 필요)
+     */
+    @Transactional
+    public Certificate updateCertificateImage(Long memberId, Long certificateId,
+            InputStream imageStream, long contentLength, String fileName, String contentType) {
+        // 1. 수료증 조회
+        Certificate certificate = certificateRepository.findById(certificateId)
+                .orElseThrow(() -> new CertificateNotFoundException(certificateId));
+
+        // 2. 소유권 검증
+        if (!certificate.getMemberId().equals(memberId)) {
+            throw new AccessDeniedException("수료증 수정 권한이 없습니다.");
+        }
+
+        // 3. 상태 검증 (APPROVED는 수정 불가)
+        if (!certificate.canEdit()) {
+            throw new CertificateNotEditableException(certificateId);
+        }
+
+        // 4. 기존 이미지 S3에서 삭제
+        String oldImageKey = certificate.getImageKey();
+        if (oldImageKey != null && !oldImageKey.isEmpty()) {
+            try {
+                fileStorageService.deletePrivate(oldImageKey);
+            } catch (RuntimeException e) {
+                log.warn("기존 수료증 이미지 삭제 실패: {}", oldImageKey, e);
+            }
+        }
+
+        // 5. 새 이미지 S3에 업로드 (InputStream 기반)
+        String newImageKey = fileStorageService.uploadPrivate(imageStream, contentLength, "certificates", fileName, contentType);
+
+        // 6. imageKey 업데이트 + 상태 PENDING으로 초기화
+        certificate.updateImageKey(newImageKey);
+
+        // 7. 저장 및 반환
+        return certificateRepository.save(certificate);
     }
 }

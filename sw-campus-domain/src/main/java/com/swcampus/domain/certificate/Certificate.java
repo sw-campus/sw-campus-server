@@ -14,30 +14,27 @@ public class Certificate {
     private Long memberId;
     private Long lectureId;
     private String imageKey;
-    private String status;
     private ApprovalStatus approvalStatus;
     private LocalDateTime createdAt;
 
-    public static Certificate create(Long memberId, Long lectureId, String imageKey, String status) {
+    public static Certificate create(Long memberId, Long lectureId, String imageKey) {
         Certificate certificate = new Certificate();
         certificate.memberId = memberId;
         certificate.lectureId = lectureId;
         certificate.imageKey = imageKey;
-        certificate.status = status;
         certificate.approvalStatus = ApprovalStatus.PENDING;
         certificate.createdAt = LocalDateTime.now();
         return certificate;
     }
 
     public static Certificate of(Long id, Long memberId, Long lectureId,
-                                  String imageKey, String status,
+                                  String imageKey,
                                   ApprovalStatus approvalStatus, LocalDateTime createdAt) {
         Certificate certificate = new Certificate();
         certificate.id = id;
         certificate.memberId = memberId;
         certificate.lectureId = lectureId;
         certificate.imageKey = imageKey;
-        certificate.status = status;
         certificate.approvalStatus = approvalStatus;
         certificate.createdAt = createdAt;
         return certificate;
@@ -57,5 +54,22 @@ public class Certificate {
 
     public boolean isApproved() {
         return this.approvalStatus == ApprovalStatus.APPROVED;
+    }
+
+    /**
+     * 수료증 이미지 수정 가능 여부 확인
+     * APPROVED 상태가 아닌 경우에만 수정 가능
+     */
+    public boolean canEdit() {
+        return this.approvalStatus != ApprovalStatus.APPROVED;
+    }
+
+    /**
+     * 수료증 이미지 키 업데이트
+     * 이미지 수정 시 상태를 PENDING으로 초기화하여 재검증 필요
+     */
+    public void updateImageKey(String newImageKey) {
+        this.imageKey = newImageKey;
+        this.approvalStatus = ApprovalStatus.PENDING;
     }
 }

@@ -44,6 +44,7 @@ public enum ErrorCode {
 	EMAIL_VERIFICATION_EXPIRED(400, "A005", "이메일 인증이 만료되었습니다"),
 	INVALID_PASSWORD(400, "A006", "비밀번호 정책을 위반했습니다"),
 	MAIL_SEND_FAILED(500, "A007", "이메일 발송에 실패했습니다"),
+	OAUTH_AUTHENTICATION_FAILED(401, "A008", "소셜 로그인 인증에 실패했습니다"),
 
 	// Organization (O)
 	ORGANIZATION_NOT_FOUND(404, "O001", "기관을 찾을 수 없습니다"),
@@ -56,6 +57,7 @@ public enum ErrorCode {
 	CERTIFICATE_ALREADY_EXISTS(409, "T002", "이미 인증된 수료증입니다"),
 	CERTIFICATE_NOT_VERIFIED(403, "T003", "인증되지 않은 수료증입니다"),
 	CERTIFICATE_LECTURE_MISMATCH(400, "T004", "수료증 강의명이 일치하지 않습니다"),
+	CERTIFICATE_NOT_EDITABLE(403, "T005", "수정할 수 없는 수료증입니다"),
 
 	// Review (R)
 	REVIEW_NOT_FOUND(404, "R001", "후기를 찾을 수 없습니다"),

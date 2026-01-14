@@ -28,6 +28,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
@@ -77,7 +78,7 @@ class CertificateControllerTest {
 
             Certificate certificate = Certificate.of(
                     1L, memberId, lectureId,
-                    "https://s3.../image.jpg", "SUCCESS",
+                    "https://s3.../image.jpg",
                     ApprovalStatus.PENDING, LocalDateTime.now()
             );
             given(certificateService.checkCertificate(memberId, lectureId))
@@ -141,12 +142,12 @@ class CertificateControllerTest {
 
             Certificate certificate = Certificate.of(
                     1L, memberId, lectureId,
-                    "https://s3.../certificates/certificate.jpg", "SUCCESS",
+                    "https://s3.../certificates/certificate.jpg",
                     ApprovalStatus.PENDING, LocalDateTime.now()
             );
 
             given(certificateService.verifyCertificate(
-                    eq(memberId), eq(lectureId), any(byte[].class), anyString(), anyString()
+                    eq(memberId), eq(lectureId), any(InputStream.class), anyLong(), anyString(), anyString()
             )).willReturn(certificate);
 
             // when & then
@@ -182,7 +183,7 @@ class CertificateControllerTest {
             );
 
             given(certificateService.verifyCertificate(
-                    eq(memberId), eq(lectureId), any(byte[].class), anyString(), anyString()
+                    eq(memberId), eq(lectureId), any(InputStream.class), anyLong(), anyString(), anyString()
             )).willThrow(new CertificateAlreadyExistsException(memberId, lectureId));
 
             // when & then
@@ -215,7 +216,7 @@ class CertificateControllerTest {
             );
 
             given(certificateService.verifyCertificate(
-                    eq(memberId), eq(lectureId), any(byte[].class), anyString(), anyString()
+                    eq(memberId), eq(lectureId), any(InputStream.class), anyLong(), anyString(), anyString()
             )).willThrow(new CertificateLectureMismatchException());
 
             // when & then

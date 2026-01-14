@@ -200,7 +200,7 @@ class ReviewServiceTest {
             String comment = "좋은 강의였습니다";
             List<ReviewDetail> details = createDefaultDetails();
 
-            Certificate certificate = Certificate.create(memberId, lectureId, "https://s3.../image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(memberId, lectureId, "https://s3.../image.jpg");
 
             given(certificateRepository.findByMemberIdAndLectureId(memberId, lectureId))
                     .willReturn(Optional.of(certificate));
@@ -243,7 +243,7 @@ class ReviewServiceTest {
             Long memberId = 1L;
             Long lectureId = 1L;
 
-            Certificate certificate = Certificate.create(memberId, lectureId, "https://s3.../image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(memberId, lectureId, "https://s3.../image.jpg");
 
             given(certificateRepository.findByMemberIdAndLectureId(memberId, lectureId))
                     .willReturn(Optional.of(certificate));
