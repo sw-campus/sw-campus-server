@@ -7,8 +7,12 @@ import com.swcampus.api.post.response.PostResponse;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
+import com.swcampus.domain.board.BoardCategoryService;
+import com.swcampus.domain.member.MemberService;
+import com.swcampus.domain.member.exception.MemberNotFoundException;
 import com.swcampus.domain.post.Post;
 import com.swcampus.domain.post.PostService;
+import com.swcampus.domain.post.PostSummary;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -34,8 +38,9 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
-    private final com.swcampus.domain.member.MemberService memberService;
-    private final com.swcampus.domain.board.BoardCategoryService boardCategoryService;
+    private final MemberService memberService;
+    private final BoardCategoryService boardCategoryService;
+
 
     @Operation(summary = "게시글 작성", description = "새 게시글을 작성합니다.")
     @SecurityRequirement(name = "cookieAuth")
@@ -62,7 +67,7 @@ public class PostController {
 
         String categoryName = boardCategoryService.getCategoryName(request.getBoardCategoryId());
 
-        // TODO: 실제 구현 시 MemberService, BoardCategoryService에서 이름 조회
+
         PostDetailResponse response = PostDetailResponse.from(
                 post,
                 nickname,
@@ -86,30 +91,17 @@ public class PostController {
             @Parameter(description = "태그 필터 (복수 가능)") @RequestParam(required = false) List<String> tags,
             @PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        Page<Post> posts = postService.getPosts(categoryId, tags, pageable);
+        // N+1 문제 해결: JOIN 쿼리로 한 번에 조회
+        Page<PostSummary> posts = postService.getPostsWithDetails(categoryId, tags, pageable);
 
-        // TODO: 실제 구현 시 작성자 닉네임, 카테고리명, 댓글 수를 batch로 조회해서 매핑
-        Page<PostResponse> response = posts.map(post -> {
-            String nickname = "알 수 없음";
-            try {
-                nickname = memberService.getMember(post.getUserId()).getNickname();
-            } catch (Exception e) {
-                // 탈퇴한 회원 등 예외 처리
-            }
-
-            String categoryName = "알 수 없음";
-            try {
-                categoryName = boardCategoryService.getCategoryName(post.getBoardCategoryId());
-            } catch (Exception e) {
-            }
-
-            return PostResponse.from(
-                    post,
-                    nickname,
-                    categoryName,
+        Page<PostResponse> response = posts.map(summary ->
+            PostResponse.from(
+                    summary.getPost(),
+                    summary.getAuthorNickname(),
+                    summary.getCategoryName(),
                     0L        // TODO: CommentService에서 조회
-            );
-        });
+            )
+        );
 
         return ResponseEntity.ok(response);
     }
@@ -132,13 +124,13 @@ public class PostController {
         String nickname = "알 수 없음";
         try {
             nickname = memberService.getMember(post.getUserId()).getNickname();
-        } catch (Exception e) {
+        } catch (MemberNotFoundException e) {
             // 탈퇴한 회원 등 예외 처리
         }
 
         String categoryName = boardCategoryService.getCategoryName(post.getBoardCategoryId());
 
-        // TODO: 실제 구현 시 작성자 닉네임, 카테고리명, 댓글 수, 북마크/좋아요 여부 조회
+
         PostDetailResponse response = PostDetailResponse.from(
                 post,
                 nickname,
@@ -180,7 +172,7 @@ public class PostController {
 
         String categoryName = boardCategoryService.getCategoryName(post.getBoardCategoryId());
 
-        // TODO: 실제 구현 시 작성자 닉네임, 카테고리명, 댓글 수, 북마크/좋아요 여부 조회  
+
         PostDetailResponse response = PostDetailResponse.from(
                 post,
                 nickname,

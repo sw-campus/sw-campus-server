@@ -49,7 +49,14 @@ public class PostResponse {
     @Schema(description = "이미지 포함 여부", example = "true")
     private boolean hasImage;
 
+    @Schema(description = "썸네일 이미지 URL", example = "https://example.com/image.jpg")
+    private String thumbnailUrl;
+
     public static PostResponse from(Post post, String authorNickname, String categoryName, Long commentCount) {
+        List<String> images = post.getImages();
+        boolean hasImage = images != null && !images.isEmpty();
+        String thumbnail = hasImage ? images.get(0) : null;
+        
         return PostResponse.builder()
                 .id(post.getId())
                 .title(post.getTitle())
@@ -62,7 +69,8 @@ public class PostResponse {
                 .likeCount(post.getLikeCount())
                 .commentCount(commentCount != null ? commentCount : 0L)
                 .createdAt(post.getCreatedAt())
-                .hasImage(post.getImages() != null && !post.getImages().isEmpty())
+                .hasImage(hasImage)
+                .thumbnailUrl(thumbnail)
                 .build();
     }
 }

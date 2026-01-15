@@ -1,5 +1,6 @@
 package com.swcampus.domain.post;
 
+import com.swcampus.domain.post.exception.PostAccessDeniedException;
 import com.swcampus.domain.post.exception.PostNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,14 @@ public class PostService {
         return postRepository.findAll(categoryId, tags, pageable);
     }
 
+    /**
+     * 게시글 목록을 작성자 닉네임, 카테고리 이름과 함께 조회합니다.
+     * N+1 문제를 해결하기 위해 JOIN 쿼리를 사용합니다.
+     */
+    public Page<PostSummary> getPostsWithDetails(Long categoryId, List<String> tags, Pageable pageable) {
+        return postRepository.findAllWithDetails(categoryId, tags, pageable);
+    }
+
     public Post getPost(Long postId) {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException(postId));
@@ -50,7 +59,7 @@ public class PostService {
                 .orElseThrow(() -> new PostNotFoundException(postId));
 
         if (!post.isAuthor(userId)) {
-            throw new IllegalStateException("게시글 수정 권한이 없습니다.");
+            throw new PostAccessDeniedException("게시글 수정 권한이 없습니다.");
         }
 
         post.update(title, body, images, tags);
@@ -63,7 +72,7 @@ public class PostService {
                 .orElseThrow(() -> new PostNotFoundException(postId));
 
         if (!post.isAuthor(userId)) {
-            throw new IllegalStateException("게시글 삭제 권한이 없습니다.");
+            throw new PostAccessDeniedException("게시글 삭제 권한이 없습니다.");
         }
 
         post.delete();
@@ -76,7 +85,7 @@ public class PostService {
                 .orElseThrow(() -> new PostNotFoundException(postId));
 
         if (!post.isAuthor(userId)) {
-            throw new IllegalStateException("답변 채택 권한이 없습니다.");
+            throw new PostAccessDeniedException("답변 채택 권한이 없습니다.");
         }
 
         post.selectComment(commentId);

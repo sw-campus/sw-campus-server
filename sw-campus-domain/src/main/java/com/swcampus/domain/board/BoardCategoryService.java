@@ -1,5 +1,6 @@
 package com.swcampus.domain.board;
 
+import com.swcampus.domain.board.exception.BoardCategoryNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +24,7 @@ public class BoardCategoryService {
 
     public BoardCategory getCategory(Long categoryId) {
         return boardCategoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BoardCategoryNotFoundException(categoryId));
     }
 
     public String getCategoryName(Long categoryId) {

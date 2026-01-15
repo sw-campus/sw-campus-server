@@ -20,5 +20,9 @@ public interface PostRepository {
     
     boolean existsById(Long id);
 
-    long countByPostId(Long postId);
+    /**
+     * 게시글 목록을 작성자 닉네임, 카테고리 이름과 함께 조회합니다.
+     * N+1 문제를 해결하기 위해 JOIN 쿼리를 사용합니다.
+     */
+    Page<PostSummary> findAllWithDetails(Long categoryId, List<String> tags, Pageable pageable);
 }
