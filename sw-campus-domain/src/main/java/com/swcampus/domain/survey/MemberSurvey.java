@@ -1,82 +1,102 @@
 package com.swcampus.domain.survey;
 
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberSurvey {
     private Long memberId;
-    private String major;
-    private Boolean bootcampCompleted;
-    private String wantedJobs;
-    private String licenses;
-    private Boolean hasGovCard;
-    private BigDecimal affordableAmount;
+    private BasicSurvey basicSurvey;
+    private AptitudeTest aptitudeTest;
+    private SurveyResults results;
+    private AptitudeGrade aptitudeGrade;
+    private RecommendedJob recommendedJob;
+    private Integer aptitudeScore;
+    private Integer questionSetVersion;
+    private LocalDateTime completedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static MemberSurvey create(
+    @Builder
+    public MemberSurvey(
             Long memberId,
-            String major,
-            Boolean bootcampCompleted,
-            String wantedJobs,
-            String licenses,
-            Boolean hasGovCard,
-            BigDecimal affordableAmount
-    ) {
-        MemberSurvey survey = new MemberSurvey();
-        survey.memberId = memberId;
-        survey.major = major;
-        survey.bootcampCompleted = bootcampCompleted;
-        survey.wantedJobs = wantedJobs;
-        survey.licenses = licenses;
-        survey.hasGovCard = hasGovCard;
-        survey.affordableAmount = affordableAmount;
-        return survey;
-    }
-
-    public static MemberSurvey of(
-            Long memberId,
-            String major,
-            Boolean bootcampCompleted,
-            String wantedJobs,
-            String licenses,
-            Boolean hasGovCard,
-            BigDecimal affordableAmount,
+            BasicSurvey basicSurvey,
+            AptitudeTest aptitudeTest,
+            SurveyResults results,
+            AptitudeGrade aptitudeGrade,
+            RecommendedJob recommendedJob,
+            Integer aptitudeScore,
+            Integer questionSetVersion,
+            LocalDateTime completedAt,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
-        MemberSurvey survey = new MemberSurvey();
-        survey.memberId = memberId;
-        survey.major = major;
-        survey.bootcampCompleted = bootcampCompleted;
-        survey.wantedJobs = wantedJobs;
-        survey.licenses = licenses;
-        survey.hasGovCard = hasGovCard;
-        survey.affordableAmount = affordableAmount;
-        survey.createdAt = createdAt;
-        survey.updatedAt = updatedAt;
-        return survey;
+        this.memberId = memberId;
+        this.basicSurvey = basicSurvey;
+        this.aptitudeTest = aptitudeTest;
+        this.results = results;
+        this.aptitudeGrade = aptitudeGrade;
+        this.recommendedJob = recommendedJob;
+        this.aptitudeScore = aptitudeScore;
+        this.questionSetVersion = questionSetVersion;
+        this.completedAt = completedAt;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
-    public void update(
-            String major,
-            Boolean bootcampCompleted,
-            String wantedJobs,
-            String licenses,
-            Boolean hasGovCard,
-            BigDecimal affordableAmount
+    public static MemberSurvey createWithBasicSurvey(Long memberId, BasicSurvey basicSurvey) {
+        return MemberSurvey.builder()
+                .memberId(memberId)
+                .basicSurvey(basicSurvey)
+                .build();
+    }
+
+    public void updateBasicSurvey(BasicSurvey basicSurvey) {
+        this.basicSurvey = basicSurvey;
+    }
+
+    public void completeAptitudeTest(
+            AptitudeTest aptitudeTest,
+            SurveyResults results,
+            Integer questionSetVersion
     ) {
-        this.major = major;
-        this.bootcampCompleted = bootcampCompleted;
-        this.wantedJobs = wantedJobs;
-        this.licenses = licenses;
-        this.hasGovCard = hasGovCard;
-        this.affordableAmount = affordableAmount;
+        this.aptitudeTest = aptitudeTest;
+        this.results = results;
+        this.aptitudeGrade = results.getAptitudeGrade();
+        this.recommendedJob = results.getRecommendedJob();
+        this.aptitudeScore = results.getAptitudeScore();
+        this.questionSetVersion = questionSetVersion;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    public boolean hasBasicSurvey() {
+        return basicSurvey != null;
+    }
+
+    public boolean hasAptitudeTest() {
+        return aptitudeTest != null;
+    }
+
+    public boolean isComplete() {
+        return completedAt != null;
+    }
+
+    /**
+     * AI 기본 추천 가능 여부
+     */
+    public boolean canUseBasicRecommendation() {
+        return hasBasicSurvey();
+    }
+
+    /**
+     * AI 정밀 추천 가능 여부
+     */
+    public boolean canUsePreciseRecommendation() {
+        return hasAptitudeTest();
     }
 }

@@ -1,13 +1,18 @@
 package com.swcampus.infra.postgres.survey;
 
-import com.swcampus.domain.survey.MemberSurvey;
+import com.swcampus.domain.survey.*;
 import com.swcampus.infra.postgres.BaseEntity;
+import com.swcampus.infra.postgres.survey.json.AptitudeTestJson;
+import com.swcampus.infra.postgres.survey.json.BasicSurveyJson;
+import com.swcampus.infra.postgres.survey.json.SurveyResultsJson;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "member_surveys")
@@ -19,56 +24,73 @@ public class MemberSurveyEntity extends BaseEntity {
     @Column(name = "user_id")
     private Long memberId;
 
-    @Column(length = 100)
-    private String major;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "basic_survey", columnDefinition = "jsonb")
+    private BasicSurveyJson basicSurvey;
 
-    @Column(name = "bootcamp_completed")
-    private Boolean bootcampCompleted;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "aptitude_test", columnDefinition = "jsonb")
+    private AptitudeTestJson aptitudeTest;
 
-    @Column(name = "wanted_jobs", length = 255)
-    private String wantedJobs;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "results", columnDefinition = "jsonb")
+    private SurveyResultsJson results;
 
-    @Column(length = 500)
-    private String licenses;
+    @Column(name = "aptitude_grade", length = 20)
+    @Enumerated(EnumType.STRING)
+    private AptitudeGrade aptitudeGrade;
 
-    @Column(name = "has_gov_card")
-    private Boolean hasGovCard;
+    @Column(name = "recommended_job", length = 20)
+    @Enumerated(EnumType.STRING)
+    private RecommendedJob recommendedJob;
 
-    @Column(name = "affordable_amount", precision = 15, scale = 2)
-    private BigDecimal affordableAmount;
+    @Column(name = "aptitude_score")
+    private Integer aptitudeScore;
+
+    @Column(name = "question_set_version")
+    private Integer questionSetVersion;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
 
     public static MemberSurveyEntity from(MemberSurvey survey) {
         MemberSurveyEntity entity = new MemberSurveyEntity();
         entity.memberId = survey.getMemberId();
-        entity.major = survey.getMajor();
-        entity.bootcampCompleted = survey.getBootcampCompleted();
-        entity.wantedJobs = survey.getWantedJobs();
-        entity.licenses = survey.getLicenses();
-        entity.hasGovCard = survey.getHasGovCard();
-        entity.affordableAmount = survey.getAffordableAmount();
+        entity.basicSurvey = BasicSurveyJson.from(survey.getBasicSurvey());
+        entity.aptitudeTest = AptitudeTestJson.from(survey.getAptitudeTest());
+        entity.results = SurveyResultsJson.from(survey.getResults());
+        entity.aptitudeGrade = survey.getAptitudeGrade();
+        entity.recommendedJob = survey.getRecommendedJob();
+        entity.aptitudeScore = survey.getAptitudeScore();
+        entity.questionSetVersion = survey.getQuestionSetVersion();
+        entity.completedAt = survey.getCompletedAt();
         return entity;
     }
 
     public MemberSurvey toDomain() {
-        return MemberSurvey.of(
-                this.memberId,
-                this.major,
-                this.bootcampCompleted,
-                this.wantedJobs,
-                this.licenses,
-                this.hasGovCard,
-                this.affordableAmount,
-                this.getCreatedAt(),
-                this.getUpdatedAt()
-        );
+        return MemberSurvey.builder()
+                .memberId(this.memberId)
+                .basicSurvey(this.basicSurvey != null ? this.basicSurvey.toDomain() : null)
+                .aptitudeTest(this.aptitudeTest != null ? this.aptitudeTest.toDomain() : null)
+                .results(this.results != null ? this.results.toDomain() : null)
+                .aptitudeGrade(this.aptitudeGrade)
+                .recommendedJob(this.recommendedJob)
+                .aptitudeScore(this.aptitudeScore)
+                .questionSetVersion(this.questionSetVersion)
+                .completedAt(this.completedAt)
+                .createdAt(this.getCreatedAt())
+                .updatedAt(this.getUpdatedAt())
+                .build();
     }
 
     public void update(MemberSurvey survey) {
-        this.major = survey.getMajor();
-        this.bootcampCompleted = survey.getBootcampCompleted();
-        this.wantedJobs = survey.getWantedJobs();
-        this.licenses = survey.getLicenses();
-        this.hasGovCard = survey.getHasGovCard();
-        this.affordableAmount = survey.getAffordableAmount();
+        this.basicSurvey = BasicSurveyJson.from(survey.getBasicSurvey());
+        this.aptitudeTest = AptitudeTestJson.from(survey.getAptitudeTest());
+        this.results = SurveyResultsJson.from(survey.getResults());
+        this.aptitudeGrade = survey.getAptitudeGrade();
+        this.recommendedJob = survey.getRecommendedJob();
+        this.aptitudeScore = survey.getAptitudeScore();
+        this.questionSetVersion = survey.getQuestionSetVersion();
+        this.completedAt = survey.getCompletedAt();
     }
 }
