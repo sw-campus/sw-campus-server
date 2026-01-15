@@ -238,14 +238,19 @@ ALTER TABLE "swcampus"."notifications"
 -- 5. Seed Data (기본 게시판 카테고리)
 -- ========================================
 -- 상위 카테고리: 취준생, 현직자
+-- 최상위 카테고리: 커뮤니티
 INSERT INTO "swcampus"."board_categories" ("board_category_id", "board_category_name", "board_pid") VALUES
-    (1, '취준생', NULL),
-    (2, '현직자', NULL);
+    (10, '커뮤니티', NULL);
 
--- 하위 카테고리: 자유게시판
+-- 2단계 카테고리: 취준생, 현직자
 INSERT INTO "swcampus"."board_categories" ("board_category_id", "board_category_name", "board_pid") VALUES
-    (3, '자유게시판', 1),  -- 취준생 > 자유게시판
-    (4, '자유게시판', 2);  -- 현직자 > 자유게시판
+    (1, '취준생', 10),
+    (2, '현직자', 10);
+
+-- 3단계 카테고리: 자유게시판
+INSERT INTO "swcampus"."board_categories" ("board_category_id", "board_category_name", "board_pid") VALUES
+    (3, '자유게시판', 1),  -- 커뮤니티 > 취준생 > 자유게시판
+    (4, '자유게시판', 2);  -- 커뮤니티 > 현직자 > 자유게시판
 
 -- Sequence 값 업데이트 (수동 삽입된 ID 이후부터 시작)
-SELECT setval('swcampus.board_categories_board_category_id_seq', 4, true);
+SELECT setval('swcampus.board_categories_board_category_id_seq', 11, true);
