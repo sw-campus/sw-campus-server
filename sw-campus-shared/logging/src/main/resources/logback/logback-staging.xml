@@ -9,7 +9,6 @@
     <logger name="com.swcampus" level="INFO"/>
 
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-        <!-- <appender-ref ref="OTEL"/> TODO: 나중에 사용 예정 -->
+        <appender-ref ref="OTEL"/>
     </root>
 </configuration>
