@@ -29,6 +29,15 @@ import org.springframework.beans.factory.annotation.Value;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    // 단일 진실 소스: 공개 GET API 패턴 정의
+    public static final String[] PUBLIC_GET_APIS = {
+            "/api/v1/categories/**",
+            "/api/v1/banners/**",
+            "/api/v1/lectures/**",
+            "/api/v1/organizations/**",
+            "/api/v1/reviews/*"
+    };
+
     private final TokenProvider tokenProvider;
     private final List<String> allowedOrigins;
 
@@ -66,12 +75,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**")
                         .permitAll()
-                        // 공개 API (조회)
-                        .requestMatchers(HttpMethod.GET, "/api/v1/reviews/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/lectures/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/organizations/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/banners/**").permitAll()
+                        // 공개 API (조회) - PUBLIC_GET_APIS 상수 사용
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_APIS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/members/nickname/check").permitAll()
                         // Storage API (인증 선택적)
                         .requestMatchers(HttpMethod.GET, "/api/v1/storage/presigned-urls").permitAll()
@@ -81,7 +86,7 @@ public class SecurityConfig {
                         // 나머지는 인증 필요
                         .anyRequest().authenticated())
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(tokenProvider),
+                        new JwtAuthenticationFilter(tokenProvider, PUBLIC_GET_APIS),
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
