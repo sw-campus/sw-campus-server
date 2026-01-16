@@ -5,11 +5,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
+
 
 public interface BookmarkJpaRepository extends JpaRepository<BookmarkEntity, Long> {
-
-    Optional<BookmarkEntity> findByUserIdAndPostId(Long userId, Long postId);
 
     void deleteByUserIdAndPostId(Long userId, Long postId);
 

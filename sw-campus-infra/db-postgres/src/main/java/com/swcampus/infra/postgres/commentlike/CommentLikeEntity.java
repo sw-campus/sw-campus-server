@@ -34,7 +34,7 @@ public class CommentLikeEntity {
         entity.id = commentLike.getId();
         entity.userId = commentLike.getUserId();
         entity.commentId = commentLike.getCommentId();
-        entity.createdAt = commentLike.getCreatedAt() != null ? commentLike.getCreatedAt() : LocalDateTime.now();
+        entity.createdAt = commentLike.getCreatedAt();
         return entity;
     }
 

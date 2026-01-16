@@ -34,7 +34,7 @@ public class PostLikeEntity {
         entity.id = postLike.getId();
         entity.userId = postLike.getUserId();
         entity.postId = postLike.getPostId();
-        entity.createdAt = postLike.getCreatedAt() != null ? postLike.getCreatedAt() : LocalDateTime.now();
+        entity.createdAt = postLike.getCreatedAt();
         return entity;
     }
 

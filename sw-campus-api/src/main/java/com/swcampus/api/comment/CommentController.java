@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Tag(name = "Comment", description = "댓글 API")
@@ -158,7 +159,7 @@ public class CommentController {
         List<CommentResponse> rootComments = new ArrayList<>();
 
         // 3. 사용자가 추천한 댓글 ID 목록 조회
-        java.util.Set<Long> likedCommentIds = commentLikeService.getLikedCommentIds(currentUserId);
+        Set<Long> likedCommentIds = commentLikeService.getLikedCommentIds(currentUserId);
 
         // 4. 모든 댓글을 CommentResponse로 변환하고 Map에 저장
         for (Comment comment : comments) {
