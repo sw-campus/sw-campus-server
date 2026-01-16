@@ -31,11 +31,11 @@ public class CommentService {
     }
 
     @Transactional
-    public Comment updateComment(Long commentId, Long userId, String body, String imageUrl) {
+    public Comment updateComment(Long commentId, Long userId, boolean isAdmin, String body, String imageUrl) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentNotFoundException(commentId));
 
-        if (!comment.isAuthor(userId)) {
+        if (!isAdmin && !comment.isAuthor(userId)) {
             throw new CommentAccessDeniedException("댓글 수정 권한이 없습니다.");
         }
 
@@ -44,11 +44,11 @@ public class CommentService {
     }
 
     @Transactional
-    public void deleteComment(Long commentId, Long userId) {
+    public void deleteComment(Long commentId, Long userId, boolean isAdmin) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentNotFoundException(commentId));
 
-        if (!comment.isAuthor(userId)) {
+        if (!isAdmin && !comment.isAuthor(userId)) {
             throw new CommentAccessDeniedException("댓글 삭제 권한이 없습니다.");
         }
 

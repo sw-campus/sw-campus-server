@@ -8,8 +8,11 @@ import com.swcampus.api.security.CurrentMember;
 import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.board.BoardCategoryService;
+import com.swcampus.domain.bookmark.BookmarkService;
 import com.swcampus.domain.comment.CommentService;
+import com.swcampus.domain.postlike.PostLikeService;
 import com.swcampus.domain.member.MemberService;
+import com.swcampus.domain.member.Role;
 import com.swcampus.domain.member.exception.MemberNotFoundException;
 import com.swcampus.domain.post.Post;
 import com.swcampus.domain.post.PostService;
@@ -43,6 +46,8 @@ public class PostController {
     private final MemberService memberService;
     private final BoardCategoryService boardCategoryService;
     private final CommentService commentService;
+    private final BookmarkService bookmarkService;
+    private final PostLikeService postLikeService;
 
 
     @Operation(summary = "게시글 작성", description = "새 게시글을 작성합니다.")
@@ -146,20 +151,23 @@ public class PostController {
 
         long commentCount = commentService.countByPostId(postId);
 
+        boolean isBookmarked = bookmarkService.isBookmarked(currentUserId, postId);
+        boolean isLiked = postLikeService.isLiked(currentUserId, postId);
+
         PostDetailResponse response = PostDetailResponse.from(
                 post,
                 nickname,
                 categoryName,
                 commentCount,
-                false,     // TODO: BookmarkService에서 조회
-                false,     // TODO: PostLikeService에서 조회
+                isBookmarked,
+                isLiked,
                 isAuthor
         );
 
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "게시글 수정", description = "본인이 작성한 게시글을 수정합니다.")
+    @Operation(summary = "게시글 수정", description = "본인이 작성한 게시글을 수정합니다. (관리자는 모든 게시글 수정 가능)")
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "수정 성공"),
@@ -174,9 +182,12 @@ public class PostController {
             @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId,
             @Valid @RequestBody UpdatePostRequest request) {
 
+        boolean isAdmin = member.role() == Role.ADMIN;
+
         Post post = postService.updatePost(
                 postId,
                 member.memberId(),
+                isAdmin,
                 request.getTitle(),
                 request.getBody(),
                 request.getImages(),
@@ -189,20 +200,23 @@ public class PostController {
 
         long commentCount = commentService.countByPostId(postId);
 
+        boolean isBookmarked = bookmarkService.isBookmarked(member.memberId(), postId);
+        boolean isLiked = postLikeService.isLiked(member.memberId(), postId);
+
         PostDetailResponse response = PostDetailResponse.from(
                 post,
                 nickname,
                 categoryName,
                 commentCount,
-                false,     // TODO: BookmarkService에서 조회
-                false,     // TODO: PostLikeService에서 조회
+                isBookmarked,
+                isLiked,
                 true       // 본인 작성
         );
 
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "게시글 삭제", description = "본인이 작성한 게시글을 삭제합니다. (Soft Delete)")
+    @Operation(summary = "게시글 삭제", description = "본인이 작성한 게시글을 삭제합니다. (Soft Delete, 관리자는 모든 게시글 삭제 가능)")
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "삭제 성공"),
@@ -215,7 +229,9 @@ public class PostController {
             @CurrentMember MemberPrincipal member,
             @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
 
-        postService.deletePost(postId, member.memberId());
+        boolean isAdmin = member.role() == Role.ADMIN;
+
+        postService.deletePost(postId, member.memberId(), isAdmin);
 
         return ResponseEntity.noContent().build();
     }

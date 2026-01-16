@@ -8,7 +8,9 @@ import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.comment.Comment;
 import com.swcampus.domain.comment.CommentService;
+import com.swcampus.domain.commentlike.CommentLikeService;
 import com.swcampus.domain.member.MemberService;
+import com.swcampus.domain.member.Role;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Tag(name = "Comment", description = "댓글 API")
@@ -37,6 +40,7 @@ public class CommentController {
 
     private final CommentService commentService;
     private final MemberService memberService;
+    private final CommentLikeService commentLikeService;
 
     @Operation(summary = "댓글 작성", description = "게시글에 댓글을 작성합니다.")
     @SecurityRequirement(name = "cookieAuth")
@@ -60,7 +64,7 @@ public class CommentController {
 
         String nickname = memberService.getMember(member.memberId()).getNickname();
 
-        CommentResponse response = CommentResponse.from(comment, nickname, true);
+        CommentResponse response = CommentResponse.from(comment, nickname, true, false);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -84,7 +88,7 @@ public class CommentController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "댓글 수정", description = "본인이 작성한 댓글을 수정합니다.")
+    @Operation(summary = "댓글 수정", description = "본인이 작성한 댓글을 수정합니다. (관리자는 모든 댓글 수정 가능)")
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "수정 성공"),
@@ -99,21 +103,26 @@ public class CommentController {
             @Parameter(description = "댓글 ID", required = true) @PathVariable Long commentId,
             @Valid @RequestBody UpdateCommentRequest request) {
 
+        boolean isAdmin = member.role() == Role.ADMIN;
+
         Comment comment = commentService.updateComment(
                 commentId,
                 member.memberId(),
+                isAdmin,
                 request.getBody(),
                 request.getImageUrl()
         );
 
         String nickname = memberService.getMember(member.memberId()).getNickname();
 
-        CommentResponse response = CommentResponse.from(comment, nickname, true);
+        boolean isLiked = commentLikeService.isLiked(member.memberId(), commentId);
+
+        CommentResponse response = CommentResponse.from(comment, nickname, true, isLiked);
 
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "댓글 삭제", description = "본인이 작성한 댓글을 삭제합니다. (Soft Delete)")
+    @Operation(summary = "댓글 삭제", description = "본인이 작성한 댓글을 삭제합니다. (Soft Delete, 관리자는 모든 댓글 삭제 가능)")
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "삭제 성공"),
@@ -126,7 +135,9 @@ public class CommentController {
             @CurrentMember MemberPrincipal member,
             @Parameter(description = "댓글 ID", required = true) @PathVariable Long commentId) {
 
-        commentService.deleteComment(commentId, member.memberId());
+        boolean isAdmin = member.role() == Role.ADMIN;
+
+        commentService.deleteComment(commentId, member.memberId(), isAdmin);
 
         return ResponseEntity.noContent().build();
     }
@@ -153,11 +164,15 @@ public class CommentController {
         Map<Long, CommentResponse> commentMap = new LinkedHashMap<>();
         List<CommentResponse> rootComments = new ArrayList<>();
 
-        // 3. 모든 댓글을 CommentResponse로 변환하고 Map에 저장
+        // 3. 사용자가 추천한 댓글 ID 목록 조회
+        Set<Long> likedCommentIds = commentLikeService.getLikedCommentIds(currentUserId);
+
+        // 4. 모든 댓글을 CommentResponse로 변환하고 Map에 저장
         for (Comment comment : comments) {
             String nickname = nicknameMap.getOrDefault(comment.getUserId(), "알 수 없음");
             boolean isAuthor = currentUserId != null && comment.isAuthor(currentUserId);
-            CommentResponse response = CommentResponse.from(comment, nickname, isAuthor);
+            boolean isLiked = likedCommentIds.contains(comment.getId());
+            CommentResponse response = CommentResponse.from(comment, nickname, isAuthor, isLiked);
             commentMap.put(comment.getId(), response);
         }
 

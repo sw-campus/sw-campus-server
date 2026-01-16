@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -157,7 +158,7 @@ class CommentControllerTest {
             LocalDateTime.now(), LocalDateTime.now()
         );
 
-        given(commentService.updateComment(anyLong(), anyLong(), any(), any()))
+        given(commentService.updateComment(anyLong(), anyLong(), anyBoolean(), any(), any()))
                 .willReturn(mockComment);
 
         given(memberService.getMember(anyLong()))
@@ -178,7 +179,7 @@ class CommentControllerTest {
     @DisplayName("댓글 삭제 성공")
     void deleteComment_Success() throws Exception {
         // given
-        doNothing().when(commentService).deleteComment(anyLong(), anyLong());
+        doNothing().when(commentService).deleteComment(anyLong(), anyLong(), anyBoolean());
 
         // when & then
         mockMvc.perform(delete("/api/v1/comments/1")
