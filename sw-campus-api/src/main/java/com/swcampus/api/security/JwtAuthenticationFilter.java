@@ -27,6 +27,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
+        String uri = request.getRequestURI();
+        String method = request.getMethod();
+
+        // 공개 GET API는 JWT 검사 스킵
+        if ("GET".equals(method) && isPublicGetApi(uri)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // 나머지만 JWT 인증 처리
         String token = resolveToken(request);
 
         if (token != null && tokenProvider.validateToken(token)) {
@@ -46,6 +56,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublicGetApi(String uri) {
+        return uri.startsWith("/api/v1/categories")
+                || uri.startsWith("/api/v1/banners")
+                || uri.startsWith("/api/v1/lectures")
+                || uri.startsWith("/api/v1/organizations")
+                || uri.startsWith("/api/v1/reviews");
     }
 
     private String resolveToken(HttpServletRequest request) {
