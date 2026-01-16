@@ -2,6 +2,7 @@ package com.swcampus.domain.survey;
 
 import com.swcampus.domain.survey.exception.AptitudeTestRequiredException;
 import com.swcampus.domain.survey.exception.BasicSurveyRequiredException;
+import com.swcampus.domain.survey.exception.InvalidAptitudeTestAnswersException;
 import com.swcampus.domain.survey.exception.SurveyNotFoundException;
 import com.swcampus.domain.survey.exception.SurveyQuestionSetNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -55,6 +60,9 @@ public class MemberSurveyService {
                 .findPublishedByTypeWithQuestions(QuestionSetType.APTITUDE)
                 .orElseThrow(() -> new SurveyQuestionSetNotFoundException("APTITUDE"));
 
+        // 동적 검증: 발행된 문항 세트 기반으로 응답 수 검증
+        validateAptitudeTestAnswers(aptitudeTest, questionSet);
+
         // 점수 계산
         SurveyResults results = resultCalculator.calculate(aptitudeTest, questionSet);
 
@@ -62,6 +70,33 @@ public class MemberSurveyService {
         survey.completeAptitudeTest(aptitudeTest, results, questionSet.getVersion(), LocalDateTime.now());
 
         return surveyRepository.save(survey);
+    }
+
+    private void validateAptitudeTestAnswers(AptitudeTest test, SurveyQuestionSet questionSet) {
+        // Part별 문항 수 계산
+        Map<QuestionPart, Long> questionCounts = questionSet.getQuestions().stream()
+                .filter(q -> q.getPart() != null)
+                .collect(Collectors.groupingBy(SurveyQuestion::getPart, Collectors.counting()));
+
+        List<String> errors = new ArrayList<>();
+
+        int expectedPart1 = questionCounts.getOrDefault(QuestionPart.PART1, 0L).intValue();
+        int expectedPart2 = questionCounts.getOrDefault(QuestionPart.PART2, 0L).intValue();
+        int expectedPart3 = questionCounts.getOrDefault(QuestionPart.PART3, 0L).intValue();
+
+        if (test.getPart1Answers().size() != expectedPart1) {
+            errors.add("Part 1은 " + expectedPart1 + "문항 모두 응답해야 합니다");
+        }
+        if (test.getPart2Answers().size() != expectedPart2) {
+            errors.add("Part 2는 " + expectedPart2 + "문항 모두 응답해야 합니다");
+        }
+        if (test.getPart3Answers().size() != expectedPart3) {
+            errors.add("Part 3은 " + expectedPart3 + "문항 모두 응답해야 합니다");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new InvalidAptitudeTestAnswersException(String.join(", ", errors));
+        }
     }
 
     public MemberSurvey getSurveyByMemberId(Long memberId) {

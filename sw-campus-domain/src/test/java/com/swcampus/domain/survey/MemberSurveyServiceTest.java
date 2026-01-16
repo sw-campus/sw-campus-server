@@ -2,6 +2,7 @@ package com.swcampus.domain.survey;
 
 import com.swcampus.domain.survey.exception.AptitudeTestRequiredException;
 import com.swcampus.domain.survey.exception.BasicSurveyRequiredException;
+import com.swcampus.domain.survey.exception.InvalidAptitudeTestAnswersException;
 import com.swcampus.domain.survey.exception.SurveyNotFoundException;
 import com.swcampus.domain.survey.exception.SurveyQuestionSetNotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -65,13 +66,43 @@ class MemberSurveyServiceTest {
     }
 
     private SurveyQuestionSet createTestQuestionSet() {
+        // Part1: q1~q4 (4문항), Part2: q5~q8 (4문항), Part3: q9~q15 (7문항)
+        List<SurveyQuestion> questions = List.of(
+                createQuestion(1L, "q1", QuestionPart.PART1),
+                createQuestion(2L, "q2", QuestionPart.PART1),
+                createQuestion(3L, "q3", QuestionPart.PART1),
+                createQuestion(4L, "q4", QuestionPart.PART1),
+                createQuestion(5L, "q5", QuestionPart.PART2),
+                createQuestion(6L, "q6", QuestionPart.PART2),
+                createQuestion(7L, "q7", QuestionPart.PART2),
+                createQuestion(8L, "q8", QuestionPart.PART2),
+                createQuestion(9L, "q9", QuestionPart.PART3),
+                createQuestion(10L, "q10", QuestionPart.PART3),
+                createQuestion(11L, "q11", QuestionPart.PART3),
+                createQuestion(12L, "q12", QuestionPart.PART3),
+                createQuestion(13L, "q13", QuestionPart.PART3),
+                createQuestion(14L, "q14", QuestionPart.PART3),
+                createQuestion(15L, "q15", QuestionPart.PART3)
+        );
+
         return SurveyQuestionSet.builder()
                 .questionSetId(1L)
                 .name("성향 테스트 v1")
                 .type(QuestionSetType.APTITUDE)
                 .version(1)
                 .status(QuestionSetStatus.PUBLISHED)
-                .questions(List.of())
+                .questions(questions)
+                .build();
+    }
+
+    private SurveyQuestion createQuestion(Long id, String fieldKey, QuestionPart part) {
+        return SurveyQuestion.builder()
+                .questionId(id)
+                .questionSetId(1L)
+                .fieldKey(fieldKey)
+                .part(part)
+                .questionType(QuestionType.RADIO)
+                .isRequired(true)
                 .build();
     }
 
@@ -227,6 +258,38 @@ class MemberSurveyServiceTest {
             // when & then
             assertThatThrownBy(() -> surveyService.submitAptitudeTest(memberId, aptitudeTest))
                     .isInstanceOf(SurveyQuestionSetNotFoundException.class);
+
+            verify(surveyRepository).findByMemberId(memberId);
+            verify(surveyRepository, never()).save(any(MemberSurvey.class));
+        }
+
+        @Test
+        @DisplayName("실패 - 응답 수가 문항 수와 일치하지 않는 경우")
+        void fail_invalidAnswerCount() {
+            // given
+            BasicSurvey basicSurvey = createTestBasicSurvey();
+            MemberSurvey existingSurvey = MemberSurvey.createWithBasicSurvey(memberId, basicSurvey);
+
+            // 잘못된 응답 수: Part1은 3개만 제출 (기대값 4개)
+            AptitudeTest invalidAptitudeTest = AptitudeTest.builder()
+                    .part1Answers(Map.of("q1", 2, "q2", 1, "q3", 2)) // 3개만 제출
+                    .part2Answers(Map.of("q5", 3, "q6", 2, "q7", 2, "q8", 3))
+                    .part3Answers(Map.of(
+                            "q9", "B", "q10", "B", "q11", "D",
+                            "q12", "B", "q13", "B", "q14", "B", "q15", "B"
+                    ))
+                    .build();
+
+            SurveyQuestionSet questionSet = createTestQuestionSet();
+
+            when(surveyRepository.findByMemberId(memberId)).thenReturn(Optional.of(existingSurvey));
+            when(questionSetRepository.findPublishedByTypeWithQuestions(QuestionSetType.APTITUDE))
+                    .thenReturn(Optional.of(questionSet));
+
+            // when & then
+            assertThatThrownBy(() -> surveyService.submitAptitudeTest(memberId, invalidAptitudeTest))
+                    .isInstanceOf(InvalidAptitudeTestAnswersException.class)
+                    .hasMessageContaining("Part 1은 4문항 모두 응답해야 합니다");
 
             verify(surveyRepository).findByMemberId(memberId);
             verify(surveyRepository, never()).save(any(MemberSurvey.class));

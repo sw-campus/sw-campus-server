@@ -76,6 +76,9 @@ public enum ErrorCode {
 	APTITUDE_TEST_REQUIRED(400, "S004", "성향 테스트를 먼저 완료해야 합니다"),
 	SURVEY_QUESTION_SET_NOT_FOUND(404, "S005", "문항 세트를 찾을 수 없습니다"),
 	QUESTION_SET_NOT_EDITABLE(403, "S006", "발행된 문항 세트는 수정/삭제할 수 없습니다"),
+	SURVEY_QUESTION_NOT_FOUND(404, "S007", "문항을 찾을 수 없습니다"),
+	SURVEY_OPTION_NOT_FOUND(404, "S008", "선택지를 찾을 수 없습니다"),
+	INVALID_APTITUDE_TEST_ANSWERS(400, "S009", "성향 테스트 응답이 유효하지 않습니다"),
 
 	// Storage/File (F)
 	STORAGE_KEY_NOT_FOUND(404, "F001", "파일을 찾을 수 없습니다"),
