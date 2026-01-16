@@ -41,9 +41,10 @@ public class PostEntityRepository implements PostRepository {
     }
 
     @Override
-    public Page<Post> findAll(Long categoryId, List<String> tags, Pageable pageable) {
+    public Page<Post> findAll(List<Long> categoryIds, List<String> tags, Pageable pageable) {
+        Long[] categoryIdsArray = (categoryIds != null && !categoryIds.isEmpty()) ? categoryIds.toArray(new Long[0]) : null;
         String[] tagsArray = (tags != null && !tags.isEmpty()) ? tags.toArray(new String[0]) : null;
-        return jpaRepository.findAllWithFilters(categoryId, tagsArray, pageable)
+        return jpaRepository.findAllWithFilters(categoryIdsArray, tagsArray, pageable)
                 .map(PostEntity::toDomain);
     }
 
@@ -63,15 +64,16 @@ public class PostEntityRepository implements PostRepository {
     }
 
     @Override
-    public Page<PostSummary> findAllWithDetails(Long categoryId, List<String> tags, Pageable pageable) {
+    public Page<PostSummary> findAllWithDetails(List<Long> categoryIds, List<String> tags, String keyword, Pageable pageable) {
+        Long[] categoryIdsArray = (categoryIds != null && !categoryIds.isEmpty()) ? categoryIds.toArray(new Long[0]) : null;
         String[] tagsArray = (tags != null && !tags.isEmpty()) ? tags.toArray(new String[0]) : null;
         
-        Page<Object[]> results = jpaRepository.findAllWithDetails(categoryId, tagsArray, pageable);
+        Page<Object[]> results = jpaRepository.findAllWithDetails(categoryIdsArray, tagsArray, keyword, pageable);
         
         return results.map(row -> {
             Post post = mapRowToPost(row);
-            String authorNickname = (String) row[12];
-            String categoryName = (String) row[13];
+            String authorNickname = (String) row[13];
+            String categoryName = (String) row[14];
             
             return PostSummary.builder()
                     .post(post)
@@ -102,13 +104,27 @@ public class PostEntityRepository implements PostRepository {
         Long selectedCommentId = row[9] != null ? ((Number) row[9]).longValue() : null;
         boolean deleted = row[10] != null && (Boolean) row[10];
         
-        java.time.LocalDateTime createdAt = row[11] != null 
-                ? ((java.sql.Timestamp) row[11]).toLocalDateTime() : null;
-        java.time.LocalDateTime updatedAt = row[12] != null 
-                ? ((java.sql.Timestamp) row[12]).toLocalDateTime() : null;
+        java.time.LocalDateTime createdAt = resolveLocalDateTime(row[11]);
+        java.time.LocalDateTime updatedAt = resolveLocalDateTime(row[12]);
         
         return Post.of(id, boardCategoryId, userId, title, body, images, tags,
                 viewCount, likeCount, selectedCommentId, deleted, createdAt, updatedAt);
+    }
+
+    private java.time.LocalDateTime resolveLocalDateTime(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+        if (obj instanceof java.sql.Timestamp) {
+            return ((java.sql.Timestamp) obj).toLocalDateTime();
+        }
+        if (obj instanceof java.time.Instant) {
+            return java.time.LocalDateTime.ofInstant((java.time.Instant) obj, java.time.ZoneId.systemDefault());
+        }
+        if (obj instanceof java.time.LocalDateTime) {
+            return (java.time.LocalDateTime) obj;
+        }
+        return null; // or throw exception? For now null is safer to avoid crashing if unknown type, but better to log or fallback.
     }
 
 

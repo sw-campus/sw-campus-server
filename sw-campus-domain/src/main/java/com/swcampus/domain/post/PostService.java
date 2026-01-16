@@ -1,5 +1,6 @@
 package com.swcampus.domain.post;
 
+import com.swcampus.domain.board.BoardCategoryService;
 import com.swcampus.domain.post.exception.PostAccessDeniedException;
 import com.swcampus.domain.post.exception.PostNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import java.util.List;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final BoardCategoryService boardCategoryService;
 
     @Transactional
     public Post createPost(Long userId, Long boardCategoryId, String title, String body,
@@ -25,15 +27,22 @@ public class PostService {
     }
 
     public Page<Post> getPosts(Long categoryId, List<String> tags, Pageable pageable) {
-        return postRepository.findAll(categoryId, tags, pageable);
+        List<Long> categoryIds = (categoryId != null)
+                ? boardCategoryService.getChildCategoryIds(categoryId)
+                : null;
+        return postRepository.findAll(categoryIds, tags, pageable);
     }
 
     /**
      * 게시글 목록을 작성자 닉네임, 카테고리 이름과 함께 조회합니다.
      * N+1 문제를 해결하기 위해 JOIN 쿼리를 사용합니다.
+     * @param keyword 검색어 (제목, 본문, 태그에서 검색)
      */
-    public Page<PostSummary> getPostsWithDetails(Long categoryId, List<String> tags, Pageable pageable) {
-        return postRepository.findAllWithDetails(categoryId, tags, pageable);
+    public Page<PostSummary> getPostsWithDetails(Long categoryId, List<String> tags, String keyword, Pageable pageable) {
+        List<Long> categoryIds = (categoryId != null)
+                ? boardCategoryService.getChildCategoryIds(categoryId)
+                : null;
+        return postRepository.findAllWithDetails(categoryIds, tags, keyword, pageable);
     }
 
     public Post getPost(Long postId) {

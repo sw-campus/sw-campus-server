@@ -12,7 +12,7 @@ public interface PostRepository {
     
     Optional<Post> findById(Long id);
     
-    Page<Post> findAll(Long categoryId, List<String> tags, Pageable pageable);
+    Page<Post> findAll(List<Long> categoryIds, List<String> tags, Pageable pageable);
     
     void incrementViewCount(Long id);
     
@@ -23,6 +23,7 @@ public interface PostRepository {
     /**
      * 게시글 목록을 작성자 닉네임, 카테고리 이름과 함께 조회합니다.
      * N+1 문제를 해결하기 위해 JOIN 쿼리를 사용합니다.
+     * @param keyword 검색어 (제목, 본문, 태그에서 검색)
      */
-    Page<PostSummary> findAllWithDetails(Long categoryId, List<String> tags, Pageable pageable);
+    Page<PostSummary> findAllWithDetails(List<Long> categoryIds, List<String> tags, String keyword, Pageable pageable);
 }

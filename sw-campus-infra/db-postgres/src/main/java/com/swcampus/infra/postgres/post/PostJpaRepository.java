@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 
+
 import java.util.Optional;
 
 public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
@@ -18,18 +19,18 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
     @Query(value = """
             SELECT * FROM swcampus.posts p
             WHERE p.is_deleted = false
-            AND (:categoryId IS NULL OR p.board_category_id = :categoryId)
+            AND (CAST(:categoryIds AS bigint[]) IS NULL OR p.board_category_id = ANY(CAST(:categoryIds AS bigint[])))
             AND (CAST(:tags AS text[]) IS NULL OR p.tags && CAST(:tags AS text[]))
             """,
             countQuery = """
             SELECT COUNT(*) FROM swcampus.posts p
             WHERE p.is_deleted = false
-            AND (:categoryId IS NULL OR p.board_category_id = :categoryId)
+            AND (CAST(:categoryIds AS bigint[]) IS NULL OR p.board_category_id = ANY(CAST(:categoryIds AS bigint[])))
             AND (CAST(:tags AS text[]) IS NULL OR p.tags && CAST(:tags AS text[]))
             """,
             nativeQuery = true)
     Page<PostEntity> findAllWithFilters(
-            @Param("categoryId") Long categoryId,
+            @Param("categoryIds") Long[] categoryIds,
             @Param("tags") String[] tags,
             Pageable pageable);
 
@@ -40,6 +41,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
     /**
      * 게시글 목록을 작성자 닉네임, 카테고리 이름과 함께 조회합니다.
      * N+1 문제를 해결하기 위해 JOIN 쿼리를 사용합니다.
+     * @param keyword 검색어 (제목, 본문, 태그에서 검색)
      */
     @Query(value = """
             SELECT 
@@ -62,18 +64,27 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             LEFT JOIN swcampus.members m ON p.user_id = m.user_id
             LEFT JOIN swcampus.board_categories bc ON p.board_category_id = bc.board_category_id
             WHERE p.is_deleted = false
-            AND (:categoryId IS NULL OR p.board_category_id = :categoryId)
+            AND (CAST(:categoryIds AS bigint[]) IS NULL OR p.board_category_id = ANY(CAST(:categoryIds AS bigint[])))
             AND (CAST(:tags AS text[]) IS NULL OR p.tags && CAST(:tags AS text[]))
+            AND (:keyword IS NULL OR :keyword = '' OR 
+                 p.post_title ILIKE '%' || :keyword || '%' OR 
+                 p.post_body ILIKE '%' || :keyword || '%' OR 
+                 array_to_string(p.tags, ' ') ILIKE '%' || :keyword || '%')
             """,
             countQuery = """
             SELECT COUNT(*) FROM swcampus.posts p
             WHERE p.is_deleted = false
-            AND (:categoryId IS NULL OR p.board_category_id = :categoryId)
+            AND (CAST(:categoryIds AS bigint[]) IS NULL OR p.board_category_id = ANY(CAST(:categoryIds AS bigint[])))
             AND (CAST(:tags AS text[]) IS NULL OR p.tags && CAST(:tags AS text[]))
+            AND (:keyword IS NULL OR :keyword = '' OR 
+                 p.post_title ILIKE '%' || :keyword || '%' OR 
+                 p.post_body ILIKE '%' || :keyword || '%' OR 
+                 array_to_string(p.tags, ' ') ILIKE '%' || :keyword || '%')
             """,
             nativeQuery = true)
     Page<Object[]> findAllWithDetails(
-            @Param("categoryId") Long categoryId,
+            @Param("categoryIds") Long[] categoryIds,
             @Param("tags") String[] tags,
+            @Param("keyword") String keyword,
             Pageable pageable);
 }

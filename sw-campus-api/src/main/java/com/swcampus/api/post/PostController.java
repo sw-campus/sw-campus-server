@@ -89,7 +89,7 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 페이지네이션으로 조회합니다. 태그 필터링을 지원합니다.")
+    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 페이지네이션으로 조회합니다. 태그 필터링 및 검색을 지원합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공")
     })
@@ -97,10 +97,11 @@ public class PostController {
     public ResponseEntity<Page<PostResponse>> getPosts(
             @Parameter(description = "카테고리 ID") @RequestParam(required = false) Long categoryId,
             @Parameter(description = "태그 필터 (복수 가능)") @RequestParam(required = false) List<String> tags,
+            @Parameter(description = "검색어 (제목, 본문, 태그 검색)") @RequestParam(required = false) String keyword,
             @PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable) {
 
         // N+1 문제 해결: JOIN 쿼리로 한 번에 조회
-        Page<PostSummary> posts = postService.getPostsWithDetails(categoryId, tags, pageable);
+        Page<PostSummary> posts = postService.getPostsWithDetails(categoryId, tags, keyword, pageable);
 
         if (posts.isEmpty()) {
             return ResponseEntity.ok(Page.empty(pageable));

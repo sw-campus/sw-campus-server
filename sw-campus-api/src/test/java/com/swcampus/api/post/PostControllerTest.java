@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.post.request.CreatePostRequest;
 import com.swcampus.api.post.request.UpdatePostRequest;
-import com.swcampus.api.post.response.PostDetailResponse;
+
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.board.BoardCategoryService;
 import com.swcampus.domain.member.Member;
@@ -20,7 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
