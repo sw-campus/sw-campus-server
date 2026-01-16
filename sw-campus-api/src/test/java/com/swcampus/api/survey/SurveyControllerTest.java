@@ -60,6 +60,9 @@ class SurveyControllerTest {
     private MemberSurveyService surveyService;
 
     @MockitoBean
+    private AdminSurveyQuestionService questionService;
+
+    @MockitoBean
     private TokenProvider tokenProvider;
 
     private static final Long MEMBER_ID = 1L;
