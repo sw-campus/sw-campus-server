@@ -8,6 +8,7 @@ import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.comment.Comment;
 import com.swcampus.domain.comment.CommentService;
+import com.swcampus.domain.commentlike.CommentLikeService;
 import com.swcampus.domain.member.MemberService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,6 +38,7 @@ public class CommentController {
 
     private final CommentService commentService;
     private final MemberService memberService;
+    private final CommentLikeService commentLikeService;
 
     @Operation(summary = "댓글 작성", description = "게시글에 댓글을 작성합니다.")
     @SecurityRequirement(name = "cookieAuth")
@@ -60,7 +62,7 @@ public class CommentController {
 
         String nickname = memberService.getMember(member.memberId()).getNickname();
 
-        CommentResponse response = CommentResponse.from(comment, nickname, true);
+        CommentResponse response = CommentResponse.from(comment, nickname, true, false);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -108,7 +110,9 @@ public class CommentController {
 
         String nickname = memberService.getMember(member.memberId()).getNickname();
 
-        CommentResponse response = CommentResponse.from(comment, nickname, true);
+        boolean isLiked = commentLikeService.isLiked(member.memberId(), commentId);
+
+        CommentResponse response = CommentResponse.from(comment, nickname, true, isLiked);
 
         return ResponseEntity.ok(response);
     }
@@ -153,11 +157,15 @@ public class CommentController {
         Map<Long, CommentResponse> commentMap = new LinkedHashMap<>();
         List<CommentResponse> rootComments = new ArrayList<>();
 
-        // 3. 모든 댓글을 CommentResponse로 변환하고 Map에 저장
+        // 3. 사용자가 추천한 댓글 ID 목록 조회
+        java.util.Set<Long> likedCommentIds = commentLikeService.getLikedCommentIds(currentUserId);
+
+        // 4. 모든 댓글을 CommentResponse로 변환하고 Map에 저장
         for (Comment comment : comments) {
             String nickname = nicknameMap.getOrDefault(comment.getUserId(), "알 수 없음");
             boolean isAuthor = currentUserId != null && comment.isAuthor(currentUserId);
-            CommentResponse response = CommentResponse.from(comment, nickname, isAuthor);
+            boolean isLiked = likedCommentIds.contains(comment.getId());
+            CommentResponse response = CommentResponse.from(comment, nickname, isAuthor, isLiked);
             commentMap.put(comment.getId(), response);
         }
 

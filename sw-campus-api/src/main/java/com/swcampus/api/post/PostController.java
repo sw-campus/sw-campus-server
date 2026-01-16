@@ -8,7 +8,9 @@ import com.swcampus.api.security.CurrentMember;
 import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.board.BoardCategoryService;
+import com.swcampus.domain.bookmark.BookmarkService;
 import com.swcampus.domain.comment.CommentService;
+import com.swcampus.domain.postlike.PostLikeService;
 import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.member.exception.MemberNotFoundException;
 import com.swcampus.domain.post.Post;
@@ -43,6 +45,8 @@ public class PostController {
     private final MemberService memberService;
     private final BoardCategoryService boardCategoryService;
     private final CommentService commentService;
+    private final BookmarkService bookmarkService;
+    private final PostLikeService postLikeService;
 
 
     @Operation(summary = "게시글 작성", description = "새 게시글을 작성합니다.")
@@ -146,13 +150,16 @@ public class PostController {
 
         long commentCount = commentService.countByPostId(postId);
 
+        boolean isBookmarked = bookmarkService.isBookmarked(currentUserId, postId);
+        boolean isLiked = postLikeService.isLiked(currentUserId, postId);
+
         PostDetailResponse response = PostDetailResponse.from(
                 post,
                 nickname,
                 categoryName,
                 commentCount,
-                false,     // TODO: BookmarkService에서 조회
-                false,     // TODO: PostLikeService에서 조회
+                isBookmarked,
+                isLiked,
                 isAuthor
         );
 
@@ -189,13 +196,16 @@ public class PostController {
 
         long commentCount = commentService.countByPostId(postId);
 
+        boolean isBookmarked = bookmarkService.isBookmarked(member.memberId(), postId);
+        boolean isLiked = postLikeService.isLiked(member.memberId(), postId);
+
         PostDetailResponse response = PostDetailResponse.from(
                 post,
                 nickname,
                 categoryName,
                 commentCount,
-                false,     // TODO: BookmarkService에서 조회
-                false,     // TODO: PostLikeService에서 조회
+                isBookmarked,
+                isLiked,
                 true       // 본인 작성
         );
 

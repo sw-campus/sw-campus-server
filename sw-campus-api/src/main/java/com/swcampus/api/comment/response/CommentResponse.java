@@ -47,11 +47,14 @@ public class CommentResponse {
     @Schema(description = "본인 작성 여부", example = "true")
     private boolean isAuthor;
 
+    @Schema(description = "추천 여부", example = "false")
+    private boolean isLiked;
+
     @Schema(description = "대댓글 목록")
     @Builder.Default
     private List<CommentResponse> replies = new ArrayList<>();
 
-    public static CommentResponse from(Comment comment, String authorNickname, boolean isAuthor) {
+    public static CommentResponse from(Comment comment, String authorNickname, boolean isAuthor, boolean isLiked) {
         return CommentResponse.builder()
                 .id(comment.getId())
                 .postId(comment.getPostId())
@@ -64,6 +67,7 @@ public class CommentResponse {
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .isAuthor(isAuthor)
+                .isLiked(isLiked)
                 .replies(new ArrayList<>())
                 .build();
     }
