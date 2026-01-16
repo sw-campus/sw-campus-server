@@ -48,3 +48,6 @@ scripts/data-migration/output/
 *-ga-credentials.json
 
 .sdkmanrc
+
+### Ignored Data ###
+sw-campus-infra/db-postgres/src/main/resources/db/migration/V9__seed_test_data.sql
