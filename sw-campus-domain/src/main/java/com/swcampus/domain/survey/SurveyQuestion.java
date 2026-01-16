@@ -79,4 +79,8 @@ public class SurveyQuestion {
         this.metadata = metadata;
         this.part = part;
     }
+
+    public void updateOrder(int newOrder) {
+        this.questionOrder = newOrder;
+    }
 }

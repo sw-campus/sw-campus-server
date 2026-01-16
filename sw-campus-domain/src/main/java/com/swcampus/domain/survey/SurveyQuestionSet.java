@@ -48,12 +48,12 @@ public class SurveyQuestionSet {
         this.questions = questions != null ? questions : new ArrayList<>();
     }
 
-    public static SurveyQuestionSet createDraft(String name, String description, QuestionSetType type) {
+    public static SurveyQuestionSet createDraft(String name, String description, QuestionSetType type, int version) {
         return SurveyQuestionSet.builder()
                 .name(name)
                 .description(description)
                 .type(type)
-                .version(1)
+                .version(version)
                 .status(QuestionSetStatus.DRAFT)
                 .build();
     }
@@ -81,6 +81,14 @@ public class SurveyQuestionSet {
         this.status = QuestionSetStatus.ARCHIVED;
     }
 
+    public void republish() {
+        if (this.status != QuestionSetStatus.ARCHIVED) {
+            throw new IllegalStateException("ARCHIVED 상태에서만 재발행할 수 있습니다.");
+        }
+        this.status = QuestionSetStatus.PUBLISHED;
+        this.publishedAt = LocalDateTime.now();
+    }
+
     public void addQuestion(SurveyQuestion question) {
         if (!status.isEditable()) {
             throw new IllegalStateException("발행된 문항 세트에는 문항을 추가할 수 없습니다.");
@@ -90,6 +98,13 @@ public class SurveyQuestionSet {
 
     public boolean isEditable() {
         return status.isEditable();
+    }
+
+    /**
+     * 삭제 가능 여부 (DRAFT, ARCHIVED 상태에서만 삭제 가능)
+     */
+    public boolean isDeletable() {
+        return status == QuestionSetStatus.DRAFT || status == QuestionSetStatus.ARCHIVED;
     }
 
     /**

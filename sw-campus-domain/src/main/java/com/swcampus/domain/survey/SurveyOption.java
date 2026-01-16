@@ -45,4 +45,8 @@ public class SurveyOption {
         this.jobType = jobType;
         this.isCorrect = isCorrect != null ? isCorrect : false;
     }
+
+    public void updateOrder(int newOrder) {
+        this.optionOrder = newOrder;
+    }
 }
