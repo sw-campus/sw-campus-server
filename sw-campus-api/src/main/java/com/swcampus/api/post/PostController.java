@@ -12,6 +12,7 @@ import com.swcampus.domain.bookmark.BookmarkService;
 import com.swcampus.domain.comment.CommentService;
 import com.swcampus.domain.postlike.PostLikeService;
 import com.swcampus.domain.member.MemberService;
+import com.swcampus.domain.member.Role;
 import com.swcampus.domain.member.exception.MemberNotFoundException;
 import com.swcampus.domain.post.Post;
 import com.swcampus.domain.post.PostService;
@@ -166,7 +167,7 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "게시글 수정", description = "본인이 작성한 게시글을 수정합니다.")
+    @Operation(summary = "게시글 수정", description = "본인이 작성한 게시글을 수정합니다. (관리자는 모든 게시글 수정 가능)")
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "수정 성공"),
@@ -181,9 +182,12 @@ public class PostController {
             @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId,
             @Valid @RequestBody UpdatePostRequest request) {
 
+        boolean isAdmin = member.role() == Role.ADMIN;
+
         Post post = postService.updatePost(
                 postId,
                 member.memberId(),
+                isAdmin,
                 request.getTitle(),
                 request.getBody(),
                 request.getImages(),
@@ -212,7 +216,7 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "게시글 삭제", description = "본인이 작성한 게시글을 삭제합니다. (Soft Delete)")
+    @Operation(summary = "게시글 삭제", description = "본인이 작성한 게시글을 삭제합니다. (Soft Delete, 관리자는 모든 게시글 삭제 가능)")
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "삭제 성공"),
@@ -225,7 +229,9 @@ public class PostController {
             @CurrentMember MemberPrincipal member,
             @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
 
-        postService.deletePost(postId, member.memberId());
+        boolean isAdmin = member.role() == Role.ADMIN;
+
+        postService.deletePost(postId, member.memberId(), isAdmin);
 
         return ResponseEntity.noContent().build();
     }

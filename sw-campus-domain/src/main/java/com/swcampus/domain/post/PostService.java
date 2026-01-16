@@ -53,12 +53,12 @@ public class PostService {
     }
 
     @Transactional
-    public Post updatePost(Long postId, Long userId, String title, String body,
+    public Post updatePost(Long postId, Long userId, boolean isAdmin, String title, String body,
                            List<String> images, List<String> tags) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException(postId));
 
-        if (!post.isAuthor(userId)) {
+        if (!isAdmin && !post.isAuthor(userId)) {
             throw new PostAccessDeniedException("게시글 수정 권한이 없습니다.");
         }
 
@@ -67,11 +67,11 @@ public class PostService {
     }
 
     @Transactional
-    public void deletePost(Long postId, Long userId) {
+    public void deletePost(Long postId, Long userId, boolean isAdmin) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException(postId));
 
-        if (!post.isAuthor(userId)) {
+        if (!isAdmin && !post.isAuthor(userId)) {
             throw new PostAccessDeniedException("게시글 삭제 권한이 없습니다.");
         }
 

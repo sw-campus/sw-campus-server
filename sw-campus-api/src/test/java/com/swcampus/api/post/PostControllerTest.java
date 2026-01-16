@@ -3,6 +3,7 @@ package com.swcampus.api.post;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.post.request.CreatePostRequest;
+import com.swcampus.api.post.request.UpdatePostRequest;
 import com.swcampus.api.post.response.PostDetailResponse;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.board.BoardCategoryService;
@@ -22,13 +23,16 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,12 +61,35 @@ class PostControllerTest {
     @MockitoBean
     private com.swcampus.domain.comment.CommentService commentService;
 
+    @MockitoBean
+    private com.swcampus.domain.bookmark.BookmarkService bookmarkService;
+
+    @MockitoBean
+    private com.swcampus.domain.postlike.PostLikeService postLikeService;
+
     private String validToken;
+    private Member mockMember;
+    private Post mockPost;
 
     @BeforeEach
     void setUp() {
         // 유효한 토큰 생성
         validToken = tokenProvider.createAccessToken(1L, "test@example.com", Role.USER);
+
+        mockMember = Member.of(
+            1L, "test@example.com", "password",
+            "Test Name", "Tester", "010-1234-5678",
+            Role.USER, null, "Seoul",
+            LocalDateTime.now(), LocalDateTime.now()
+        );
+
+        mockPost = Post.of(
+            1L, 1L, 1L,
+            "Test Title", "Test Body",
+            List.of(), List.of("tag1"),
+            0L, 0L, null, false,
+            LocalDateTime.now(), LocalDateTime.now()
+        );
     }
 
     @Test
@@ -77,23 +104,8 @@ class PostControllerTest {
             List.of("tag1")
         );
 
-        Post mockPost = Post.of(
-            1L, 1L, 1L, 
-            "Test Title", "Test Body", 
-            List.of(), List.of("tag1"), 
-            0L, 0L, null, false, 
-            java.time.LocalDateTime.now(), java.time.LocalDateTime.now()
-        );
-
         given(postService.createPost(any(), any(), any(), any(), any(), any()))
                 .willReturn(mockPost);
-
-        Member mockMember = Member.of(
-            1L, "test@example.com", "password", 
-            "Test Name", "Tester", "010-1234-5678", 
-            Role.USER, null, "Seoul", 
-            java.time.LocalDateTime.now(), java.time.LocalDateTime.now()
-        );
 
         given(memberService.getMember(anyLong()))
                 .willReturn(mockMember);
@@ -127,4 +139,90 @@ class PostControllerTest {
                 .andDo(print())
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    @DisplayName("게시글 수정 성공")
+    void updatePost_Success() throws Exception {
+        // given
+        UpdatePostRequest request = new UpdatePostRequest(
+            "Updated Title", "Updated Body", List.of(), List.of("updated-tag")
+        );
+
+        Post updatedPost = Post.of(
+            1L, 1L, 1L,
+            "Updated Title", "Updated Body",
+            List.of(), List.of("updated-tag"),
+            0L, 0L, null, false,
+            LocalDateTime.now(), LocalDateTime.now()
+        );
+
+        given(postService.updatePost(anyLong(), anyLong(), anyBoolean(), any(), any(), any(), any()))
+                .willReturn(updatedPost);
+
+        given(memberService.getMember(anyLong()))
+                .willReturn(mockMember);
+
+        given(boardCategoryService.getCategoryName(anyLong()))
+                .willReturn("Free Board");
+
+        given(commentService.countByPostId(anyLong()))
+                .willReturn(0L);
+
+        given(bookmarkService.isBookmarked(any(), anyLong()))
+                .willReturn(false);
+
+        given(postLikeService.isLiked(any(), anyLong()))
+                .willReturn(false);
+
+        // when & then
+        mockMvc.perform(put("/api/v1/posts/1")
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("게시글 삭제 성공")
+    void deletePost_Success() throws Exception {
+        // given
+        doNothing().when(postService).deletePost(anyLong(), anyLong(), anyBoolean());
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/posts/1")
+                        .header("Authorization", "Bearer " + validToken)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("게시글 수정 실패 - 토큰 없음")
+    void updatePost_Fail_NoToken() throws Exception {
+        // given
+        UpdatePostRequest request = new UpdatePostRequest(
+            "Updated Title", "Updated Body", List.of(), List.of()
+        );
+
+        // when & then
+        mockMvc.perform(put("/api/v1/posts/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("게시글 삭제 실패 - 토큰 없음")
+    void deletePost_Fail_NoToken() throws Exception {
+        // when & then
+        mockMvc.perform(delete("/api/v1/posts/1")
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
 }
+
