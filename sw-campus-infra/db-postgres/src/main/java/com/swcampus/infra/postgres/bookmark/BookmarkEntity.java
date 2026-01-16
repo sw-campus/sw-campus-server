@@ -34,7 +34,7 @@ public class BookmarkEntity {
         entity.id = bookmark.getId();
         entity.userId = bookmark.getUserId();
         entity.postId = bookmark.getPostId();
-        entity.createdAt = bookmark.getCreatedAt() != null ? bookmark.getCreatedAt() : LocalDateTime.now();
+        entity.createdAt = bookmark.getCreatedAt();
         return entity;
     }
 
