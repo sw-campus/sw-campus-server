@@ -187,8 +187,9 @@ class MemberSurveyServiceTest {
             SurveyQuestionSet questionSet = createTestQuestionSet();
             SurveyResults expectedResults = createTestResults();
 
+            int questionSetVersion = 1;
             when(surveyRepository.findByMemberId(memberId)).thenReturn(Optional.of(existingSurvey));
-            when(questionSetRepository.findPublishedByTypeWithQuestions(QuestionSetType.APTITUDE))
+            when(questionSetRepository.findByTypeAndVersionWithQuestions(QuestionSetType.APTITUDE, questionSetVersion))
                     .thenReturn(Optional.of(questionSet));
             when(resultCalculator.calculate(eq(aptitudeTest), eq(questionSet)))
                     .thenReturn(expectedResults);
@@ -196,7 +197,7 @@ class MemberSurveyServiceTest {
                     .thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            MemberSurvey result = surveyService.submitAptitudeTest(memberId, aptitudeTest);
+            MemberSurvey result = surveyService.submitAptitudeTest(memberId, aptitudeTest, questionSetVersion);
 
             // then
             assertThat(result.hasAptitudeTest()).isTrue();
@@ -205,7 +206,7 @@ class MemberSurveyServiceTest {
             assertThat(result.getCompletedAt()).isNotNull();
 
             verify(surveyRepository).findByMemberId(memberId);
-            verify(questionSetRepository).findPublishedByTypeWithQuestions(QuestionSetType.APTITUDE);
+            verify(questionSetRepository).findByTypeAndVersionWithQuestions(QuestionSetType.APTITUDE, questionSetVersion);
             verify(resultCalculator).calculate(aptitudeTest, questionSet);
             verify(surveyRepository).save(any(MemberSurvey.class));
         }
@@ -217,9 +218,10 @@ class MemberSurveyServiceTest {
             when(surveyRepository.findByMemberId(memberId)).thenReturn(Optional.empty());
 
             AptitudeTest aptitudeTest = createTestAptitudeTest();
+            int questionSetVersion = 1;
 
             // when & then
-            assertThatThrownBy(() -> surveyService.submitAptitudeTest(memberId, aptitudeTest))
+            assertThatThrownBy(() -> surveyService.submitAptitudeTest(memberId, aptitudeTest, questionSetVersion))
                     .isInstanceOf(SurveyNotFoundException.class);
 
             verify(surveyRepository).findByMemberId(memberId);
@@ -234,9 +236,10 @@ class MemberSurveyServiceTest {
             when(surveyRepository.findByMemberId(memberId)).thenReturn(Optional.of(existingSurvey));
 
             AptitudeTest aptitudeTest = createTestAptitudeTest();
+            int questionSetVersion = 1;
 
             // when & then
-            assertThatThrownBy(() -> surveyService.submitAptitudeTest(memberId, aptitudeTest))
+            assertThatThrownBy(() -> surveyService.submitAptitudeTest(memberId, aptitudeTest, questionSetVersion))
                     .isInstanceOf(BasicSurveyRequiredException.class);
 
             verify(surveyRepository).findByMemberId(memberId);
@@ -244,19 +247,20 @@ class MemberSurveyServiceTest {
         }
 
         @Test
-        @DisplayName("실패 - 발행된 문항 세트가 없는 경우")
+        @DisplayName("실패 - 해당 버전의 문항 세트가 없는 경우")
         void fail_noQuestionSet() {
             // given
             BasicSurvey basicSurvey = createTestBasicSurvey();
             MemberSurvey existingSurvey = MemberSurvey.createWithBasicSurvey(memberId, basicSurvey);
             AptitudeTest aptitudeTest = createTestAptitudeTest();
+            int questionSetVersion = 1;
 
             when(surveyRepository.findByMemberId(memberId)).thenReturn(Optional.of(existingSurvey));
-            when(questionSetRepository.findPublishedByTypeWithQuestions(QuestionSetType.APTITUDE))
+            when(questionSetRepository.findByTypeAndVersionWithQuestions(QuestionSetType.APTITUDE, questionSetVersion))
                     .thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> surveyService.submitAptitudeTest(memberId, aptitudeTest))
+            assertThatThrownBy(() -> surveyService.submitAptitudeTest(memberId, aptitudeTest, questionSetVersion))
                     .isInstanceOf(SurveyQuestionSetNotFoundException.class);
 
             verify(surveyRepository).findByMemberId(memberId);
@@ -281,13 +285,14 @@ class MemberSurveyServiceTest {
                     .build();
 
             SurveyQuestionSet questionSet = createTestQuestionSet();
+            int questionSetVersion = 1;
 
             when(surveyRepository.findByMemberId(memberId)).thenReturn(Optional.of(existingSurvey));
-            when(questionSetRepository.findPublishedByTypeWithQuestions(QuestionSetType.APTITUDE))
+            when(questionSetRepository.findByTypeAndVersionWithQuestions(QuestionSetType.APTITUDE, questionSetVersion))
                     .thenReturn(Optional.of(questionSet));
 
             // when & then
-            assertThatThrownBy(() -> surveyService.submitAptitudeTest(memberId, invalidAptitudeTest))
+            assertThatThrownBy(() -> surveyService.submitAptitudeTest(memberId, invalidAptitudeTest, questionSetVersion))
                     .isInstanceOf(InvalidAptitudeTestAnswersException.class)
                     .hasMessageContaining("Part 1은 4문항 모두 응답해야 합니다");
 

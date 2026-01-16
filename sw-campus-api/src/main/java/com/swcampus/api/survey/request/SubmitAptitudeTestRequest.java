@@ -17,6 +17,10 @@ import java.util.Map;
 @Schema(description = "성향 테스트 제출 요청")
 public class SubmitAptitudeTestRequest {
 
+    @Schema(description = "문항 세트 버전 (테스트 시작 시점의 버전)", example = "1")
+    @NotNull(message = "문항 세트 버전은 필수입니다")
+    private Integer questionSetVersion;
+
     @Schema(description = "Part 1 응답 (논리/사고력) - 값은 선택지 번호", example = "{\"q1\": 3, \"q2\": 2, \"q3\": 2, \"q4\": 2}")
     @NotNull(message = "Part 1 응답은 필수입니다")
     @Size(min = 1, message = "Part 1은 최소 1개 이상 응답해야 합니다")

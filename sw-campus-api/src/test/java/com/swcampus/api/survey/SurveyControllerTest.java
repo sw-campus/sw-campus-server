@@ -211,7 +211,9 @@ class SurveyControllerTest {
         @DisplayName("성향 테스트 제출 성공 (200)")
         void success() throws Exception {
             // given
+            int questionSetVersion = 1;
             SubmitAptitudeTestRequest request = new SubmitAptitudeTestRequest(
+                    questionSetVersion,
                     Map.of("q1", 2, "q2", 1, "q3", 2, "q4", 3),
                     Map.of("q5", 3, "q6", 2, "q7", 2, "q8", 3),
                     Map.of("q9", "B", "q10", "B", "q11", "D",
@@ -220,7 +222,7 @@ class SurveyControllerTest {
 
             MemberSurvey survey = createCompletedSurvey();
 
-            when(surveyService.submitAptitudeTest(eq(MEMBER_ID), any(AptitudeTest.class)))
+            when(surveyService.submitAptitudeTest(eq(MEMBER_ID), any(AptitudeTest.class), eq(questionSetVersion)))
                     .thenReturn(survey);
 
             // when & then
@@ -238,14 +240,16 @@ class SurveyControllerTest {
         @DisplayName("기초 설문 미완료 시 실패 (400)")
         void fail_noBasicSurvey() throws Exception {
             // given
+            int questionSetVersion = 1;
             SubmitAptitudeTestRequest request = new SubmitAptitudeTestRequest(
+                    questionSetVersion,
                     Map.of("q1", 2, "q2", 1, "q3", 2, "q4", 3),
                     Map.of("q5", 3, "q6", 2, "q7", 2, "q8", 3),
                     Map.of("q9", "B", "q10", "B", "q11", "D",
                             "q12", "B", "q13", "B", "q14", "B", "q15", "B")
             );
 
-            when(surveyService.submitAptitudeTest(eq(MEMBER_ID), any(AptitudeTest.class)))
+            when(surveyService.submitAptitudeTest(eq(MEMBER_ID), any(AptitudeTest.class), eq(questionSetVersion)))
                     .thenThrow(new BasicSurveyRequiredException());
 
             // when & then

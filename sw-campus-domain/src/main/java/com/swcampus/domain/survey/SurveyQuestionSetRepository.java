@@ -27,6 +27,16 @@ public interface SurveyQuestionSetRepository {
     List<SurveyQuestionSet> findAllByType(QuestionSetType type);
 
     /**
+     * 특정 타입과 버전의 문항 세트와 문항들 조회 (테스트 제출 검증용)
+     */
+    Optional<SurveyQuestionSet> findByTypeAndVersionWithQuestions(QuestionSetType type, int version);
+
+    /**
+     * 전체 문항 세트 조회
+     */
+    List<SurveyQuestionSet> findAll();
+
+    /**
      * 특정 타입의 최신 버전 번호 조회
      */
     int findMaxVersionByType(QuestionSetType type);

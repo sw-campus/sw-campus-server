@@ -23,6 +23,12 @@ public interface SurveyQuestionSetJpaRepository extends JpaRepository<SurveyQues
             @Param("status") QuestionSetStatus status
     );
 
+    @Query("SELECT qs FROM SurveyQuestionSetEntity qs LEFT JOIN FETCH qs.questions q LEFT JOIN FETCH q.options WHERE qs.type = :type AND qs.version = :version")
+    Optional<SurveyQuestionSetEntity> findByTypeAndVersionWithQuestions(
+            @Param("type") QuestionSetType type,
+            @Param("version") int version
+    );
+
     List<SurveyQuestionSetEntity> findAllByType(QuestionSetType type);
 
     @Query("SELECT COALESCE(MAX(qs.version), 0) FROM SurveyQuestionSetEntity qs WHERE qs.type = :type")
@@ -31,4 +37,8 @@ public interface SurveyQuestionSetJpaRepository extends JpaRepository<SurveyQues
     @Modifying
     @Query("UPDATE SurveyQuestionSetEntity qs SET qs.status = 'ARCHIVED' WHERE qs.type = :type AND qs.status = 'PUBLISHED'")
     void archivePublishedByType(@Param("type") QuestionSetType type);
+
+    @Modifying
+    @Query("DELETE FROM SurveyQuestionSetEntity qs WHERE qs.questionSetId = :id")
+    void deleteByIdDirectly(@Param("id") Long id);
 }

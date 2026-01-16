@@ -3,12 +3,16 @@ package com.swcampus.api.survey;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.api.survey.request.SaveBasicSurveyRequest;
 import com.swcampus.api.survey.request.SubmitAptitudeTestRequest;
+import com.swcampus.api.survey.response.QuestionSetResponse;
 import com.swcampus.api.survey.response.SurveyResponse;
 import com.swcampus.api.survey.response.SurveyResultsResponse;
 import com.swcampus.api.survey.response.SurveyStatusResponse;
 import com.swcampus.domain.auth.MemberPrincipal;
+import com.swcampus.domain.survey.AdminSurveyQuestionService;
 import com.swcampus.domain.survey.MemberSurvey;
 import com.swcampus.domain.survey.MemberSurveyService;
+import com.swcampus.domain.survey.QuestionSetType;
+import com.swcampus.domain.survey.SurveyQuestionSet;
 import com.swcampus.domain.survey.SurveyResults;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 public class SurveyController {
 
     private final MemberSurveyService surveyService;
+    private final AdminSurveyQuestionService questionService;
 
     @Operation(summary = "내 설문조사 조회", description = "본인의 설문조사를 조회합니다. 설문이 없으면 null을 반환합니다.")
     @ApiResponses({
@@ -70,7 +75,11 @@ public class SurveyController {
             @CurrentMember MemberPrincipal member,
             @Valid @RequestBody SubmitAptitudeTestRequest request) {
         Long currentMemberId = member.memberId();
-        MemberSurvey survey = surveyService.submitAptitudeTest(currentMemberId, request.toDomain());
+        MemberSurvey survey = surveyService.submitAptitudeTest(
+                currentMemberId,
+                request.toDomain(),
+                request.getQuestionSetVersion()
+        );
         return ResponseEntity.ok(SurveyResponse.from(survey));
     }
 
@@ -99,5 +108,19 @@ public class SurveyController {
         return surveyService.findSurveyByMemberId(currentMemberId)
                 .map(survey -> ResponseEntity.ok(SurveyStatusResponse.from(survey)))
                 .orElseGet(() -> ResponseEntity.ok(SurveyStatusResponse.from(null)));
+    }
+
+    @Operation(summary = "발행된 문항 세트 조회", description = "발행된 설문 문항 세트를 타입별로 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공 (발행된 세트가 없으면 null)"),
+            @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @GetMapping("/question-sets/{type}")
+    public ResponseEntity<QuestionSetResponse> getPublishedQuestionSet(
+            @CurrentMember MemberPrincipal member,
+            @PathVariable(name = "type") QuestionSetType type) {
+        return questionService.findPublishedQuestionSet(type)
+                .map(questionSet -> ResponseEntity.ok(QuestionSetResponse.from(questionSet)))
+                .orElseGet(() -> ResponseEntity.ok(null));
     }
 }

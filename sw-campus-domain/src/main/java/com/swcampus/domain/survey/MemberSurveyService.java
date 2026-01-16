@@ -45,9 +45,13 @@ public class MemberSurveyService {
 
     /**
      * 성향 테스트 제출 및 점수 계산
+     *
+     * @param memberId 회원 ID
+     * @param aptitudeTest 성향 테스트 응답
+     * @param questionSetVersion 테스트 시작 시점의 문항 세트 버전
      */
     @Transactional
-    public MemberSurvey submitAptitudeTest(Long memberId, AptitudeTest aptitudeTest) {
+    public MemberSurvey submitAptitudeTest(Long memberId, AptitudeTest aptitudeTest, int questionSetVersion) {
         MemberSurvey survey = surveyRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new SurveyNotFoundException(memberId));
 
@@ -55,12 +59,13 @@ public class MemberSurveyService {
             throw new BasicSurveyRequiredException(memberId);
         }
 
-        // PUBLISHED 상태의 성향 테스트 문항 세트 조회
+        // 테스트 시작 시점의 문항 세트 버전으로 조회 (테스트 도중 새 버전 발행되어도 기존 버전으로 검증)
         SurveyQuestionSet questionSet = questionSetRepository
-                .findPublishedByTypeWithQuestions(QuestionSetType.APTITUDE)
-                .orElseThrow(() -> new SurveyQuestionSetNotFoundException("APTITUDE"));
+                .findByTypeAndVersionWithQuestions(QuestionSetType.APTITUDE, questionSetVersion)
+                .orElseThrow(() -> new SurveyQuestionSetNotFoundException(
+                        "APTITUDE 타입의 버전 " + questionSetVersion + " 문항 세트를 찾을 수 없습니다"));
 
-        // 동적 검증: 발행된 문항 세트 기반으로 응답 수 검증
+        // 동적 검증: 해당 버전의 문항 세트 기반으로 응답 수 검증
         validateAptitudeTestAnswers(aptitudeTest, questionSet);
 
         // 점수 계산

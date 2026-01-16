@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 public class SurveyQuestionSetEntityRepository implements SurveyQuestionSetRepository {
 
     private final SurveyQuestionSetJpaRepository jpaRepository;
+    private final SurveyQuestionJpaRepository questionJpaRepository;
+    private final SurveyOptionJpaRepository optionJpaRepository;
 
     @Override
     public SurveyQuestionSet save(SurveyQuestionSet questionSet) {
@@ -62,6 +64,19 @@ public class SurveyQuestionSetEntityRepository implements SurveyQuestionSetRepos
     }
 
     @Override
+    public Optional<SurveyQuestionSet> findByTypeAndVersionWithQuestions(QuestionSetType type, int version) {
+        return jpaRepository.findByTypeAndVersionWithQuestions(type, version)
+                .map(SurveyQuestionSetEntity::toDomain);
+    }
+
+    @Override
+    public List<SurveyQuestionSet> findAll() {
+        return jpaRepository.findAll().stream()
+                .map(SurveyQuestionSetEntity::toDomainWithoutQuestions)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public int findMaxVersionByType(QuestionSetType type) {
         return jpaRepository.findMaxVersionByType(type);
     }
@@ -69,7 +84,21 @@ public class SurveyQuestionSetEntityRepository implements SurveyQuestionSetRepos
     @Override
     public void delete(SurveyQuestionSet questionSet) {
         if (questionSet.getQuestionSetId() != null) {
-            jpaRepository.deleteById(questionSet.getQuestionSetId());
+            Long questionSetId = questionSet.getQuestionSetId();
+
+            // 1. 먼저 해당 QuestionSet의 모든 Question ID 조회
+            List<Long> questionIds = questionJpaRepository.findQuestionIdsByQuestionSetId(questionSetId);
+
+            // 2. Option 삭제 (Question이 있는 경우에만)
+            if (!questionIds.isEmpty()) {
+                optionJpaRepository.deleteByQuestionIdIn(questionIds);
+            }
+
+            // 3. Question 삭제
+            questionJpaRepository.deleteByQuestionSetId(questionSetId);
+
+            // 4. QuestionSet 삭제 (JPQL로 직접 삭제하여 cascade 문제 회피)
+            jpaRepository.deleteByIdDirectly(questionSetId);
         }
     }
 
