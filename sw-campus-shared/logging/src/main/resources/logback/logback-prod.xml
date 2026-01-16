@@ -8,7 +8,7 @@
     <logger name="com.swcampus" level="INFO"/>
 
     <root level="INFO">
-        <appender-ref ref="OTEL"/>
+        <appender-ref ref="JSON"/>
         <appender-ref ref="CONSOLE"/>
     </root>
 </configuration>
