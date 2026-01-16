@@ -37,9 +37,8 @@ dependencies {
     // Swagger UI + OpenAPI 3.0
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
 
-    // Open Telemetry
-    implementation 'io.micrometer:micrometer-registry-prometheus'  // Actuator → Prometheus (Pull)
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel'  // Spring Boot ↔ OTEL
+    // Prometheus
+    implementation 'io.micrometer:micrometer-registry-prometheus' // Actuator → Prometheus (Pull)
 
     // Test (모듈 전용)
     testRuntimeOnly 'com.h2database:h2' // H2 for test (in-memory database with PostgreSQL mode)
