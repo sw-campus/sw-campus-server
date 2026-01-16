@@ -128,6 +128,19 @@ api → domain ← infra
 - `@Valid` 사용 필수
 - `ResponseEntity` 사용
 - 비즈니스 로직 금지
+- `@PathVariable`, `@RequestParam`에 **name 속성 필수**
+
+#### @PathVariable, @RequestParam 명시적 이름 지정
+
+```java
+// ✅ 올바른 예: 명시적 name 지정
+@PathVariable("id") Long id
+@RequestParam(name = "page", defaultValue = "0") int page
+
+// ❌ 금지: name 생략 (멀티모듈에서 런타임 에러 발생 가능)
+@PathVariable Long id
+@RequestParam int page
+```
 
 ---
 
@@ -160,6 +173,7 @@ api → domain ← infra
 □ 적절한 HTTP Method 사용
 □ 적절한 Status Code 반환
 □ @Valid 사용
+□ @PathVariable, @RequestParam에 name 속성 명시
 □ Swagger 문서화 (@Tag, @Operation, @Schema)
 ```
 
