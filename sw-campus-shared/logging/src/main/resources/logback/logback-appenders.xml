@@ -1,6 +1,6 @@
 <configuration>
 
-    <!-- Console -->
+    <!-- LOCAL용: 사람이 읽기 좋은 포맷 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
@@ -10,6 +10,13 @@
         </encoder>
     </appender>
 
-    <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender"/>
+    <!-- STAGING/PROD용: JSON 포맷 (Loki 검색용) -->
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeContext>true</includeContext>
+            <includeMdc>true</includeMdc>
+            <includeTags>true</includeTags>
+        </encoder>
+    </appender>
 
 </configuration>

@@ -1,7 +1,7 @@
 # Spring 기본 설정
 spring:
   application:
-    name: sw-campus-server
+    name: sw-campus
 
   servlet:
     multipart:
@@ -68,7 +68,7 @@ management:
 otel:
   resource:
     attributes:
-      service.name: sw-campus
+      service.name: ${spring.application.name}
 
 # Swagger
 springdoc:

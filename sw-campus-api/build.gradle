@@ -15,16 +15,15 @@ dependencies {
     implementation project(':sw-campus-infra:ocr')      // ocr client
     runtimeOnly project(':sw-campus-infra:analytics')   // google analytics
 
-    // Spring Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-
-    // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-
-    // AOP for infra exception translation aspect
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 
     // Cache with Caffeine
     implementation 'org.springframework.boot:spring-boot-starter-cache'
@@ -35,22 +34,11 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 
-    // OAuth2 Client
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-
-    // Validation
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-    // Mail
-    implementation 'org.springframework.boot:spring-boot-starter-mail'
-
     // Swagger UI + OpenAPI 3.0
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
 
-    // Open Telemetry
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'io.micrometer:micrometer-registry-prometheus'  // Actuator → Prometheus (Pull)
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel'  // HTTP 요청 트레이싱
+    // Prometheus
+    implementation 'io.micrometer:micrometer-registry-prometheus' // Actuator → Prometheus (Pull)
 
     // Test (모듈 전용)
     testRuntimeOnly 'com.h2database:h2' // H2 for test (in-memory database with PostgreSQL mode)

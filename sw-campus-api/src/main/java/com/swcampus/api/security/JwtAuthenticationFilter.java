@@ -8,19 +8,29 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenProvider tokenProvider;
+    private final List<RequestMatcher> publicGetMatchers;
+
+    public JwtAuthenticationFilter(TokenProvider tokenProvider, String[] publicGetApis) {
+        this.tokenProvider = tokenProvider;
+        this.publicGetMatchers = Arrays.stream(publicGetApis)
+                .map(path -> new AntPathRequestMatcher(path, "GET"))
+                .collect(Collectors.toList());
+    }
 
     // ✅ ALB 헬스체크 전용 엔드포인트는 JWT 필터 자체를 타지 않음
     // - SecurityConfig의 permitAll()과 반드시 동일한 범위여야 함
@@ -39,6 +49,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
+        // 공개 GET API는 JWT 검사 스킵
+        if (isPublicGet(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // 나머지만 JWT 인증 처리
         String token = resolveToken(request);
 
         if (token != null && tokenProvider.validateToken(token)) {
@@ -58,6 +75,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublicGet(HttpServletRequest request) {
+        return publicGetMatchers.stream().anyMatch(m -> m.matches(request));
     }
 
     private String resolveToken(HttpServletRequest request) {
