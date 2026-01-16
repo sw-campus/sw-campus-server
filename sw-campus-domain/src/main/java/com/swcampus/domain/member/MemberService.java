@@ -38,6 +38,10 @@ public class MemberService {
                 .orElseThrow(MemberNotFoundException::new);
     }
 
+    public List<Member> getMembersByIds(List<Long> memberIds) {
+        return memberRepository.findAllByIds(memberIds);
+    }
+
     /**
      * 비밀번호 검증 (회원정보 수정 화면 진입 전 확인용)
      * @param memberId 사용자 ID

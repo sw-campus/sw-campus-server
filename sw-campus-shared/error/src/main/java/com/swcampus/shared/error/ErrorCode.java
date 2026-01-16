@@ -85,7 +85,9 @@ public enum ErrorCode {
 	// Post/Community (P)
 	BOARD_CATEGORY_NOT_FOUND(404, "P001", "카테고리를 찾을 수 없습니다"),
 	POST_NOT_FOUND(404, "P002", "게시글을 찾을 수 없습니다"),
-	POST_ACCESS_DENIED(403, "P003", "게시글에 대한 권한이 없습니다");
+	POST_ACCESS_DENIED(403, "P003", "게시글에 대한 권한이 없습니다"),
+	COMMENT_NOT_FOUND(404, "P004", "댓글을 찾을 수 없습니다"),
+	COMMENT_ACCESS_DENIED(403, "P005", "댓글에 대한 권한이 없습니다");
 
 	private final int status;
 	private final String code;
