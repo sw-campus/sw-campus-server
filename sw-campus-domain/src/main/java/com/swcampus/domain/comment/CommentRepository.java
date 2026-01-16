@@ -12,4 +12,6 @@ public interface CommentRepository {
     List<Comment> findByPostId(Long postId);
 
     long countByPostId(Long postId);
+
+    java.util.Map<Long, Long> countByPostIds(java.util.List<Long> postIds);
 }

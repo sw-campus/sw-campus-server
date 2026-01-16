@@ -17,4 +17,7 @@ public interface CommentJpaRepository extends JpaRepository<CommentEntity, Long>
 
     @Query("SELECT COUNT(c) FROM CommentEntity c WHERE c.postId = :postId AND c.deleted = false")
     long countByPostIdAndNotDeleted(@Param("postId") Long postId);
+
+    @Query("SELECT c.postId, COUNT(c) FROM CommentEntity c WHERE c.postId IN :postIds AND c.deleted = false GROUP BY c.postId")
+    List<Object[]> countByPostIds(@Param("postIds") List<Long> postIds);
 }

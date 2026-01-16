@@ -6,8 +6,11 @@ import com.swcampus.domain.comment.exception.CommentNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -48,5 +51,18 @@ public class CommentEntityRepository implements CommentRepository {
     @Override
     public long countByPostId(Long postId) {
         return jpaRepository.countByPostIdAndNotDeleted(postId);
+    }
+
+    @Override
+    public Map<Long, Long> countByPostIds(List<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return jpaRepository.countByPostIds(postIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
     }
 }

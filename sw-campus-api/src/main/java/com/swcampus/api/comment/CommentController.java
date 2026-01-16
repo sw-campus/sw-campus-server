@@ -9,7 +9,7 @@ import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.comment.Comment;
 import com.swcampus.domain.comment.CommentService;
 import com.swcampus.domain.member.MemberService;
-import com.swcampus.domain.member.exception.MemberNotFoundException;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,10 +22,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.swcampus.domain.member.Member;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Tag(name = "Comment", description = "댓글 API")
 @RestController
@@ -131,20 +133,35 @@ public class CommentController {
 
     /**
      * 댓글 목록을 계층 구조(부모-자식)로 변환합니다.
+     * N+1 문제를 해결하기 위해 작성자 정보를 일괄 조회합니다.
      */
     private List<CommentResponse> buildCommentTree(List<Comment> comments, Long currentUserId) {
+        if (comments.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 1. 작성자 ID 목록 수집
+        List<Long> authorIds = comments.stream()
+                .map(Comment::getUserId)
+                .distinct()
+                .toList();
+
+        // 2. 작성자 정보 일괄 조회
+        Map<Long, String> nicknameMap = memberService.getMembersByIds(authorIds).stream()
+                .collect(Collectors.toMap(Member::getId, Member::getNickname));
+
         Map<Long, CommentResponse> commentMap = new LinkedHashMap<>();
         List<CommentResponse> rootComments = new ArrayList<>();
 
-        // 1단계: 모든 댓글을 CommentResponse로 변환하고 Map에 저장
+        // 3. 모든 댓글을 CommentResponse로 변환하고 Map에 저장
         for (Comment comment : comments) {
-            String nickname = getAuthorNickname(comment.getUserId());
+            String nickname = nicknameMap.getOrDefault(comment.getUserId(), "알 수 없음");
             boolean isAuthor = currentUserId != null && comment.isAuthor(currentUserId);
             CommentResponse response = CommentResponse.from(comment, nickname, isAuthor);
             commentMap.put(comment.getId(), response);
         }
 
-        // 2단계: 부모-자식 관계 설정
+        // 4. 부모-자식 관계 설정
         for (Comment comment : comments) {
             CommentResponse response = commentMap.get(comment.getId());
             if (comment.getParentId() == null) {
@@ -163,13 +180,5 @@ public class CommentController {
         }
 
         return rootComments;
-    }
-
-    private String getAuthorNickname(Long userId) {
-        try {
-            return memberService.getMember(userId).getNickname();
-        } catch (MemberNotFoundException e) {
-            return "알 수 없음";
-        }
     }
 }

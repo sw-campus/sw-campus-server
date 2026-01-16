@@ -15,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -46,10 +46,10 @@ class CommentControllerTest {
     @Autowired
     private TokenProvider tokenProvider;
 
-    @MockBean
+    @MockitoBean
     private CommentService commentService;
 
-    @MockBean
+    @MockitoBean
     private MemberService memberService;
 
     private String validToken;
@@ -131,8 +131,8 @@ class CommentControllerTest {
         given(commentService.getCommentsByPostId(anyLong()))
                 .willReturn(List.of(mockComment));
 
-        given(memberService.getMember(anyLong()))
-                .willReturn(mockMember);
+        given(memberService.getMembersByIds(any()))
+                .willReturn(List.of(mockMember));
 
         // when & then
         mockMvc.perform(get("/api/v1/posts/1/comments")

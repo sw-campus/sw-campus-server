@@ -59,4 +59,8 @@ public class CommentService {
     public long countByPostId(Long postId) {
         return commentRepository.countByPostId(postId);
     }
+
+    public java.util.Map<Long, Long> getCommentCounts(List<Long> postIds) {
+        return commentRepository.countByPostIds(postIds);
+    }
 }

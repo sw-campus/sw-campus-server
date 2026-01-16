@@ -31,6 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "Post", description = "게시글 API")
 @RestController
@@ -96,12 +97,23 @@ public class PostController {
         // N+1 문제 해결: JOIN 쿼리로 한 번에 조회
         Page<PostSummary> posts = postService.getPostsWithDetails(categoryId, tags, pageable);
 
+        if (posts.isEmpty()) {
+            return ResponseEntity.ok(Page.empty(pageable));
+        }
+
+        // N+1 문제 해결: 댓글 수 일괄 조회
+        List<Long> postIds = posts.getContent().stream()
+                .map(summary -> summary.getPost().getId())
+                .toList();
+
+        Map<Long, Long> commentCounts = commentService.getCommentCounts(postIds);
+
         Page<PostResponse> response = posts.map(summary ->
             PostResponse.from(
                     summary.getPost(),
                     summary.getAuthorNickname(),
                     summary.getCategoryName(),
-                    commentService.countByPostId(summary.getPost().getId())
+                    commentCounts.getOrDefault(summary.getPost().getId(), 0L)
             )
         );
 
