@@ -44,7 +44,7 @@ class MemberSurveyServiceTest {
 
     private BasicSurvey createTestBasicSurvey() {
         return BasicSurvey.builder()
-                .major("컴퓨터공학")
+                .majorInfo(MajorInfo.withMajor("컴퓨터공학"))
                 .programmingExperience(ProgrammingExperience.withExperience("삼성 SW 아카데미"))
                 .preferredLearningMethod(LearningMethod.OFFLINE)
                 .desiredJobs(List.of(DesiredJob.BACKEND, DesiredJob.DATA))
@@ -103,7 +103,7 @@ class MemberSurveyServiceTest {
             // then
             assertThat(result.getMemberId()).isEqualTo(memberId);
             assertThat(result.getBasicSurvey()).isNotNull();
-            assertThat(result.getBasicSurvey().getMajor()).isEqualTo("컴퓨터공학");
+            assertThat(result.getBasicSurvey().getMajorInfo().getMajorName()).isEqualTo("컴퓨터공학");
             assertThat(result.hasBasicSurvey()).isTrue();
             assertThat(result.hasAptitudeTest()).isFalse();
 
@@ -116,7 +116,7 @@ class MemberSurveyServiceTest {
         void success_update() {
             // given
             BasicSurvey oldBasicSurvey = BasicSurvey.builder()
-                    .major("전자공학")
+                    .majorInfo(MajorInfo.withMajor("전자공학"))
                     .programmingExperience(ProgrammingExperience.noExperience())
                     .preferredLearningMethod(LearningMethod.ONLINE)
                     .desiredJobs(List.of(DesiredJob.FRONTEND))
@@ -134,7 +134,7 @@ class MemberSurveyServiceTest {
             MemberSurvey result = surveyService.saveBasicSurvey(memberId, newBasicSurvey);
 
             // then
-            assertThat(result.getBasicSurvey().getMajor()).isEqualTo("컴퓨터공학");
+            assertThat(result.getBasicSurvey().getMajorInfo().getMajorName()).isEqualTo("컴퓨터공학");
             assertThat(result.getBasicSurvey().getPreferredLearningMethod()).isEqualTo(LearningMethod.OFFLINE);
 
             verify(surveyRepository).findByMemberId(memberId);
@@ -250,7 +250,7 @@ class MemberSurveyServiceTest {
 
             // then
             assertThat(result.getMemberId()).isEqualTo(memberId);
-            assertThat(result.getBasicSurvey().getMajor()).isEqualTo("컴퓨터공학");
+            assertThat(result.getBasicSurvey().getMajorInfo().getMajorName()).isEqualTo("컴퓨터공학");
 
             verify(surveyRepository).findByMemberId(memberId);
         }
@@ -282,7 +282,7 @@ class MemberSurveyServiceTest {
             AptitudeTest aptitudeTest = createTestAptitudeTest();
             SurveyResults expectedResults = createTestResults();
             MemberSurvey survey = MemberSurvey.createWithBasicSurvey(memberId, basicSurvey);
-            survey.completeAptitudeTest(aptitudeTest, expectedResults, 1);
+            survey.completeAptitudeTest(aptitudeTest, expectedResults, 1, java.time.LocalDateTime.now());
 
             when(surveyRepository.findByMemberId(memberId)).thenReturn(Optional.of(survey));
 

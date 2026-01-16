@@ -254,7 +254,7 @@ class MypageControllerTest {
     void getSurvey_Success() throws Exception {
         // given
         BasicSurvey basicSurvey = BasicSurvey.builder()
-                .major("CS")
+                .majorInfo(MajorInfo.withMajor("CS"))
                 .programmingExperience(ProgrammingExperience.withExperience("삼성 SW 아카데미"))
                 .preferredLearningMethod(LearningMethod.OFFLINE)
                 .desiredJobs(List.of(DesiredJob.BACKEND))

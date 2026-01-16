@@ -65,7 +65,7 @@ class AdminSurveyControllerTest {
 
     private BasicSurvey createTestBasicSurvey(String major) {
         return BasicSurvey.builder()
-                .major(major)
+                .majorInfo(MajorInfo.withMajor(major))
                 .programmingExperience(ProgrammingExperience.withExperience("삼성 SW 아카데미"))
                 .preferredLearningMethod(LearningMethod.OFFLINE)
                 .desiredJobs(List.of(DesiredJob.BACKEND, DesiredJob.DATA))
@@ -94,7 +94,7 @@ class AdminSurveyControllerTest {
                 .jobTypeScores(Map.of(JobTypeCode.B, 5, JobTypeCode.F, 1, JobTypeCode.D, 1))
                 .recommendedJob(RecommendedJob.BACKEND)
                 .build();
-        survey.completeAptitudeTest(aptitudeTest, results, 1);
+        survey.completeAptitudeTest(aptitudeTest, results, 1, java.time.LocalDateTime.now());
         return survey;
     }
 
@@ -118,11 +118,11 @@ class AdminSurveyControllerTest {
                     .andExpect(jsonPath("$.content").isArray())
                     .andExpect(jsonPath("$.content.length()").value(2))
                     .andExpect(jsonPath("$.content[0].memberId").value(1))
-                    .andExpect(jsonPath("$.content[0].basicSurvey.major").value("컴퓨터공학"))
+                    .andExpect(jsonPath("$.content[0].basicSurvey.majorInfo.majorName").value("컴퓨터공학"))
                     .andExpect(jsonPath("$.content[0].status.hasBasicSurvey").value(true))
                     .andExpect(jsonPath("$.content[0].status.hasAptitudeTest").value(true))
                     .andExpect(jsonPath("$.content[1].memberId").value(2))
-                    .andExpect(jsonPath("$.content[1].basicSurvey.major").value("전자공학"))
+                    .andExpect(jsonPath("$.content[1].basicSurvey.majorInfo.majorName").value("전자공학"))
                     .andExpect(jsonPath("$.content[1].status.hasAptitudeTest").value(false));
         }
 
@@ -158,7 +158,7 @@ class AdminSurveyControllerTest {
             mockMvc.perform(get("/api/v1/admin/surveys/members/{memberId}", targetUserId))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.memberId").value(targetUserId))
-                    .andExpect(jsonPath("$.basicSurvey.major").value("컴퓨터공학"))
+                    .andExpect(jsonPath("$.basicSurvey.majorInfo.majorName").value("컴퓨터공학"))
                     .andExpect(jsonPath("$.basicSurvey.programmingExperience.hasExperience").value(true))
                     .andExpect(jsonPath("$.status.hasBasicSurvey").value(true))
                     .andExpect(jsonPath("$.status.hasAptitudeTest").value(true))

@@ -49,9 +49,11 @@ public record SurveyResponse(
         }
 
         ProgrammingExperience exp = basicSurvey.getProgrammingExperience();
+        MajorInfo majorInfo = basicSurvey.getMajorInfo();
+        String majorName = majorInfo != null && majorInfo.isHasMajor() ? majorInfo.getMajorName() : null;
         return new SurveyResponse(
             survey.getMemberId(),
-            basicSurvey.getMajor(),
+            majorName,
             exp != null ? exp.isHasExperience() : null,
             exp != null ? exp.getBootcampName() : null,
             basicSurvey.getPreferredLearningMethod(),

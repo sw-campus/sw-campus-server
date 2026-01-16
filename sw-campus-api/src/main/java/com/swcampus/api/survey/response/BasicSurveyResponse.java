@@ -7,8 +7,8 @@ import java.util.List;
 
 @Schema(description = "기초 설문 응답")
 public record BasicSurveyResponse(
-        @Schema(description = "전공", example = "컴퓨터공학")
-        String major,
+        @Schema(description = "전공 정보")
+        MajorInfoResponse majorInfo,
 
         @Schema(description = "프로그래밍 경험 정보")
         ProgrammingExperienceResponse programmingExperience,
@@ -28,13 +28,30 @@ public record BasicSurveyResponse(
     public static BasicSurveyResponse from(BasicSurvey survey) {
         if (survey == null) return null;
         return new BasicSurveyResponse(
-                survey.getMajor(),
+                MajorInfoResponse.from(survey.getMajorInfo()),
                 ProgrammingExperienceResponse.from(survey.getProgrammingExperience()),
                 survey.getPreferredLearningMethod(),
                 survey.getDesiredJobs(),
                 survey.getDesiredJobOther(),
                 survey.getAffordableBudgetRange()
         );
+    }
+
+    @Schema(description = "전공 정보")
+    public record MajorInfoResponse(
+            @Schema(description = "전공 유무", example = "true")
+            boolean hasMajor,
+
+            @Schema(description = "전공명", example = "컴퓨터공학")
+            String majorName
+    ) {
+        public static MajorInfoResponse from(MajorInfo majorInfo) {
+            if (majorInfo == null) return null;
+            return new MajorInfoResponse(
+                    majorInfo.isHasMajor(),
+                    majorInfo.getMajorName()
+            );
+        }
     }
 
     @Schema(description = "프로그래밍 경험 정보")

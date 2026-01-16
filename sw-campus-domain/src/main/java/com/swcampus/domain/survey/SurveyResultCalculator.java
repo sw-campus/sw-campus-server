@@ -1,5 +1,6 @@
 package com.swcampus.domain.survey;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;
@@ -9,6 +10,7 @@ import java.util.Map;
  * 성향 테스트 점수 계산기.
  * 정답은 서버에서만 관리되며, 사용자 API에는 노출되지 않음.
  */
+@Slf4j
 @Component
 public class SurveyResultCalculator {
 
@@ -51,10 +53,17 @@ public class SurveyResultCalculator {
         String key = question.getFieldKey();
         Integer answer = test.getPart1Answers().get(key);
 
-        if (answer == null) return 0;
+        if (answer == null) {
+            log.warn("Part 1 응답 누락: questionKey={}", key);
+            return 0;
+        }
 
         SurveyOption selectedOption = findOptionByOrder(question, answer);
-        if (selectedOption != null && Boolean.TRUE.equals(selectedOption.getIsCorrect())) {
+        if (selectedOption == null) {
+            log.warn("Part 1 선택지 불일치: questionKey={}, answer={}", key, answer);
+            return 0;
+        }
+        if (Boolean.TRUE.equals(selectedOption.getIsCorrect())) {
             return 10;
         }
         return 0;
@@ -64,13 +73,17 @@ public class SurveyResultCalculator {
         String key = question.getFieldKey();
         Integer answer = test.getPart2Answers().get(key);
 
-        if (answer == null) return 0;
+        if (answer == null) {
+            log.warn("Part 2 응답 누락: questionKey={}", key);
+            return 0;
+        }
 
         SurveyOption selectedOption = findOptionByOrder(question, answer);
-        if (selectedOption != null) {
-            return selectedOption.getScore();
+        if (selectedOption == null) {
+            log.warn("Part 2 선택지 불일치: questionKey={}, answer={}", key, answer);
+            return 0;
         }
-        return 0;
+        return selectedOption.getScore();
     }
 
     private void updateJobScores(AptitudeTest test, SurveyQuestion question, Map<JobTypeCode, Integer> jobScores) {
@@ -82,8 +95,8 @@ public class SurveyResultCalculator {
         try {
             JobTypeCode jobType = JobTypeCode.valueOf(answer);
             jobScores.merge(jobType, 1, Integer::sum);
-        } catch (IllegalArgumentException ignored) {
-            // 유효하지 않은 응답 무시
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid JobTypeCode for question {}: {}", key, answer);
         }
     }
 

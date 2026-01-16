@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -58,7 +59,7 @@ public class MemberSurveyService {
         SurveyResults results = resultCalculator.calculate(aptitudeTest, questionSet);
 
         // 결과 저장
-        survey.completeAptitudeTest(aptitudeTest, results, questionSet.getVersion());
+        survey.completeAptitudeTest(aptitudeTest, results, questionSet.getVersion(), LocalDateTime.now());
 
         return surveyRepository.save(survey);
     }

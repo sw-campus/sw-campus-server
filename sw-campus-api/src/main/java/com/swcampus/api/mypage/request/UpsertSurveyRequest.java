@@ -37,8 +37,13 @@ public record UpsertSurveyRequest(
                 ? ProgrammingExperience.withExperience(bootcampName)
                 : ProgrammingExperience.noExperience();
 
+        // 기존 API는 major 문자열만 받으므로, 값이 있으면 전공 있음으로 처리
+        MajorInfo majorInfo = (major != null && !major.isBlank())
+                ? MajorInfo.withMajor(major)
+                : MajorInfo.noMajor();
+
         return BasicSurvey.builder()
-                .major(major)
+                .majorInfo(majorInfo)
                 .programmingExperience(experience)
                 .preferredLearningMethod(preferredLearningMethod)
                 .desiredJobs(desiredJobs)

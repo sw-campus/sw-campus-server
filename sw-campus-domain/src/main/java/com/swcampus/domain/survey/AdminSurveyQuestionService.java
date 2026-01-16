@@ -1,5 +1,7 @@
 package com.swcampus.domain.survey;
 
+import com.swcampus.domain.survey.exception.QuestionSetNotEditableException;
+import com.swcampus.domain.survey.exception.SurveyQuestionSetNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +29,7 @@ public class AdminSurveyQuestionService {
      */
     public SurveyQuestionSet getQuestionSet(Long questionSetId) {
         return questionSetRepository.findById(questionSetId)
-                .orElseThrow(() -> new IllegalArgumentException("문항 세트를 찾을 수 없습니다: " + questionSetId));
+                .orElseThrow(SurveyQuestionSetNotFoundException::new);
     }
 
     /**
@@ -35,7 +37,7 @@ public class AdminSurveyQuestionService {
      */
     public SurveyQuestionSet getQuestionSetWithQuestions(Long questionSetId) {
         return questionSetRepository.findByIdWithQuestions(questionSetId)
-                .orElseThrow(() -> new IllegalArgumentException("문항 세트를 찾을 수 없습니다: " + questionSetId));
+                .orElseThrow(SurveyQuestionSetNotFoundException::new);
     }
 
     /**
@@ -62,7 +64,7 @@ public class AdminSurveyQuestionService {
     public void deleteQuestionSet(Long questionSetId) {
         SurveyQuestionSet questionSet = getQuestionSet(questionSetId);
         if (!questionSet.isEditable()) {
-            throw new IllegalStateException("발행된 문항 세트는 삭제할 수 없습니다.");
+            throw new QuestionSetNotEditableException(questionSetId);
         }
         questionSetRepository.delete(questionSet);
     }
@@ -102,6 +104,6 @@ public class AdminSurveyQuestionService {
      */
     public SurveyQuestionSet getPublishedQuestionSet(QuestionSetType type) {
         return questionSetRepository.findPublishedByTypeWithQuestions(type)
-                .orElseThrow(() -> new IllegalStateException("발행된 문항 세트가 없습니다: " + type));
+                .orElseThrow(() -> new SurveyQuestionSetNotFoundException(type.name()));
     }
 }

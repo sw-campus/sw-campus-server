@@ -3,6 +3,7 @@ package com.swcampus.api.survey.request;
 import com.swcampus.domain.survey.AptitudeTest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,7 +30,7 @@ public class SubmitAptitudeTestRequest {
     @Schema(description = "Part 3 응답 (직무 성향) - q9~q15, 값은 F/B/D", example = "{\"q9\": \"B\", \"q10\": \"B\", \"q11\": \"D\", \"q12\": \"B\", \"q13\": \"B\", \"q14\": \"B\", \"q15\": \"B\"}")
     @NotNull(message = "Part 3 응답은 필수입니다")
     @Size(min = 7, max = 7, message = "Part 3은 7문항 모두 응답해야 합니다")
-    private Map<String, String> part3Answers;
+    private Map<String, @Pattern(regexp = "^[FBD]$", message = "Part 3 응답값은 F, B, D 중 하나여야 합니다") String> part3Answers;
 
     public AptitudeTest toDomain() {
         return AptitudeTest.builder()

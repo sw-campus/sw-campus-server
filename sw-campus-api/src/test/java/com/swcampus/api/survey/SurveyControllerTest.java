@@ -75,7 +75,7 @@ class SurveyControllerTest {
 
     private BasicSurvey createTestBasicSurvey() {
         return BasicSurvey.builder()
-                .major("컴퓨터공학")
+                .majorInfo(MajorInfo.withMajor("컴퓨터공학"))
                 .programmingExperience(ProgrammingExperience.withExperience("삼성 SW 아카데미"))
                 .preferredLearningMethod(LearningMethod.OFFLINE)
                 .desiredJobs(List.of(DesiredJob.BACKEND, DesiredJob.DATA))
@@ -104,7 +104,7 @@ class SurveyControllerTest {
                 .jobTypeScores(Map.of(JobTypeCode.B, 5, JobTypeCode.F, 1, JobTypeCode.D, 1))
                 .recommendedJob(RecommendedJob.BACKEND)
                 .build();
-        survey.completeAptitudeTest(aptitudeTest, results, 1);
+        survey.completeAptitudeTest(aptitudeTest, results, 1, java.time.LocalDateTime.now());
         return survey;
     }
 
@@ -117,14 +117,15 @@ class SurveyControllerTest {
         void success() throws Exception {
             // given
             MemberSurvey survey = createTestMemberSurvey();
-            when(surveyService.getSurveyByMemberId(MEMBER_ID)).thenReturn(survey);
+            when(surveyService.findSurveyByMemberId(MEMBER_ID)).thenReturn(Optional.of(survey));
 
             // when & then
             mockMvc.perform(get(BASE_URL))
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.memberId").value(MEMBER_ID))
-                    .andExpect(jsonPath("$.basicSurvey.major").value("컴퓨터공학"))
+                    .andExpect(jsonPath("$.basicSurvey.majorInfo.hasMajor").value(true))
+                    .andExpect(jsonPath("$.basicSurvey.majorInfo.majorName").value("컴퓨터공학"))
                     .andExpect(jsonPath("$.basicSurvey.programmingExperience.hasExperience").value(true))
                     .andExpect(jsonPath("$.basicSurvey.preferredLearningMethod").value("OFFLINE"))
                     .andExpect(jsonPath("$.status.hasBasicSurvey").value(true))
@@ -132,15 +133,15 @@ class SurveyControllerTest {
         }
 
         @Test
-        @DisplayName("설문조사 없을 때 (404)")
-        void fail_notFound() throws Exception {
+        @DisplayName("설문조사 없을 때 (200, null)")
+        void success_nullWhenNotFound() throws Exception {
             // given
-            when(surveyService.getSurveyByMemberId(MEMBER_ID))
-                    .thenThrow(new SurveyNotFoundException());
+            when(surveyService.findSurveyByMemberId(MEMBER_ID)).thenReturn(Optional.empty());
 
             // when & then
             mockMvc.perform(get(BASE_URL))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").doesNotExist());
         }
     }
 
@@ -153,7 +154,7 @@ class SurveyControllerTest {
         void success() throws Exception {
             // given
             SaveBasicSurveyRequest request = new SaveBasicSurveyRequest(
-                    "컴퓨터공학",
+                    new SaveBasicSurveyRequest.MajorInfoRequest(true, "컴퓨터공학"),
                     new SaveBasicSurveyRequest.ProgrammingExperienceRequest(true, "삼성 SW 아카데미"),
                     LearningMethod.OFFLINE,
                     List.of(DesiredJob.BACKEND, DesiredJob.DATA),
@@ -173,7 +174,7 @@ class SurveyControllerTest {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.memberId").value(MEMBER_ID))
-                    .andExpect(jsonPath("$.basicSurvey.major").value("컴퓨터공학"))
+                    .andExpect(jsonPath("$.basicSurvey.majorInfo.majorName").value("컴퓨터공학"))
                     .andExpect(jsonPath("$.status.hasBasicSurvey").value(true));
         }
 

@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BasicSurvey {
-    private String major;
+    private MajorInfo majorInfo;
     private ProgrammingExperience programmingExperience;
     private LearningMethod preferredLearningMethod;
     private List<DesiredJob> desiredJobs;
@@ -19,14 +19,14 @@ public class BasicSurvey {
 
     @Builder
     public BasicSurvey(
-            String major,
+            MajorInfo majorInfo,
             ProgrammingExperience programmingExperience,
             LearningMethod preferredLearningMethod,
             List<DesiredJob> desiredJobs,
             String desiredJobOther,
             BudgetRange affordableBudgetRange
     ) {
-        this.major = major;
+        this.majorInfo = majorInfo;
         this.programmingExperience = programmingExperience;
         this.preferredLearningMethod = preferredLearningMethod;
         this.desiredJobs = desiredJobs;

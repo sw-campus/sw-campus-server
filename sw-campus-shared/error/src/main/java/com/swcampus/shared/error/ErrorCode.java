@@ -74,7 +74,8 @@ public enum ErrorCode {
 	SURVEY_ALREADY_EXISTS(409, "S002", "이미 응답한 설문조사입니다"),
 	BASIC_SURVEY_REQUIRED(400, "S003", "기초 설문을 먼저 완료해야 합니다"),
 	APTITUDE_TEST_REQUIRED(400, "S004", "성향 테스트를 먼저 완료해야 합니다"),
-	SURVEY_QUESTION_SET_NOT_FOUND(500, "S005", "발행된 문항 세트를 찾을 수 없습니다"),
+	SURVEY_QUESTION_SET_NOT_FOUND(404, "S005", "문항 세트를 찾을 수 없습니다"),
+	QUESTION_SET_NOT_EDITABLE(403, "S006", "발행된 문항 세트는 수정/삭제할 수 없습니다"),
 
 	// Storage/File (F)
 	STORAGE_KEY_NOT_FOUND(404, "F001", "파일을 찾을 수 없습니다"),

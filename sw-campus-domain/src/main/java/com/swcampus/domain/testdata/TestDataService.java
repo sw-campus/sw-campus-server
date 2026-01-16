@@ -726,7 +726,7 @@ public class TestDataService {
      */
     private void createDemoSurvey(String batchId, Long memberId) {
         BasicSurvey basicSurvey = BasicSurvey.builder()
-                .major("컴퓨터공학")
+                .majorInfo(MajorInfo.withMajor("컴퓨터공학"))
                 .programmingExperience(ProgrammingExperience.noExperience())
                 .preferredLearningMethod(LearningMethod.OFFLINE)
                 .desiredJobs(List.of(DesiredJob.BACKEND))
@@ -914,8 +914,12 @@ public class TestDataService {
                     ? ProgrammingExperience.withExperience("부트캠프 " + (i + 1))
                     : ProgrammingExperience.noExperience();
 
+            MajorInfo majorInfo = "비전공".equals(majors[i])
+                    ? MajorInfo.noMajor()
+                    : MajorInfo.withMajor(majors[i]);
+
             BasicSurvey basicSurvey = BasicSurvey.builder()
-                    .major(majors[i])
+                    .majorInfo(majorInfo)
                     .programmingExperience(experience)
                     .preferredLearningMethod(learningMethods[i])
                     .desiredJobs(List.of(desiredJobsList[i]))

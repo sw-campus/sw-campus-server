@@ -30,17 +30,17 @@ public class SurveyController {
 
     private final MemberSurveyService surveyService;
 
-    @Operation(summary = "내 설문조사 조회", description = "본인의 설문조사를 조회합니다.")
+    @Operation(summary = "내 설문조사 조회", description = "본인의 설문조사를 조회합니다. 설문이 없으면 null을 반환합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "404", description = "설문조사 없음")
+            @ApiResponse(responseCode = "200", description = "조회 성공 (설문이 없으면 null)"),
+            @ApiResponse(responseCode = "401", description = "인증 필요")
     })
     @GetMapping
     public ResponseEntity<SurveyResponse> getMySurvey(@CurrentMember MemberPrincipal member) {
         Long currentMemberId = member.memberId();
-        MemberSurvey survey = surveyService.getSurveyByMemberId(currentMemberId);
-        return ResponseEntity.ok(SurveyResponse.from(survey));
+        return surveyService.findSurveyByMemberId(currentMemberId)
+                .map(survey -> ResponseEntity.ok(SurveyResponse.from(survey)))
+                .orElseGet(() -> ResponseEntity.ok(null));
     }
 
     @Operation(summary = "기초 설문 저장", description = "기초 설문(5문항)을 저장합니다. 이미 존재하면 덮어씁니다.")

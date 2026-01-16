@@ -4,6 +4,7 @@ import com.swcampus.domain.survey.BasicSurvey;
 import com.swcampus.domain.survey.BudgetRange;
 import com.swcampus.domain.survey.DesiredJob;
 import com.swcampus.domain.survey.LearningMethod;
+import com.swcampus.domain.survey.MajorInfo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +18,11 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BasicSurveyJson {
+    // 기존 필드 (하위 호환성 유지 - 읽기 전용)
     private String major;
+
+    // 새 필드
+    private MajorInfoJson majorInfo;
     private ProgrammingExperienceJson programmingExperience;
     private String preferredLearningMethod;
     private List<String> desiredJobs;
@@ -28,7 +33,7 @@ public class BasicSurveyJson {
         if (domain == null) return null;
 
         BasicSurveyJson json = new BasicSurveyJson();
-        json.setMajor(domain.getMajor());
+        json.setMajorInfo(MajorInfoJson.from(domain.getMajorInfo()));
         json.setProgrammingExperience(ProgrammingExperienceJson.from(domain.getProgrammingExperience()));
         json.setPreferredLearningMethod(domain.getPreferredLearningMethod() != null
                 ? domain.getPreferredLearningMethod().name() : null);
@@ -41,8 +46,19 @@ public class BasicSurveyJson {
     }
 
     public BasicSurvey toDomain() {
+        // 하위 호환성: majorInfo가 없으면 기존 major 필드로 변환
+        MajorInfo majorInfoDomain;
+        if (majorInfo != null) {
+            majorInfoDomain = majorInfo.toDomain();
+        } else if (major != null && !major.isEmpty()) {
+            // 기존 데이터 마이그레이션: major 문자열이 있으면 전공 있음으로 처리
+            majorInfoDomain = MajorInfo.withMajor(major);
+        } else {
+            majorInfoDomain = MajorInfo.noMajor();
+        }
+
         return BasicSurvey.builder()
-                .major(major)
+                .majorInfo(majorInfoDomain)
                 .programmingExperience(programmingExperience != null ? programmingExperience.toDomain() : null)
                 .preferredLearningMethod(preferredLearningMethod != null
                         ? LearningMethod.valueOf(preferredLearningMethod) : null)

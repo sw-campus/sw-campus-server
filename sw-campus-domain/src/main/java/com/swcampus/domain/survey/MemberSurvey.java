@@ -63,7 +63,8 @@ public class MemberSurvey {
     public void completeAptitudeTest(
             AptitudeTest aptitudeTest,
             SurveyResults results,
-            Integer questionSetVersion
+            Integer questionSetVersion,
+            LocalDateTime completedAt
     ) {
         this.aptitudeTest = aptitudeTest;
         this.results = results;
@@ -71,7 +72,7 @@ public class MemberSurvey {
         this.recommendedJob = results.getRecommendedJob();
         this.aptitudeScore = results.getAptitudeScore();
         this.questionSetVersion = questionSetVersion;
-        this.completedAt = LocalDateTime.now();
+        this.completedAt = completedAt;
     }
 
     public boolean hasBasicSurvey() {
