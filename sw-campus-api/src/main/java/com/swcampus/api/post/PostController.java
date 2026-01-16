@@ -8,6 +8,7 @@ import com.swcampus.api.security.CurrentMember;
 import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.board.BoardCategoryService;
+import com.swcampus.domain.comment.CommentService;
 import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.member.exception.MemberNotFoundException;
 import com.swcampus.domain.post.Post;
@@ -40,6 +41,7 @@ public class PostController {
     private final PostService postService;
     private final MemberService memberService;
     private final BoardCategoryService boardCategoryService;
+    private final CommentService commentService;
 
 
     @Operation(summary = "게시글 작성", description = "새 게시글을 작성합니다.")
@@ -99,7 +101,7 @@ public class PostController {
                     summary.getPost(),
                     summary.getAuthorNickname(),
                     summary.getCategoryName(),
-                    0L        // TODO: CommentService에서 조회
+                    commentService.countByPostId(summary.getPost().getId())
             )
         );
 
@@ -130,12 +132,13 @@ public class PostController {
 
         String categoryName = boardCategoryService.getCategoryName(post.getBoardCategoryId());
 
+        long commentCount = commentService.countByPostId(postId);
 
         PostDetailResponse response = PostDetailResponse.from(
                 post,
                 nickname,
                 categoryName,
-                0L,        // TODO: CommentService에서 조회
+                commentCount,
                 false,     // TODO: BookmarkService에서 조회
                 false,     // TODO: PostLikeService에서 조회
                 isAuthor
@@ -172,12 +175,13 @@ public class PostController {
 
         String categoryName = boardCategoryService.getCategoryName(post.getBoardCategoryId());
 
+        long commentCount = commentService.countByPostId(postId);
 
         PostDetailResponse response = PostDetailResponse.from(
                 post,
                 nickname,
                 categoryName,
-                0L,        // TODO: CommentService에서 조회
+                commentCount,
                 false,     // TODO: BookmarkService에서 조회
                 false,     // TODO: PostLikeService에서 조회
                 true       // 본인 작성
