@@ -33,9 +33,8 @@ import com.swcampus.domain.review.ReviewDetail;
 import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.review.ReviewWithNickname;
 import com.swcampus.domain.review.exception.ReviewNotFoundException;
-import com.swcampus.domain.survey.MemberSurvey;
+import com.swcampus.domain.survey.*;
 import com.swcampus.domain.survey.MemberSurveyService;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -253,7 +252,15 @@ class MypageControllerTest {
     @Test
     @DisplayName("설문조사 조회 - 성공")
     void getSurvey_Success() throws Exception {
-        MemberSurvey survey = MemberSurvey.create(1L, "CS", true, "Backend", "None", false, BigDecimal.ZERO);
+        // given
+        BasicSurvey basicSurvey = BasicSurvey.builder()
+                .majorInfo(MajorInfo.withMajor("CS"))
+                .programmingExperience(ProgrammingExperience.withExperience("삼성 SW 아카데미"))
+                .preferredLearningMethod(LearningMethod.OFFLINE)
+                .desiredJobs(List.of(DesiredJob.BACKEND))
+                .affordableBudgetRange(BudgetRange.RANGE_100_200)
+                .build();
+        MemberSurvey survey = MemberSurvey.createWithBasicSurvey(1L, basicSurvey);
         given(memberSurveyService.findSurveyByMemberId(1L)).willReturn(Optional.of(survey));
 
         // when & then
@@ -262,7 +269,7 @@ class MypageControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.major").value("CS"));
-        
+
         verify(memberSurveyService).findSurveyByMemberId(1L);
     }
 
@@ -285,8 +292,16 @@ class MypageControllerTest {
     @DisplayName("설문조사 등록/수정 - 성공")
     void upsertSurvey_Success() throws Exception {
         // given
-        UpsertSurveyRequest request = new UpsertSurveyRequest("CS", true, "Backend", "None", false, BigDecimal.ZERO);
-        
+        UpsertSurveyRequest request = new UpsertSurveyRequest(
+                "CS",
+                true,
+                "삼성 SW 아카데미",
+                LearningMethod.OFFLINE,
+                List.of(DesiredJob.BACKEND),
+                null,
+                BudgetRange.RANGE_100_200
+        );
+
         // when & then
         mockMvc.perform(put("/api/v1/mypage/survey")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -295,8 +310,8 @@ class MypageControllerTest {
                         .principal(new UsernamePasswordAuthenticationToken(memberPrincipal, null)))
                 .andDo(print())
                 .andExpect(status().isOk());
-        
-        verify(memberSurveyService).upsertSurvey(1L, "CS", true, "Backend", "None", false, BigDecimal.ZERO);
+
+        verify(memberSurveyService).saveBasicSurvey(eq(1L), any(BasicSurvey.class));
     }
     
     @Test
