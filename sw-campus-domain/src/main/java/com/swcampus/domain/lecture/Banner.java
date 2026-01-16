@@ -13,6 +13,7 @@ public class Banner {
     private BannerType type;
     private String url;
     private String imageUrl;
+    private String backgroundColor;
     private OffsetDateTime startDate;
     private OffsetDateTime endDate;
     private Boolean isActive;

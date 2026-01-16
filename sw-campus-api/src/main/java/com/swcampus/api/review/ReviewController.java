@@ -43,7 +43,11 @@ public class ReviewController {
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 필요")
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = com.swcampus.api.exception.ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
     })
     @GetMapping("/eligibility")
     public ResponseEntity<ReviewEligibilityResponse> checkEligibility(
@@ -83,10 +87,26 @@ public class ReviewController {
                       "updatedAt": "2025-12-10T10:30:00"
                     }
                     """))),
-        @ApiResponse(responseCode = "400", description = "유효성 검증 실패"),
-        @ApiResponse(responseCode = "401", description = "인증 필요"),
-        @ApiResponse(responseCode = "403", description = "수료증 인증 필요"),
-        @ApiResponse(responseCode = "409", description = "이미 작성한 후기 존재")
+        @ApiResponse(responseCode = "400", description = "유효성 검증 실패",
+            content = @Content(schema = @Schema(implementation = com.swcampus.api.exception.ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 400, "message": "잘못된 요청입니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = com.swcampus.api.exception.ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "403", description = "수료증 인증 필요",
+            content = @Content(schema = @Schema(implementation = com.swcampus.api.exception.ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 403, "message": "수료증 인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "409", description = "이미 작성한 후기 존재",
+            content = @Content(schema = @Schema(implementation = com.swcampus.api.exception.ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 409, "message": "이미 작성한 후기가 존재합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
     })
     @PostMapping
     public ResponseEntity<ReviewResponse> createReview(
@@ -158,10 +178,26 @@ public class ReviewController {
                       "updatedAt": "2025-12-15T14:20:00"
                     }
                     """))),
-        @ApiResponse(responseCode = "400", description = "유효성 검증 실패"),
-        @ApiResponse(responseCode = "401", description = "인증 필요"),
-        @ApiResponse(responseCode = "403", description = "본인 후기만 수정 가능 / 승인된 후기 수정 불가"),
-        @ApiResponse(responseCode = "404", description = "후기를 찾을 수 없음")
+        @ApiResponse(responseCode = "400", description = "유효성 검증 실패",
+            content = @Content(schema = @Schema(implementation = com.swcampus.api.exception.ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 400, "message": "잘못된 요청입니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = com.swcampus.api.exception.ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "403", description = "본인 후기만 수정 가능 / 승인된 후기 수정 불가",
+            content = @Content(schema = @Schema(implementation = com.swcampus.api.exception.ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 403, "message": "접근 권한이 없습니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "404", description = "후기를 찾을 수 없음",
+            content = @Content(schema = @Schema(implementation = com.swcampus.api.exception.ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 404, "message": "후기를 찾을 수 없습니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
     })
     @PutMapping("/{reviewId}")
     public ResponseEntity<ReviewResponse> updateReview(

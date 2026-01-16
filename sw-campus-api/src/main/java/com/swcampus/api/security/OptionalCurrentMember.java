@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-@AuthenticationPrincipal
+@AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this")
 @Parameter(hidden = true)
 public @interface OptionalCurrentMember {
 }

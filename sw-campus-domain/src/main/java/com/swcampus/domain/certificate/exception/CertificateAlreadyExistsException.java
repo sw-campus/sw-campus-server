@@ -1,12 +1,16 @@
 package com.swcampus.domain.certificate.exception;
 
-public class CertificateAlreadyExistsException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public CertificateAlreadyExistsException() {
-        super("이미 인증된 수료증입니다");
-    }
+public class CertificateAlreadyExistsException extends BusinessException {
 
-    public CertificateAlreadyExistsException(Long memberId, Long lectureId) {
-        super(String.format("이미 인증된 수료증입니다. memberId: %d, lectureId: %d", memberId, lectureId));
-    }
+	public CertificateAlreadyExistsException() {
+		super(ErrorCode.CERTIFICATE_ALREADY_EXISTS);
+	}
+
+	public CertificateAlreadyExistsException(Long memberId, Long lectureId) {
+		super(ErrorCode.CERTIFICATE_ALREADY_EXISTS,
+				String.format("이미 인증된 수료증입니다. memberId: %d, lectureId: %d", memberId, lectureId));
+	}
 }

@@ -1,12 +1,15 @@
 package com.swcampus.domain.certificate.exception;
 
-public class CertificateNotFoundException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public CertificateNotFoundException() {
-        super("수료증을 찾을 수 없습니다");
-    }
+public class CertificateNotFoundException extends BusinessException {
 
-    public CertificateNotFoundException(Long id) {
-        super(String.format("수료증을 찾을 수 없습니다. ID: %d", id));
-    }
+	public CertificateNotFoundException() {
+		super(ErrorCode.CERTIFICATE_NOT_FOUND);
+	}
+
+	public CertificateNotFoundException(Long id) {
+		super(ErrorCode.CERTIFICATE_NOT_FOUND, String.format("수료증을 찾을 수 없습니다. ID: %d", id));
+	}
 }

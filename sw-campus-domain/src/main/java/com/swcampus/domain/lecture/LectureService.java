@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.swcampus.domain.category.CategoryRepository;
+import com.swcampus.domain.category.CurriculumRepository;
 import com.swcampus.domain.common.ResourceNotFoundException;
 import com.swcampus.domain.common.ApprovalStatus;
-import com.swcampus.domain.common.BusinessException;
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 import com.swcampus.domain.lecture.dto.LectureSearchCondition;
 import com.swcampus.domain.lecture.dto.LectureSummaryDto;
 import com.swcampus.domain.lecture.exception.LectureNotModifiableException;
@@ -33,9 +36,11 @@ public class LectureService {
 	private static final Long ROOT_CATEGORY_ID = 1L;
 
 	private final LectureRepository lectureRepository;
+	private final LectureCacheRepository lectureCacheRepository;
 	private final com.swcampus.domain.storage.FileStorageService fileStorageService;
 	private final com.swcampus.domain.review.ReviewRepository reviewRepository;
 	private final CategoryRepository categoryRepository;
+	private final CurriculumRepository curriculumRepository;
 	private final OrganizationService organizationService;
 
 	@Value("${app.default-image.base-url:}")
@@ -47,16 +52,18 @@ public class LectureService {
 	}
 
 	@Transactional
-	public Lecture registerLecture(Lecture lecture, Long userId, Role role, byte[] imageContent, String imageName, String contentType) {
+	public Lecture registerLecture(Lecture lecture, Long userId, Role role, byte[] imageContent, String imageName,
+			String contentType) {
 		return registerLecture(lecture, userId, role, imageContent, imageName, contentType, Collections.emptyList());
 	}
 
 	@Transactional
-	public Lecture registerLecture(Lecture lecture, Long userId, Role role, byte[] imageContent, String imageName, String contentType,
+	public Lecture registerLecture(Lecture lecture, Long userId, Role role, byte[] imageContent, String imageName,
+			String contentType,
 			List<ImageContent> teacherImages) {
-		
+
 		Long organizationId = resolveOrganizationId(userId, role, lecture.getOrgId());
-		
+
 		String imageUrl = lecture.getLectureImageUrl();
 
 		if (imageContent != null && imageContent.length > 0) {
@@ -80,11 +87,12 @@ public class LectureService {
 	}
 
 	@Transactional
-	public Lecture modifyLecture(Long lectureId, Long userId, Role role, Lecture lecture, byte[] imageContent, String imageName,
+	public Lecture modifyLecture(Long lectureId, Long userId, Role role, Lecture lecture, byte[] imageContent,
+			String imageName,
 			String contentType,
 			List<ImageContent> teacherImages) {
 		Lecture existingLecture = getLecture(lectureId);
-		
+
 		// ADMIN은 모든 강의 수정 가능, 권한 체크 건너뜀
 		if (role != Role.ADMIN) {
 			// 일반 회원은 자신의 기관 ID로 확인
@@ -94,9 +102,9 @@ public class LectureService {
 			}
 		}
 
-//		if (existingLecture.getLectureAuthStatus() == LectureAuthStatus.APPROVED) {
-//			throw new LectureNotModifiableException();
-//		}
+		// if (existingLecture.getLectureAuthStatus() == LectureAuthStatus.APPROVED) {
+		// throw new LectureNotModifiableException();
+		// }
 
 		String imageUrl = existingLecture.getLectureImageUrl();
 
@@ -112,20 +120,51 @@ public class LectureService {
 			newAuthStatus = LectureAuthStatus.PENDING;
 		}
 
+		// deadline 기준으로 status 결정
+		LectureStatus newStatus;
+		if (lecture.getDeadline() == null) {
+			newStatus = existingLecture.getStatus();
+		} else if (lecture.getDeadline().isAfter(java.time.LocalDateTime.now())) {
+			newStatus = LectureStatus.RECRUITING;
+		} else {
+			newStatus = LectureStatus.FINISHED;
+		}
+
 		Lecture updatedLecture = lecture.toBuilder()
 				.lectureId(lectureId)
 				.lectureImageUrl(imageUrl)
-				.status(existingLecture.getStatus())
+				.status(newStatus)
 				.lectureAuthStatus(newAuthStatus)
 				.createdAt(existingLecture.getCreatedAt())
 				.teachers(updatedTeachers)
 				.build();
-		return lectureRepository.save(updatedLecture);
+		Lecture saved = lectureRepository.save(updatedLecture);
+
+		// 캐시 무효화
+		lectureCacheRepository.deleteLecture(lectureId);
+
+		return saved;
 	}
 
+	/**
+	 * 강의 조회 (Cache-Aside 패턴)
+	 * 1. 캐시 조회 -> 2. 캐시 미스 시 DB 조회 -> 3. 캐시 저장
+	 */
 	public Lecture getLecture(Long lectureId) {
-		return lectureRepository.findById(lectureId)
+		// 1. 캐시 조회
+		Optional<Lecture> cached = lectureCacheRepository.getLecture(lectureId);
+		if (cached.isPresent()) {
+			return cached.get();
+		}
+
+		// 2. DB 조회
+		Lecture lecture = lectureRepository.findById(lectureId)
 				.orElseThrow(() -> new ResourceNotFoundException("Lecture not found with id: " + lectureId));
+
+		// 3. 캐시 저장
+		lectureCacheRepository.saveLecture(lecture);
+
+		return lecture;
 	}
 
 	public List<Lecture> findAllByOrgId(Long orgId) {
@@ -177,13 +216,16 @@ public class LectureService {
 		List<Long> lectureIds = lectures.getContent().stream()
 				.map(Lecture::getLectureId)
 				.toList();
-		Map<Long, Double> averageScores = getAverageScoresByLectureIds(lectureIds);
-		Map<Long, Long> reviewCounts = getReviewCountsByLectureIds(lectureIds);
 
-		return lectures.map(lecture -> LectureSummaryDto.from(
-				lecture,
-				averageScores.get(lecture.getLectureId()),
-				reviewCounts.get(lecture.getLectureId())));
+		// 2 쿼리 → 1 쿼리 최적화: 평균 점수와 리뷰 수를 한 번에 조회
+		Map<Long, Map<String, Number>> reviewStats = reviewRepository.getReviewStatsByLectureIds(lectureIds);
+
+		return lectures.map(lecture -> {
+			Map<String, Number> stats = reviewStats.getOrDefault(lecture.getLectureId(), Map.of());
+			Double avgScore = stats.getOrDefault("avgScore", 0.0).doubleValue();
+			Long reviewCount = stats.getOrDefault("reviewCount", 0L).longValue();
+			return LectureSummaryDto.from(lecture, avgScore, reviewCount);
+		});
 	}
 
 	/**
@@ -195,14 +237,17 @@ public class LectureService {
 		List<Long> lectureIds = lectures.stream()
 				.map(Lecture::getLectureId)
 				.toList();
-		Map<Long, Double> averageScores = getAverageScoresByLectureIds(lectureIds);
-		Map<Long, Long> reviewCounts = getReviewCountsByLectureIds(lectureIds);
+
+		// 2 쿼리 → 1 쿼리 최적화
+		Map<Long, Map<String, Number>> reviewStats = reviewRepository.getReviewStatsByLectureIds(lectureIds);
 
 		return lectures.stream()
-				.map(lecture -> LectureSummaryDto.from(
-						lecture,
-						averageScores.get(lecture.getLectureId()),
-						reviewCounts.get(lecture.getLectureId())))
+				.map(lecture -> {
+					Map<String, Number> stats = reviewStats.getOrDefault(lecture.getLectureId(), Map.of());
+					Double avgScore = stats.getOrDefault("avgScore", 0.0).doubleValue();
+					Long reviewCount = stats.getOrDefault("reviewCount", 0L).longValue();
+					return LectureSummaryDto.from(lecture, avgScore, reviewCount);
+				})
 				.toList();
 	}
 
@@ -215,7 +260,7 @@ public class LectureService {
 			return java.util.Collections.emptyMap();
 		}
 		return lectureRepository.findAllByIds(lectureIds).stream()
-			.collect(Collectors.toMap(Lecture::getLectureId, lecture -> lecture));
+				.collect(Collectors.toMap(Lecture::getLectureId, lecture -> lecture));
 	}
 
 	@Transactional(readOnly = true)
@@ -273,7 +318,7 @@ public class LectureService {
 	private Long resolveOrganizationId(Long userId, Role role, Long requestOrgId) {
 		if (role == Role.ADMIN) {
 			if (requestOrgId == null) {
-				throw new BusinessException("관리자는 강의 등록 시 기관 ID를 필수적으로 입력해야 합니다.");
+				throw new BusinessException(ErrorCode.INVALID_INPUT, "관리자는 강의 등록 시 기관 ID를 필수적으로 입력해야 합니다.");
 			}
 			return organizationService.getOrganization(requestOrgId).getId();
 		} else {
@@ -281,53 +326,59 @@ public class LectureService {
 		}
 	}
 
+	/**
+	 * 강의의 커리큘럼 카테고리(중분류)에 맞는 기본 이미지 URL을 반환합니다.
+	 * 흐름: 커리큘럼 → categoryId → 중분류 → 이미지 파일명
+	 */
 	private String resolveDefaultImageUrl(Lecture lecture) {
 		if (defaultImageBaseUrl == null || defaultImageBaseUrl.isBlank()) {
 			return null;
 		}
 
-		Long categoryId = lecture.extractCategoryId();
-		if (categoryId == null) {
-			return null;
-		}
-
-		Long middleCategoryId = findMiddleCategoryId(categoryId);
-		if (middleCategoryId == null) {
-			return null;
-		}
-
-		String fileName = getDefaultImageFileName(middleCategoryId);
-		if (fileName == null) {
-			return null;
-		}
-
-		return defaultImageBaseUrl + "/" + fileName;
-	}
-
-	private Long findMiddleCategoryId(Long categoryId) {
-		return categoryRepository.findById(categoryId)
-				.map(category -> {
-					Long pid = category.getPid();
-					if (pid == null || pid.equals(ROOT_CATEGORY_ID)) {
-						return categoryId;
-					}
-					return pid;
-				})
+		return findCategoryIdFromCurriculum(lecture)
+				.flatMap(this::findMiddleCategoryId)
+				.map(this::getDefaultImageFileName)
+				.map(fileName -> defaultImageBaseUrl + "/" + fileName)
 				.orElse(null);
 	}
 
+	private Optional<Long> findCategoryIdFromCurriculum(Lecture lecture) {
+		// 1. Lecture에 Curriculum 객체가 있는 경우
+		Long categoryId = lecture.extractCategoryId();
+		if (categoryId != null) {
+			return Optional.of(categoryId);
+		}
+
+		// 2. curriculumId로 DB 조회
+		return Optional.ofNullable(lecture.getLectureCurriculums())
+				.filter(list -> !list.isEmpty())
+				.map(list -> list.get(0).getCurriculumId())
+				.flatMap(curriculumRepository::findById)
+				.map(curriculum -> curriculum.getCategoryId());
+	}
+
+	private Optional<Long> findMiddleCategoryId(Long categoryId) {
+		return categoryRepository.findById(categoryId)
+				.map(category -> {
+					Long pid = category.getPid();
+					// 부모가 없거나 루트면 본인이 중분류
+					return (pid == null || pid.equals(ROOT_CATEGORY_ID)) ? categoryId : pid;
+				});
+	}
+
+	private static final Map<Long, String> CATEGORY_IMAGE_MAP = Map.of(
+			2L, "web-development.png",
+			6L, "mobile.png",
+			8L, "data-ai.png",
+			12L, "cloud.png",
+			14L, "security.png",
+			16L, "embedded-iot.png",
+			19L, "game-blockchain.png",
+			22L, "planning-marketing-design.png"
+	);
+
 	private String getDefaultImageFileName(Long middleCategoryId) {
-		return switch (middleCategoryId.intValue()) {
-			case 2 -> "web-development.png";
-			case 6 -> "mobile.png";
-			case 8 -> "data-ai.png";
-			case 12 -> "cloud.png";
-			case 14 -> "security.png";
-			case 16 -> "embedded-iot.png";
-			case 19 -> "game-blockchain.png";
-			case 22 -> "planning-marketing-design.png";
-			default -> null;
-		};
+		return CATEGORY_IMAGE_MAP.get(middleCategoryId);
 	}
 
 }

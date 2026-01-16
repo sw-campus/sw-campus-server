@@ -18,8 +18,12 @@ import com.swcampus.api.teacher.response.TeacherResponse;
 import com.swcampus.domain.teacher.Teacher;
 import com.swcampus.domain.teacher.TeacherService;
 
+import com.swcampus.api.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -42,7 +46,7 @@ public class TeacherController {
     @GetMapping
     public List<TeacherResponse> searchTeachers(
             @Parameter(description = "강사 이름", example = "김철수")
-            @RequestParam(required = false, defaultValue = "") String name) {
+            @RequestParam(name = "name", required = false, defaultValue = "") String name) {
         return teacherService.searchTeachers(name).stream()
                 .map(TeacherResponse::from)
                 .toList();
@@ -51,7 +55,11 @@ public class TeacherController {
     @Operation(summary = "강사 등록", description = "새로운 강사를 등록합니다. (이미지 포함)")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "등록 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청")
+            @ApiResponse(responseCode = "400", description = "잘못된 요청",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 400, "message": "잘못된 요청입니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """)))
     })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<TeacherResponse> createTeacher(

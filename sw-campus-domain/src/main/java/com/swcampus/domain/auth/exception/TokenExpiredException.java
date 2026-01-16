@@ -1,12 +1,15 @@
 package com.swcampus.domain.auth.exception;
 
-public class TokenExpiredException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public TokenExpiredException() {
-        super("토큰이 만료되었습니다");
-    }
+public class TokenExpiredException extends BusinessException {
 
-    public TokenExpiredException(String message) {
-        super(message);
-    }
+	public TokenExpiredException() {
+		super(ErrorCode.TOKEN_EXPIRED);
+	}
+
+	public TokenExpiredException(String message) {
+		super(ErrorCode.TOKEN_EXPIRED, message);
+	}
 }

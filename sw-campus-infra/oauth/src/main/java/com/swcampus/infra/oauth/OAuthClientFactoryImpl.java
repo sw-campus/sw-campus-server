@@ -12,12 +12,14 @@ public class OAuthClientFactoryImpl implements OAuthClientFactory {
 
     private final GoogleOAuthClient googleOAuthClient;
     private final GitHubOAuthClient gitHubOAuthClient;
+    private final KakaoOAuthClient kakaoOAuthClient;
 
     @Override
     public OAuthClient getClient(OAuthProvider provider) {
         return switch (provider) {
             case GOOGLE -> googleOAuthClient;
             case GITHUB -> gitHubOAuthClient;
+            case KAKAO -> kakaoOAuthClient;
         };
     }
 }

@@ -36,8 +36,12 @@ import com.swcampus.domain.organization.OrganizationService;
 import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.review.ReviewWithNickname;
 
+import com.swcampus.api.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -68,8 +72,16 @@ public class LectureController {
 	@SecurityRequirement(name = "cookieAuth")
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "등록 성공 (승인 대기)"),
-			@ApiResponse(responseCode = "401", description = "인증 필요"),
-			@ApiResponse(responseCode = "403", description = "권한 없음")
+			@ApiResponse(responseCode = "401", description = "인증 필요",
+					content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+							examples = @ExampleObject(value = """
+									{"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+									"""))),
+			@ApiResponse(responseCode = "403", description = "권한 없음",
+					content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+							examples = @ExampleObject(value = """
+									{"status": 403, "message": "접근 권한이 없습니다", "timestamp": "2025-12-09T12:00:00"}
+									""")))
 	})
 	public ResponseEntity<LectureResponse> createLecture(
 			@CurrentMember MemberPrincipal member,
@@ -110,9 +122,21 @@ public class LectureController {
 	@SecurityRequirement(name = "cookieAuth")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "수정 성공"),
-			@ApiResponse(responseCode = "401", description = "인증 필요"),
-			@ApiResponse(responseCode = "403", description = "권한 없음"),
-			@ApiResponse(responseCode = "404", description = "강의 없음")
+			@ApiResponse(responseCode = "401", description = "인증 필요",
+					content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+							examples = @ExampleObject(value = """
+									{"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+									"""))),
+			@ApiResponse(responseCode = "403", description = "권한 없음",
+					content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+							examples = @ExampleObject(value = """
+									{"status": 403, "message": "접근 권한이 없습니다", "timestamp": "2025-12-09T12:00:00"}
+									"""))),
+			@ApiResponse(responseCode = "404", description = "강의 없음",
+					content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+							examples = @ExampleObject(value = """
+									{"status": 404, "message": "강의를 찾을 수 없습니다", "timestamp": "2025-12-09T12:00:00"}
+									""")))
 	})
 	public ResponseEntity<LectureResponse> updateLecture(
 			@CurrentMember MemberPrincipal member,

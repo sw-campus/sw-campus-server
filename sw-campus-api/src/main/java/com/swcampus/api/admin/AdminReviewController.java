@@ -9,8 +9,12 @@ import com.swcampus.domain.storage.PresignedUrlService;
 import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.dto.PendingReviewInfo;
+import com.swcampus.api.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -45,8 +49,16 @@ public class AdminReviewController {
     @Operation(summary = "수료증 상태별 통계 조회", description = "전체/대기/승인/반려 수료증 수를 조회합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 필요"),
-        @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
     })
     @GetMapping("/certificates/stats")
     public ResponseEntity<ApprovalStatsResponse> getCertificateStats() {
@@ -57,8 +69,16 @@ public class AdminReviewController {
     @Operation(summary = "리뷰 상태별 통계 조회", description = "전체/대기/승인/반려 리뷰 수를 조회합니다. (수료증 승인된 리뷰만 카운트)")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 필요"),
-        @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
     })
     @GetMapping("/reviews/stats")
     public ResponseEntity<ApprovalStatsResponse> getReviewStats() {
@@ -69,8 +89,16 @@ public class AdminReviewController {
     @Operation(summary = "대기 중인 후기 목록 조회", description = "수료증 또는 후기가 PENDING 상태인 목록을 조회합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 필요"),
-        @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
     })
     @GetMapping("/reviews")
     public ResponseEntity<AdminReviewListResponse> getPendingReviews() {
@@ -86,8 +114,16 @@ public class AdminReviewController {
     @Operation(summary = "전체 후기 목록 조회", description = "모든 후기를 조회합니다. 승인 상태 필터링, 강의명 검색, 페이지네이션을 지원합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 필요"),
-        @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
     })
     @GetMapping("/reviews/all")
     public ResponseEntity<Page<AdminReviewListResponse.AdminReviewSummary>> getAllReviews(

@@ -42,7 +42,7 @@ public class CertificateEntityRepository implements CertificateRepository {
 
     @Override
     public List<Certificate> findAllByMemberId(Long memberId) {
-        return jpaRepository.findAllByMemberIdAndApprovalStatus(memberId, ApprovalStatus.APPROVED)
+        return jpaRepository.findAllByMemberId(memberId)
             .stream()
             .map(CertificateEntity::toDomain)
             .toList();
@@ -73,5 +73,10 @@ public class CertificateEntityRepository implements CertificateRepository {
     @Override
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteByMemberId(Long memberId) {
+        jpaRepository.deleteByMemberId(memberId);
     }
 }

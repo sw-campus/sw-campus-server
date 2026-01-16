@@ -1,63 +1,47 @@
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16
-    container_name: sw-campus-postgres
-    environment:
-      POSTGRES_DB: swcampus
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # OCR AI Service
-  ocr:
-    image: zionge2k/sw-campus-ocr:latest
-    container_name: sw-campus-ocr
-    ports:
-      - "8000:8000"
-    environment:
-      - PYTHONUNBUFFERED=1
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 10s
-      start_period: 60s
-      retries: 3
-    restart: unless-stopped
-
-  # Spring Boot Server (optional - for full stack local dev)
-  # server:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: sw-campus-server
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     - SPRING_PROFILES_ACTIVE=local
-  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/sw-campus
-  #     - SPRING_DATASOURCE_USERNAME=postgres
-  #     - SPRING_DATASOURCE_PASSWORD=postgres
-  #     - OCR_SERVICE_URL=http://ocr:8000
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     ocr:
-  #       condition: service_healthy
-
-  redis:
+  # Redis Cache
+  prod-redis:
     image: redis:alpine
     container_name: sw-campus-redis
     ports:
       - "6379:6379"
+    restart: unless-stopped
 
-volumes:
-  postgres_data:
+  # OCR AI Service (일시 비활성화 - certificate.ocr.enabled=false)
+  # CPU 사용량 최적화를 위해 비활성화, 재활성화 시 주석 해제
+  # ocr:
+  #   image: zionge2k/sw-campus-ocr:latest
+  #   container_name: sw-campus-ocr
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #   healthcheck:
+  #     test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
+  #     interval: 30s
+  #     timeout: 10s
+  #     start_period: 60s
+  #     retries: 3
+  #   restart: unless-stopped
+
+  # Spring Boot Server
+  server:
+    image: ghcr.io/sw-campus/sw-campus-server:${SERVER_TAG}
+    container_name: sw-campus-server
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - REDIS_HOST=prod-redis
+      - REDIS_PORT=6379
+      # OCR 비활성화로 인해 주석 처리 (재활성화 시 주석 해제)
+      # - OCR_SERVER_URL=http://ocr:8000
+    volumes:
+      - ./config:/app/config:ro
+    depends_on:
+      - prod-redis
+      # OCR 비활성화로 인해 주석 처리
+      # - ocr
+    restart: unless-stopped

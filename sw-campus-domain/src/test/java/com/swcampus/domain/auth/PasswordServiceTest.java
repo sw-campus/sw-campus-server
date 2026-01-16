@@ -13,7 +13,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -104,15 +103,17 @@ class PasswordServiceTest {
     void issueTemporaryPassword() {
         // given
         String email = "user@example.com";
+        String name = "홍길동";
+        String phone = "01012345678";
 
         Member member = mock(Member.class);
         when(member.getPassword()).thenReturn("existingPassword");  // 일반 가입자
 
-        when(memberRepository.findByEmail(email)).thenReturn(Optional.of(member));
+        when(memberRepository.findByEmailAndNameAndPhone(email, name, phone)).thenReturn(Optional.of(member));
         when(passwordEncoder.encode(anyString())).thenReturn("encodedTempPassword");
 
         // when
-        passwordService.issueTemporaryPassword(email);
+        passwordService.issueTemporaryPassword(email, name, phone);
 
         // then
         verify(member).changePassword("encodedTempPassword");
@@ -121,33 +122,39 @@ class PasswordServiceTest {
     }
 
     @Test
-    @DisplayName("존재하지 않는 이메일에도 동일 응답 (보안)")
-    void issueTemporaryPassword_notFoundEmail() {
+    @DisplayName("존재하지 않는 정보로 임시 비밀번호 요청 시 예외 발생")
+    void issueTemporaryPassword_notFoundUser() {
         // given
         String email = "notfound@example.com";
-        when(memberRepository.findByEmail(email)).thenReturn(Optional.empty());
+        String name = "존재하지않음";
+        String phone = "01099999999";
+        when(memberRepository.findByEmailAndNameAndPhone(email, name, phone)).thenReturn(Optional.empty());
 
-        // when & then (예외 없이 정상 종료)
-        assertThatCode(() -> passwordService.issueTemporaryPassword(email))
-                .doesNotThrowAnyException();
+        // when & then
+        assertThatThrownBy(() -> passwordService.issueTemporaryPassword(email, name, phone))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("일치하는 사용자가 없습니다");
 
         verify(mailSender, never()).send(anyString(), anyString(), anyString());
     }
 
     @Test
-    @DisplayName("OAuth 사용자에게는 임시 비밀번호 미발급 (보안)")
+    @DisplayName("OAuth 사용자는 임시 비밀번호 요청 시 예외 발생")
     void issueTemporaryPassword_oauthUser() {
         // given
         String email = "oauth@example.com";
+        String name = "OAuth사용자";
+        String phone = "01099998888";
 
         Member member = mock(Member.class);
         when(member.getPassword()).thenReturn(null);  // OAuth 사용자
 
-        when(memberRepository.findByEmail(email)).thenReturn(Optional.of(member));
+        when(memberRepository.findByEmailAndNameAndPhone(email, name, phone)).thenReturn(Optional.of(member));
 
-        // when & then (예외 없이 정상 종료, 메일 미발송)
-        assertThatCode(() -> passwordService.issueTemporaryPassword(email))
-                .doesNotThrowAnyException();
+        // when & then
+        assertThatThrownBy(() -> passwordService.issueTemporaryPassword(email, name, phone))
+                .isInstanceOf(InvalidPasswordException.class)
+                .hasMessageContaining("소셜 로그인");
 
         verify(mailSender, never()).send(anyString(), anyString(), anyString());
     }

@@ -14,6 +14,7 @@ import com.swcampus.domain.member.Role;
 import com.swcampus.domain.ocr.OcrClient;
 import com.swcampus.domain.storage.FileStorageService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -136,7 +138,7 @@ class CertificateIntegrationTest {
                     .willReturn(List.of("수료증", "Spring Boot 실전 강의", "수료를 증명합니다"));
             
             // Mock 설정: S3 Private Bucket 업로드 성공
-            given(fileStorageService.uploadPrivate(any(byte[].class), eq("certificates"), anyString(), anyString()))
+            given(fileStorageService.uploadPrivate(any(InputStream.class), anyLong(), eq("certificates"), anyString(), anyString()))
                     .willReturn("https://s3.example.com/certificate/test.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(
@@ -181,13 +183,13 @@ class CertificateIntegrationTest {
             // 이미 인증된 수료증이 있는 경우
             certificateRepository.save(
                     Certificate.create(testMember.getId(), testLecture.getLectureId(),
-                            "https://s3.example.com/old-certificate.jpg", "SUCCESS")
+                            "https://s3.example.com/old-certificate.jpg")
             );
 
             // 중복 인증 시도
             given(ocrClient.extractText(any(byte[].class), anyString()))
                     .willReturn(List.of("수료증", "Spring Boot 실전 강의"));
-            given(fileStorageService.uploadPrivate(any(byte[].class), eq("certificates"), anyString(), anyString()))
+            given(fileStorageService.uploadPrivate(any(InputStream.class), anyLong(), eq("certificates"), anyString(), anyString()))
                     .willReturn("https://s3.example.com/new-certificate.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(
@@ -211,6 +213,7 @@ class CertificateIntegrationTest {
         }
 
         @Test
+        @Disabled("OCR 기능 일시 비활성화 (certificate.ocr.enabled=false)")
         @DisplayName("OCR 강의명 불일치 - 실패")
         void ocrMismatch_fails() throws Exception {
             // OCR이 다른 강의명을 추출
@@ -275,6 +278,7 @@ class CertificateIntegrationTest {
     class OcrFlexibleMatching {
 
         @Test
+        @Disabled("OCR 기능 일시 비활성화 (certificate.ocr.enabled=false)")
         @DisplayName("공백/대소문자가 달라도 매칭 성공")
         void flexibleMatchingSuccess() throws Exception {
             // 강의명: "Spring Boot 실전 강의"
@@ -282,7 +286,7 @@ class CertificateIntegrationTest {
             given(ocrClient.extractText(any(byte[].class), anyString()))
                     .willReturn(List.of("수료증", "SpringBoot실전강의", "2024년 수료"));
             
-            given(fileStorageService.uploadPrivate(any(byte[].class), eq("certificates"), anyString(), anyString()))
+            given(fileStorageService.uploadPrivate(any(InputStream.class), anyLong(), eq("certificates"), anyString(), anyString()))
                     .willReturn("https://s3.example.com/certificate/test.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(
@@ -307,6 +311,7 @@ class CertificateIntegrationTest {
         }
 
         @Test
+        @Disabled("OCR 기능 일시 비활성화 (certificate.ocr.enabled=false)")
         @DisplayName("강의명이 여러 줄에 걸쳐 추출되어도 매칭 성공")
         void multiLineMatchingSuccess() throws Exception {
             // 강의명이 OCR에서 여러 줄로 분리된 경우
@@ -318,7 +323,7 @@ class CertificateIntegrationTest {
                             "수료를 증명합니다"
                     ));
             
-            given(fileStorageService.uploadPrivate(any(byte[].class), eq("certificates"), anyString(), anyString()))
+            given(fileStorageService.uploadPrivate(any(InputStream.class), anyLong(), eq("certificates"), anyString(), anyString()))
                     .willReturn("https://s3.example.com/certificate/test.jpg");
 
             MockMultipartFile imageFile = new MockMultipartFile(

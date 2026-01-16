@@ -73,6 +73,16 @@ public class Organization {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * 반려된 기관이 정보 수정 시 승인 대기 상태로 변경합니다.
+     */
+    public void resubmit() {
+        if (this.approvalStatus == ApprovalStatus.REJECTED) {
+            this.approvalStatus = ApprovalStatus.PENDING;
+            this.updatedAt = LocalDateTime.now();
+        }
+    }
+
     public void updateInfo(String name, String description) {
         this.name = name;
         this.description = description;
@@ -104,6 +114,16 @@ public class Organization {
 
     public void updateHomepage(String homepage) {
         this.homepage = homepage;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 기관 비활성화 (담당자 탈퇴 시 호출)
+     * 상태를 PENDING으로 변경하여 새로운 담당자가 인수할 수 있도록 합니다.
+     */
+    public void deactivate() {
+        this.userId = null;
+        this.approvalStatus = ApprovalStatus.PENDING;
         this.updatedAt = LocalDateTime.now();
     }
 

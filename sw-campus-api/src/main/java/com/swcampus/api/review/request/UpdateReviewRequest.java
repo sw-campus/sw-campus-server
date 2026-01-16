@@ -1,5 +1,6 @@
 package com.swcampus.api.review.request;
 
+import com.swcampus.domain.review.ReviewValidationConstants;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -9,8 +10,8 @@ import java.util.List;
 
 @Schema(description = "후기 수정 요청")
 public record UpdateReviewRequest(
-    @Schema(description = "총평 (선택, 최대 500자)", example = "수정된 후기 내용입니다.")
-    @Size(max = 500, message = "총평은 최대 500자입니다")
+    @Schema(description = "총평 (선택, 최대 " + ReviewValidationConstants.REVIEW_COMMENT_MAX_LENGTH + "자)", example = "수정된 후기 내용입니다.")
+    @Size(max = ReviewValidationConstants.REVIEW_COMMENT_MAX_LENGTH, message = "총평은 최대 " + ReviewValidationConstants.REVIEW_COMMENT_MAX_LENGTH + "자입니다")
     String comment,
 
     @Schema(description = "카테고리별 상세 점수 (5개 모두 필수)")

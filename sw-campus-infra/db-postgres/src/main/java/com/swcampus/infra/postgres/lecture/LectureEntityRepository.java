@@ -155,15 +155,24 @@ public class LectureEntityRepository implements LectureRepository {
 
 	@Override
 	public Optional<Lecture> findById(Long id) {
-		return jpaRepository.findByIdWithCategory(id)
-				.map(entity -> {
-					Double avgScore = reviewRepository.getAverageScoreByLectureId(id);
-					Long reviewCount = reviewRepository.countReviewsByLectureId(id);
-					return entity.toDomain().toBuilder()
-							.averageScore(avgScore != null ? avgScore : 0.0)
-							.reviewCount(reviewCount != null ? reviewCount : 0L)
-							.build();
-				});
+		// 1. Lecture + 연관 엔티티 조회 (FETCH JOIN)
+		Optional<LectureEntity> entityOpt = jpaRepository.findByIdWithCategory(id);
+		if (entityOpt.isEmpty()) {
+			return Optional.empty();
+		}
+
+		LectureEntity entity = entityOpt.get();
+
+		// 2. 리뷰 통계 별도 조회 (GROUP BY 충돌 방지)
+		List<Object[]> reviewStatsList = jpaRepository.findReviewStatsByLectureId(id);
+		Object[] reviewStats = reviewStatsList.isEmpty() ? null : reviewStatsList.get(0);
+		Double avgScore = reviewStats != null && reviewStats[0] != null ? ((Number) reviewStats[0]).doubleValue() : 0.0;
+		Long reviewCount = reviewStats != null && reviewStats[1] != null ? ((Number) reviewStats[1]).longValue() : 0L;
+
+		return Optional.of(entity.toDomain().toBuilder()
+				.averageScore(avgScore != null ? avgScore : 0.0)
+				.reviewCount(reviewCount != null ? reviewCount : 0L)
+				.build());
 	}
 
 	@Override
@@ -195,6 +204,11 @@ public class LectureEntityRepository implements LectureRepository {
 				.stream()
 				.map(LectureEntity::toDomain)
 				.toList();
+	}
+
+	@Override
+	public int closeExpiredLectures(LocalDateTime now) {
+		return jpaRepository.closeExpiredLectures(now);
 	}
 
 	@Override
@@ -240,18 +254,33 @@ public class LectureEntityRepository implements LectureRepository {
 			return lectures;
 		}
 
-		Map<Long, Double> avgScores = reviewRepository.getAverageScoresByLectureIds(lectureIds);
-		Map<Long, Long> reviewCounts = reviewRepository.countReviewsByLectureIds(lectureIds);
+		// 2 쿼리 → 1 쿼리 최적화: 평균 점수와 리뷰 수를 한 번에 조회
+		Map<Long, Map<String, Number>> reviewStats = reviewRepository.getReviewStatsByLectureIds(lectureIds);
 
 		return lectures.stream()
 				.map(l -> {
-					Double avg = avgScores.getOrDefault(l.getLectureId(), 0.0);
-					Long count = reviewCounts.getOrDefault(l.getLectureId(), 0L);
+					Map<String, Number> stats = reviewStats.getOrDefault(l.getLectureId(), Map.of());
+					Double avg = stats.getOrDefault("avgScore", 0.0).doubleValue();
+					Long count = stats.getOrDefault("reviewCount", 0L).longValue();
 					return l.toBuilder()
 							.averageScore(avg)
 							.reviewCount(count)
 							.build();
 				})
+				.toList();
+	}
+
+	/**
+	 * 리뷰 통계 없이 강의 목록 조회 (장바구니 등 리뷰 불필요한 경우)
+	 * findAllByIds() 대비 1회 쿼리 감소
+	 */
+	@Override
+	public List<Lecture> findAllByIdsWithoutReviewStats(List<Long> lectureIds) {
+		if (lectureIds == null || lectureIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return jpaRepository.findAllByIdInWithCurriculums(lectureIds).stream()
+				.map(LectureEntity::toDomain)
 				.toList();
 	}
 

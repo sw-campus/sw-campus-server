@@ -8,6 +8,7 @@ import com.swcampus.domain.lecture.LectureRepository;
 import com.swcampus.domain.ocr.OcrClient;
 import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.storage.FileStorageService;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,6 +48,9 @@ class CertificateServiceTest {
     @Mock
     private OcrClient ocrClient;
 
+    @Mock
+    private LectureNameMatcher lectureNameMatcher;
+
     @Nested
     @DisplayName("수료증 인증 여부 확인")
     class CheckCertificateTest {
@@ -54,7 +61,7 @@ class CertificateServiceTest {
             // given
             Long memberId = 1L;
             Long lectureId = 1L;
-            Certificate certificate = Certificate.create(memberId, lectureId, "certificates/image.jpg", "SUCCESS");
+            Certificate certificate = Certificate.create(memberId, lectureId, "certificates/image.jpg");
 
             given(certificateRepository.findByMemberIdAndLectureId(memberId, lectureId))
                     .willReturn(Optional.of(certificate));
@@ -102,7 +109,7 @@ class CertificateServiceTest {
 
             // when & then
             assertThatThrownBy(() -> certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             )).isInstanceOf(CertificateAlreadyExistsException.class);
         }
 
@@ -120,33 +127,38 @@ class CertificateServiceTest {
 
             // when & then
             assertThatThrownBy(() -> certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             )).isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("강의를 찾을 수 없습니다");
         }
 
         @Test
+        @Disabled("OCR 기능 일시 비활성화 (certificate.ocr.enabled=false)")
         @DisplayName("OCR 결과에 강의명이 포함되지 않으면 예외 발생")
         void verifyCertificate_lectureMismatch_throwsException() {
             // given
             Long memberId = 1L;
             Long lectureId = 1L;
             Lecture lecture = createLecture("Java 풀스택 개발자 과정");
+            List<String> ocrLines = List.of("Python", "백엔드", "과정");
 
             given(certificateRepository.existsByMemberIdAndLectureId(memberId, lectureId))
                     .willReturn(false);
             given(lectureRepository.findById(lectureId))
                     .willReturn(Optional.of(lecture));
             given(ocrClient.extractText(any(), anyString()))
-                    .willReturn(List.of("Python", "백엔드", "과정"));
+                    .willReturn(ocrLines);
+            given(lectureNameMatcher.match(anyString(), any()))
+                    .willReturn(false);
 
             // when & then
             assertThatThrownBy(() -> certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             )).isInstanceOf(CertificateLectureMismatchException.class);
         }
 
         @Test
+        @Disabled("OCR 기능 일시 비활성화 (certificate.ocr.enabled=false)")
         @DisplayName("OCR 결과가 빈 리스트면 예외 발생")
         void verifyCertificate_emptyOcrResult_throwsException() {
             // given
@@ -160,14 +172,17 @@ class CertificateServiceTest {
                     .willReturn(Optional.of(lecture));
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of());
+            given(lectureNameMatcher.match(anyString(), any()))
+                    .willReturn(false);
 
             // when & then
             assertThatThrownBy(() -> certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             )).isInstanceOf(CertificateLectureMismatchException.class);
         }
 
         @Test
+        @Disabled("OCR 기능 일시 비활성화 (certificate.ocr.enabled=false)")
         @DisplayName("수료증 인증 성공 - 정확히 일치")
         void verifyCertificate_exactMatch_success() {
             // given
@@ -181,16 +196,18 @@ class CertificateServiceTest {
                     .willReturn(Optional.of(lecture));
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "Java 풀스택 개발자 과정", "홍길동"));
-            given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
+            given(lectureNameMatcher.match(anyString(), any()))
+                    .willReturn(true);
+            given(fileStorageService.uploadPrivate(any(InputStream.class), eq(0L), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
-            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg", "SUCCESS");
+            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
             given(certificateRepository.save(any(Certificate.class)))
                     .willReturn(savedCertificate);
 
             // when
             Certificate result = certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             );
 
             // then
@@ -201,6 +218,7 @@ class CertificateServiceTest {
         }
 
         @Test
+        @Disabled("OCR 기능 일시 비활성화 (certificate.ocr.enabled=false)")
         @DisplayName("유연한 매칭: 공백이 다르더라도 강의명 인식 성공")
         void verifyCertificate_flexibleMatching_success() {
             // given
@@ -215,16 +233,18 @@ class CertificateServiceTest {
             // OCR 결과: 공백이 다름
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "Java풀스택개발자과정", "홍길동"));
-            given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
+            given(lectureNameMatcher.match(anyString(), any()))
+                    .willReturn(true);
+            given(fileStorageService.uploadPrivate(any(InputStream.class), eq(0L), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
-            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg", "SUCCESS");
+            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
             given(certificateRepository.save(any(Certificate.class)))
                     .willReturn(savedCertificate);
 
             // when
             Certificate result = certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             );
 
             // then
@@ -233,6 +253,7 @@ class CertificateServiceTest {
         }
 
         @Test
+        @Disabled("OCR 기능 일시 비활성화 (certificate.ocr.enabled=false)")
         @DisplayName("유연한 매칭: 대소문자가 다르더라도 강의명 인식 성공")
         void verifyCertificate_caseInsensitiveMatching_success() {
             // given
@@ -247,20 +268,56 @@ class CertificateServiceTest {
             // OCR 결과: 대소문자가 다름
             given(ocrClient.extractText(any(), anyString()))
                     .willReturn(List.of("수료증", "JAVA 풀스택 개발자 과정", "홍길동"));
-            given(fileStorageService.uploadPrivate(any(), eq("certificates"), anyString(), anyString()))
+            given(lectureNameMatcher.match(anyString(), any()))
+                    .willReturn(true);
+            given(fileStorageService.uploadPrivate(any(InputStream.class), eq(0L), eq("certificates"), anyString(), anyString()))
                     .willReturn("certificates/test.jpg");
 
-            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg", "SUCCESS");
+            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
             given(certificateRepository.save(any(Certificate.class)))
                     .willReturn(savedCertificate);
 
             // when
             Certificate result = certificateService.verifyCertificate(
-                    memberId, lectureId, new byte[0], "test.jpg", "image/jpeg"
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
             );
 
             // then
             assertThat(result).isNotNull();
+        }
+
+        @Test
+        @DisplayName("OCR 비활성화 상태에서 수료증 인증 성공 - 이미지만 저장")
+        void verifyCertificate_ocrDisabled_success() {
+            // given
+            Long memberId = 1L;
+            Long lectureId = 1L;
+            Lecture lecture = createLecture("Java 풀스택 개발자 과정");
+
+            // ocrEnabled = false (기본값) 상태에서는 OCR 호출 없이 바로 저장
+            ReflectionTestUtils.setField(certificateService, "ocrEnabled", false);
+
+            given(certificateRepository.existsByMemberIdAndLectureId(memberId, lectureId))
+                    .willReturn(false);
+            given(lectureRepository.findById(lectureId))
+                    .willReturn(Optional.of(lecture));
+            given(fileStorageService.uploadPrivate(any(InputStream.class), eq(0L), eq("certificates"), anyString(), anyString()))
+                    .willReturn("certificates/test.jpg");
+
+            Certificate savedCertificate = Certificate.create(memberId, lectureId, "certificates/test.jpg");
+            given(certificateRepository.save(any(Certificate.class)))
+                    .willReturn(savedCertificate);
+
+            // when
+            Certificate result = certificateService.verifyCertificate(
+                    memberId, lectureId, new ByteArrayInputStream(new byte[0]), 0L, "test.jpg", "image/jpeg"
+            );
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.getMemberId()).isEqualTo(memberId);
+            assertThat(result.getLectureId()).isEqualTo(lectureId);
+            assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
         }
     }
 

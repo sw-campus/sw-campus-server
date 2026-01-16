@@ -8,8 +8,12 @@ import com.swcampus.domain.lecture.AdminBannerService;
 import com.swcampus.domain.lecture.BannerPeriodStatus;
 import com.swcampus.domain.lecture.BannerType;
 import com.swcampus.domain.lecture.dto.BannerDetailsDto;
+import com.swcampus.api.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -70,8 +74,16 @@ public class AdminBannerController {
         @Operation(summary = "배너 상태별 통계 조회", description = "전체/활성/비활성/예정/진행중/종료 배너 수를 조회합니다.")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "조회 성공"),
-                        @ApiResponse(responseCode = "401", description = "인증 필요"),
-                        @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+                        @ApiResponse(responseCode = "401", description = "인증 필요",
+                                content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                                        examples = @ExampleObject(value = """
+                                                {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                                """))),
+                        @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                                content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                                        examples = @ExampleObject(value = """
+                                                {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                                """)))
         })
         @GetMapping("/stats")
         public ResponseEntity<BannerStatsResponse> getStats() {
@@ -84,16 +96,24 @@ public class AdminBannerController {
         @Operation(summary = "배너 목록 조회", description = "배너를 검색합니다. 키워드, 기간 상태, 배너 타입으로 필터링하고 페이징 처리됩니다.")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "조회 성공"),
-                        @ApiResponse(responseCode = "401", description = "인증 필요"),
-                        @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+                        @ApiResponse(responseCode = "401", description = "인증 필요",
+                                content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                                        examples = @ExampleObject(value = """
+                                                {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                                """))),
+                        @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                                content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                                        examples = @ExampleObject(value = """
+                                                {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                                """)))
         })
         @GetMapping
         public ResponseEntity<Page<AdminBannerResponse>> getBanners(
-                        @Parameter(description = "강의명 검색어") @RequestParam(required = false) String keyword,
-                        @Parameter(description = "기간 상태 (SCHEDULED, ACTIVE, ENDED)") @RequestParam(required = false) String periodStatus,
-                        @Parameter(description = "배너 타입 (BIG, MIDDLE, SMALL)") @RequestParam(required = false) BannerType type,
-                        @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
-                        @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+                        @Parameter(description = "강의명 검색어") @RequestParam(name = "keyword", required = false) String keyword,
+                        @Parameter(description = "기간 상태 (SCHEDULED, ACTIVE, ENDED)") @RequestParam(name = "periodStatus", required = false) String periodStatus,
+                        @Parameter(description = "배너 타입 (BIG, MIDDLE, SMALL)") @RequestParam(name = "type", required = false) BannerType type,
+                        @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
+                        @Parameter(description = "페이지 크기") @RequestParam(name = "size", defaultValue = "10") int size) {
                 Pageable pageable = PageRequest.of(page, size);
                 BannerPeriodStatus status = BannerPeriodStatus.fromString(periodStatus);
                 Page<BannerDetailsDto> bannerPage = adminBannerService.searchBanners(keyword, status, type, pageable);

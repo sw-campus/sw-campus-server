@@ -1,0 +1,109 @@
+name: Build Dev Image
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      tag: ${{ steps.meta.outputs.tag }}
+
+    steps:
+      - name: Checkout code with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.CONFIG_REPO_TOKEN }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Build with Gradle
+        run: |
+          chmod +x gradlew
+          ./gradlew build -x test
+
+      - name: Determine Image Meta
+        id: meta
+        run: |
+          IMAGE=ghcr.io/sw-campus/sw-campus-server
+          TAG=RHSA-${{ github.sha }}
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Image
+        run: |
+          IMAGE=${{ steps.meta.outputs.image }}
+          TAG=${{ steps.meta.outputs.tag }}
+          echo "Building DEV image with tag $TAG"
+          docker build -t $IMAGE:$TAG .
+          docker push $IMAGE:$TAG
+
+      # Manifest 업데이트
+      - name: Checkout manifest repo
+        uses: actions/checkout@v4
+        with:
+          repository: sw-campus/sw-campus-manifest
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
+          ref: develop
+          path: manifest
+
+      - name: Update server image tag in manifest
+        run: |
+          cd manifest
+          TAG=${{ steps.meta.outputs.tag }}
+          sed -i '/repository: ghcr.io\/sw-campus\/sw-campus-server$/,/pullPolicy:/ s|tag: ".*"|tag: "'$TAG'"|' k8s/environments/develop/values.yaml
+
+      - name: Create Pull Request to manifest repo
+        id: cpr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
+          path: manifest
+          branch: auto-update/server-dev-${{ github.sha }}
+          base: develop
+          title: "chore(server): update dev image to ${{ steps.meta.outputs.tag }}"
+          body: |
+            🤖 Auto-generated PR from server dev build
+            
+            - **Image**: `ghcr.io/sw-campus/sw-campus-server:${{ steps.meta.outputs.tag }}`
+            - **Commit**: ${{ github.sha }}
+          delete-branch: true
+
+      - name: Merge PR
+        if: steps.cpr.outputs.pull-request-number
+        run: |
+          cd manifest
+          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --delete-branch
+        env:
+          GH_TOKEN: ${{ secrets.MANIFEST_REPO_TOKEN }}
+

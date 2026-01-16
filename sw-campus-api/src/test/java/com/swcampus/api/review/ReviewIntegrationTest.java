@@ -143,7 +143,7 @@ class ReviewIntegrationTest {
             // === 2단계: 수료증 인증 ===
             certificateRepository.save(
                     Certificate.create(testMember.getId(), testLecture.getLectureId(),
-                            "https://s3.example.com/certificate.jpg", "SUCCESS")
+                            "https://s3.example.com/certificate.jpg")
             );
 
             // === 3단계: 수료증 인증 후 - 작성 가능 ===
@@ -196,7 +196,7 @@ class ReviewIntegrationTest {
             // === 사전 준비: 수료증 인증 ===
             certificateRepository.save(
                     Certificate.create(testMember.getId(), testLecture.getLectureId(),
-                            "https://s3.example.com/certificate.jpg", "SUCCESS")
+                            "https://s3.example.com/certificate.jpg")
             );
 
             // === 1단계: 후기 작성 ===
@@ -251,7 +251,7 @@ class ReviewIntegrationTest {
             // 수료증 생성
             certificateRepository.save(
                     Certificate.create(testMember.getId(), testLecture.getLectureId(),
-                            "https://s3.example.com/certificate.jpg", "SUCCESS")
+                            "https://s3.example.com/certificate.jpg")
             );
 
             // 첫 번째 후기 작성
@@ -285,7 +285,7 @@ class ReviewIntegrationTest {
             // otherMember의 수료증 생성
             certificateRepository.save(
                     Certificate.create(otherMember.getId(), testLecture.getLectureId(),
-                            "https://s3.example.com/certificate.jpg", "SUCCESS")
+                            "https://s3.example.com/certificate.jpg")
             );
 
             // SecurityContext를 otherMember로 변경 후 후기 생성

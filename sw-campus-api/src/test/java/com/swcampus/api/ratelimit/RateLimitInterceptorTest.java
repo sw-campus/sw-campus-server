@@ -68,7 +68,7 @@ class RateLimitInterceptorTest {
         // when & then
         assertThatThrownBy(() -> rateLimitInterceptor.preHandle(request, response, handlerMethod))
                 .isInstanceOf(RateLimitExceededException.class)
-                .hasMessage("요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+                .hasMessage("요청 한도를 초과했습니다");
     }
 
     @Test

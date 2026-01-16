@@ -1,12 +1,16 @@
 package com.swcampus.domain.review.exception;
 
-public class ReviewNotModifiableException extends RuntimeException {
+import com.swcampus.shared.error.BusinessException;
+import com.swcampus.shared.error.ErrorCode;
 
-    public ReviewNotModifiableException() {
-        super("승인된 후기는 수정할 수 없습니다");
-    }
+public class ReviewNotModifiableException extends BusinessException {
 
-    public ReviewNotModifiableException(Long reviewId) {
-        super(String.format("승인된 후기는 수정할 수 없습니다. Review ID: %d", reviewId));
-    }
+	public ReviewNotModifiableException() {
+		super(ErrorCode.REVIEW_NOT_MODIFIABLE);
+	}
+
+	public ReviewNotModifiableException(Long reviewId) {
+		super(ErrorCode.REVIEW_NOT_MODIFIABLE,
+				String.format("승인된 후기는 수정할 수 없습니다. Review ID: %d", reviewId));
+	}
 }

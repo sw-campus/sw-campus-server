@@ -5,7 +5,11 @@ import com.swcampus.api.admin.response.TestDataSummaryResponse;
 import com.swcampus.domain.testdata.TestDataCreateResult;
 import com.swcampus.domain.testdata.TestDataService;
 import com.swcampus.domain.testdata.TestDataSummary;
+import com.swcampus.api.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -28,9 +32,21 @@ public class AdminTestDataController {
                     "이미 테스트 데이터가 존재하면 먼저 삭제해야 합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "생성 성공"),
-            @ApiResponse(responseCode = "400", description = "이미 테스트 데이터가 존재함"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+            @ApiResponse(responseCode = "400", description = "이미 테스트 데이터가 존재함",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 400, "message": "이미 테스트 데이터가 존재합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """))),
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """)))
     })
     @PostMapping
     public ResponseEntity<TestDataCreateResponse> createTestData() {
@@ -43,9 +59,21 @@ public class AdminTestDataController {
                     "실제 사용자 데이터는 삭제되지 않습니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "삭제 성공"),
-            @ApiResponse(responseCode = "400", description = "삭제할 테스트 데이터가 없음"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+            @ApiResponse(responseCode = "400", description = "삭제할 테스트 데이터가 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 400, "message": "삭제할 테스트 데이터가 없습니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """))),
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """)))
     })
     @DeleteMapping
     public ResponseEntity<Void> deleteTestData() {
@@ -57,8 +85,16 @@ public class AdminTestDataController {
             description = "현재 생성된 테스트 데이터의 현황을 조회합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """))),
+            @ApiResponse(responseCode = "403", description = "관리자 권한 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {"status": 403, "message": "관리자 권한이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                                    """)))
     })
     @GetMapping("/summary")
     public ResponseEntity<TestDataSummaryResponse> getSummary() {

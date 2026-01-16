@@ -8,6 +8,7 @@ import com.swcampus.domain.analytics.EventStats;
 import com.swcampus.domain.analytics.LectureClickStats;
 import com.swcampus.domain.analytics.PopularLecture;
 import com.swcampus.domain.analytics.PopularSearchTerm;
+import com.swcampus.domain.analytics.TrafficSource;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
@@ -23,6 +24,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Google Analytics Data API를 사용하여 Analytics 데이터를 조회하는 Repository 구현체
@@ -47,25 +49,71 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     @Override
     public AnalyticsReport getReport(int daysAgo) {
-        String startDate = daysAgo + "daysAgo";
+        // daysAgo=1이면 오늘만, daysAgo=7이면 오늘 포함 7일 (6일 전부터)
+        String startDate = (daysAgo - 1) + "daysAgo";
         String endDate = "today";
 
-        // 총 통계 데이터 조회
-        RunReportResponse summaryResponse = analyticsClient.runReport(
-            RunReportRequest.newBuilder()
-                .setProperty("properties/" + propertyId)
-                .addDateRanges(DateRange.newBuilder()
-                    .setStartDate(startDate)
-                    .setEndDate(endDate)
-                    .build())
-                .addMetrics(Metric.newBuilder().setName("totalUsers"))
-                .addMetrics(Metric.newBuilder().setName("activeUsers"))
-                .addMetrics(Metric.newBuilder().setName("newUsers"))
-                .addMetrics(Metric.newBuilder().setName("averageSessionDuration"))
-                .addMetrics(Metric.newBuilder().setName("screenPageViews"))
-                .addMetrics(Metric.newBuilder().setName("sessions"))
-                .build()
+        // 병렬 실행: 3개의 GA API 요청을 동시에 실행
+        CompletableFuture<RunReportResponse> summaryFuture = CompletableFuture.supplyAsync(() ->
+            analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addMetrics(Metric.newBuilder().setName("totalUsers"))
+                    .addMetrics(Metric.newBuilder().setName("activeUsers"))
+                    .addMetrics(Metric.newBuilder().setName("newUsers"))
+                    .addMetrics(Metric.newBuilder().setName("averageSessionDuration"))
+                    .addMetrics(Metric.newBuilder().setName("screenPageViews"))
+                    .addMetrics(Metric.newBuilder().setName("sessions"))
+                    .build()
+            )
         );
+
+        CompletableFuture<RunReportResponse> dailyFuture = CompletableFuture.supplyAsync(() ->
+            analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("date"))
+                    .addMetrics(Metric.newBuilder().setName("totalUsers"))
+                    .addMetrics(Metric.newBuilder().setName("newUsers"))
+                    .addMetrics(Metric.newBuilder().setName("screenPageViews"))
+                    .addOrderBys(OrderBy.newBuilder()
+                        .setDimension(OrderBy.DimensionOrderBy.newBuilder()
+                            .setDimensionName("date")
+                            .build())
+                        .build())
+                    .build()
+            )
+        );
+
+        CompletableFuture<RunReportResponse> deviceFuture = CompletableFuture.supplyAsync(() ->
+            analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("deviceCategory"))
+                    .addMetrics(Metric.newBuilder().setName("activeUsers"))
+                    .build()
+            )
+        );
+
+        // 모든 Future 완료 대기
+        CompletableFuture.allOf(summaryFuture, dailyFuture, deviceFuture).join();
+
+        // 결과 추출
+        RunReportResponse summaryResponse = summaryFuture.join();
+        RunReportResponse dailyResponse = dailyFuture.join();
+        RunReportResponse deviceResponse = deviceFuture.join();
 
         long totalUsers = 0;
         long activeUsers = 0;
@@ -84,26 +132,6 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
             sessions = Long.parseLong(row.getMetricValues(5).getValue());
         }
 
-        // 일별 통계 데이터 조회
-        RunReportResponse dailyResponse = analyticsClient.runReport(
-            RunReportRequest.newBuilder()
-                .setProperty("properties/" + propertyId)
-                .addDateRanges(DateRange.newBuilder()
-                    .setStartDate(startDate)
-                    .setEndDate(endDate)
-                    .build())
-                .addDimensions(Dimension.newBuilder().setName("date"))
-                .addMetrics(Metric.newBuilder().setName("totalUsers"))
-                .addMetrics(Metric.newBuilder().setName("newUsers"))
-                .addMetrics(Metric.newBuilder().setName("screenPageViews"))
-                .addOrderBys(OrderBy.newBuilder()
-                    .setDimension(OrderBy.DimensionOrderBy.newBuilder()
-                        .setDimensionName("date")
-                        .build())
-                    .build())
-                .build()
-        );
-
         List<AnalyticsReport.DailyStats> dailyStats = new ArrayList<>();
 
         for (Row row : dailyResponse.getRowsList()) {
@@ -113,19 +141,6 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
             long dailyPageViews = Long.parseLong(row.getMetricValues(2).getValue());
             dailyStats.add(new AnalyticsReport.DailyStats(date, dailyTotalUsers, dailyNewUsers, dailyPageViews));
         }
-
-        // 기기별 통계 데이터 조회 (New Request)
-        RunReportResponse deviceResponse = analyticsClient.runReport(
-            RunReportRequest.newBuilder()
-                .setProperty("properties/" + propertyId)
-                .addDateRanges(DateRange.newBuilder()
-                    .setStartDate(startDate)
-                    .setEndDate(endDate)
-                    .build())
-                .addDimensions(Dimension.newBuilder().setName("deviceCategory"))
-                .addMetrics(Metric.newBuilder().setName("activeUsers"))
-                .build()
-        );
 
         List<AnalyticsReport.DeviceStat> deviceStats = new ArrayList<>();
         for (Row row : deviceResponse.getRowsList()) {
@@ -137,23 +152,57 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
         return new AnalyticsReport(totalUsers, activeUsers, newUsers, averageEngagementTime, pageViews, sessions, dailyStats, deviceStats);
     }
 
+
     @Override
     public EventStats getEventStats(int daysAgo) {
-        String startDate = daysAgo + "daysAgo";
+        String startDate = (daysAgo - 1) + "daysAgo";
         String endDate = "today";
 
-        // 1. 전체 이벤트 통계 조회
-        RunReportResponse eventResponse = analyticsClient.runReport(
-            RunReportRequest.newBuilder()
-                .setProperty("properties/" + propertyId)
-                .addDateRanges(DateRange.newBuilder()
-                    .setStartDate(startDate)
-                    .setEndDate(endDate)
-                    .build())
-                .addDimensions(Dimension.newBuilder().setName("eventName"))
-                .addMetrics(Metric.newBuilder().setName("eventCount"))
-                .build()
+        // 병렬 실행: 2개의 GA API 요청을 동시에 실행
+        CompletableFuture<RunReportResponse> eventFuture = CompletableFuture.supplyAsync(() ->
+            analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("eventName"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .build()
+            )
         );
+
+        CompletableFuture<RunReportResponse> bannerFuture = CompletableFuture.supplyAsync(() ->
+            analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:banner_type"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                        .setFilter(Filter.newBuilder()
+                            .setFieldName("eventName")
+                            .setStringFilter(Filter.StringFilter.newBuilder()
+                                .setMatchType(Filter.StringFilter.MatchType.EXACT)
+                                .setValue("banner_click")
+                                .setCaseSensitive(false)
+                            )
+                        )
+                        .build())
+                    .build()
+            )
+        );
+
+        // 모든 Future 완료 대기
+        CompletableFuture.allOf(eventFuture, bannerFuture).join();
+
+        // 결과 추출
+        RunReportResponse eventResponse = eventFuture.join();
+        RunReportResponse bannerResponse = bannerFuture.join();
 
         long bannerClicks = 0;
         long applyButtonClicks = 0;
@@ -176,46 +225,19 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
             ));
         }
 
-        // 2. Fetch banner stats by type (customEvent:banner_type)
         long bigBannerClicks = 0;
         long middleBannerClicks = 0;
         long smallBannerClicks = 0;
 
-        try {
-            RunReportResponse bannerResponse = analyticsClient.runReport(
-                RunReportRequest.newBuilder()
-                    .setProperty("properties/" + propertyId)
-                    .addDateRanges(DateRange.newBuilder()
-                        .setStartDate(startDate)
-                        .setEndDate(endDate)
-                        .build())
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:banner_type"))
-                    .addMetrics(Metric.newBuilder().setName("eventCount"))
-                    .setDimensionFilter(FilterExpression.newBuilder()
-                        .setFilter(Filter.newBuilder()
-                            .setFieldName("eventName")
-                            .setStringFilter(Filter.StringFilter.newBuilder()
-                                .setMatchType(Filter.StringFilter.MatchType.EXACT)
-                                .setValue("banner_click")
-                                .setCaseSensitive(false)
-                            )
-                        )
-                        .build())
-                    .build()
-            );
+        for (Row row : bannerResponse.getRowsList()) {
+            String bannerType = row.getDimensionValues(0).getValue();
+            long count = Long.parseLong(row.getMetricValues(0).getValue());
 
-            for (Row row : bannerResponse.getRowsList()) {
-                String bannerType = row.getDimensionValues(0).getValue();
-                long count = Long.parseLong(row.getMetricValues(0).getValue());
-
-                switch (bannerType) {
-                    case "BIG" -> bigBannerClicks = count;
-                    case "MIDDLE" -> middleBannerClicks = count;
-                    case "SMALL" -> smallBannerClicks = count;
-                }
+            switch (bannerType) {
+                case "BIG" -> bigBannerClicks = count;
+                case "MIDDLE" -> middleBannerClicks = count;
+                case "SMALL" -> smallBannerClicks = count;
             }
-        } catch (ApiException e) {
-            log.error("Failed to fetch banner types", e);
         }
 
         return new EventStats(
@@ -231,7 +253,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     @Override
     public List<BannerClickStats> getTopBannersByClicks(int daysAgo, int limit) {
-        String startDate = daysAgo + "daysAgo";
+        String startDate = (daysAgo - 1) + "daysAgo";
         String endDate = "today";
         List<BannerClickStats> result = new ArrayList<>();
 
@@ -284,15 +306,12 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     @Override
     public List<LectureClickStats> getTopLecturesByClicks(int daysAgo, int limit) {
-        String startDate = daysAgo + "daysAgo";
+        String startDate = (daysAgo - 1) + "daysAgo";
         String endDate = "today";
-        
-        // Map to aggregate lecture stats
-        Map<String, LectureData> lectureMap = new HashMap<>();
 
-        try {
-            // Fetch both apply_button_click and share events in a single API call
-            RunReportResponse response = analyticsClient.runReport(
+        // 병렬 실행: 2개의 GA API 요청을 동시에 실행
+        CompletableFuture<RunReportResponse> clickFuture = CompletableFuture.supplyAsync(() ->
+            analyticsClient.runReport(
                 RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
                     .addDateRanges(DateRange.newBuilder()
@@ -314,29 +333,11 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
                         )
                         .build())
                     .build()
-            );
+            )
+        );
 
-            for (Row row : response.getRowsList()) {
-                String eventName = row.getDimensionValues(0).getValue();
-                String lectureId = row.getDimensionValues(1).getValue();
-                String lectureName = row.getDimensionValues(2).getValue();
-                long count = Long.parseLong(row.getMetricValues(0).getValue());
-
-                LectureData data = lectureMap.computeIfAbsent(lectureId, k -> new LectureData(lectureName));
-                if ("apply_button_click".equals(eventName)) {
-                    data.applyClicks = count;
-                } else if ("share".equals(eventName)) {
-                    data.shareClicks = count;
-                }
-            }
-
-        } catch (ApiException e) {
-            log.error("Failed to fetch top lectures", e);
-        }
-
-        // 2. Fetch Page Views (to populate views count)
-        try {
-            RunReportResponse viewResponse = analyticsClient.runReport(
+        CompletableFuture<RunReportResponse> viewFuture = CompletableFuture.supplyAsync(() ->
+            analyticsClient.runReport(
                 RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
                     .addDateRanges(DateRange.newBuilder()
@@ -356,39 +357,61 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
                             )
                         )
                         .build())
-                    .setLimit(Math.max(limit * 3, 50)) // Ensure we fetch enough views to cover clicked lectures
+                    .setLimit(Math.max(limit * 3, 50))
                     .build()
-            );
+            )
+        );
 
-            for (Row row : viewResponse.getRowsList()) {
-                String pagePath = row.getDimensionValues(0).getValue();
-                String pageTitle = row.getDimensionValues(1).getValue();
-                long views = Long.parseLong(row.getMetricValues(0).getValue());
+        // 모든 Future 완료 대기
+        CompletableFuture.allOf(clickFuture, viewFuture).join();
 
-                if (pagePath.matches("^/lectures/\\d+$")) {
-                    String lectureId = pagePath.replace("/lectures/", "");
-                    
-                    LectureData data = lectureMap.get(lectureId);
-                    if (data != null) {
-                        data.views = views;
-                    } else {
-                         String name = (pageTitle != null && !pageTitle.isEmpty() && !"(not set)".equals(pageTitle)) 
-                                     ? pageTitle 
-                                     : "강의 #" + lectureId;
-                         
-                         // Clean up title (remove " | SW Campus" etc if present)
-                         if (name.contains(" |")) {
-                            name = name.substring(0, name.indexOf(" |"));
-                         }
-                         
-                         LectureData newData = new LectureData(name);
-                         newData.views = views;
-                         lectureMap.put(lectureId, newData);
-                    }
+        // 결과 추출
+        RunReportResponse clickResponse = clickFuture.join();
+        RunReportResponse viewResponse = viewFuture.join();
+
+        // Map to aggregate lecture stats
+        Map<String, LectureData> lectureMap = new HashMap<>();
+
+        for (Row row : clickResponse.getRowsList()) {
+            String eventName = row.getDimensionValues(0).getValue();
+            String lectureId = row.getDimensionValues(1).getValue();
+            String lectureName = row.getDimensionValues(2).getValue();
+            long count = Long.parseLong(row.getMetricValues(0).getValue());
+
+            LectureData data = lectureMap.computeIfAbsent(lectureId, k -> new LectureData(lectureName));
+            if ("apply_button_click".equals(eventName)) {
+                data.applyClicks = count;
+            } else if ("share".equals(eventName)) {
+                data.shareClicks = count;
+            }
+        }
+
+        for (Row row : viewResponse.getRowsList()) {
+            String pagePath = row.getDimensionValues(0).getValue();
+            String pageTitle = row.getDimensionValues(1).getValue();
+            long views = Long.parseLong(row.getMetricValues(0).getValue());
+
+            if (pagePath.matches("^/lectures/\\d+$")) {
+                String lectureId = pagePath.replace("/lectures/", "");
+                
+                LectureData data = lectureMap.get(lectureId);
+                if (data != null) {
+                    data.views = views;
+                } else {
+                     String name = (pageTitle != null && !pageTitle.isEmpty() && !"(not set)".equals(pageTitle)) 
+                                 ? pageTitle 
+                                 : "강의 #" + lectureId;
+                     
+                     // Clean up title (remove " | SW Campus" etc if present)
+                     if (name.contains(" |")) {
+                        name = name.substring(0, name.indexOf(" |"));
+                     }
+                     
+                     LectureData newData = new LectureData(name);
+                     newData.views = views;
+                     lectureMap.put(lectureId, newData);
                 }
             }
-        } catch (ApiException e) {
-            log.error("Failed to fetch lecture views", e);
         }
 
         // Convert to result list and sort by total clicks (descending), then views (descending)
@@ -422,7 +445,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     @Override
     public List<PopularLecture> getPopularLectures(int daysAgo, int limit) {
-        String startDate = daysAgo + "daysAgo";
+        String startDate = (daysAgo - 1) + "daysAgo";
         String endDate = "today";
         List<PopularLecture> result = new ArrayList<>();
 
@@ -490,7 +513,7 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
 
     @Override
     public List<PopularSearchTerm> getPopularSearchTerms(int daysAgo, int limit) {
-        String startDate = daysAgo + "daysAgo";
+        String startDate = (daysAgo - 1) + "daysAgo";
         String endDate = "today";
         List<PopularSearchTerm> result = new ArrayList<>();
 
@@ -538,6 +561,89 @@ public class GoogleAnalyticsRepository implements AnalyticsRepository {
         }
 
         return result;
+    }
+
+    @Override
+    public List<TrafficSource> getTrafficSources(int daysAgo, int limit) {
+        String startDate = (daysAgo - 1) + "daysAgo";
+        String endDate = "today";
+        List<TrafficSource> result = new ArrayList<>();
+
+        try {
+            RunReportResponse response = analyticsClient.runReport(
+                RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(startDate)
+                        .setEndDate(endDate)
+                        .build())
+                    .addDimensions(Dimension.newBuilder().setName("sessionSource"))
+                    .addDimensions(Dimension.newBuilder().setName("sessionMedium"))
+                    .addMetrics(Metric.newBuilder().setName("sessions"))
+                    .addMetrics(Metric.newBuilder().setName("totalUsers"))
+                    .addOrderBys(OrderBy.newBuilder()
+                        .setMetric(OrderBy.MetricOrderBy.newBuilder()
+                            .setMetricName("sessions")
+                            .build())
+                        .setDesc(true)
+                        .build())
+                    .setLimit(limit)
+                    .build()
+            );
+
+            // 헤더 기반 인덱스 조회로 순서 변경에 안전하게 대응
+            int sourceIndex = findDimensionIndex(response, "sessionSource");
+            int mediumIndex = findDimensionIndex(response, "sessionMedium");
+            int sessionsIndex = findMetricIndex(response, "sessions");
+            int usersIndex = findMetricIndex(response, "totalUsers");
+
+            for (Row row : response.getRowsList()) {
+                String source = row.getDimensionValues(sourceIndex).getValue();
+                String medium = row.getDimensionValues(mediumIndex).getValue();
+                long sessions = Long.parseLong(row.getMetricValues(sessionsIndex).getValue());
+                long users = Long.parseLong(row.getMetricValues(usersIndex).getValue());
+
+                result.add(new TrafficSource(source, medium, sessions, users));
+            }
+        } catch (ApiException e) {
+            log.error("Failed to fetch traffic sources", e);
+        }
+
+        return result;
+    }
+
+    /**
+     * 응답 헤더에서 dimension 이름으로 인덱스를 찾습니다.
+     * @param response GA API 응답
+     * @param dimensionName 찾을 dimension 이름
+     * @return dimension 인덱스 (찾지 못하면 -1)
+     */
+    private int findDimensionIndex(RunReportResponse response, String dimensionName) {
+        List<DimensionHeader> headers = response.getDimensionHeadersList();
+        for (int i = 0; i < headers.size(); i++) {
+            if (headers.get(i).getName().equals(dimensionName)) {
+                return i;
+            }
+        }
+        log.warn("Dimension '{}' not found in response headers", dimensionName);
+        return -1;
+    }
+
+    /**
+     * 응답 헤더에서 metric 이름으로 인덱스를 찾습니다.
+     * @param response GA API 응답
+     * @param metricName 찾을 metric 이름
+     * @return metric 인덱스 (찾지 못하면 -1)
+     */
+    private int findMetricIndex(RunReportResponse response, String metricName) {
+        List<MetricHeader> headers = response.getMetricHeadersList();
+        for (int i = 0; i < headers.size(); i++) {
+            if (headers.get(i).getName().equals(metricName)) {
+                return i;
+            }
+        }
+        log.warn("Metric '{}' not found in response headers", metricName);
+        return -1;
     }
 }
 

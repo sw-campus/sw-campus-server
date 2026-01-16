@@ -15,7 +15,11 @@ import com.swcampus.api.auth.request.TemporaryPasswordRequest;
 import com.swcampus.domain.auth.PasswordService;
 import com.swcampus.domain.auth.TokenProvider;
 
+import com.swcampus.api.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -37,8 +41,16 @@ public class PasswordController {
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "변경 성공"),
-        @ApiResponse(responseCode = "400", description = "현재 비밀번호 불일치"),
-        @ApiResponse(responseCode = "401", description = "인증 필요")
+        @ApiResponse(responseCode = "400", description = "현재 비밀번호 불일치",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 400, "message": "현재 비밀번호가 일치하지 않습니다", "timestamp": "2025-12-09T12:00:00"}
+                    """))),
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
     })
     public ResponseEntity<Void> changePassword(
             @CookieValue(name = "accessToken") String accessToken,
@@ -51,15 +63,15 @@ public class PasswordController {
     }
 
     @PostMapping("/temporary")
-    @Operation(summary = "임시 비밀번호 발급", description = "이메일로 임시 비밀번호를 발송합니다. 비밀번호 찾기 기능에 사용됩니다.")
+    @Operation(summary = "임시 비밀번호 발급", description = "이름, 전화번호, 이메일이 모두 일치하는 경우 임시 비밀번호를 이메일로 발송합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "발송 성공"),
-        @ApiResponse(responseCode = "404", description = "존재하지 않는 이메일")
+        @ApiResponse(responseCode = "404", description = "일치하는 사용자 없음")
     })
     public ResponseEntity<Map<String, String>> issueTemporaryPassword(
             @Valid @RequestBody TemporaryPasswordRequest request) {
 
-        passwordService.issueTemporaryPassword(request.getEmail());
+        passwordService.issueTemporaryPassword(request.getEmail(), request.getName(), request.getPhone());
         return ResponseEntity.ok(Map.of("message", "임시 비밀번호가 이메일로 발송되었습니다"));
     }
 }

@@ -163,7 +163,8 @@ class MypageControllerTest {
     void getMyCompletedLectures_Success() throws Exception {
         // given
         CompletedLectureInfo lectureInfo = new CompletedLectureInfo(
-            1L, 100L, "Test Lecture", "image.jpg", "Test Org", LocalDateTime.now(), true
+            1L, 100L, "Test Lecture", "image.jpg", "Test Org", LocalDateTime.now(), true,
+            "https://s3.example.com/cert.jpg", ApprovalStatus.PENDING
         );
         given(mypageService.getCompletedLectures(1L)).willReturn(List.of(lectureInfo));
 
@@ -356,7 +357,7 @@ class MypageControllerTest {
 
         Organization org = Organization.of(100L, 1L, "Test Org", "Desc", ApprovalStatus.APPROVED, "cert.jpg", null, null, null, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
 
-        given(organizationService.getApprovedOrganizationByUserId(1L)).willReturn(org);
+        given(organizationService.getOrganizationByUserId(1L)).willReturn(org);
 
         MockMultipartFile file = new MockMultipartFile("businessRegistration", "cert.jpg", "image/jpeg", "content".getBytes());
         MockMultipartFile organizationNamePart = new MockMultipartFile("organizationName", "", "text/plain", "Updated Org".getBytes());

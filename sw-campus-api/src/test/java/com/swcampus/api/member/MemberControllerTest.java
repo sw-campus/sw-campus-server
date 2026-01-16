@@ -89,7 +89,7 @@ class MemberControllerTest {
         mockMvc.perform(get("/api/v1/members/nickname/check")
                         .param("nickname", nickname))
                 .andExpect(status().isTooManyRequests())
-                .andExpect(jsonPath("$.message").value("요청이 너무 많습니다. 잠시 후 다시 시도해주세요."));
+                .andExpect(jsonPath("$.message").value("요청 한도를 초과했습니다"));
 
         // MemberService가 호출되지 않았는지 확인
         verify(memberService, never()).isNicknameAvailable(anyString(), any());

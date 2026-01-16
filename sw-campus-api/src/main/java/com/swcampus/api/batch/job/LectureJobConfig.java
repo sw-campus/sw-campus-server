@@ -1,9 +1,8 @@
 package com.swcampus.api.batch.job;
 
-import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureRepository;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -21,6 +20,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 @RequiredArgsConstructor
 public class LectureJobConfig {
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final LectureRepository lectureRepository;
@@ -37,17 +38,12 @@ public class LectureJobConfig {
         return new StepBuilder("lectureStatusUpdateStep", jobRepository)
             .tasklet((contribution, chunkContext) -> {
                 log.info(">>>>> Start lectureStatusUpdateStep");
-                
-                LocalDateTime now = LocalDateTime.now();
-                List<Lecture> expiredLectures = lectureRepository.findAllExpiredAndRecruiting(now);
 
-                log.info("Found {} expired lectures to close.", expiredLectures.size());
+                LocalDateTime now = LocalDateTime.now(KST);
+                log.info("Current time (KST): {}", now);
+                int closedCount = lectureRepository.closeExpiredLectures(now);
 
-                List<Lecture> closedLectures = expiredLectures.stream()
-                    .map(Lecture::close)
-                    .toList();
-                lectureRepository.saveAll(closedLectures);
-
+                log.info("Closed {} expired lectures.", closedCount);
                 log.info(">>>>> End lectureStatusUpdateStep");
                 return RepeatStatus.FINISHED;
             }, transactionManager)

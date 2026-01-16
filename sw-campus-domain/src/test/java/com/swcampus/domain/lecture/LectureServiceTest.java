@@ -18,6 +18,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -29,6 +30,9 @@ class LectureServiceTest {
 
     @Mock
     private LectureRepository lectureRepository;
+
+    @Mock
+    private LectureCacheRepository lectureCacheRepository;
 
     @Mock
     private FileStorageService fileStorageService;
@@ -56,11 +60,13 @@ class LectureServiceTest {
                     .lectureName("수정된 강의")
                     .build();
 
+            given(lectureCacheRepository.getLecture(anyLong()))
+                    .willReturn(Optional.empty());
             given(lectureRepository.findById(lectureId))
                     .willReturn(Optional.of(existingLecture));
             given(lectureRepository.save(any(Lecture.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
-            
+
             Organization mockOrg = mock(Organization.class);
             given(mockOrg.getId()).willReturn(orgId);
             given(organizationService.getApprovedOrganizationByUserId(any()))
@@ -89,6 +95,8 @@ class LectureServiceTest {
                     .lectureName("수정된 강의")
                     .build();
 
+            given(lectureCacheRepository.getLecture(anyLong()))
+                    .willReturn(Optional.empty());
             given(lectureRepository.findById(lectureId))
                     .willReturn(Optional.of(existingLecture));
             given(lectureRepository.save(any(Lecture.class)))
@@ -122,6 +130,8 @@ class LectureServiceTest {
                     .lectureName("수정된 강의")
                     .build();
 
+            given(lectureCacheRepository.getLecture(anyLong()))
+                    .willReturn(Optional.empty());
             given(lectureRepository.findById(lectureId))
                     .willReturn(Optional.of(existingLecture));
             given(lectureRepository.save(any(Lecture.class)))
@@ -144,8 +154,9 @@ class LectureServiceTest {
         void modifyLecture_notFound_throwsException() {
             // given
             Long lectureId = 999L;
-            Long orgId = 1L;
 
+            given(lectureCacheRepository.getLecture(anyLong()))
+                    .willReturn(Optional.empty());
             given(lectureRepository.findById(lectureId))
                     .willReturn(Optional.empty());
 
