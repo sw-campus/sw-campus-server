@@ -1,6 +1,6 @@
 <configuration>
 
-    <!-- Console -->
+    <!-- CONSOLE -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
@@ -10,6 +10,7 @@
         </encoder>
     </appender>
 
+    <!-- OTEL -->
     <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender"/>
 
 </configuration>

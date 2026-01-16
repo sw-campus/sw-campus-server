@@ -80,7 +80,12 @@ public enum ErrorCode {
 	INVALID_STORAGE_CATEGORY(400, "F004", "잘못된 파일 카테고리입니다"),
 
 	// Lecture (L)
-	LECTURE_NOT_MODIFIABLE(403, "L001", "수정할 수 없는 강의입니다");
+	LECTURE_NOT_MODIFIABLE(403, "L001", "수정할 수 없는 강의입니다"),
+
+	// Post/Community (P)
+	BOARD_CATEGORY_NOT_FOUND(404, "P001", "카테고리를 찾을 수 없습니다"),
+	POST_NOT_FOUND(404, "P002", "게시글을 찾을 수 없습니다"),
+	POST_ACCESS_DENIED(403, "P003", "게시글에 대한 권한이 없습니다");
 
 	private final int status;
 	private final String code;
