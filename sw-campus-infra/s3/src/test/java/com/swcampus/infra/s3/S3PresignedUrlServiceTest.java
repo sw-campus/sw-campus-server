@@ -3,6 +3,7 @@ package com.swcampus.infra.s3;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.storage.PresignedUrlService.PresignedUploadUrl;
 import com.swcampus.domain.storage.PresignedUrlService.PresignedUrl;
+import com.swcampus.domain.storage.exception.InvalidContentTypeException;
 import com.swcampus.domain.storage.exception.InvalidStorageCategoryException;
 import com.swcampus.domain.storage.exception.StorageAccessDeniedException;
 import com.swcampus.domain.storage.exception.StorageBatchLimitExceededException;
@@ -224,7 +225,7 @@ class S3PresignedUrlServiceTest {
         @DisplayName("certificates 카테고리로 업로드 URL을 발급받는다")
         void certificates_success() {
             // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl("certificates", "cert.pdf", "application/pdf", Role.USER);
+            PresignedUploadUrl result = service.getPresignedUploadUrl("certificates", "cert.jpg", "image/jpeg", Role.USER);
 
             // then
             assertThat(result.key()).startsWith("certificates/");
@@ -234,7 +235,7 @@ class S3PresignedUrlServiceTest {
         @DisplayName("employment-certificates 카테고리로 업로드 URL을 발급받는다")
         void employmentCertificates_success() {
             // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl("employment-certificates", "doc.pdf", "application/pdf", Role.USER);
+            PresignedUploadUrl result = service.getPresignedUploadUrl("employment-certificates", "doc.png", "image/png", Role.USER);
 
             // then
             assertThat(result.key()).startsWith("employment-certificates/");
@@ -263,6 +264,62 @@ class S3PresignedUrlServiceTest {
             // UUID is 36 characters + extension
             String fileName = parts[4];
             assertThat(fileName).matches("[a-f0-9-]{36}\\.jpg");
+        }
+
+        @Test
+        @DisplayName("허용되지 않는 contentType은 예외가 발생한다")
+        void invalidContentType_throwsException() {
+            // when & then
+            assertThatThrownBy(() -> service.getPresignedUploadUrl("lectures", "test.pdf", "application/pdf", Role.ORGANIZATION))
+                    .isInstanceOf(InvalidContentTypeException.class);
+        }
+
+        @Test
+        @DisplayName("null contentType은 예외가 발생한다")
+        void nullContentType_throwsException() {
+            // when & then
+            assertThatThrownBy(() -> service.getPresignedUploadUrl("lectures", "test.jpg", null, Role.ORGANIZATION))
+                    .isInstanceOf(InvalidContentTypeException.class);
+        }
+
+        @Test
+        @DisplayName("image/jpeg contentType은 허용된다")
+        void jpegContentType_success() {
+            // when
+            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "test.jpg", "image/jpeg", Role.ORGANIZATION);
+
+            // then
+            assertThat(result.uploadUrl()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("image/png contentType은 허용된다")
+        void pngContentType_success() {
+            // when
+            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "test.png", "image/png", Role.ORGANIZATION);
+
+            // then
+            assertThat(result.uploadUrl()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("image/webp contentType은 허용된다")
+        void webpContentType_success() {
+            // when
+            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "test.webp", "image/webp", Role.ORGANIZATION);
+
+            // then
+            assertThat(result.uploadUrl()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("image/gif contentType은 허용된다")
+        void gifContentType_success() {
+            // when
+            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "test.gif", "image/gif", Role.ORGANIZATION);
+
+            // then
+            assertThat(result.uploadUrl()).isNotNull();
         }
     }
 }

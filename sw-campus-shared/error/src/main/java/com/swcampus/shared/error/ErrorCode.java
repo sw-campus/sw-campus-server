@@ -78,6 +78,7 @@ public enum ErrorCode {
 	STORAGE_ACCESS_DENIED(403, "F002", "파일 접근 권한이 없습니다"),
 	STORAGE_BATCH_LIMIT_EXCEEDED(400, "F003", "파일 업로드 한도를 초과했습니다"),
 	INVALID_STORAGE_CATEGORY(400, "F004", "잘못된 파일 카테고리입니다"),
+	INVALID_CONTENT_TYPE(400, "F005", "지원하지 않는 파일 형식입니다"),
 
 	// Lecture (L)
 	LECTURE_NOT_MODIFIABLE(403, "L001", "수정할 수 없는 강의입니다");
