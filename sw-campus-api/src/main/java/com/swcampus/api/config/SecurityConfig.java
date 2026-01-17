@@ -85,8 +85,8 @@ public class SecurityConfig {
                         // Storage API (인증 선택적)
                         .requestMatchers(HttpMethod.GET, "/api/v1/storage/presigned-urls").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/storage/presigned-urls/batch").permitAll()
-                        // 관리자 API (인증 필요, 추후 ROLE_ADMIN 추가 가능)
-                        .requestMatchers("/api/v1/admin/**").authenticated()
+                        // 관리자 API (ADMIN 역할 필요)
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         // 나머지는 인증 필요
                         .anyRequest().authenticated())
                 .addFilterBefore(

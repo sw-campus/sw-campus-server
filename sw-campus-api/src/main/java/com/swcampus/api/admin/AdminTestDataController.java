@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Admin Test Data", description = "관리자 테스트 데이터 관리 API")
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/admin/test-data")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "cookieAuth")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminTestDataController {
 
     private final TestDataService testDataService;
