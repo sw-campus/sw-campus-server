@@ -21,6 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.swcampus.api.security.JwtAuthenticationFilter;
 import com.swcampus.domain.auth.TokenProvider;
+import com.swcampus.domain.auth.TokenValidationResult;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -61,7 +62,20 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"message\":\"인증이 필요합니다\"}");
+
+                            // JWT 필터에서 저장한 validation result 확인
+                            Object validationResult = request.getAttribute(
+                                    JwtAuthenticationFilter.TOKEN_VALIDATION_RESULT_ATTRIBUTE);
+
+                            String responseBody;
+                            if (validationResult == TokenValidationResult.EXPIRED) {
+                                responseBody = "{\"code\": \"A002\", \"message\": \"토큰이 만료되었습니다\"}";
+                            } else if (validationResult == TokenValidationResult.INVALID) {
+                                responseBody = "{\"code\": \"A001\", \"message\": \"유효하지 않은 토큰입니다\"}";
+                            } else {
+                                responseBody = "{\"message\": \"인증이 필요합니다\"}";
+                            }
+                            response.getWriter().write(responseBody);
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -90,7 +104,7 @@ public class SecurityConfig {
                         // 나머지는 인증 필요
                         .anyRequest().authenticated())
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(tokenProvider, PUBLIC_GET_APIS),
+                        new JwtAuthenticationFilter(tokenProvider),
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
