@@ -12,6 +12,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -282,41 +284,12 @@ class S3PresignedUrlServiceTest {
                     .isInstanceOf(InvalidContentTypeException.class);
         }
 
-        @Test
-        @DisplayName("image/jpeg contentType은 허용된다")
-        void jpegContentType_success() {
+        @ParameterizedTest
+        @ValueSource(strings = {"image/jpeg", "image/png", "image/webp", "image/gif"})
+        @DisplayName("허용된 contentType은 URL 발급에 성공한다")
+        void allowedContentTypes_success(String contentType) {
             // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "test.jpg", "image/jpeg", Role.ORGANIZATION);
-
-            // then
-            assertThat(result.uploadUrl()).isNotNull();
-        }
-
-        @Test
-        @DisplayName("image/png contentType은 허용된다")
-        void pngContentType_success() {
-            // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "test.png", "image/png", Role.ORGANIZATION);
-
-            // then
-            assertThat(result.uploadUrl()).isNotNull();
-        }
-
-        @Test
-        @DisplayName("image/webp contentType은 허용된다")
-        void webpContentType_success() {
-            // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "test.webp", "image/webp", Role.ORGANIZATION);
-
-            // then
-            assertThat(result.uploadUrl()).isNotNull();
-        }
-
-        @Test
-        @DisplayName("image/gif contentType은 허용된다")
-        void gifContentType_success() {
-            // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "test.gif", "image/gif", Role.ORGANIZATION);
+            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "test.file", contentType, Role.ORGANIZATION);
 
             // then
             assertThat(result.uploadUrl()).isNotNull();
