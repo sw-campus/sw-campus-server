@@ -23,10 +23,10 @@ class PasswordValidatorTest {
     }
 
     @Test
-    @DisplayName("8자 이상 특수문자 포함 비밀번호는 통과한다")
+    @DisplayName("8자 이상 모든 조건 충족 비밀번호는 통과한다")
     void validPasswordWithMinLength() {
         // given
-        String password = "Passwor!";
+        String password = "Passwo1!";
 
         // when & then
         assertThatNoException().isThrownBy(() -> validator.validate(password));
@@ -42,6 +42,42 @@ class PasswordValidatorTest {
         assertThatThrownBy(() -> validator.validate(password))
                 .isInstanceOf(InvalidPasswordException.class)
                 .hasMessageContaining("8자 이상");
+    }
+
+    @Test
+    @DisplayName("대문자가 없는 비밀번호는 검증에 실패한다")
+    void noUppercase() {
+        // given
+        String password = "password1!";
+
+        // when & then
+        assertThatThrownBy(() -> validator.validate(password))
+                .isInstanceOf(InvalidPasswordException.class)
+                .hasMessageContaining("대문자");
+    }
+
+    @Test
+    @DisplayName("소문자가 없는 비밀번호는 검증에 실패한다")
+    void noLowercase() {
+        // given
+        String password = "PASSWORD1!";
+
+        // when & then
+        assertThatThrownBy(() -> validator.validate(password))
+                .isInstanceOf(InvalidPasswordException.class)
+                .hasMessageContaining("소문자");
+    }
+
+    @Test
+    @DisplayName("숫자가 없는 비밀번호는 검증에 실패한다")
+    void noDigit() {
+        // given
+        String password = "Password!";
+
+        // when & then
+        assertThatThrownBy(() -> validator.validate(password))
+                .isInstanceOf(InvalidPasswordException.class)
+                .hasMessageContaining("숫자");
     }
 
     @Test

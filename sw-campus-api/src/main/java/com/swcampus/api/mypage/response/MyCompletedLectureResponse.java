@@ -32,7 +32,10 @@ public record MyCompletedLectureResponse(
     String certificateImageUrl,
 
     @Schema(description = "수료증 승인 상태")
-    ApprovalStatus certificateStatus
+    ApprovalStatus certificateStatus,
+
+    @Schema(description = "후기 승인 상태 (후기가 없으면 null)", example = "APPROVED", allowableValues = {"PENDING", "APPROVED", "REJECTED"})
+    ApprovalStatus reviewStatus
 ) {
     public static MyCompletedLectureResponse from(CompletedLectureInfo info) {
         return new MyCompletedLectureResponse(
@@ -44,7 +47,8 @@ public record MyCompletedLectureResponse(
             info.certifiedAt(),
             info.canWriteReview(),
             info.certificateImageUrl(),
-            info.certificateStatus()
+            info.certificateStatus(),
+            info.reviewStatus()
         );
     }
 }

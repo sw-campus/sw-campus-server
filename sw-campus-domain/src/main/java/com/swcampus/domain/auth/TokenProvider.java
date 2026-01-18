@@ -2,6 +2,7 @@ package com.swcampus.domain.auth;
 
 import com.swcampus.domain.member.Role;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -66,6 +67,23 @@ public class TokenProvider {
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
+        }
+    }
+
+    public TokenValidationResult validateTokenWithResult(String token) {
+        if (token == null || token.isBlank()) {
+            return TokenValidationResult.INVALID;
+        }
+        try {
+            Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
+            return TokenValidationResult.VALID;
+        } catch (ExpiredJwtException e) {
+            return TokenValidationResult.EXPIRED;
+        } catch (JwtException | IllegalArgumentException e) {
+            return TokenValidationResult.INVALID;
         }
     }
 
