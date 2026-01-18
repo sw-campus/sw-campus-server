@@ -66,10 +66,14 @@ project(':sw-campus-api') {
 
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation project(':sw-campus-infra:db-postgres')
     }
 
     bootJar {
         enabled = true
+        from(project(':sw-campus-infra:db-postgres').sourceSets.main.resources) {
+        into('BOOT-INF/classes')
+        }
     }
 
     jar {
