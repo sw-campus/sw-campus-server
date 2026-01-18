@@ -7,6 +7,8 @@ ADD --chmod=644 https://github.com/open-telemetry/opentelemetry-java-instrumenta
 
 # CI에서 이미 만들어진 jar만 복사
 COPY sw-campus-api/build/libs/*.jar app.jar
+# Flyway migration SQL 포함 
+COPY sw-campus-api/src/main/resources/db /app/resources/db
 
 RUN addgroup -S spring && adduser -S spring -G spring && chown -R spring:spring /app
 USER spring:spring
