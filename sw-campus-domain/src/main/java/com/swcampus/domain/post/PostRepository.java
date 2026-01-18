@@ -15,6 +15,14 @@ public interface PostRepository {
     Page<Post> findAll(List<Long> categoryIds, List<String> tags, Pageable pageable);
     
     void incrementViewCount(Long id);
+
+    void incrementCommentCount(Long id);
+
+    void decrementCommentCount(Long id);
+
+    void incrementLikeCount(Long id);
+
+    void decrementLikeCount(Long id);
     
     void deleteById(Long id);
     
@@ -26,4 +34,24 @@ public interface PostRepository {
      * @param keyword 검색어 (제목, 본문, 태그에서 검색)
      */
     Page<PostSummary> findAllWithDetails(List<Long> categoryIds, List<String> tags, String keyword, Pageable pageable);
+
+    /**
+     * 이전 게시글 조회 (현재 게시글보다 id가 작고, 삭제되지 않은 게시글 중 가장 큰 id)
+     */
+    Optional<PostSummary> findPreviousPost(Long currentPostId);
+
+    /**
+     * 다음 게시글 조회 (현재 게시글보다 id가 크고, 삭제되지 않은 게시글 중 가장 작은 id)
+     */
+    Optional<PostSummary> findNextPost(Long currentPostId);
+
+    /**
+     * 특정 유저가 작성한 게시글 목록 조회 (삭제되지 않은 게시글만)
+     */
+    Page<PostSummary> findByUserId(Long userId, Pageable pageable);
+
+    /**
+     * 특정 유저가 작성한 게시글 수 조회 (삭제되지 않은 게시글만)
+     */
+    long countByUserId(Long userId);
 }

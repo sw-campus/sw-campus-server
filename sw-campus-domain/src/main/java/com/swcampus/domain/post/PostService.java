@@ -100,4 +100,24 @@ public class PostService {
         post.selectComment(commentId);
         postRepository.save(post);
     }
+
+    /**
+     * 이전/다음 게시글 조회
+     */
+    public AdjacentPosts getAdjacentPosts(Long postId) {
+        PostSummary prev = postRepository.findPreviousPost(postId).orElse(null);
+        PostSummary next = postRepository.findNextPost(postId).orElse(null);
+        return new AdjacentPosts(prev, next);
+    }
+
+    /**
+     * 게시글 고정/해제 토글 (관리자만 가능)
+     */
+    @Transactional
+    public Post togglePin(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException(postId));
+        post.togglePin();
+        return postRepository.save(post);
+    }
 }

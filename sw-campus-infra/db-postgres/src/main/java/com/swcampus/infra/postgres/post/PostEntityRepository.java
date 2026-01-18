@@ -54,6 +54,26 @@ public class PostEntityRepository implements PostRepository {
     }
 
     @Override
+    public void incrementCommentCount(Long id) {
+        jpaRepository.incrementCommentCount(id);
+    }
+
+    @Override
+    public void decrementCommentCount(Long id) {
+        jpaRepository.decrementCommentCount(id);
+    }
+
+    @Override
+    public void incrementLikeCount(Long id) {
+        jpaRepository.incrementLikeCount(id);
+    }
+
+    @Override
+    public void decrementLikeCount(Long id) {
+        jpaRepository.decrementLikeCount(id);
+    }
+
+    @Override
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
     }
@@ -72,8 +92,8 @@ public class PostEntityRepository implements PostRepository {
         
         return results.map(row -> {
             Post post = mapRowToPost(row);
-            String authorNickname = (String) row[13];
-            String categoryName = (String) row[14];
+            String authorNickname = row[15] != null ? (String) row[15] : "알 수 없음";
+            String categoryName = (String) row[16];
             
             return PostSummary.builder()
                     .post(post)
@@ -86,8 +106,9 @@ public class PostEntityRepository implements PostRepository {
     private Post mapRowToPost(Object[] row) {
         // Native Query 결과 매핑
         // 0: post_id, 1: board_category_id, 2: user_id, 3: post_title, 4: post_body
-        // 5: post_images, 6: tags, 7: view_count, 8: like_count, 9: selected_comment_id
-        // 10: is_deleted, 11: created_at, 12: updated_at, 13: author_nickname, 14: category_name
+        // 5: post_images, 6: tags, 7: view_count, 8: like_count, 9: comment_count
+        // 10: selected_comment_id, 11: is_deleted, 12: created_at, 13: updated_at
+        // 14: is_pinned, 15: author_nickname, 16: category_name
         
         Long id = row[0] != null ? ((Number) row[0]).longValue() : null;
         Long boardCategoryId = row[1] != null ? ((Number) row[1]).longValue() : null;
@@ -101,14 +122,18 @@ public class PostEntityRepository implements PostRepository {
         
         Long viewCount = row[7] != null ? ((Number) row[7]).longValue() : 0L;
         Long likeCount = row[8] != null ? ((Number) row[8]).longValue() : 0L;
-        Long selectedCommentId = row[9] != null ? ((Number) row[9]).longValue() : null;
-        boolean deleted = row[10] != null && (Boolean) row[10];
+        Long commentCount = row[9] != null ? ((Number) row[9]).longValue() : 0L;
+        Long selectedCommentId = row[10] != null ? ((Number) row[10]).longValue() : null;
+        boolean deleted = row[11] != null && (Boolean) row[11];
         
-        java.time.LocalDateTime createdAt = resolveLocalDateTime(row[11]);
-        java.time.LocalDateTime updatedAt = resolveLocalDateTime(row[12]);
+        java.time.LocalDateTime createdAt = resolveLocalDateTime(row[12]);
+        java.time.LocalDateTime updatedAt = resolveLocalDateTime(row[13]);
+        
+        // is_pinned는 인덱스 14에 있음
+        boolean pinned = row[14] != null && (Boolean) row[14];
         
         return Post.of(id, boardCategoryId, userId, title, body, images, tags,
-                viewCount, likeCount, selectedCommentId, deleted, createdAt, updatedAt);
+                viewCount, likeCount, commentCount, selectedCommentId, pinned, deleted, createdAt, updatedAt);
     }
 
     private java.time.LocalDateTime resolveLocalDateTime(Object obj) {
@@ -146,5 +171,61 @@ public class PostEntityRepository implements PostRepository {
             }
         }
         return new java.util.ArrayList<>();
+    }
+
+    @Override
+    public Optional<PostSummary> findPreviousPost(Long currentPostId) {
+        java.util.List<Object[]> results = jpaRepository.findPreviousPostWithDetails(currentPostId);
+        if (results == null || results.isEmpty()) {
+            return Optional.empty();
+        }
+        return mapRowToPostSummary(results.get(0));
+    }
+
+    @Override
+    public Optional<PostSummary> findNextPost(Long currentPostId) {
+        java.util.List<Object[]> results = jpaRepository.findNextPostWithDetails(currentPostId);
+        if (results == null || results.isEmpty()) {
+            return Optional.empty();
+        }
+        return mapRowToPostSummary(results.get(0));
+    }
+
+    private Optional<PostSummary> mapRowToPostSummary(Object[] row) {
+        if (row == null || row.length == 0 || row[0] == null) {
+            return Optional.empty();
+        }
+        
+        Post post = mapRowToPost(row);
+        String authorNickname = row[15] != null ? (String) row[15] : "알 수 없음";
+        String categoryName = (String) row[16];
+        
+        return Optional.of(PostSummary.builder()
+                .post(post)
+                .authorNickname(authorNickname)
+                .categoryName(categoryName)
+                .build());
+    }
+
+    @Override
+    public Page<PostSummary> findByUserId(Long userId, Pageable pageable) {
+        Page<Object[]> results = jpaRepository.findByUserIdWithDetails(userId, pageable);
+        
+        return results.map(row -> {
+            Post post = mapRowToPost(row);
+            String authorNickname = row[15] != null ? (String) row[15] : "알 수 없음";
+            String categoryName = (String) row[16];
+            
+            return PostSummary.builder()
+                    .post(post)
+                    .authorNickname(authorNickname)
+                    .categoryName(categoryName)
+                    .build();
+        });
+    }
+
+    @Override
+    public long countByUserId(Long userId) {
+        return jpaRepository.countByUserIdNotDeleted(userId);
     }
 }

@@ -50,8 +50,14 @@ public class PostEntity extends BaseEntity {
     @Column(name = "like_count", nullable = false)
     private Long likeCount = 0L;
 
+    @Column(name = "comment_count", nullable = false)
+    private Long commentCount = 0L;
+
     @Column(name = "selected_comment_id")
     private Long selectedCommentId;
+
+    @Column(name = "is_pinned", nullable = false)
+    private boolean pinned = false;
 
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false;
@@ -68,6 +74,7 @@ public class PostEntity extends BaseEntity {
         entity.viewCount = post.getViewCount();
         entity.likeCount = post.getLikeCount();
         entity.selectedCommentId = post.getSelectedCommentId();
+        entity.pinned = post.isPinned();
         entity.deleted = post.isDeleted();
         return entity;
     }
@@ -78,6 +85,7 @@ public class PostEntity extends BaseEntity {
         this.images = post.getImages() != null ? new ArrayList<>(post.getImages()) : new ArrayList<>();
         this.tags = post.getTags() != null ? new ArrayList<>(post.getTags()) : new ArrayList<>();
         this.selectedCommentId = post.getSelectedCommentId();
+        this.pinned = post.isPinned();
         this.deleted = post.isDeleted();
     }
 
@@ -92,7 +100,9 @@ public class PostEntity extends BaseEntity {
                 this.tags != null ? new ArrayList<>(this.tags) : new ArrayList<>(),
                 this.viewCount,
                 this.likeCount,
+                this.commentCount,
                 this.selectedCommentId,
+                this.pinned,
                 this.deleted,
                 this.getCreatedAt(),
                 this.getUpdatedAt()

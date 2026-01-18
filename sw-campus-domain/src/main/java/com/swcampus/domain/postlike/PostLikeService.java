@@ -1,5 +1,6 @@
 package com.swcampus.domain.postlike;
 
+import com.swcampus.domain.post.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,7 @@ import java.util.Set;
 public class PostLikeService {
 
     private final PostLikeRepository postLikeRepository;
+    private final PostRepository postRepository;
 
     /**
      * 게시글 추천 토글 - 이미 추천했으면 취소, 없으면 추천
@@ -21,10 +23,12 @@ public class PostLikeService {
     public boolean toggleLike(Long userId, Long postId) {
         if (postLikeRepository.existsByUserIdAndPostId(userId, postId)) {
             postLikeRepository.deleteByUserIdAndPostId(userId, postId);
+            postRepository.decrementLikeCount(postId);
             return false;
         } else {
             PostLike postLike = PostLike.create(userId, postId);
             postLikeRepository.save(postLike);
+            postRepository.incrementLikeCount(postId);
             return true;
         }
     }

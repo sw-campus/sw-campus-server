@@ -236,4 +236,39 @@ public class PostController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "이전/다음 게시글 조회", description = "현재 게시글의 이전/다음 게시글 정보를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    @GetMapping("/{postId}/adjacent")
+    public ResponseEntity<com.swcampus.api.post.response.AdjacentPostResponse> getAdjacentPosts(
+            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+        
+        com.swcampus.domain.post.AdjacentPosts adjacentPosts = postService.getAdjacentPosts(postId);
+        com.swcampus.api.post.response.AdjacentPostResponse response = 
+                com.swcampus.api.post.response.AdjacentPostResponse.from(adjacentPosts);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "게시글 고정/해제", description = "관리자가 게시글을 상단에 고정하거나 해제합니다.")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "토글 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (관리자만 가능)")
+    })
+    @PostMapping("/{postId}/pin")
+    public ResponseEntity<java.util.Map<String, Boolean>> togglePin(
+            @CurrentMember MemberPrincipal member,
+            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+        
+        if (member.role() != Role.ADMIN) {
+            return ResponseEntity.status(403).build();
+        }
+        
+        com.swcampus.domain.post.Post post = postService.togglePin(postId);
+        return ResponseEntity.ok(java.util.Map.of("pinned", post.isPinned()));
+    }
 }

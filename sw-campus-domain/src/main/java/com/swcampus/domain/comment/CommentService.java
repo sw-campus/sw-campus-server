@@ -2,6 +2,7 @@ package com.swcampus.domain.comment;
 
 import com.swcampus.domain.comment.exception.CommentAccessDeniedException;
 import com.swcampus.domain.comment.exception.CommentNotFoundException;
+import com.swcampus.domain.post.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,11 +15,17 @@ import java.util.List;
 public class CommentService {
 
     private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
 
     @Transactional
     public Comment createComment(Long postId, Long userId, Long parentId, String body, String imageUrl) {
         Comment comment = Comment.create(postId, userId, parentId, body, imageUrl);
-        return commentRepository.save(comment);
+        Comment saved = commentRepository.save(comment);
+        
+        // 게시글 댓글 수 증가
+        postRepository.incrementCommentCount(postId);
+        
+        return saved;
     }
 
     public List<Comment> getCommentsByPostId(Long postId) {
@@ -54,6 +61,9 @@ public class CommentService {
 
         comment.delete();
         commentRepository.save(comment);
+        
+        // 게시글 댓글 수 감소
+        postRepository.decrementCommentCount(comment.getPostId());
     }
 
     public long countByPostId(Long postId) {

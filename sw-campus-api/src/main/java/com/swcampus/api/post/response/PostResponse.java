@@ -52,6 +52,9 @@ public class PostResponse {
     @Schema(description = "썸네일 이미지 URL", example = "https://example.com/image.jpg")
     private String thumbnailUrl;
 
+    @Schema(description = "고정 게시글 여부", example = "false")
+    private boolean pinned;
+
     public static PostResponse from(Post post, String authorNickname, String categoryName, Long commentCount) {
         List<String> images = post.getImages();
         boolean hasImage = images != null && !images.isEmpty();
@@ -71,6 +74,7 @@ public class PostResponse {
                 .createdAt(post.getCreatedAt())
                 .hasImage(hasImage)
                 .thumbnailUrl(thumbnail)
+                .pinned(post.isPinned())
                 .build();
     }
 }

@@ -87,7 +87,7 @@ class PostControllerTest {
             1L, 1L, 1L,
             "Test Title", "Test Body",
             List.of(), List.of("tag1"),
-            0L, 0L, null, false,
+            0L, 0L, 0L, null, false, false,
             LocalDateTime.now(), LocalDateTime.now()
         );
     }
@@ -152,7 +152,7 @@ class PostControllerTest {
             1L, 1L, 1L,
             "Updated Title", "Updated Body",
             List.of(), List.of("updated-tag"),
-            0L, 0L, null, false,
+            0L, 0L, 0L, null, false, false,
             LocalDateTime.now(), LocalDateTime.now()
         );
 
