@@ -163,7 +163,7 @@ class MypageControllerTest {
         // given
         CompletedLectureInfo lectureInfo = new CompletedLectureInfo(
             1L, 100L, "Test Lecture", "image.jpg", "Test Org", LocalDateTime.now(), true,
-            "https://s3.example.com/cert.jpg", ApprovalStatus.PENDING
+            "https://s3.example.com/cert.jpg", ApprovalStatus.PENDING, ApprovalStatus.APPROVED
         );
         given(mypageService.getCompletedLectures(1L)).willReturn(List.of(lectureInfo));
 
