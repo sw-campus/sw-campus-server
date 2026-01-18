@@ -2,13 +2,10 @@ package com.swcampus.api.survey;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -16,14 +13,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.exception.GlobalExceptionHandler;
-import com.swcampus.api.survey.request.CreateSurveyRequest;
-import com.swcampus.api.survey.request.UpdateSurveyRequest;
+import com.swcampus.api.survey.request.SaveBasicSurveyRequest;
+import com.swcampus.api.survey.request.SubmitAptitudeTestRequest;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.member.Role;
-import com.swcampus.domain.survey.MemberSurvey;
-import com.swcampus.domain.survey.MemberSurveyService;
-import com.swcampus.domain.survey.exception.SurveyAlreadyExistsException;
+import com.swcampus.domain.survey.*;
+import com.swcampus.domain.survey.exception.AptitudeTestRequiredException;
+import com.swcampus.domain.survey.exception.BasicSurveyRequiredException;
 import com.swcampus.domain.survey.exception.SurveyNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +39,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @WebMvcTest(controllers = SurveyController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @AutoConfigureMockMvc(addFilters = false)
@@ -61,6 +60,9 @@ class SurveyControllerTest {
     private MemberSurveyService surveyService;
 
     @MockitoBean
+    private AdminSurveyQuestionService questionService;
+
+    @MockitoBean
     private TokenProvider tokenProvider;
 
     private static final Long MEMBER_ID = 1L;
@@ -74,65 +76,39 @@ class SurveyControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    @Nested
-    @DisplayName("POST /api/v1/members/me/survey")
-    class CreateSurvey {
+    private BasicSurvey createTestBasicSurvey() {
+        return BasicSurvey.builder()
+                .majorInfo(MajorInfo.withMajor("컴퓨터공학"))
+                .programmingExperience(ProgrammingExperience.withExperience("삼성 SW 아카데미"))
+                .preferredLearningMethod(LearningMethod.OFFLINE)
+                .desiredJobs(List.of(DesiredJob.BACKEND, DesiredJob.DATA))
+                .desiredJobOther(null)
+                .affordableBudgetRange(BudgetRange.RANGE_100_200)
+                .build();
+    }
 
-        @Test
-        @DisplayName("설문조사 작성 성공 (201)")
-        void success() throws Exception {
-            // given
-            CreateSurveyRequest request = new CreateSurveyRequest(
-                    "컴퓨터공학", true, "백엔드 개발자",
-                    "정보처리기사", true, BigDecimal.valueOf(500000)
-            );
+    private MemberSurvey createTestMemberSurvey() {
+        return MemberSurvey.createWithBasicSurvey(MEMBER_ID, createTestBasicSurvey());
+    }
 
-            MemberSurvey survey = MemberSurvey.create(
-                    MEMBER_ID, "컴퓨터공학", true,
-                    "백엔드 개발자", "정보처리기사",
-                    true, BigDecimal.valueOf(500000)
-            );
-
-            when(surveyService.createSurvey(
-                    eq(MEMBER_ID), any(), any(), any(), any(), any(), any()
-            )).thenReturn(survey);
-
-            // when & then
-            mockMvc.perform(post(BASE_URL)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request))
-                            .with(csrf()))
-                    .andDo(print())
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.memberId").value(MEMBER_ID))
-                    .andExpect(jsonPath("$.major").value("컴퓨터공학"))
-                    .andExpect(jsonPath("$.bootcampCompleted").value(true))
-                    .andExpect(jsonPath("$.wantedJobs").value("백엔드 개발자"))
-                    .andExpect(jsonPath("$.licenses").value("정보처리기사"))
-                    .andExpect(jsonPath("$.hasGovCard").value(true))
-                    .andExpect(jsonPath("$.affordableAmount").value(500000));
-        }
-
-        @Test
-        @DisplayName("이미 설문조사 존재 시 실패 (409)")
-        void fail_alreadyExists() throws Exception {
-            // given
-            CreateSurveyRequest request = new CreateSurveyRequest(
-                    "컴퓨터공학", true, "백엔드 개발자",
-                    "정보처리기사", true, BigDecimal.valueOf(500000)
-            );
-
-            when(surveyService.createSurvey(
-                    eq(MEMBER_ID), any(), any(), any(), any(), any(), any()
-            )).thenThrow(new SurveyAlreadyExistsException());
-
-            // when & then
-            mockMvc.perform(post(BASE_URL)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request))
-                            .with(csrf()))
-                    .andExpect(status().isConflict());
-        }
+    private MemberSurvey createCompletedSurvey() {
+        MemberSurvey survey = createTestMemberSurvey();
+        AptitudeTest aptitudeTest = AptitudeTest.builder()
+                .part1Answers(Map.of("q1", 2, "q2", 1, "q3", 2, "q4", 3))
+                .part2Answers(Map.of("q5", 3, "q6", 2, "q7", 2, "q8", 3))
+                .part3Answers(Map.of(
+                        "q9", "B", "q10", "B", "q11", "D",
+                        "q12", "B", "q13", "B", "q14", "B", "q15", "B"
+                ))
+                .build();
+        SurveyResults results = SurveyResults.builder()
+                .aptitudeScore(65)
+                .aptitudeGrade(AptitudeGrade.TALENTED)
+                .jobTypeScores(Map.of(JobTypeCode.B, 5, JobTypeCode.F, 1, JobTypeCode.D, 1))
+                .recommendedJob(RecommendedJob.BACKEND)
+                .build();
+        survey.completeAptitudeTest(aptitudeTest, results, 1, java.time.LocalDateTime.now());
+        return survey;
     }
 
     @Nested
@@ -143,86 +119,222 @@ class SurveyControllerTest {
         @DisplayName("내 설문조사 조회 성공 (200)")
         void success() throws Exception {
             // given
-            MemberSurvey survey = MemberSurvey.create(
-                    MEMBER_ID, "컴퓨터공학", true,
-                    "백엔드 개발자", "정보처리기사",
-                    true, BigDecimal.valueOf(500000)
-            );
+            MemberSurvey survey = createTestMemberSurvey();
+            when(surveyService.findSurveyByMemberId(MEMBER_ID)).thenReturn(Optional.of(survey));
 
-            when(surveyService.getSurveyByMemberId(MEMBER_ID)).thenReturn(survey);
+            // when & then
+            mockMvc.perform(get(BASE_URL))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.memberId").value(MEMBER_ID))
+                    .andExpect(jsonPath("$.basicSurvey.majorInfo.hasMajor").value(true))
+                    .andExpect(jsonPath("$.basicSurvey.majorInfo.majorName").value("컴퓨터공학"))
+                    .andExpect(jsonPath("$.basicSurvey.programmingExperience.hasExperience").value(true))
+                    .andExpect(jsonPath("$.basicSurvey.preferredLearningMethod").value("OFFLINE"))
+                    .andExpect(jsonPath("$.status.hasBasicSurvey").value(true))
+                    .andExpect(jsonPath("$.status.hasAptitudeTest").value(false));
+        }
+
+        @Test
+        @DisplayName("설문조사 없을 때 (200, null)")
+        void success_nullWhenNotFound() throws Exception {
+            // given
+            when(surveyService.findSurveyByMemberId(MEMBER_ID)).thenReturn(Optional.empty());
 
             // when & then
             mockMvc.perform(get(BASE_URL))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.memberId").value(MEMBER_ID))
-                    .andExpect(jsonPath("$.major").value("컴퓨터공학"));
-        }
-
-        @Test
-        @DisplayName("설문조사 없을 때 (404)")
-        void fail_notFound() throws Exception {
-            // given
-            when(surveyService.getSurveyByMemberId(MEMBER_ID))
-                    .thenThrow(new SurveyNotFoundException());
-
-            // when & then
-            mockMvc.perform(get(BASE_URL))
-                    .andExpect(status().isNotFound());
+                    .andExpect(jsonPath("$").doesNotExist());
         }
     }
 
     @Nested
-    @DisplayName("PUT /api/v1/members/me/survey")
-    class UpdateMySurvey {
+    @DisplayName("POST /api/v1/members/me/survey/basic")
+    class SaveBasicSurvey {
 
         @Test
-        @DisplayName("설문조사 수정 성공 (200)")
+        @DisplayName("기초 설문 저장 성공 (200)")
         void success() throws Exception {
             // given
-            UpdateSurveyRequest request = new UpdateSurveyRequest(
-                    "소프트웨어공학", false, "풀스택 개발자",
-                    "정보처리기사, SQLD", false, BigDecimal.valueOf(1000000)
+            SaveBasicSurveyRequest request = new SaveBasicSurveyRequest(
+                    new SaveBasicSurveyRequest.MajorInfoRequest(true, "컴퓨터공학"),
+                    new SaveBasicSurveyRequest.ProgrammingExperienceRequest(true, "삼성 SW 아카데미"),
+                    LearningMethod.OFFLINE,
+                    List.of(DesiredJob.BACKEND, DesiredJob.DATA),
+                    null,
+                    BudgetRange.RANGE_100_200
             );
 
-            MemberSurvey updatedSurvey = MemberSurvey.create(
-                    MEMBER_ID, "소프트웨어공학", false,
-                    "풀스택 개발자", "정보처리기사, SQLD",
-                    false, BigDecimal.valueOf(1000000)
-            );
-
-            when(surveyService.updateSurvey(
-                    eq(MEMBER_ID), any(), any(), any(), any(), any(), any()
-            )).thenReturn(updatedSurvey);
+            MemberSurvey survey = createTestMemberSurvey();
+            when(surveyService.saveBasicSurvey(eq(MEMBER_ID), any(BasicSurvey.class)))
+                    .thenReturn(survey);
 
             // when & then
-            mockMvc.perform(put(BASE_URL)
+            mockMvc.perform(post(BASE_URL + "/basic")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request))
                             .with(csrf()))
+                    .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.major").value("소프트웨어공학"))
-                    .andExpect(jsonPath("$.wantedJobs").value("풀스택 개발자"));
+                    .andExpect(jsonPath("$.memberId").value(MEMBER_ID))
+                    .andExpect(jsonPath("$.basicSurvey.majorInfo.majorName").value("컴퓨터공학"))
+                    .andExpect(jsonPath("$.status.hasBasicSurvey").value(true));
         }
 
         @Test
-        @DisplayName("설문조사 없을 때 수정 실패 (404)")
-        void fail_notFound() throws Exception {
+        @DisplayName("필수 필드 누락 시 실패 (400)")
+        void fail_missingRequiredFields() throws Exception {
             // given
-            UpdateSurveyRequest request = new UpdateSurveyRequest(
-                    "소프트웨어공학", false, "풀스택 개발자",
-                    "정보처리기사, SQLD", false, BigDecimal.valueOf(1000000)
+            SaveBasicSurveyRequest request = new SaveBasicSurveyRequest(
+                    null, // major is required
+                    new SaveBasicSurveyRequest.ProgrammingExperienceRequest(true, null),
+                    LearningMethod.OFFLINE,
+                    List.of(DesiredJob.BACKEND),
+                    null,
+                    BudgetRange.RANGE_100_200
             );
 
-            when(surveyService.updateSurvey(
-                    eq(MEMBER_ID), any(), any(), any(), any(), any(), any()
-            )).thenThrow(new SurveyNotFoundException());
-
             // when & then
-            mockMvc.perform(put(BASE_URL)
+            mockMvc.perform(post(BASE_URL + "/basic")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request))
                             .with(csrf()))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /api/v1/members/me/survey/aptitude-test")
+    class SubmitAptitudeTest {
+
+        @Test
+        @DisplayName("성향 테스트 제출 성공 (200)")
+        void success() throws Exception {
+            // given
+            int questionSetVersion = 1;
+            SubmitAptitudeTestRequest request = new SubmitAptitudeTestRequest(
+                    questionSetVersion,
+                    Map.of("q1", 2, "q2", 1, "q3", 2, "q4", 3),
+                    Map.of("q5", 3, "q6", 2, "q7", 2, "q8", 3),
+                    Map.of("q9", "B", "q10", "B", "q11", "D",
+                            "q12", "B", "q13", "B", "q14", "B", "q15", "B")
+            );
+
+            MemberSurvey survey = createCompletedSurvey();
+
+            when(surveyService.submitAptitudeTest(eq(MEMBER_ID), any(AptitudeTest.class), eq(questionSetVersion)))
+                    .thenReturn(survey);
+
+            // when & then
+            mockMvc.perform(post(BASE_URL + "/aptitude-test")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request))
+                            .with(csrf()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status.hasAptitudeTest").value(true))
+                    .andExpect(jsonPath("$.results.recommendedJob").value("BACKEND"));
+        }
+
+        @Test
+        @DisplayName("기초 설문 미완료 시 실패 (400)")
+        void fail_noBasicSurvey() throws Exception {
+            // given
+            int questionSetVersion = 1;
+            SubmitAptitudeTestRequest request = new SubmitAptitudeTestRequest(
+                    questionSetVersion,
+                    Map.of("q1", 2, "q2", 1, "q3", 2, "q4", 3),
+                    Map.of("q5", 3, "q6", 2, "q7", 2, "q8", 3),
+                    Map.of("q9", "B", "q10", "B", "q11", "D",
+                            "q12", "B", "q13", "B", "q14", "B", "q15", "B")
+            );
+
+            when(surveyService.submitAptitudeTest(eq(MEMBER_ID), any(AptitudeTest.class), eq(questionSetVersion)))
+                    .thenThrow(new BasicSurveyRequiredException());
+
+            // when & then
+            mockMvc.perform(post(BASE_URL + "/aptitude-test")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request))
+                            .with(csrf()))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/members/me/survey/results")
+    class GetResults {
+
+        @Test
+        @DisplayName("설문 결과 조회 성공 (200)")
+        void success() throws Exception {
+            // given
+            SurveyResults results = SurveyResults.builder()
+                    .aptitudeScore(65)
+                    .aptitudeGrade(AptitudeGrade.TALENTED)
+                    .jobTypeScores(Map.of(JobTypeCode.B, 5, JobTypeCode.F, 1, JobTypeCode.D, 1))
+                    .recommendedJob(RecommendedJob.BACKEND)
+                    .build();
+
+            when(surveyService.getResultsByMemberId(MEMBER_ID)).thenReturn(results);
+
+            // when & then
+            mockMvc.perform(get(BASE_URL + "/results"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.recommendedJob").value("BACKEND"));
+        }
+
+        @Test
+        @DisplayName("성향 테스트 미완료 시 실패 (400)")
+        void fail_noAptitudeTest() throws Exception {
+            // given
+            when(surveyService.getResultsByMemberId(MEMBER_ID))
+                    .thenThrow(new AptitudeTestRequiredException());
+
+            // when & then
+            mockMvc.perform(get(BASE_URL + "/results"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/members/me/survey/status")
+    class GetStatus {
+
+        @Test
+        @DisplayName("설문 상태 조회 성공 - 기초 설문만 완료 (200)")
+        void success_basicOnly() throws Exception {
+            // given
+            MemberSurvey survey = createTestMemberSurvey();
+            when(surveyService.findSurveyByMemberId(MEMBER_ID))
+                    .thenReturn(Optional.of(survey));
+
+            // when & then
+            mockMvc.perform(get(BASE_URL + "/status"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.hasBasicSurvey").value(true))
+                    .andExpect(jsonPath("$.hasAptitudeTest").value(false))
+                    .andExpect(jsonPath("$.canUseBasicRecommendation").value(true))
+                    .andExpect(jsonPath("$.canUsePreciseRecommendation").value(false));
+        }
+
+        @Test
+        @DisplayName("설문 상태 조회 성공 - 설문 없음 (200)")
+        void success_noSurvey() throws Exception {
+            // given
+            when(surveyService.findSurveyByMemberId(MEMBER_ID))
+                    .thenReturn(Optional.empty());
+
+            // when & then
+            mockMvc.perform(get(BASE_URL + "/status"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.hasBasicSurvey").value(false))
+                    .andExpect(jsonPath("$.hasAptitudeTest").value(false))
+                    .andExpect(jsonPath("$.canUseBasicRecommendation").value(false))
+                    .andExpect(jsonPath("$.canUsePreciseRecommendation").value(false));
         }
     }
 }

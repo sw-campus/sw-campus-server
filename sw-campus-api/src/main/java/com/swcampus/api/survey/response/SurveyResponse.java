@@ -3,49 +3,43 @@ package com.swcampus.api.survey.response;
 import com.swcampus.domain.survey.MemberSurvey;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Schema(description = "설문조사 응답")
+@Schema(description = "설문조사 전체 응답")
 public record SurveyResponse(
         @Schema(description = "회원 ID", example = "1")
         Long memberId,
 
-        @Schema(description = "전공", example = "컴퓨터공학")
-        String major,
+        @Schema(description = "기초 설문 데이터")
+        BasicSurveyResponse basicSurvey,
 
-        @Schema(description = "부트캠프 수료 여부", example = "true")
-        Boolean bootcampCompleted,
+        @Schema(description = "설문 결과 (추천 직무)")
+        SurveyResultsResponse results,
 
-        @Schema(description = "희망 직무", example = "백엔드 개발자, 데이터 엔지니어")
-        String wantedJobs,
-
-        @Schema(description = "보유 자격증", example = "정보처리기사, SQLD, AWS SAA")
-        String licenses,
-
-        @Schema(description = "내일배움카드 보유 여부", example = "true")
-        Boolean hasGovCard,
-
-        @Schema(description = "자비 부담 가능 금액", example = "500000")
-        BigDecimal affordableAmount,
+        @Schema(description = "설문 상태")
+        SurveyStatusResponse status,
 
         @Schema(description = "생성일시")
         LocalDateTime createdAt,
 
         @Schema(description = "수정일시")
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+
+        @Schema(description = "완료일시")
+        LocalDateTime completedAt
 ) {
     public static SurveyResponse from(MemberSurvey survey) {
+        if (survey == null) {
+            return null;
+        }
         return new SurveyResponse(
                 survey.getMemberId(),
-                survey.getMajor(),
-                survey.getBootcampCompleted(),
-                survey.getWantedJobs(),
-                survey.getLicenses(),
-                survey.getHasGovCard(),
-                survey.getAffordableAmount(),
+                BasicSurveyResponse.from(survey.getBasicSurvey()),
+                SurveyResultsResponse.from(survey.getResults()),
+                SurveyStatusResponse.from(survey),
                 survey.getCreatedAt(),
-                survey.getUpdatedAt()
+                survey.getUpdatedAt(),
+                survey.getCompletedAt()
         );
     }
 }

@@ -13,7 +13,7 @@ import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewCategory;
 import com.swcampus.domain.review.ReviewDetail;
 import com.swcampus.domain.review.ReviewRepository;
-import com.swcampus.domain.survey.MemberSurvey;
+import com.swcampus.domain.survey.*;
 import com.swcampus.domain.survey.MemberSurveyRepository;
 import com.swcampus.domain.teacher.Teacher;
 import com.swcampus.domain.teacher.TeacherRepository;
@@ -725,15 +725,14 @@ public class TestDataService {
      * 시연용 계정 설문조사 생성
      */
     private void createDemoSurvey(String batchId, Long memberId) {
-        MemberSurvey survey = MemberSurvey.create(
-                memberId,
-                "컴퓨터공학",           // 전공
-                false,                  // 부트캠프 수료 여부
-                "백엔드 개발자",         // 희망 직무
-                "정보처리기사, SQLD",    // 자격증
-                true,                   // 국비카드 보유
-                BigDecimal.valueOf(3000000)  // 희망 금액
-        );
+        BasicSurvey basicSurvey = BasicSurvey.builder()
+                .majorInfo(MajorInfo.withMajor("컴퓨터공학"))
+                .programmingExperience(ProgrammingExperience.noExperience())
+                .preferredLearningMethod(LearningMethod.OFFLINE)
+                .desiredJobs(List.of(DesiredJob.BACKEND))
+                .affordableBudgetRange(BudgetRange.OVER_200)
+                .build();
+        MemberSurvey survey = MemberSurvey.createWithBasicSurvey(memberId, basicSurvey);
         memberSurveyRepository.save(survey);
         registerTestData(batchId, "member_surveys", memberId);
     }
@@ -888,37 +887,46 @@ public class TestDataService {
                 "정보통신공학", "소프트웨어학", "데이터사이언스", "산업공학", "비전공"
         };
 
-        String[] wantedJobsList = {
-                "백엔드 개발자", "프론트엔드 개발자", "풀스택 개발자", "데이터 분석가", "AI/ML 엔지니어",
-                "DevOps 엔지니어", "클라우드 엔지니어", "모바일 개발자", "QA 엔지니어", "보안 엔지니어"
+        DesiredJob[][] desiredJobsList = {
+                {DesiredJob.BACKEND}, {DesiredJob.FRONTEND}, {DesiredJob.BACKEND, DesiredJob.FRONTEND},
+                {DesiredJob.DATA}, {DesiredJob.AI}, {DesiredJob.BACKEND}, {DesiredJob.DATA, DesiredJob.AI},
+                {DesiredJob.MOBILE}, {DesiredJob.BACKEND}, {DesiredJob.OTHER}
         };
 
-        String[] licensesList = {
-                "정보처리기사", "SQLD, 정보처리기사", "컴활1급", "AWS SAA, 정보처리기사",
-                "정보보안기사", "SQLD", "네트워크관리사, 정보처리기사", "빅데이터분석기사",
-                "리눅스마스터1급", null  // 마지막 유저는 자격증 없음
+        LearningMethod[] learningMethods = {
+                LearningMethod.OFFLINE, LearningMethod.ONLINE, LearningMethod.MIXED,
+                LearningMethod.OFFLINE, LearningMethod.ONLINE, LearningMethod.MIXED,
+                LearningMethod.OFFLINE, LearningMethod.ONLINE, LearningMethod.MIXED,
+                LearningMethod.OFFLINE
         };
 
-        BigDecimal[] amounts = {
-                BigDecimal.valueOf(1000000), BigDecimal.valueOf(1500000), BigDecimal.valueOf(2000000),
-                BigDecimal.valueOf(2500000), BigDecimal.valueOf(3000000), BigDecimal.valueOf(3500000),
-                BigDecimal.valueOf(4000000), BigDecimal.valueOf(4500000), BigDecimal.valueOf(5000000),
-                BigDecimal.valueOf(500000)
+        BudgetRange[] budgetRanges = {
+                BudgetRange.UNDER_50, BudgetRange.RANGE_50_100, BudgetRange.RANGE_100_200,
+                BudgetRange.OVER_200, BudgetRange.UNDER_50, BudgetRange.RANGE_50_100,
+                BudgetRange.RANGE_100_200, BudgetRange.OVER_200, BudgetRange.UNDER_50,
+                BudgetRange.RANGE_50_100
         };
 
         for (int i = 0; i < userMemberIds.size(); i++) {
             Long memberId = userMemberIds.get(i);
 
-            MemberSurvey survey = MemberSurvey.create(
-                    memberId,
-                    majors[i],
-                    i % 3 != 0,  // 1, 2, 4, 5, 7, 8번은 부트캠프 수료 O (3, 6, 9, 10번은 X)
-                    wantedJobsList[i],
-                    licensesList[i],
-                    i < 7,       // 1~7번은 국비카드 보유, 8~10번은 미보유
-                    amounts[i]
-            );
+            ProgrammingExperience experience = (i % 3 != 0)
+                    ? ProgrammingExperience.withExperience("부트캠프 " + (i + 1))
+                    : ProgrammingExperience.noExperience();
 
+            MajorInfo majorInfo = "비전공".equals(majors[i])
+                    ? MajorInfo.noMajor()
+                    : MajorInfo.withMajor(majors[i]);
+
+            BasicSurvey basicSurvey = BasicSurvey.builder()
+                    .majorInfo(majorInfo)
+                    .programmingExperience(experience)
+                    .preferredLearningMethod(learningMethods[i])
+                    .desiredJobs(List.of(desiredJobsList[i]))
+                    .affordableBudgetRange(budgetRanges[i])
+                    .build();
+
+            MemberSurvey survey = MemberSurvey.createWithBasicSurvey(memberId, basicSurvey);
             memberSurveyRepository.save(survey);
             ids.add(memberId);
             registerTestData(batchId, "member_surveys", memberId);

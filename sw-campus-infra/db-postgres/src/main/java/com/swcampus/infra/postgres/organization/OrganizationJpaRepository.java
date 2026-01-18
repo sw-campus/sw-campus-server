@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.swcampus.domain.common.ApprovalStatus;
 
@@ -19,13 +20,13 @@ public interface OrganizationJpaRepository extends JpaRepository<OrganizationEnt
 
     // 회원이 등록된 기관만 목록 조회 (Member.orgId가 존재하는 경우만)
     @Query("SELECT o FROM OrganizationEntity o WHERE EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id) AND LOWER(o.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    Page<OrganizationEntity> findWithMemberRegistrationByNameContainingIgnoreCase(String name, Pageable pageable);
+    Page<OrganizationEntity> findWithMemberRegistrationByNameContainingIgnoreCase(@Param("name") String name, Pageable pageable);
 
     @Query("SELECT o FROM OrganizationEntity o WHERE EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id) AND o.approvalStatus = :status")
-    Page<OrganizationEntity> findWithMemberRegistrationByApprovalStatus(ApprovalStatus status, Pageable pageable);
+    Page<OrganizationEntity> findWithMemberRegistrationByApprovalStatus(@Param("status") ApprovalStatus status, Pageable pageable);
 
     @Query("SELECT o FROM OrganizationEntity o WHERE EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id) AND o.approvalStatus = :status AND LOWER(o.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    Page<OrganizationEntity> findWithMemberRegistrationByApprovalStatusAndNameContainingIgnoreCase(ApprovalStatus status, String name, Pageable pageable);
+    Page<OrganizationEntity> findWithMemberRegistrationByApprovalStatusAndNameContainingIgnoreCase(@Param("status") ApprovalStatus status, @Param("name") String name, Pageable pageable);
 
     @Query("SELECT o FROM OrganizationEntity o WHERE EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id)")
     Page<OrganizationEntity> findAllWithMemberRegistration(Pageable pageable);
@@ -35,5 +36,5 @@ public interface OrganizationJpaRepository extends JpaRepository<OrganizationEnt
     long countWithMemberRegistration();
 
     @Query("SELECT COUNT(o) FROM OrganizationEntity o WHERE o.approvalStatus = :status AND EXISTS (SELECT 1 FROM MemberEntity m WHERE m.orgId = o.id)")
-    long countByApprovalStatusWithMemberRegistration(ApprovalStatus status);
+    long countByApprovalStatusWithMemberRegistration(@Param("status") ApprovalStatus status);
 }
