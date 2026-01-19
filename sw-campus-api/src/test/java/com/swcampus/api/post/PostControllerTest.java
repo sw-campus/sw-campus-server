@@ -21,6 +21,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 
+import org.springframework.data.domain.Page;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -259,6 +260,258 @@ class PostControllerTest {
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("게시글 목록 조회 성공")
+    void getPosts_Success() throws Exception {
+        // given
+        Page<com.swcampus.domain.post.PostSummary> postSummaries = Page.empty();
+
+        given(postService.getPostsWithDetails(any(), any(), any(), any()))
+                .willReturn(postSummaries);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/posts")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("게시글 목록 조회 성공 - 카테고리 필터")
+    void getPosts_WithCategoryFilter_Success() throws Exception {
+        // given
+        Page<com.swcampus.domain.post.PostSummary> postSummaries = Page.empty();
+
+        given(postService.getPostsWithDetails(any(), any(), any(), any()))
+                .willReturn(postSummaries);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/posts")
+                        .param("categoryId", "1")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("게시글 목록 조회 성공 - 태그 필터")
+    void getPosts_WithTagFilter_Success() throws Exception {
+        // given
+        Page<com.swcampus.domain.post.PostSummary> postSummaries = Page.empty();
+
+        given(postService.getPostsWithDetails(any(), any(), any(), any()))
+                .willReturn(postSummaries);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/posts")
+                        .param("tags", "tag1", "tag2")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("게시글 목록 조회 성공 - 검색어 필터")
+    void getPosts_WithKeyword_Success() throws Exception {
+        // given
+        Page<com.swcampus.domain.post.PostSummary> postSummaries = Page.empty();
+
+        given(postService.getPostsWithDetails(any(), any(), any(), any()))
+                .willReturn(postSummaries);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/posts")
+                        .param("keyword", "테스트")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 성공 - 비로그인 사용자")
+    void getPost_Success_Anonymous() throws Exception {
+        // given
+        given(postService.getPostWithViewCount(anyLong()))
+                .willReturn(mockPost);
+
+        given(memberService.getMember(anyLong()))
+                .willReturn(mockMember);
+
+        given(boardCategoryService.getCategoryName(anyLong()))
+                .willReturn("Free Board");
+
+        given(commentService.countByPostId(anyLong()))
+                .willReturn(0L);
+
+        given(bookmarkService.isBookmarked(any(), anyLong()))
+                .willReturn(false);
+
+        given(postLikeService.isLiked(any(), anyLong()))
+                .willReturn(false);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/posts/1"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 성공 - 로그인 사용자")
+    void getPost_Success_Authenticated() throws Exception {
+        // given
+        given(postService.getPostWithViewCount(anyLong()))
+                .willReturn(mockPost);
+
+        given(memberService.getMember(anyLong()))
+                .willReturn(mockMember);
+
+        given(boardCategoryService.getCategoryName(anyLong()))
+                .willReturn("Free Board");
+
+        given(commentService.countByPostId(anyLong()))
+                .willReturn(5L);
+
+        given(bookmarkService.isBookmarked(any(), anyLong()))
+                .willReturn(true);
+
+        given(postLikeService.isLiked(any(), anyLong()))
+                .willReturn(true);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/posts/1")
+                        .header("Authorization", "Bearer " + validToken))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 실패 - 존재하지 않는 게시글")
+    void getPost_Fail_NotFound() throws Exception {
+        // given
+        given(postService.getPostWithViewCount(anyLong()))
+                .willThrow(new com.swcampus.domain.post.exception.PostNotFoundException(999L));
+
+        // when & then
+        mockMvc.perform(get("/api/v1/posts/999"))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("이전/다음 게시글 조회 성공")
+    void getAdjacentPosts_Success() throws Exception {
+        // given
+        com.swcampus.domain.post.AdjacentPosts adjacentPosts =
+                new com.swcampus.domain.post.AdjacentPosts(null, null);
+
+        given(postService.getAdjacentPosts(anyLong()))
+                .willReturn(adjacentPosts);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/posts/1/adjacent"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("게시글 작성 실패 - 유효하지 않은 요청 (제목 없음)")
+    void createPost_Fail_InvalidRequest_NoTitle() throws Exception {
+        // given
+        CreatePostRequest request = new CreatePostRequest(
+            1L,
+            null,  // 제목 없음
+            "Test Body",
+            List.of(),
+            List.of("tag1")
+        );
+
+        // when & then
+        mockMvc.perform(post("/api/v1/posts")
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("게시글 작성 실패 - 유효하지 않은 요청 (본문 없음)")
+    void createPost_Fail_InvalidRequest_NoBody() throws Exception {
+        // given
+        CreatePostRequest request = new CreatePostRequest(
+            1L,
+            "Test Title",
+            null,  // 본문 없음
+            List.of(),
+            List.of("tag1")
+        );
+
+        // when & then
+        mockMvc.perform(post("/api/v1/posts")
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("게시글 수정 실패 - 권한 없음 (다른 사용자의 게시글)")
+    void updatePost_Fail_AccessDenied() throws Exception {
+        // given
+        UpdatePostRequest request = new UpdatePostRequest(
+            "Updated Title", "Updated Body", List.of(), List.of()
+        );
+
+        given(postService.updatePost(anyLong(), anyLong(), anyBoolean(), any(), any(), any(), any()))
+                .willThrow(new com.swcampus.domain.post.exception.PostAccessDeniedException("게시글 수정 권한이 없습니다."));
+
+        // when & then
+        mockMvc.perform(put("/api/v1/posts/1")
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("게시글 삭제 실패 - 권한 없음 (다른 사용자의 게시글)")
+    void deletePost_Fail_AccessDenied() throws Exception {
+        // given
+        org.mockito.Mockito.doThrow(new com.swcampus.domain.post.exception.PostAccessDeniedException("게시글 삭제 권한이 없습니다."))
+                .when(postService).deletePost(anyLong(), anyLong(), anyBoolean());
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/posts/1")
+                        .header("Authorization", "Bearer " + validToken)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("게시글 삭제 실패 - 존재하지 않는 게시글")
+    void deletePost_Fail_NotFound() throws Exception {
+        // given
+        org.mockito.Mockito.doThrow(new com.swcampus.domain.post.exception.PostNotFoundException(999L))
+                .when(postService).deletePost(anyLong(), anyLong(), anyBoolean());
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/posts/999")
+                        .header("Authorization", "Bearer " + validToken)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isNotFound());
     }
 }
 

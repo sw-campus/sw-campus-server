@@ -29,6 +29,7 @@ public enum ErrorCode {
 	INTERNAL_SERVER_ERROR(500, "C002", "서버 내부 오류입니다"),
 	RATE_LIMIT_EXCEEDED(429, "C003", "요청 한도를 초과했습니다"),
 	RESOURCE_NOT_FOUND(404, "C004", "리소스를 찾을 수 없습니다"),
+	ACCESS_DENIED(403, "C005", "접근 권한이 없습니다"),
 
 	// Member (M)
 	MEMBER_NOT_FOUND(404, "M001", "회원을 찾을 수 없습니다"),
