@@ -71,9 +71,6 @@ project(':sw-campus-api') {
 
     bootJar {
         enabled = true
-        from(project(':sw-campus-infra:db-postgres').sourceSets.main.resources) {
-        into('BOOT-INF/classes')
-        }
     }
 
     jar {
