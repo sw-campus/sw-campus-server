@@ -42,7 +42,7 @@ public class CommentEntityRepository implements CommentRepository {
 
     @Override
     public List<Comment> findByPostId(Long postId) {
-        return jpaRepository.findByPostIdAndNotDeleted(postId)
+        return jpaRepository.findAllByPostId(postId)
                 .stream()
                 .map(CommentEntity::toDomain)
                 .toList();
@@ -64,5 +64,15 @@ public class CommentEntityRepository implements CommentRepository {
                         row -> (Long) row[0],
                         row -> (Long) row[1]
                 ));
+    }
+
+    @Override
+    public void incrementLikeCount(Long commentId) {
+        jpaRepository.incrementLikeCount(commentId);
+    }
+
+    @Override
+    public void decrementLikeCount(Long commentId) {
+        jpaRepository.decrementLikeCount(commentId);
     }
 }

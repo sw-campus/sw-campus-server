@@ -45,10 +45,13 @@ public class CommentResponse {
     private LocalDateTime updatedAt;
 
     @Schema(description = "본인 작성 여부", example = "true")
-    private boolean isAuthor;
+    private boolean author;
 
     @Schema(description = "추천 여부", example = "false")
-    private boolean isLiked;
+    private boolean liked;
+
+    @Schema(description = "삭제 여부", example = "false")
+    private boolean deleted;
 
     @Schema(description = "대댓글 목록")
     @Builder.Default
@@ -60,14 +63,15 @@ public class CommentResponse {
                 .postId(comment.getPostId())
                 .parentId(comment.getParentId())
                 .authorId(comment.getUserId())
-                .authorNickname(authorNickname)
-                .body(comment.getBody())
-                .imageUrl(comment.getImageUrl())
-                .likeCount(comment.getLikeCount())
+                .authorNickname(comment.isDeleted() ? "" : authorNickname)
+                .body(comment.isDeleted() ? "" : comment.getBody())
+                .imageUrl(comment.isDeleted() ? null : comment.getImageUrl())
+                .likeCount(comment.isDeleted() ? 0L : comment.getLikeCount())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
-                .isAuthor(isAuthor)
-                .isLiked(isLiked)
+                .author(isAuthor)
+                .liked(isLiked)
+                .deleted(comment.isDeleted())
                 .replies(new ArrayList<>())
                 .build();
     }

@@ -14,4 +14,8 @@ public interface CommentRepository {
     long countByPostId(Long postId);
 
     java.util.Map<Long, Long> countByPostIds(java.util.List<Long> postIds);
+
+    void incrementLikeCount(Long commentId);
+
+    void decrementLikeCount(Long commentId);
 }

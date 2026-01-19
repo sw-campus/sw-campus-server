@@ -151,8 +151,13 @@ public class CommentController {
             return new ArrayList<>();
         }
 
+        // 0. 중복 제거 (DB에서 DISTINCT를 사용하더라도 안전장치로 추가)
+        List<Comment> uniqueComments = comments.stream()
+                .filter(distinctByKey(Comment::getId))
+                .toList();
+
         // 1. 작성자 ID 목록 수집
-        List<Long> authorIds = comments.stream()
+        List<Long> authorIds = uniqueComments.stream()
                 .map(Comment::getUserId)
                 .distinct()
                 .toList();
@@ -168,7 +173,7 @@ public class CommentController {
         Set<Long> likedCommentIds = commentLikeService.getLikedCommentIds(currentUserId);
 
         // 4. 모든 댓글을 CommentResponse로 변환하고 Map에 저장
-        for (Comment comment : comments) {
+        for (Comment comment : uniqueComments) {
             String nickname = nicknameMap.getOrDefault(comment.getUserId(), "알 수 없음");
             boolean isAuthor = currentUserId != null && comment.isAuthor(currentUserId);
             boolean isLiked = likedCommentIds.contains(comment.getId());
@@ -177,7 +182,7 @@ public class CommentController {
         }
 
         // 4. 부모-자식 관계 설정
-        for (Comment comment : comments) {
+        for (Comment comment : uniqueComments) {
             CommentResponse response = commentMap.get(comment.getId());
             if (comment.getParentId() == null) {
                 // 루트 댓글
@@ -195,5 +200,10 @@ public class CommentController {
         }
 
         return rootComments;
+    }
+
+    private static <T> java.util.function.Predicate<T> distinctByKey(java.util.function.Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = java.util.concurrent.ConcurrentHashMap.newKeySet();
+        return t -> seen.add(keyExtractor.apply(t));
     }
 }
