@@ -100,8 +100,8 @@ public class AdminLectureController {
     })
     @GetMapping
     public ResponseEntity<Page<AdminLectureSummaryResponse>> getLectures(
-            @Parameter(description = "승인 상태 (PENDING, APPROVED, REJECTED), 미입력시 전체") @RequestParam(required = false) LectureAuthStatus status,
-            @Parameter(description = "검색 키워드 (강의명), 미입력시 전체") @RequestParam(required = false, defaultValue = "") String keyword,
+            @Parameter(description = "승인 상태 (PENDING, APPROVED, REJECTED), 미입력시 전체") @RequestParam(name = "status", required = false) LectureAuthStatus status,
+            @Parameter(description = "검색 키워드 (강의명), 미입력시 전체") @RequestParam(name = "keyword", required = false, defaultValue = "") String keyword,
             @PageableDefault(size = 10) Pageable pageable) {
         Page<Lecture> lectures = adminLectureService.searchLectures(status, keyword, pageable);
         return ResponseEntity.ok(lectures.map(AdminLectureSummaryResponse::from));

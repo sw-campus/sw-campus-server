@@ -21,6 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.swcampus.api.security.JwtAuthenticationFilter;
 import com.swcampus.domain.auth.TokenProvider;
+import com.swcampus.domain.auth.TokenValidationResult;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -29,6 +30,15 @@ import jakarta.servlet.http.HttpServletResponse;
 @EnableMethodSecurity
 @EnableConfigurationProperties(CorsProperties.class)
 public class SecurityConfig {
+
+    // 단일 진실 소스: 공개 GET API 패턴 정의
+    public static final String[] PUBLIC_GET_APIS = {
+            "/api/v1/categories/**",
+            "/api/v1/banners/**",
+            "/api/v1/lectures/**",
+            "/api/v1/organizations/**",
+            "/api/v1/reviews/**"
+    };
 
     private final TokenProvider tokenProvider;
     private final CorsProperties corsProperties;
@@ -45,71 +55,60 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            .securityMatcher("/**")  // 모든 요청에 대해 이 SecurityFilterChain 적용
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .exceptionHandling(exception -> exception
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"message\":\"인증이 필요합니다\"}");
-                })
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"message\":\"접근 권한이 없습니다\"}");
-                })
-            )
-            .authorizeHttpRequests(auth -> auth
-                // ✅ ALB 헬스체크 전용 엔드포인트 완전 공개 (가장 정석적인 해결)
-                // - ALB가 Spring Security 걸린 경로를 체크하면 401/403 반환
-                // - ALB는 200~399 아니면 무조건 UNHEALTHY
-                // - permitAll()은 JWT 필터보다 앞에서 처리됨
-                .requestMatchers(
-                    "/healthz",  // ALB 헬스체크 전용 엔드포인트 (가장 정석) - 유지
-                    // "/actuator/health",
-                    // "/actuator/health/**"
-                    "/actuator/prometheus"
-                ).permitAll()
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
 
-                // Auth
-                .requestMatchers("/api/v1/auth/**").permitAll()
+                            // JWT 필터에서 저장한 validation result 확인
+                            Object validationResult = request.getAttribute(
+                                    JwtAuthenticationFilter.TOKEN_VALIDATION_RESULT_ATTRIBUTE);
 
-                // Swagger
-                .requestMatchers(
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/v3/api-docs/**",
-                    "/swagger-resources/**"
-                ).permitAll()
-
-                // Public GET APIs
-                .requestMatchers(HttpMethod.GET, "/api/v1/reviews/*").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/lectures/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/organizations/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/banners/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/members/nickname/check").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/board-categories/**").permitAll()
-
-                // Storage
-                .requestMatchers(HttpMethod.GET, "/api/v1/storage/presigned-urls").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/storage/presigned-urls/batch").permitAll()
-
-                // Admin
-                .requestMatchers("/api/v1/admin/**").authenticated()
-
-                // Everything else
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(
-                new JwtAuthenticationFilter(tokenProvider),
-                UsernamePasswordAuthenticationFilter.class
-            );
+                            String responseBody;
+                            if (validationResult == TokenValidationResult.EXPIRED) {
+                                responseBody = "{\"code\": \"A002\", \"message\": \"토큰이 만료되었습니다\"}";
+                            } else if (validationResult == TokenValidationResult.INVALID) {
+                                responseBody = "{\"code\": \"A001\", \"message\": \"유효하지 않은 토큰입니다\"}";
+                            } else {
+                                responseBody = "{\"message\": \"인증이 필요합니다\"}";
+                            }
+                            response.getWriter().write(responseBody);
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"message\":\"접근 권한이 없습니다\"}");
+                        }))
+                .authorizeHttpRequests(auth -> auth
+                        // 인증 없이 접근 가능
+                        .requestMatchers(
+                                "/api/v1/auth/**",
+                                "/actuator/health",
+                                // Swagger UI
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**")
+                        .permitAll()
+                        // 공개 API (조회) - PUBLIC_GET_APIS 상수 사용
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_APIS).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/members/nickname/check").permitAll()
+                        // 커뮤니티 API (조회)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/board-categories/**").permitAll()
+                        // Storage API (인증 선택적)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/storage/presigned-urls").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/storage/presigned-urls/batch").permitAll()
+                        // 관리자 API (ADMIN 역할 필요)
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // 나머지는 인증 필요
+                        .anyRequest().authenticated())
+                .addFilterBefore(
+                        new JwtAuthenticationFilter(tokenProvider),
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -31,6 +31,13 @@ public class BoardCategoryService {
         return getCategory(categoryId).getName();
     }
 
+    /**
+     * 특정 카테고리와 그 하위 카테고리의 ID 목록을 반환합니다.
+     */
+    public List<Long> getChildCategoryIds(Long categoryId) {
+        return boardCategoryRepository.findRecursiveChildIds(categoryId);
+    }
+
     private List<BoardCategory> buildTree(List<BoardCategory> categories) {
         Map<Long, BoardCategory> map = new HashMap<>();
         List<BoardCategory> roots = new ArrayList<>();

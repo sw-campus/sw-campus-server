@@ -7,6 +7,17 @@ import java.util.List;
 
 public interface BoardCategoryJpaRepository extends JpaRepository<BoardCategoryEntity, Long> {
     
-    // 계층 구조 정렬을 위해 ID 순 등 적절한 정렬 필요 시 추가
-    // 현재는 단순 전체 조회 사용
+    @Query(value = """
+        WITH RECURSIVE category_tree AS (
+            SELECT board_category_id
+            FROM swcampus.board_categories
+            WHERE board_category_id = :parentId
+            UNION ALL
+            SELECT c.board_category_id
+            FROM swcampus.board_categories c
+            INNER JOIN category_tree ct ON c.board_pid = ct.board_category_id
+        )
+        SELECT board_category_id FROM category_tree
+    """, nativeQuery = true)
+    List<Long> findRecursiveChildIds(Long parentId);
 }

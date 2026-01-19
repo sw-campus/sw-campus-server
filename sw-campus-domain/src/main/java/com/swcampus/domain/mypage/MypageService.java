@@ -13,7 +13,6 @@ import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.storage.PresignedUrlService;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -61,11 +60,10 @@ public class MypageService {
             .toList();
         Map<Long, String> orgNames = organizationService.getOrganizationNames(orgIds);
 
-        // 후기 작성 여부 확인
+        // 후기 작성 여부 및 상태 확인
         List<Review> reviews = reviewService.findAllByMemberId(memberId);
-        Set<Long> reviewedLectureIds = reviews.stream()
-            .map(Review::getLectureId)
-            .collect(Collectors.toSet());
+        Map<Long, ApprovalStatus> reviewStatusByLectureId = reviews.stream()
+            .collect(Collectors.toMap(Review::getLectureId, Review::getApprovalStatus));
 
         // 수료증 이미지 Presigned URL 일괄 생성 (N+1 방지)
         List<String> imageKeys = certificates.stream()
@@ -81,8 +79,9 @@ public class MypageService {
             .map(cert -> {
                 Lecture lecture = lectureMap.get(cert.getLectureId());
                 String orgName = orgNames.getOrDefault(lecture.getOrgId(), "Unknown");
-                boolean hasReview = reviewedLectureIds.contains(cert.getLectureId());
+                boolean hasReview = reviewStatusByLectureId.containsKey(cert.getLectureId());
                 String certificateImageUrl = presignedUrls.get(cert.getImageKey());
+                ApprovalStatus reviewStatus = reviewStatusByLectureId.get(cert.getLectureId());
                 return new CompletedLectureInfo(
                     cert.getId(),
                     lecture.getLectureId(),
@@ -92,7 +91,8 @@ public class MypageService {
                     cert.getCreatedAt(),
                     !hasReview,  // 후기가 없으면 작성 가능
                     certificateImageUrl,
-                    cert.getApprovalStatus()
+                    cert.getApprovalStatus(),
+                    reviewStatus  // 후기가 없으면 null
                 );
             })
             .toList();

@@ -2,13 +2,13 @@ package com.swcampus.api.security;
 
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.auth.TokenProvider;
+import com.swcampus.domain.auth.TokenValidationResult;
 import com.swcampus.domain.member.Role;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,21 +17,21 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    public static final String TOKEN_VALIDATION_RESULT_ATTRIBUTE = "TOKEN_VALIDATION_RESULT";
 
     private final TokenProvider tokenProvider;
 
+    public JwtAuthenticationFilter(TokenProvider tokenProvider) {
+        this.tokenProvider = tokenProvider;
+    }
+
     // ✅ ALB 헬스체크 전용 엔드포인트는 JWT 필터 자체를 타지 않음
-    // - SecurityConfig의 permitAll()과 반드시 동일한 범위여야 함
-    // - 이거 없으면 permitAll 해도 필터가 먼저 실행돼서 막힘
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        // /healthz는 유지 (ALB 헬스체크 전용)
-        // actuator 관련은 주석 처리 (나중에 필요하면 주석 해제)
         return uri.equals("/healthz");
-        // return uri.equals("/healthz") || uri.startsWith("/actuator/health");
     }
 
     @Override
@@ -41,20 +41,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = resolveToken(request);
 
-        if (token != null && tokenProvider.validateToken(token)) {
-            Long memberId = tokenProvider.getMemberId(token);
-            String email = tokenProvider.getEmail(token);
-            Role role = tokenProvider.getRole(token);
+        // JWT가 있으면 항상 검증 (공개 API 여부와 무관)
+        // 공개 API 접근 허용은 SecurityConfig의 permitAll()이 처리
+        if (token != null) {
+            TokenValidationResult validationResult = tokenProvider.validateTokenWithResult(token);
 
-            MemberPrincipal principal = new MemberPrincipal(memberId, email, role);
-            List<SimpleGrantedAuthority> authorities = List.of(
-                    new SimpleGrantedAuthority("ROLE_" + role.name())
-            );
+            if (validationResult == TokenValidationResult.VALID) {
+                Long memberId = tokenProvider.getMemberId(token);
+                String email = tokenProvider.getEmail(token);
+                Role role = tokenProvider.getRole(token);
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(principal, null, authorities);
+                MemberPrincipal principal = new MemberPrincipal(memberId, email, role);
+                List<SimpleGrantedAuthority> authorities = List.of(
+                        new SimpleGrantedAuthority("ROLE_" + role.name())
+                );
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(principal, null, authorities);
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } else {
+                // EXPIRED 또는 INVALID: request attribute에 저장하고 다음 필터로 진행
+                // Spring Security의 AuthenticationEntryPoint에서 세분화된 에러 처리
+                request.setAttribute(TOKEN_VALIDATION_RESULT_ATTRIBUTE, validationResult);
+            }
         }
 
         filterChain.doFilter(request, response);

@@ -12,6 +12,7 @@ import java.util.Set;
 public class CommentLikeService {
 
     private final CommentLikeRepository commentLikeRepository;
+    private final com.swcampus.domain.comment.CommentRepository commentRepository;
 
     /**
      * 댓글 추천 토글 - 이미 추천했으면 취소, 없으면 추천
@@ -21,10 +22,12 @@ public class CommentLikeService {
     public boolean toggleLike(Long userId, Long commentId) {
         if (commentLikeRepository.existsByUserIdAndCommentId(userId, commentId)) {
             commentLikeRepository.deleteByUserIdAndCommentId(userId, commentId);
+            commentRepository.decrementLikeCount(commentId);
             return false;
         } else {
             CommentLike commentLike = CommentLike.create(userId, commentId);
             commentLikeRepository.save(commentLike);
+            commentRepository.incrementLikeCount(commentId);
             return true;
         }
     }

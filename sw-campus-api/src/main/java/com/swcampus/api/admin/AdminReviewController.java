@@ -26,6 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.format.DateTimeFormatter;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "cookieAuth")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminReviewController {
 
     private final AdminReviewService adminReviewService;

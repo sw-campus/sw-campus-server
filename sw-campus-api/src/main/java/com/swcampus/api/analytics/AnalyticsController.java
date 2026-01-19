@@ -60,7 +60,7 @@ public class AnalyticsController {
     @GetMapping
     public ResponseEntity<AnalyticsReportResponse> getAnalytics(
             @Parameter(description = "조회할 기간 (일 수). 기본값: 7")
-            @RequestParam(defaultValue = "7") int days
+            @RequestParam(name = "days", defaultValue = "7") int days
     ) {
         AnalyticsReport report = analyticsService.getReport(days);
         return ResponseEntity.ok(AnalyticsReportResponse.from(report));
@@ -81,7 +81,7 @@ public class AnalyticsController {
     @GetMapping("/events")
     public ResponseEntity<EventStatsResponse> getEventStats(
             @Parameter(description = "조회할 기간 (일 수). 기본값: 7")
-            @RequestParam(defaultValue = "7") int days
+            @RequestParam(name = "days", defaultValue = "7") int days
     ) {
         EventStats stats = analyticsService.getEventStats(days);
         return ResponseEntity.ok(EventStatsResponse.from(stats));
@@ -92,9 +92,9 @@ public class AnalyticsController {
     @GetMapping("/events/top-banners")
     public ResponseEntity<List<BannerClickStatsResponse>> getTopBanners(
             @Parameter(description = "조회할 기간 (일 수). 기본값: 7")
-            @RequestParam(defaultValue = "7") int days,
+            @RequestParam(name = "days", defaultValue = "7") int days,
             @Parameter(description = "조회할 개수. 기본값: 10")
-            @RequestParam(defaultValue = "10") int limit
+            @RequestParam(name = "limit", defaultValue = "10") int limit
     ) {
         var stats = analyticsService.getTopBannersByClicks(days, limit);
         return ResponseEntity.ok(BannerClickStatsResponse.fromList(stats));
@@ -105,9 +105,9 @@ public class AnalyticsController {
     @GetMapping("/events/top-lectures")
     public ResponseEntity<List<LectureClickStatsResponse>> getTopLectures(
             @Parameter(description = "조회할 기간 (일 수). 기본값: 7")
-            @RequestParam(defaultValue = "7") int days,
+            @RequestParam(name = "days", defaultValue = "7") int days,
             @Parameter(description = "조회할 개수. 기본값: 10")
-            @RequestParam(defaultValue = "10") int limit
+            @RequestParam(name = "limit", defaultValue = "10") int limit
     ) {
         var stats = analyticsService.getTopLecturesByClicks(days, limit);
         return ResponseEntity.ok(LectureClickStatsResponse.fromList(stats));
@@ -126,9 +126,9 @@ public class AnalyticsController {
     @GetMapping("/popular-lectures")
     public ResponseEntity<List<PopularLectureResponse>> getPopularLectures(
             @Parameter(description = "조회할 기간 (일 수). 기본값: 7")
-            @RequestParam(defaultValue = "7") int days,
+            @RequestParam(name = "days", defaultValue = "7") int days,
             @Parameter(description = "조회할 개수. 기본값: 5")
-            @RequestParam(defaultValue = "5") int limit
+            @RequestParam(name = "limit", defaultValue = "5") int limit
     ) {
         var lectures = analyticsService.getPopularLectures(days, limit);
         return ResponseEntity.ok(PopularLectureResponse.fromList(lectures));
@@ -147,9 +147,9 @@ public class AnalyticsController {
     @GetMapping("/popular-search-terms")
     public ResponseEntity<List<PopularSearchTermResponse>> getPopularSearchTerms(
             @Parameter(description = "조회할 기간 (일 수). 기본값: 7")
-            @RequestParam(defaultValue = "7") int days,
+            @RequestParam(name = "days", defaultValue = "7") int days,
             @Parameter(description = "조회할 개수. 기본값: 10")
-            @RequestParam(defaultValue = "10") int limit
+            @RequestParam(name = "limit", defaultValue = "10") int limit
     ) {
         var terms = analyticsService.getPopularSearchTerms(days, limit);
         return ResponseEntity.ok(PopularSearchTermResponse.fromList(terms));
@@ -168,9 +168,9 @@ public class AnalyticsController {
     @GetMapping("/traffic-sources")
     public ResponseEntity<List<TrafficSourceResponse>> getTrafficSources(
             @Parameter(description = "조회할 기간 (일 수). 기본값: 7")
-            @RequestParam(defaultValue = "7") int days,
+            @RequestParam(name = "days", defaultValue = "7") int days,
             @Parameter(description = "조회할 개수. 기본값: 10")
-            @RequestParam(defaultValue = "10") int limit
+            @RequestParam(name = "limit", defaultValue = "10") int limit
     ) {
         var sources = analyticsService.getTrafficSources(days, limit);
         return ResponseEntity.ok(TrafficSourceResponse.fromList(sources));

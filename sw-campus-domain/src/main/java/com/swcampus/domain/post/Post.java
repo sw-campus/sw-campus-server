@@ -20,7 +20,9 @@ public class Post {
     private List<String> tags = new ArrayList<>();
     private Long viewCount;
     private Long likeCount;
+    private Long commentCount;
     private Long selectedCommentId;
+    private boolean pinned;
     private boolean deleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -36,6 +38,7 @@ public class Post {
         post.tags = tags != null ? tags : new ArrayList<>();
         post.viewCount = 0L;
         post.likeCount = 0L;
+        post.commentCount = 0L;
         post.deleted = false;
         post.createdAt = LocalDateTime.now();
         post.updatedAt = LocalDateTime.now();
@@ -44,7 +47,7 @@ public class Post {
 
     public static Post of(Long id, Long boardCategoryId, Long userId, String title, String body,
                           List<String> images, List<String> tags, Long viewCount, Long likeCount,
-                          Long selectedCommentId, boolean deleted,
+                          Long commentCount, Long selectedCommentId, boolean pinned, boolean deleted,
                           LocalDateTime createdAt, LocalDateTime updatedAt) {
         Post post = new Post();
         post.id = id;
@@ -56,7 +59,9 @@ public class Post {
         post.tags = tags != null ? tags : new ArrayList<>();
         post.viewCount = viewCount;
         post.likeCount = likeCount;
+        post.commentCount = commentCount;
         post.selectedCommentId = selectedCommentId;
+        post.pinned = pinned;
         post.deleted = deleted;
         post.createdAt = createdAt;
         post.updatedAt = updatedAt;
@@ -80,6 +85,16 @@ public class Post {
         this.viewCount = this.viewCount + 1;
     }
 
+    public void incrementCommentCount() {
+        this.commentCount = this.commentCount + 1;
+    }
+
+    public void decrementCommentCount() {
+        if (this.commentCount > 0) {
+            this.commentCount = this.commentCount - 1;
+        }
+    }
+
     public void selectComment(Long commentId) {
         this.selectedCommentId = commentId;
         this.updatedAt = LocalDateTime.now();
@@ -87,5 +102,10 @@ public class Post {
 
     public boolean isAuthor(Long userId) {
         return this.userId.equals(userId);
+    }
+
+    public void togglePin() {
+        this.pinned = !this.pinned;
+        this.updatedAt = LocalDateTime.now();
     }
 }

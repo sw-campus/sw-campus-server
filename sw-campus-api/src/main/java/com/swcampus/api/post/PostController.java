@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Tag(name = "Post", description = "게시글 API")
 @RestController
@@ -89,7 +90,7 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 페이지네이션으로 조회합니다. 태그 필터링을 지원합니다.")
+    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 페이지네이션으로 조회합니다. 태그 필터링 및 검색을 지원합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공")
     })
@@ -97,10 +98,11 @@ public class PostController {
     public ResponseEntity<Page<PostResponse>> getPosts(
             @Parameter(description = "카테고리 ID") @RequestParam(required = false) Long categoryId,
             @Parameter(description = "태그 필터 (복수 가능)") @RequestParam(required = false) List<String> tags,
+            @Parameter(description = "검색어 (제목, 본문, 태그 검색)") @RequestParam(required = false) String keyword,
             @PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable) {
 
         // N+1 문제 해결: JOIN 쿼리로 한 번에 조회
-        Page<PostSummary> posts = postService.getPostsWithDetails(categoryId, tags, pageable);
+        Page<PostSummary> posts = postService.getPostsWithDetails(categoryId, tags, keyword, pageable);
 
         if (posts.isEmpty()) {
             return ResponseEntity.ok(Page.empty(pageable));
@@ -234,5 +236,36 @@ public class PostController {
         postService.deletePost(postId, member.memberId(), isAdmin);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "이전/다음 게시글 조회", description = "현재 게시글의 이전/다음 게시글 정보를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    @GetMapping("/{postId}/adjacent")
+    public ResponseEntity<com.swcampus.api.post.response.AdjacentPostResponse> getAdjacentPosts(
+            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+        
+        com.swcampus.domain.post.AdjacentPosts adjacentPosts = postService.getAdjacentPosts(postId);
+        com.swcampus.api.post.response.AdjacentPostResponse response = 
+                com.swcampus.api.post.response.AdjacentPostResponse.from(adjacentPosts);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "게시글 고정/해제", description = "관리자가 게시글을 상단에 고정하거나 해제합니다.")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "토글 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (관리자만 가능)")
+    })
+    @PostMapping("/{postId}/pin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<java.util.Map<String, Boolean>> togglePin(
+            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+        
+        com.swcampus.domain.post.Post post = postService.togglePin(postId);
+        return ResponseEntity.ok(java.util.Map.of("pinned", post.isPinned()));
     }
 }

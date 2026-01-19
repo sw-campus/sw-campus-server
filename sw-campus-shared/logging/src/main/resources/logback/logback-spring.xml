@@ -10,16 +10,8 @@
         <include resource="logback/logback-local.xml"/>
     </springProfile>
 
-    <springProfile name="staging">
-        <include resource="logback/logback-staging.xml"/>
-    </springProfile>
-
-    <springProfile name="prod">
+    <springProfile name="staging,prod">
         <include resource="logback/logback-prod.xml"/>
-    </springProfile>
-
-    <springProfile name="default">
-        <include resource="logback/logback-local.xml"/>
     </springProfile>
 </configuration>
 

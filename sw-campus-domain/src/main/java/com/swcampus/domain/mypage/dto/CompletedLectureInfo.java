@@ -15,6 +15,7 @@ public record CompletedLectureInfo(
     LocalDateTime certifiedAt,
     boolean canWriteReview,
     String certificateImageUrl,
-    ApprovalStatus certificateStatus
+    ApprovalStatus certificateStatus,
+    ApprovalStatus reviewStatus
 ) {
 }

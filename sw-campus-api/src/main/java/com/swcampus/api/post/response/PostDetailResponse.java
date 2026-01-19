@@ -1,5 +1,6 @@
 package com.swcampus.api.post.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.swcampus.domain.post.Post;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -64,6 +65,10 @@ public class PostDetailResponse {
     @Schema(description = "좋아요 여부", example = "false")
     private boolean liked;
 
+    @Schema(description = "고정 게시글 여부", example = "false")
+    private boolean pinned;
+
+    @JsonProperty("isAuthor")
     @Schema(description = "본인 작성 여부", example = "true")
     private boolean isAuthor;
 
@@ -87,6 +92,7 @@ public class PostDetailResponse {
                 .updatedAt(post.getUpdatedAt())
                 .bookmarked(bookmarked)
                 .liked(liked)
+                .pinned(post.isPinned())
                 .isAuthor(isAuthor)
                 .build();
     }

@@ -93,7 +93,7 @@ jobs:
           base: develop
           title: "chore(server): update dev image to ${{ steps.meta.outputs.tag }}"
           body: |
-            🤖 Auto-generated PR from server dev build
+            Auto-generated PR from server dev build
             
             - **Image**: `ghcr.io/sw-campus/sw-campus-server:${{ steps.meta.outputs.tag }}`
             - **Commit**: ${{ github.sha }}
@@ -103,7 +103,7 @@ jobs:
         if: steps.cpr.outputs.pull-request-number
         run: |
           cd manifest
-          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --delete-branch
+          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --merge --delete-branch
         env:
           GH_TOKEN: ${{ secrets.MANIFEST_REPO_TOKEN }}
 

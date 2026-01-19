@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.api.post.request.CreatePostRequest;
 import com.swcampus.api.post.request.UpdatePostRequest;
-import com.swcampus.api.post.response.PostDetailResponse;
+
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.board.BoardCategoryService;
 import com.swcampus.domain.member.Member;
@@ -20,7 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -87,7 +87,7 @@ class PostControllerTest {
             1L, 1L, 1L,
             "Test Title", "Test Body",
             List.of(), List.of("tag1"),
-            0L, 0L, null, false,
+            0L, 0L, 0L, null, false, false,
             LocalDateTime.now(), LocalDateTime.now()
         );
     }
@@ -152,7 +152,7 @@ class PostControllerTest {
             1L, 1L, 1L,
             "Updated Title", "Updated Body",
             List.of(), List.of("updated-tag"),
-            0L, 0L, null, false,
+            0L, 0L, 0L, null, false, false,
             LocalDateTime.now(), LocalDateTime.now()
         );
 
@@ -223,6 +223,42 @@ class PostControllerTest {
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("게시글 고정 성공 - 관리자")
+    void togglePin_Success_Admin() throws Exception {
+        // given
+        String adminToken = tokenProvider.createAccessToken(2L, "admin@example.com", Role.ADMIN);
+        
+        Post pinnedPost = Post.of(
+            1L, 1L, 1L,
+            "Test Title", "Test Body",
+            List.of(), List.of(),
+            0L, 0L, 0L, null, true, false,
+            LocalDateTime.now(), LocalDateTime.now()
+        );
+        
+        given(postService.togglePin(anyLong()))
+                .willReturn(pinnedPost);
+
+        // when & then
+        mockMvc.perform(post("/api/v1/posts/1/pin")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("게시글 고정 실패 - 일반 사용자")
+    void togglePin_Fail_User() throws Exception {
+        // when & then
+        mockMvc.perform(post("/api/v1/posts/1/pin")
+                        .header("Authorization", "Bearer " + validToken)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isForbidden());
     }
 }
 
