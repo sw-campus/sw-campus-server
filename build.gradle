@@ -30,9 +30,10 @@ subprojects {
     apply plugin: 'java-library'
     apply plugin: 'io.spring.dependency-management'
 
-    // Java 컴파일 옵션: 파라미터 이름 정보 보존
+    // Java 컴파일 옵션: 파라미터 이름 정보 보존 + UTF-8 인코딩
     tasks.withType(JavaCompile).configureEach {
         options.compilerArgs.add('-parameters')
+        options.encoding = 'UTF-8'
     }
 
     dependencyManagement {

@@ -29,6 +29,7 @@ public enum ErrorCode {
 	INTERNAL_SERVER_ERROR(500, "C002", "서버 내부 오류입니다"),
 	RATE_LIMIT_EXCEEDED(429, "C003", "요청 한도를 초과했습니다"),
 	RESOURCE_NOT_FOUND(404, "C004", "리소스를 찾을 수 없습니다"),
+	ACCESS_DENIED(403, "C005", "접근 권한이 없습니다"),
 
 	// Member (M)
 	MEMBER_NOT_FOUND(404, "M001", "회원을 찾을 수 없습니다"),
@@ -72,15 +73,30 @@ public enum ErrorCode {
 	// Survey (S)
 	SURVEY_NOT_FOUND(404, "S001", "설문조사를 찾을 수 없습니다"),
 	SURVEY_ALREADY_EXISTS(409, "S002", "이미 응답한 설문조사입니다"),
+	BASIC_SURVEY_REQUIRED(400, "S003", "기초 설문을 먼저 완료해야 합니다"),
+	APTITUDE_TEST_REQUIRED(400, "S004", "성향 테스트를 먼저 완료해야 합니다"),
+	SURVEY_QUESTION_SET_NOT_FOUND(404, "S005", "문항 세트를 찾을 수 없습니다"),
+	QUESTION_SET_NOT_EDITABLE(403, "S006", "발행된 문항 세트는 수정/삭제할 수 없습니다"),
+	SURVEY_QUESTION_NOT_FOUND(404, "S007", "문항을 찾을 수 없습니다"),
+	SURVEY_OPTION_NOT_FOUND(404, "S008", "선택지를 찾을 수 없습니다"),
+	INVALID_APTITUDE_TEST_ANSWERS(400, "S009", "성향 테스트 응답이 유효하지 않습니다"),
 
 	// Storage/File (F)
 	STORAGE_KEY_NOT_FOUND(404, "F001", "파일을 찾을 수 없습니다"),
 	STORAGE_ACCESS_DENIED(403, "F002", "파일 접근 권한이 없습니다"),
 	STORAGE_BATCH_LIMIT_EXCEEDED(400, "F003", "파일 업로드 한도를 초과했습니다"),
 	INVALID_STORAGE_CATEGORY(400, "F004", "잘못된 파일 카테고리입니다"),
+	INVALID_CONTENT_TYPE(400, "F005", "지원하지 않는 파일 형식입니다"),
 
 	// Lecture (L)
-	LECTURE_NOT_MODIFIABLE(403, "L001", "수정할 수 없는 강의입니다");
+	LECTURE_NOT_MODIFIABLE(403, "L001", "수정할 수 없는 강의입니다"),
+
+	// Post/Community (P)
+	BOARD_CATEGORY_NOT_FOUND(404, "P001", "카테고리를 찾을 수 없습니다"),
+	POST_NOT_FOUND(404, "P002", "게시글을 찾을 수 없습니다"),
+	POST_ACCESS_DENIED(403, "P003", "게시글에 대한 권한이 없습니다"),
+	COMMENT_NOT_FOUND(404, "P004", "댓글을 찾을 수 없습니다"),
+	COMMENT_ACCESS_DENIED(403, "P005", "댓글에 대한 권한이 없습니다");
 
 	private final int status;
 	private final String code;

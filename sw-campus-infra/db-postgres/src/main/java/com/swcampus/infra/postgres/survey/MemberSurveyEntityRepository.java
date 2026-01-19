@@ -17,8 +17,15 @@ public class MemberSurveyEntityRepository implements MemberSurveyRepository {
 
     @Override
     public MemberSurvey save(MemberSurvey survey) {
-        MemberSurveyEntity entity = MemberSurveyEntity.from(survey);
-        return jpaRepository.save(entity).toDomain();
+        Optional<MemberSurveyEntity> existing = jpaRepository.findById(survey.getMemberId());
+        if (existing.isPresent()) {
+            MemberSurveyEntity entity = existing.get();
+            entity.update(survey);
+            return jpaRepository.save(entity).toDomain();
+        } else {
+            MemberSurveyEntity entity = MemberSurveyEntity.from(survey);
+            return jpaRepository.save(entity).toDomain();
+        }
     }
 
     @Override
@@ -41,5 +48,15 @@ public class MemberSurveyEntityRepository implements MemberSurveyRepository {
     @Override
     public void deleteByMemberId(Long memberId) {
         jpaRepository.deleteById(memberId);
+    }
+
+    @Override
+    public long countByAptitudeTestNotNull() {
+        return jpaRepository.countByAptitudeTestNotNull();
+    }
+
+    @Override
+    public long countByBasicSurveyNotNullAndAptitudeTestNull() {
+        return jpaRepository.countByBasicSurveyNotNullAndAptitudeTestNull();
     }
 }

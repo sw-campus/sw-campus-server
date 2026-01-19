@@ -31,6 +31,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -46,6 +47,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -55,6 +57,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Auth", description = "인증/인가 API")
 public class AuthController {
 
@@ -152,7 +155,8 @@ public class AuthController {
     @ApiResponse(responseCode = "200", description = "검색 성공")
     public ResponseEntity<List<OrganizationSearchResponse>> searchOrganizations(
             @Parameter(description = "기관명 검색어", example = "한국")
-            @RequestParam(name = "keyword", required = false, defaultValue = "") String keyword) {
+            @RequestParam(name = "keyword", required = false, defaultValue = "")
+            @Size(max = 100, message = "검색어는 100자 이내로 입력해주세요") String keyword) {
         List<Organization> organizations = organizationService.getOrganizationList(keyword);
         return ResponseEntity.ok(OrganizationSearchResponse.fromList(organizations));
     }
@@ -210,7 +214,7 @@ public class AuthController {
             try {
                 organizationId = Long.parseLong(organizationIdStr);
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("유효하지 않은 기관 ID 형식입니다: " + organizationIdStr);
+                throw new IllegalArgumentException("유효하지 않은 기관 ID 형식입니다");
             }
         }
 

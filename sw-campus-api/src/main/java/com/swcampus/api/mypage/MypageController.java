@@ -185,7 +185,11 @@ public class MypageController {
             reviewWithNickname.review(), reviewWithNickname.nickname()));
     }
 
-    @Operation(summary = "[일반 사용자 전용] 설문조사 조회", description = "[일반 사용자 전용] 강의 추천을 위한 나의 설문조사 정보를 조회합니다. 전공, 부트캠프 수료 여부, 희망 직무 등의 정보를 확인할 수 있습니다.")
+    /**
+     * @deprecated Use GET /api/v1/members/me/survey instead
+     */
+    @Deprecated
+    @Operation(summary = "[일반 사용자 전용] 설문조사 조회 (Deprecated)", description = "[Deprecated - /api/v1/members/me/survey 사용 권장] 강의 추천을 위한 나의 설문조사 정보를 조회합니다. 전공, 부트캠프 수료 여부, 희망 직무 등의 정보를 확인할 수 있습니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
         @ApiResponse(responseCode = "401", description = "인증 필요",
@@ -208,7 +212,11 @@ public class MypageController {
             .orElseGet(() -> ResponseEntity.ok(SurveyResponse.empty()));
     }
 
-    @Operation(summary = "[일반 사용자 전용] 설문조사 등록/수정", description = "[일반 사용자 전용] 강의 추천을 위한 설문조사 정보를 등록하거나 수정합니다. 이미 등록된 경우 덮어씁니다.")
+    /**
+     * @deprecated Use POST /api/v1/members/me/survey/basic instead
+     */
+    @Deprecated
+    @Operation(summary = "[일반 사용자 전용] 설문조사 등록/수정 (Deprecated)", description = "[Deprecated - /api/v1/members/me/survey/basic 사용 권장] 강의 추천을 위한 설문조사 정보를 등록하거나 수정합니다. 이미 등록된 경우 덮어씁니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "저장 성공"),
         @ApiResponse(responseCode = "400", description = "잘못된 요청",
@@ -233,15 +241,7 @@ public class MypageController {
         @CurrentMember MemberPrincipal member,
         @Valid @RequestBody UpsertSurveyRequest request
     ) {
-        memberSurveyService.upsertSurvey(
-            member.memberId(),
-            request.major(),
-            request.bootcampCompleted(),
-            request.wantedJobs(),
-            request.licenses(),
-            request.hasGovCard(),
-            request.affordableAmount()
-        );
+        memberSurveyService.saveBasicSurvey(member.memberId(), request.toBasicSurvey());
         return ResponseEntity.ok().build();
     }
 

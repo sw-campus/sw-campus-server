@@ -106,6 +106,26 @@ public class GlobalExceptionHandler {
 				.body(ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다"));
 	}
 
+	// === 인가 예외 ===
+
+	@ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+	public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+			org.springframework.security.access.AccessDeniedException e) {
+		log.warn("접근 권한 없음: {}", e.getMessage());
+		return ResponseEntity
+				.status(HttpStatus.FORBIDDEN)
+				.body(ErrorResponse.of(ErrorCode.ACCESS_DENIED, "접근 권한이 없습니다"));
+	}
+
+	@ExceptionHandler(org.springframework.security.authorization.AuthorizationDeniedException.class)
+	public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+			org.springframework.security.authorization.AuthorizationDeniedException e) {
+		log.warn("인가 거부: {}", e.getMessage());
+		return ResponseEntity
+				.status(HttpStatus.FORBIDDEN)
+				.body(ErrorResponse.of(ErrorCode.ACCESS_DENIED, "접근 권한이 없습니다"));
+	}
+
 	// === 기타 예외 ===
 
 	@ExceptionHandler(Exception.class)
