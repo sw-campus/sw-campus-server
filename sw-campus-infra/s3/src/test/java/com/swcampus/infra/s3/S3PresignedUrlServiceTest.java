@@ -3,6 +3,7 @@ package com.swcampus.infra.s3;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.storage.PresignedUrlService.PresignedUploadUrl;
 import com.swcampus.domain.storage.PresignedUrlService.PresignedUrl;
+import com.swcampus.domain.storage.exception.InvalidContentTypeException;
 import com.swcampus.domain.storage.exception.InvalidStorageCategoryException;
 import com.swcampus.domain.storage.exception.StorageAccessDeniedException;
 import com.swcampus.domain.storage.exception.StorageBatchLimitExceededException;
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -224,7 +227,7 @@ class S3PresignedUrlServiceTest {
         @DisplayName("certificates 카테고리로 업로드 URL을 발급받는다")
         void certificates_success() {
             // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl("certificates", "cert.pdf", "application/pdf", Role.USER);
+            PresignedUploadUrl result = service.getPresignedUploadUrl("certificates", "cert.jpg", "image/jpeg", Role.USER);
 
             // then
             assertThat(result.key()).startsWith("certificates/");
@@ -234,7 +237,7 @@ class S3PresignedUrlServiceTest {
         @DisplayName("employment-certificates 카테고리로 업로드 URL을 발급받는다")
         void employmentCertificates_success() {
             // when
-            PresignedUploadUrl result = service.getPresignedUploadUrl("employment-certificates", "doc.pdf", "application/pdf", Role.USER);
+            PresignedUploadUrl result = service.getPresignedUploadUrl("employment-certificates", "doc.png", "image/png", Role.USER);
 
             // then
             assertThat(result.key()).startsWith("employment-certificates/");
@@ -263,6 +266,33 @@ class S3PresignedUrlServiceTest {
             // UUID is 36 characters + extension
             String fileName = parts[4];
             assertThat(fileName).matches("[a-f0-9-]{36}\\.jpg");
+        }
+
+        @Test
+        @DisplayName("허용되지 않는 contentType은 예외가 발생한다")
+        void invalidContentType_throwsException() {
+            // when & then
+            assertThatThrownBy(() -> service.getPresignedUploadUrl("lectures", "test.pdf", "application/pdf", Role.ORGANIZATION))
+                    .isInstanceOf(InvalidContentTypeException.class);
+        }
+
+        @Test
+        @DisplayName("null contentType은 예외가 발생한다")
+        void nullContentType_throwsException() {
+            // when & then
+            assertThatThrownBy(() -> service.getPresignedUploadUrl("lectures", "test.jpg", null, Role.ORGANIZATION))
+                    .isInstanceOf(InvalidContentTypeException.class);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"image/jpeg", "image/png", "image/webp", "image/gif"})
+        @DisplayName("허용된 contentType은 URL 발급에 성공한다")
+        void allowedContentTypes_success(String contentType) {
+            // when
+            PresignedUploadUrl result = service.getPresignedUploadUrl("lectures", "test.file", contentType, Role.ORGANIZATION);
+
+            // then
+            assertThat(result.uploadUrl()).isNotNull();
         }
     }
 }

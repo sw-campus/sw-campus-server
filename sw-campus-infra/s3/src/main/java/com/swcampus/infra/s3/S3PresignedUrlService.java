@@ -2,6 +2,7 @@ package com.swcampus.infra.s3;
 
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.storage.PresignedUrlService;
+import com.swcampus.domain.storage.exception.InvalidContentTypeException;
 import com.swcampus.domain.storage.exception.InvalidStorageCategoryException;
 import com.swcampus.domain.storage.exception.StorageAccessDeniedException;
 import com.swcampus.domain.storage.exception.StorageBatchLimitExceededException;
@@ -38,6 +39,10 @@ public class S3PresignedUrlService implements PresignedUrlService {
     private static final Set<String> ADMIN_ONLY_CATEGORIES = Set.of("banners");
     // 기관 또는 관리자만 업로드 가능한 카테고리
     private static final Set<String> ORGANIZATION_CATEGORIES = Set.of("lectures", "organizations", "teachers", "thumbnails");
+    // 허용된 파일 형식
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp", "image/gif"
+    );
 
     private final S3Presigner s3Presigner;
 
@@ -86,6 +91,7 @@ public class S3PresignedUrlService implements PresignedUrlService {
             throw new InvalidStorageCategoryException(category);
         }
 
+        validateContentType(contentType);
         validateUploadPermission(category, role);
 
         String key = generateKey(category, fileName);
@@ -93,6 +99,12 @@ public class S3PresignedUrlService implements PresignedUrlService {
         String url = generatePresignedPutUrl(bucket, key, contentType, DEFAULT_EXPIRATION_MINUTES);
 
         return new PresignedUploadUrl(url, key, DEFAULT_EXPIRATION_MINUTES * 60);
+    }
+
+    private void validateContentType(String contentType) {
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
+            throw new InvalidContentTypeException(contentType);
+        }
     }
 
     private void validateUploadPermission(String category, Role role) {

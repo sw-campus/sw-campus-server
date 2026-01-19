@@ -59,9 +59,17 @@ sw-campus-server/
 - **Domain 테스트 권장**: domain 레이어는 TDD 권장, api/infra는 선택적
 - **Swagger 문서화**: 파일 업로드 시 `@RequestPart` 필수, `@ModelAttribute` 금지
 
-## Code Rules Reference
+## Code Rules
 
-상세 규칙은 `../sw-campus-docs/code-rules/` 참조:
-- `server/01-module-structure.md` ~ `server/07-swagger-documentation.md`
+상세 규칙은 `.claude/rules/` 폴더에서 자동으로 로드됩니다:
 
-AI 협업 시 `../sw-campus-docs/code-rules/00-index.md` 참조 권장.
+| 파일 | 내용 |
+|-----|------|
+| `01-module-structure.md` | 모듈 구조 및 패키지 규칙 |
+| `02-naming-convention.md` | 네이밍 컨벤션 |
+| `03-dependency-rules.md` | 모듈 간 의존성 규칙 |
+| `04-api-design.md` | REST API 설계 규칙 |
+| `05-exception-handling.md` | 예외 처리 규칙 |
+| `06-design-principles.md` | 설계 원칙 (YAGNI, 중복 허용 등) |
+| `07-swagger-documentation.md` | Swagger 문서화 규칙 |
+| `08-security.md` | 보안 규칙 |
