@@ -31,7 +31,7 @@ public class PostLikeController {
     @PostMapping("/{postId}/like")
     public ResponseEntity<LikeToggleResponse> togglePostLike(
             @CurrentMember MemberPrincipal member,
-            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
         boolean liked = postLikeService.toggleLike(member.memberId(), postId);
 
@@ -51,7 +51,7 @@ public class PostLikeController {
     @GetMapping("/{postId}/like/status")
     public ResponseEntity<Boolean> isPostLiked(
             @CurrentMember MemberPrincipal member,
-            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
         boolean liked = postLikeService.isLiked(member.memberId(), postId);
 

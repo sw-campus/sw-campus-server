@@ -35,7 +35,7 @@ public class BookmarkController {
     @PostMapping("/{postId}")
     public ResponseEntity<BookmarkToggleResponse> toggleBookmark(
             @CurrentMember MemberPrincipal member,
-            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
         boolean bookmarked = bookmarkService.toggleBookmark(member.memberId(), postId);
 
@@ -74,7 +74,7 @@ public class BookmarkController {
     @GetMapping("/{postId}/status")
     public ResponseEntity<Boolean> isBookmarked(
             @CurrentMember MemberPrincipal member,
-            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
         boolean bookmarked = bookmarkService.isBookmarked(member.memberId(), postId);
 
@@ -90,7 +90,7 @@ public class BookmarkController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deleteBookmark(
             @CurrentMember MemberPrincipal member,
-            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
         bookmarkService.deleteBookmark(member.memberId(), postId);
 

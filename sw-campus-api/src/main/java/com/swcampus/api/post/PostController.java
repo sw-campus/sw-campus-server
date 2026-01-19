@@ -13,8 +13,8 @@ import com.swcampus.domain.comment.CommentService;
 import com.swcampus.domain.postlike.PostLikeService;
 import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.member.Role;
-import com.swcampus.domain.member.exception.MemberNotFoundException;
 import com.swcampus.domain.post.Post;
+import com.swcampus.domain.post.PostDetail;
 import com.swcampus.domain.post.PostService;
 import com.swcampus.domain.post.PostSummary;
 import io.swagger.v3.oas.annotations.Operation;
@@ -135,32 +135,21 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<PostDetailResponse> getPost(
             @OptionalCurrentMember MemberPrincipal member,
-            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
-        Post post = postService.getPostWithViewCount(postId);
+        PostDetail postDetail = postService.getPostDetailWithViewCount(postId);
+        Post post = postDetail.getPost();
 
         Long currentUserId = member != null ? member.memberId() : null;
         boolean isAuthor = currentUserId != null && post.isAuthor(currentUserId);
-
-        String nickname = "알 수 없음";
-        try {
-            nickname = memberService.getMember(post.getUserId()).getNickname();
-        } catch (MemberNotFoundException e) {
-            // 탈퇴한 회원 등 예외 처리
-        }
-
-        String categoryName = boardCategoryService.getCategoryName(post.getBoardCategoryId());
-
-        long commentCount = commentService.countByPostId(postId);
-
         boolean isBookmarked = bookmarkService.isBookmarked(currentUserId, postId);
         boolean isLiked = postLikeService.isLiked(currentUserId, postId);
 
         PostDetailResponse response = PostDetailResponse.from(
                 post,
-                nickname,
-                categoryName,
-                commentCount,
+                postDetail.getAuthorNickname(),
+                postDetail.getCategoryName(),
+                postDetail.getCommentCount(),
                 isBookmarked,
                 isLiked,
                 isAuthor
@@ -181,7 +170,7 @@ public class PostController {
     @PutMapping("/{postId}")
     public ResponseEntity<PostDetailResponse> updatePost(
             @CurrentMember MemberPrincipal member,
-            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId,
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId,
             @Valid @RequestBody UpdatePostRequest request) {
 
         boolean isAdmin = member.role() == Role.ADMIN;
@@ -229,7 +218,7 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(
             @CurrentMember MemberPrincipal member,
-            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
         boolean isAdmin = member.role() == Role.ADMIN;
 
@@ -244,7 +233,7 @@ public class PostController {
     })
     @GetMapping("/{postId}/adjacent")
     public ResponseEntity<com.swcampus.api.post.response.AdjacentPostResponse> getAdjacentPosts(
-            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
         
         com.swcampus.domain.post.AdjacentPosts adjacentPosts = postService.getAdjacentPosts(postId);
         com.swcampus.api.post.response.AdjacentPostResponse response = 
@@ -263,7 +252,7 @@ public class PostController {
     @PostMapping("/{postId}/pin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<java.util.Map<String, Boolean>> togglePin(
-            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
         
         com.swcampus.domain.post.Post post = postService.togglePin(postId);
         return ResponseEntity.ok(java.util.Map.of("pinned", post.isPinned()));

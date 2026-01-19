@@ -10,6 +10,7 @@ import com.swcampus.api.storage.response.PresignedUrlResponse;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.storage.FileStorageService;
+import com.swcampus.domain.storage.UploadResult;
 import com.swcampus.domain.storage.PresignedUrlService;
 import com.swcampus.api.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -141,24 +142,16 @@ public class StorageController {
             throw new IllegalArgumentException("파일이 비어있습니다.");
         }
 
-        // 현재 posts 카테고리만 지원
-        if (!"posts".equals(category)) {
-            throw new IllegalArgumentException("지원하지 않는 카테고리입니다: " + category);
-        }
-
         String originalFilename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "image.jpg";
         String contentType = file.getContentType() != null ? file.getContentType() : "image/jpeg";
 
-        String url = fileStorageService.upload(
+        UploadResult result = fileStorageService.upload(
                 file.getBytes(),
                 category,
                 originalFilename,
                 contentType
         );
 
-        // URL에서 key 추출
-        String key = url.substring(url.indexOf(category + "/"));
-
-        return ResponseEntity.ok(new ImageUploadResponse(url, key));
+        return ResponseEntity.ok(new ImageUploadResponse(result.url(), result.key()));
     }
 }

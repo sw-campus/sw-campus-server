@@ -1,6 +1,7 @@
 package com.swcampus.domain.teacher;
 
 import com.swcampus.domain.storage.FileStorageService;
+import com.swcampus.domain.storage.UploadResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,9 +40,10 @@ class TeacherServiceTest {
         String imageName = "test.jpg";
         String contentType = "image/jpeg";
         String uploadedUrl = "https://s3.example.com/teachers/test.jpg";
+        String uploadedKey = "teachers/2024/01/01/test.jpg";
 
         given(fileStorageService.upload(imageContent, "teachers", imageName, contentType))
-                .willReturn(uploadedUrl);
+                .willReturn(new UploadResult(uploadedUrl, uploadedKey));
         given(teacherRepository.save(any(Teacher.class)))
                 .willAnswer(invocation -> {
                     Teacher saved = invocation.getArgument(0);

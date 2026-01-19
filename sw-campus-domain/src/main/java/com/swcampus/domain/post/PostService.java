@@ -1,6 +1,9 @@
 package com.swcampus.domain.post;
 
 import com.swcampus.domain.board.BoardCategoryService;
+import com.swcampus.domain.comment.CommentService;
+import com.swcampus.domain.member.MemberService;
+import com.swcampus.domain.member.exception.MemberNotFoundException;
 import com.swcampus.domain.post.exception.PostAccessDeniedException;
 import com.swcampus.domain.post.exception.PostNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +19,12 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class PostService {
 
+    private static final String UNKNOWN_AUTHOR = "알 수 없음";
+
     private final PostRepository postRepository;
     private final BoardCategoryService boardCategoryService;
+    private final MemberService memberService;
+    private final CommentService commentService;
 
     @Transactional
     public Post createPost(Long userId, Long boardCategoryId, String title, String body,
@@ -54,11 +61,47 @@ public class PostService {
     public Post getPostWithViewCount(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException(postId));
-        
+
         postRepository.incrementViewCount(postId);
         post.incrementViewCount();
-        
+
         return post;
+    }
+
+    /**
+     * 게시글 상세 정보를 조회합니다. 조회수가 1 증가합니다.
+     * 탈퇴한 회원의 경우 작성자 닉네임이 "알 수 없음"으로 표시됩니다.
+     */
+    @Transactional
+    public PostDetail getPostDetailWithViewCount(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException(postId));
+
+        postRepository.incrementViewCount(postId);
+        post.incrementViewCount();
+
+        String authorNickname = getAuthorNickname(post.getUserId());
+        String categoryName = boardCategoryService.getCategoryName(post.getBoardCategoryId());
+        long commentCount = commentService.countByPostId(postId);
+
+        return PostDetail.builder()
+                .post(post)
+                .authorNickname(authorNickname)
+                .categoryName(categoryName)
+                .commentCount(commentCount)
+                .build();
+    }
+
+    /**
+     * 작성자 닉네임을 조회합니다.
+     * 탈퇴한 회원의 경우 "알 수 없음"을 반환합니다.
+     */
+    private String getAuthorNickname(Long userId) {
+        try {
+            return memberService.getMember(userId).getNickname();
+        } catch (MemberNotFoundException e) {
+            return UNKNOWN_AUTHOR;
+        }
     }
 
     @Transactional

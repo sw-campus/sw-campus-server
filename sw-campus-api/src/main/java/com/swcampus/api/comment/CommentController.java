@@ -24,13 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.swcampus.domain.member.Member;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Tag(name = "Comment", description = "댓글 API")
 @RestController
@@ -41,6 +35,7 @@ public class CommentController {
     private final CommentService commentService;
     private final MemberService memberService;
     private final CommentLikeService commentLikeService;
+    private final CommentResponseMapper commentResponseMapper;
 
     @Operation(summary = "댓글 작성", description = "게시글에 댓글을 작성합니다.")
     @SecurityRequirement(name = "cookieAuth")
@@ -76,14 +71,14 @@ public class CommentController {
     @GetMapping("/posts/{postId}/comments")
     public ResponseEntity<List<CommentResponse>> getCommentsByPostId(
             @OptionalCurrentMember MemberPrincipal member,
-            @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
         Long currentUserId = member != null ? member.memberId() : null;
 
         List<Comment> comments = commentService.getCommentsByPostId(postId);
 
         // 계층 구조로 변환
-        List<CommentResponse> response = buildCommentTree(comments, currentUserId);
+        List<CommentResponse> response = commentResponseMapper.toTreeResponse(comments, currentUserId);
 
         return ResponseEntity.ok(response);
     }
@@ -100,7 +95,7 @@ public class CommentController {
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<CommentResponse> updateComment(
             @CurrentMember MemberPrincipal member,
-            @Parameter(description = "댓글 ID", required = true) @PathVariable Long commentId,
+            @Parameter(description = "댓글 ID", required = true) @PathVariable("commentId") Long commentId,
             @Valid @RequestBody UpdateCommentRequest request) {
 
         boolean isAdmin = member.role() == Role.ADMIN;
@@ -133,77 +128,12 @@ public class CommentController {
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @CurrentMember MemberPrincipal member,
-            @Parameter(description = "댓글 ID", required = true) @PathVariable Long commentId) {
+            @Parameter(description = "댓글 ID", required = true) @PathVariable("commentId") Long commentId) {
 
         boolean isAdmin = member.role() == Role.ADMIN;
 
         commentService.deleteComment(commentId, member.memberId(), isAdmin);
 
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * 댓글 목록을 계층 구조(부모-자식)로 변환합니다.
-     * N+1 문제를 해결하기 위해 작성자 정보를 일괄 조회합니다.
-     */
-    private List<CommentResponse> buildCommentTree(List<Comment> comments, Long currentUserId) {
-        if (comments.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        // 0. 중복 제거 (DB에서 DISTINCT를 사용하더라도 안전장치로 추가)
-        List<Comment> uniqueComments = comments.stream()
-                .filter(distinctByKey(Comment::getId))
-                .toList();
-
-        // 1. 작성자 ID 목록 수집
-        List<Long> authorIds = uniqueComments.stream()
-                .map(Comment::getUserId)
-                .distinct()
-                .toList();
-
-        // 2. 작성자 정보 일괄 조회
-        Map<Long, String> nicknameMap = memberService.getMembersByIds(authorIds).stream()
-                .collect(Collectors.toMap(Member::getId, Member::getNickname));
-
-        Map<Long, CommentResponse> commentMap = new LinkedHashMap<>();
-        List<CommentResponse> rootComments = new ArrayList<>();
-
-        // 3. 사용자가 추천한 댓글 ID 목록 조회
-        Set<Long> likedCommentIds = commentLikeService.getLikedCommentIds(currentUserId);
-
-        // 4. 모든 댓글을 CommentResponse로 변환하고 Map에 저장
-        for (Comment comment : uniqueComments) {
-            String nickname = nicknameMap.getOrDefault(comment.getUserId(), "알 수 없음");
-            boolean isAuthor = currentUserId != null && comment.isAuthor(currentUserId);
-            boolean isLiked = likedCommentIds.contains(comment.getId());
-            CommentResponse response = CommentResponse.from(comment, nickname, isAuthor, isLiked);
-            commentMap.put(comment.getId(), response);
-        }
-
-        // 4. 부모-자식 관계 설정
-        for (Comment comment : uniqueComments) {
-            CommentResponse response = commentMap.get(comment.getId());
-            if (comment.getParentId() == null) {
-                // 루트 댓글
-                rootComments.add(response);
-            } else {
-                // 대댓글: 부모 댓글에 추가
-                CommentResponse parent = commentMap.get(comment.getParentId());
-                if (parent != null) {
-                    parent.addReply(response);
-                } else {
-                    // 부모가 삭제된 경우 루트로 표시
-                    rootComments.add(response);
-                }
-            }
-        }
-
-        return rootComments;
-    }
-
-    private static <T> java.util.function.Predicate<T> distinctByKey(java.util.function.Function<? super T, ?> keyExtractor) {
-        Set<Object> seen = java.util.concurrent.ConcurrentHashMap.newKeySet();
-        return t -> seen.add(keyExtractor.apply(t));
     }
 }
