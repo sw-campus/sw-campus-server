@@ -87,7 +87,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             AND (:keyword IS NULL OR :keyword = '' OR 
                  p.post_title ILIKE '%' || :keyword || '%' OR 
                  p.post_body ILIKE '%' || :keyword || '%' OR 
-                 array_to_string(p.tags, ' ') ILIKE '%' || :keyword || '%')
+                 :keyword = ANY(p.tags))
             """,
             countQuery = """
             SELECT COUNT(*) FROM swcampus.posts p
@@ -97,7 +97,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             AND (:keyword IS NULL OR :keyword = '' OR 
                  p.post_title ILIKE '%' || :keyword || '%' OR 
                  p.post_body ILIKE '%' || :keyword || '%' OR 
-                 array_to_string(p.tags, ' ') ILIKE '%' || :keyword || '%')
+                 :keyword = ANY(p.tags))
             """,
             nativeQuery = true)
     Page<Object[]> findAllWithDetails(

@@ -32,4 +32,9 @@ public class BoardCategoryEntityRepository implements BoardCategoryRepository {
         BoardCategoryEntity entity = BoardCategoryEntity.from(boardCategory);
         return jpaRepository.save(entity).toDomain();
     }
+
+    @Override
+    public List<Long> findRecursiveChildIds(Long parentId) {
+        return jpaRepository.findRecursiveChildIds(parentId);
+    }
 }

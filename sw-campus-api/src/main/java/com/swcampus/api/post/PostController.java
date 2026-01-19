@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Tag(name = "Post", description = "게시글 API")
 @RestController
@@ -260,13 +261,9 @@ public class PostController {
             @ApiResponse(responseCode = "403", description = "권한 없음 (관리자만 가능)")
     })
     @PostMapping("/{postId}/pin")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<java.util.Map<String, Boolean>> togglePin(
-            @CurrentMember MemberPrincipal member,
             @Parameter(description = "게시글 ID", required = true) @PathVariable Long postId) {
-        
-        if (member.role() != Role.ADMIN) {
-            return ResponseEntity.status(403).build();
-        }
         
         com.swcampus.domain.post.Post post = postService.togglePin(postId);
         return ResponseEntity.ok(java.util.Map.of("pinned", post.isPinned()));

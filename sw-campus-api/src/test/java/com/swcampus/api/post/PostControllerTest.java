@@ -224,5 +224,41 @@ class PostControllerTest {
                 .andDo(print())
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    @DisplayName("게시글 고정 성공 - 관리자")
+    void togglePin_Success_Admin() throws Exception {
+        // given
+        String adminToken = tokenProvider.createAccessToken(2L, "admin@example.com", Role.ADMIN);
+        
+        Post pinnedPost = Post.of(
+            1L, 1L, 1L,
+            "Test Title", "Test Body",
+            List.of(), List.of(),
+            0L, 0L, 0L, null, true, false,
+            LocalDateTime.now(), LocalDateTime.now()
+        );
+        
+        given(postService.togglePin(anyLong()))
+                .willReturn(pinnedPost);
+
+        // when & then
+        mockMvc.perform(post("/api/v1/posts/1/pin")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("게시글 고정 실패 - 일반 사용자")
+    void togglePin_Fail_User() throws Exception {
+        // when & then
+        mockMvc.perform(post("/api/v1/posts/1/pin")
+                        .header("Authorization", "Bearer " + validToken)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
 }
 

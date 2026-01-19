@@ -35,33 +35,7 @@ public class BoardCategoryService {
      * 특정 카테고리와 그 하위 카테고리의 ID 목록을 반환합니다.
      */
     public List<Long> getChildCategoryIds(Long categoryId) {
-        List<BoardCategory> allCategories = boardCategoryRepository.findAll();
-        // 전체 리스트를 순회하여 parent-child 관계를 구성하고 targetId부터 수집
-        return getIdsFromMap(allCategories, categoryId);
-    }
-
-    private List<Long> getIdsFromMap(List<BoardCategory> allCategories, Long targetId) {
-        // 자식 관계 구성
-        Map<Long, List<Long>> parentToChildren = new HashMap<>();
-        for (BoardCategory cat : allCategories) {
-            if (cat.getPid() != null) {
-                parentToChildren.computeIfAbsent(cat.getPid(), k -> new ArrayList<>()).add(cat.getId());
-            }
-        }
-        
-        List<Long> result = new ArrayList<>();
-        collectIds(targetId, parentToChildren, result);
-        return result;
-    }
-
-    private void collectIds(Long currentId, Map<Long, List<Long>> parentToChildren, List<Long> result) {
-        result.add(currentId);
-        List<Long> children = parentToChildren.get(currentId);
-        if (children != null) {
-            for (Long childId : children) {
-                collectIds(childId, parentToChildren, result);
-            }
-        }
+        return boardCategoryRepository.findRecursiveChildIds(categoryId);
     }
 
     private List<BoardCategory> buildTree(List<BoardCategory> categories) {
