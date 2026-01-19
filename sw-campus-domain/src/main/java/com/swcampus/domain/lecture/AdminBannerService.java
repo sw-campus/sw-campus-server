@@ -83,7 +83,7 @@ public class AdminBannerService {
 
         // 이미지 파일이 업로드된 경우 S3에 저장하고 URL 획득
         if (imageContent != null && imageContent.length > 0) {
-            imageUrl = fileStorageService.upload(imageContent, BANNER_UPLOAD_DIRECTORY, imageName, contentType);
+            imageUrl = fileStorageService.upload(imageContent, BANNER_UPLOAD_DIRECTORY, imageName, contentType).url();
         }
 
         Banner bannerToSave = banner.toBuilder()
@@ -115,7 +115,7 @@ public class AdminBannerService {
 
         // 새 이미지 파일이 업로드된 경우 S3에 저장
         if (imageContent != null && imageContent.length > 0) {
-            imageUrl = fileStorageService.upload(imageContent, BANNER_UPLOAD_DIRECTORY, imageName, contentType);
+            imageUrl = fileStorageService.upload(imageContent, BANNER_UPLOAD_DIRECTORY, imageName, contentType).url();
         } else if (banner.getImageUrl() != null && !banner.getImageUrl().isBlank()) {
             // 새 이미지 파일 없지만 URL이 직접 제공된 경우
             imageUrl = banner.getImageUrl();

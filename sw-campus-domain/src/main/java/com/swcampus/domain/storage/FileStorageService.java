@@ -8,15 +8,15 @@ import java.io.InputStream;
 public interface FileStorageService {
 
     /**
-     * 파일을 저장하고 접근 URL을 반환
+     * 파일을 저장하고 업로드 결과(URL과 key)를 반환
      *
      * @param content     파일 바이트 배열
      * @param directory   저장할 디렉토리 경로 (예: "lectures", "teachers")
      * @param fileName    원본 파일명
      * @param contentType MIME 타입
-     * @return 저장된 파일의 접근 URL
+     * @return 저장된 파일의 URL과 key를 포함한 결과
      */
-    String upload(byte[] content, String directory, String fileName, String contentType);
+    UploadResult upload(byte[] content, String directory, String fileName, String contentType);
 
     /**
      * 파일 삭제

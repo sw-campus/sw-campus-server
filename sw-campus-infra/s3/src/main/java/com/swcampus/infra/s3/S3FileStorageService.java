@@ -1,6 +1,8 @@
 package com.swcampus.infra.s3;
 
 import com.swcampus.domain.storage.FileStorageService;
+import com.swcampus.domain.storage.UploadResult;
+import com.swcampus.domain.storage.exception.InvalidStorageCategoryException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,11 +16,17 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class S3FileStorageService implements FileStorageService {
+
+    private static final Set<String> VALID_CATEGORIES = Set.of(
+            "lectures", "organizations", "teachers", "banners", "thumbnails",
+            "certificates", "employment-certificates", "members", "posts"
+    );
 
     private final S3Client s3Client;
 
@@ -32,8 +40,15 @@ public class S3FileStorageService implements FileStorageService {
     private String region;
 
     @Override
-    public String upload(byte[] content, String directory, String fileName, String contentType) {
+    public UploadResult upload(byte[] content, String directory, String fileName, String contentType) {
+        validateCategory(directory);
         return performUpload(content, directory, fileName, contentType, bucketName);
+    }
+
+    private void validateCategory(String category) {
+        if (!VALID_CATEGORIES.contains(category)) {
+            throw new InvalidStorageCategoryException(category);
+        }
     }
 
     @Override
@@ -57,7 +72,7 @@ public class S3FileStorageService implements FileStorageService {
         performDeleteByKey(fileKey, privateBucketName);
     }
 
-    private String performUpload(byte[] content, String directory, String fileName, String contentType, String targetBucket) {
+    private UploadResult performUpload(byte[] content, String directory, String fileName, String contentType, String targetBucket) {
         String key = generateKey(directory, fileName);
 
         PutObjectRequest request = PutObjectRequest.builder()
@@ -68,7 +83,8 @@ public class S3FileStorageService implements FileStorageService {
 
         s3Client.putObject(request, RequestBody.fromBytes(content));
 
-        return String.format("https://%s.s3.%s.amazonaws.com/%s", targetBucket, region, key);
+        String url = String.format("https://%s.s3.%s.amazonaws.com/%s", targetBucket, region, key);
+        return new UploadResult(url, key);
     }
 
     private String performUploadAndGetKey(byte[] content, String directory, String fileName, String contentType, String targetBucket) {

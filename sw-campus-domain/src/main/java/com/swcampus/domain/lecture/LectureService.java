@@ -67,7 +67,7 @@ public class LectureService {
 		String imageUrl = lecture.getLectureImageUrl();
 
 		if (imageContent != null && imageContent.length > 0) {
-			imageUrl = fileStorageService.upload(imageContent, "lectures", imageName, contentType);
+			imageUrl = fileStorageService.upload(imageContent, "lectures", imageName, contentType).url();
 		} else if (imageUrl == null || imageUrl.isBlank()) {
 			imageUrl = resolveDefaultImageUrl(lecture);
 		}
@@ -109,7 +109,7 @@ public class LectureService {
 		String imageUrl = existingLecture.getLectureImageUrl();
 
 		if (imageContent != null && imageContent.length > 0) {
-			imageUrl = fileStorageService.upload(imageContent, "lectures", imageName, contentType);
+			imageUrl = fileStorageService.upload(imageContent, "lectures", imageName, contentType).url();
 		}
 
 		List<Teacher> updatedTeachers = processNewTeachers(lecture.getTeachers(), teacherImages);
@@ -302,7 +302,7 @@ public class LectureService {
 						ImageContent img = teacherImages.get(imageIndex++);
 						if (img.content() != null && img.content().length > 0) {
 							teacherImgUrl = fileStorageService.upload(img.content(), "teachers", img.name(),
-									img.contentType());
+									img.contentType()).url();
 						}
 					}
 					updatedTeachers.add(teacher.toBuilder().teacherImageUrl(teacherImgUrl).build());

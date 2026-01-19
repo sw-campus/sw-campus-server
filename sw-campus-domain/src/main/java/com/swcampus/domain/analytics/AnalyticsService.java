@@ -28,7 +28,7 @@ public class AnalyticsService {
      * @param daysAgo 조회할 일수 (기본값: 7)
      * @return AnalyticsReport
      */
-    @Cacheable(value = "analyticsReport", key = "#p0")
+    @Cacheable(value = "analyticsReport", key = "#daysAgo")
     public AnalyticsReport getReport(int daysAgo) {
         if (daysAgo <= 0) {
             daysAgo = DEFAULT_DAYS;
@@ -42,7 +42,7 @@ public class AnalyticsService {
      * @param daysAgo 조회할 일수 (기본값: 7)
      * @return EventStats
      */
-    @Cacheable(value = "eventStats", key = "#p0")
+    @Cacheable(value = "eventStats", key = "#daysAgo")
     public EventStats getEventStats(int daysAgo) {
         if (daysAgo <= 0) {
             daysAgo = DEFAULT_DAYS;
@@ -53,7 +53,7 @@ public class AnalyticsService {
     /**
      * 클릭 수 높은 순으로 배너 통계를 조회합니다.
      */
-    @Cacheable(value = "topBanners", key = "#p0 + '-' + #p1")
+    @Cacheable(value = "topBanners", key = "#daysAgo + '-' + #limit")
     public List<BannerClickStats> getTopBannersByClicks(int daysAgo, int limit) {
         if (daysAgo <= 0) daysAgo = DEFAULT_DAYS;
         if (limit <= 0) limit = DEFAULT_LIMIT;
@@ -63,7 +63,7 @@ public class AnalyticsService {
     /**
      * 클릭 수 높은 순으로 강의 통계를 조회합니다.
      */
-    @Cacheable(value = "topLectures", key = "#p0 + '-' + #p1")
+    @Cacheable(value = "topLectures", key = "#daysAgo + '-' + #limit")
     public List<LectureClickStats> getTopLecturesByClicks(int daysAgo, int limit) {
         if (daysAgo <= 0) daysAgo = DEFAULT_DAYS;
         if (limit <= 0) limit = DEFAULT_LIMIT;
@@ -73,7 +73,7 @@ public class AnalyticsService {
     /**
      * 페이지 조회수 기준 인기 강의 목록을 조회합니다.
      */
-    @Cacheable(value = "popularLectures", key = "#p0 + '-' + #p1")
+    @Cacheable(value = "popularLectures", key = "#daysAgo + '-' + #limit")
     public List<PopularLecture> getPopularLectures(int daysAgo, int limit) {
         if (daysAgo <= 0) daysAgo = DEFAULT_DAYS;
         if (limit <= 0) limit = DEFAULT_LIMIT;
@@ -83,7 +83,7 @@ public class AnalyticsService {
     /**
      * 검색 횟수 기준 인기 검색어 목록을 조회합니다.
      */
-    @Cacheable(value = "popularSearchTerms", key = "#p0 + '-' + #p1")
+    @Cacheable(value = "popularSearchTerms", key = "#daysAgo + '-' + #limit")
     public List<PopularSearchTerm> getPopularSearchTerms(int daysAgo, int limit) {
         if (daysAgo <= 0) daysAgo = DEFAULT_DAYS;
         if (limit <= 0) limit = DEFAULT_LIMIT;
@@ -93,7 +93,7 @@ public class AnalyticsService {
     /**
      * 트래픽 소스별 세션/사용자 통계를 조회합니다.
      */
-    @Cacheable(value = "trafficSources", key = "#p0 + '-' + #p1")
+    @Cacheable(value = "trafficSources", key = "#daysAgo + '-' + #limit")
     public List<TrafficSource> getTrafficSources(int daysAgo, int limit) {
         if (daysAgo <= 0) daysAgo = DEFAULT_DAYS;
         if (limit <= 0) limit = DEFAULT_LIMIT;

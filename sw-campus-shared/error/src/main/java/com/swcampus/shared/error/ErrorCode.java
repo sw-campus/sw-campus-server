@@ -29,6 +29,7 @@ public enum ErrorCode {
 	INTERNAL_SERVER_ERROR(500, "C002", "서버 내부 오류입니다"),
 	RATE_LIMIT_EXCEEDED(429, "C003", "요청 한도를 초과했습니다"),
 	RESOURCE_NOT_FOUND(404, "C004", "리소스를 찾을 수 없습니다"),
+	ACCESS_DENIED(403, "C005", "접근 권한이 없습니다"),
 
 	// Member (M)
 	MEMBER_NOT_FOUND(404, "M001", "회원을 찾을 수 없습니다"),
@@ -88,7 +89,14 @@ public enum ErrorCode {
 	INVALID_CONTENT_TYPE(400, "F005", "지원하지 않는 파일 형식입니다"),
 
 	// Lecture (L)
-	LECTURE_NOT_MODIFIABLE(403, "L001", "수정할 수 없는 강의입니다");
+	LECTURE_NOT_MODIFIABLE(403, "L001", "수정할 수 없는 강의입니다"),
+
+	// Post/Community (P)
+	BOARD_CATEGORY_NOT_FOUND(404, "P001", "카테고리를 찾을 수 없습니다"),
+	POST_NOT_FOUND(404, "P002", "게시글을 찾을 수 없습니다"),
+	POST_ACCESS_DENIED(403, "P003", "게시글에 대한 권한이 없습니다"),
+	COMMENT_NOT_FOUND(404, "P004", "댓글을 찾을 수 없습니다"),
+	COMMENT_ACCESS_DENIED(403, "P005", "댓글에 대한 권한이 없습니다");
 
 	private final int status;
 	private final String code;

@@ -129,7 +129,7 @@ public class OrganizationService {
         if (file == null || file.content() == null || file.content().length == 0) {
             return null;
         }
-        return fileStorageService.upload(file.content(), folder, file.fileName(), file.contentType());
+        return fileStorageService.upload(file.content(), folder, file.fileName(), file.contentType()).url();
     }
 
     private String uploadPrivateFileIfPresent(FileUploadData file, String folder) {

@@ -23,7 +23,7 @@ public class TeacherService {
         String imageUrl = null;
 
         if (imageContent != null && imageContent.length > 0) {
-            imageUrl = fileStorageService.upload(imageContent, "teachers", imageName, contentType);
+            imageUrl = fileStorageService.upload(imageContent, "teachers", imageName, contentType).url();
         }
 
         Teacher newTeacher = teacher.toBuilder()
