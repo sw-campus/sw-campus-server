@@ -67,6 +67,7 @@ project(':sw-campus-api') {
 
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation project(':sw-campus-infra:db-postgres')
     }
 
     bootJar {
