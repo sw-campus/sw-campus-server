@@ -86,7 +86,11 @@ public class SecurityConfig {
                         // 인증 없이 접근 가능
                         .requestMatchers(
                                 "/api/v1/auth/**",
+                                // health check
+                                "/healthz", // ALB 헬스체크 전용 엔드포인트
                                 "/actuator/health",
+                                "/actuator/health/**",
+                                "/actuator/prometheus",
                                 // Swagger UI
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
