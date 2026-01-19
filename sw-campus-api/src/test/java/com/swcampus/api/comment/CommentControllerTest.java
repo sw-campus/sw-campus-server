@@ -7,6 +7,7 @@ import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.comment.Comment;
 import com.swcampus.domain.comment.CommentService;
+import com.swcampus.domain.commentlike.CommentLikeService;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.member.Role;
@@ -52,6 +53,9 @@ class CommentControllerTest {
 
     @MockitoBean
     private MemberService memberService;
+
+    @MockitoBean
+    private CommentLikeService commentLikeService;
 
     private String validToken;
     private Member mockMember;
@@ -187,5 +191,155 @@ class CommentControllerTest {
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("댓글 수정 실패 - 토큰 없음")
+    void updateComment_Fail_NoToken() throws Exception {
+        // given
+        UpdateCommentRequest request = new UpdateCommentRequest(
+            "Updated Comment", null
+        );
+
+        // when & then
+        mockMvc.perform(put("/api/v1/comments/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("댓글 삭제 실패 - 토큰 없음")
+    void deleteComment_Fail_NoToken() throws Exception {
+        // when & then
+        mockMvc.perform(delete("/api/v1/comments/1")
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("댓글 수정 실패 - 권한 없음")
+    void updateComment_Fail_AccessDenied() throws Exception {
+        // given
+        UpdateCommentRequest request = new UpdateCommentRequest(
+            "Updated Comment", null
+        );
+
+        given(commentService.updateComment(anyLong(), anyLong(), anyBoolean(), any(), any()))
+                .willThrow(new com.swcampus.domain.comment.exception.CommentAccessDeniedException("댓글 수정 권한이 없습니다."));
+
+        // when & then
+        mockMvc.perform(put("/api/v1/comments/1")
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("댓글 삭제 실패 - 권한 없음")
+    void deleteComment_Fail_AccessDenied() throws Exception {
+        // given
+        org.mockito.Mockito.doThrow(new com.swcampus.domain.comment.exception.CommentAccessDeniedException("댓글 삭제 권한이 없습니다."))
+                .when(commentService).deleteComment(anyLong(), anyLong(), anyBoolean());
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/comments/1")
+                        .header("Authorization", "Bearer " + validToken)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("댓글 수정 실패 - 존재하지 않는 댓글")
+    void updateComment_Fail_NotFound() throws Exception {
+        // given
+        UpdateCommentRequest request = new UpdateCommentRequest(
+            "Updated Comment", null
+        );
+
+        given(commentService.updateComment(anyLong(), anyLong(), anyBoolean(), any(), any()))
+                .willThrow(new com.swcampus.domain.comment.exception.CommentNotFoundException(999L));
+
+        // when & then
+        mockMvc.perform(put("/api/v1/comments/999")
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("댓글 삭제 실패 - 존재하지 않는 댓글")
+    void deleteComment_Fail_NotFound() throws Exception {
+        // given
+        org.mockito.Mockito.doThrow(new com.swcampus.domain.comment.exception.CommentNotFoundException(999L))
+                .when(commentService).deleteComment(anyLong(), anyLong(), anyBoolean());
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/comments/999")
+                        .header("Authorization", "Bearer " + validToken)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("댓글 작성 실패 - 본문 없음")
+    void createComment_Fail_NoBody() throws Exception {
+        // given
+        CreateCommentRequest request = new CreateCommentRequest(
+            1L, null, null, null  // body가 null
+        );
+
+        // when & then
+        mockMvc.perform(post("/api/v1/comments")
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("대댓글 작성 성공")
+    void createReply_Success() throws Exception {
+        // given
+        CreateCommentRequest request = new CreateCommentRequest(
+            1L, 1L, "Reply Comment", null  // parentId 지정
+        );
+
+        Comment mockReply = Comment.of(
+            2L, 1L, 1L, 1L,  // parentId = 1
+            "Reply Comment", null, 0L, false,
+            LocalDateTime.now(), LocalDateTime.now()
+        );
+
+        given(commentService.createComment(anyLong(), anyLong(), any(), any(), any()))
+                .willReturn(mockReply);
+
+        given(memberService.getMember(anyLong()))
+                .willReturn(mockMember);
+
+        // when & then
+        mockMvc.perform(post("/api/v1/comments")
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(2L))
+                .andExpect(jsonPath("$.parentId").value(1L))
+                .andExpect(jsonPath("$.body").value("Reply Comment"));
     }
 }
