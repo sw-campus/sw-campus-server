@@ -40,7 +40,7 @@ public class UserProfileController {
     })
     @GetMapping("/{userId}/profile")
     public ResponseEntity<UserProfileResponse> getUserProfile(
-            @Parameter(description = "유저 ID", required = true) @PathVariable Long userId) {
+            @Parameter(description = "유저 ID", required = true) @PathVariable("userId") Long userId) {
         
         Member member = memberService.getMember(userId);
         long postCount = postRepository.countByUserId(userId);
@@ -62,7 +62,7 @@ public class UserProfileController {
     })
     @GetMapping("/{userId}/posts")
     public ResponseEntity<Page<PostResponse>> getUserPosts(
-            @Parameter(description = "유저 ID", required = true) @PathVariable Long userId,
+            @Parameter(description = "유저 ID", required = true) @PathVariable("userId") Long userId,
             @PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable) {
 
         // 유저 존재 여부 확인

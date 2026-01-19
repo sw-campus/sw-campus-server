@@ -96,9 +96,9 @@ public class PostController {
     })
     @GetMapping
     public ResponseEntity<Page<PostResponse>> getPosts(
-            @Parameter(description = "카테고리 ID") @RequestParam(required = false) Long categoryId,
-            @Parameter(description = "태그 필터 (복수 가능)") @RequestParam(required = false) List<String> tags,
-            @Parameter(description = "검색어 (제목, 본문, 태그 검색)") @RequestParam(required = false) String keyword,
+            @Parameter(description = "카테고리 ID") @RequestParam(name = "categoryId", required = false) Long categoryId,
+            @Parameter(description = "태그 필터 (복수 가능)") @RequestParam(name = "tags", required = false) List<String> tags,
+            @Parameter(description = "검색어 (제목, 본문, 태그 검색)") @RequestParam(name = "keyword", required = false) String keyword,
             @PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable) {
 
         // N+1 문제 해결: JOIN 쿼리로 한 번에 조회
