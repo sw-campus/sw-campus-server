@@ -9,8 +9,6 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.util.TimeZone;
-
 @EnableAsync
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 @EnableScheduling
@@ -18,7 +16,6 @@ import java.util.TimeZone;
 public class SwCampusServerApplication {
 
 	public static void main(String[] args) {
-		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
 		SpringApplication.run(SwCampusServerApplication.class, args);
 	}
 
