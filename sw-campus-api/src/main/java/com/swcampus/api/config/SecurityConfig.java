@@ -100,6 +100,9 @@ public class SecurityConfig {
                         // 공개 API (조회) - PUBLIC_GET_APIS 상수 사용
                         .requestMatchers(HttpMethod.GET, PUBLIC_GET_APIS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/members/nickname/check").permitAll()
+                        // 커뮤니티 API (조회)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/board-categories/**").permitAll()
                         // Storage API (인증 선택적)
                         .requestMatchers(HttpMethod.GET, "/api/v1/storage/presigned-urls").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/storage/presigned-urls/batch").permitAll()
