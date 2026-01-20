@@ -12,6 +12,7 @@ import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureAdd;
 import com.swcampus.domain.lecture.LectureCurriculum;
 import com.swcampus.domain.lecture.LectureQual;
+import com.swcampus.domain.lecture.LectureSpecialCurriculum;
 import com.swcampus.domain.lecture.LectureStep;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.teacher.Teacher;
@@ -106,6 +107,8 @@ public record LectureResponse(
 
 		@Schema(description = "커리큘럼 목록") List<CurriculumResponse> curriculums,
 
+		@Schema(description = "특화 커리큘럼 목록") List<SpecialCurriculumResponse> specialCurriculums,
+
 		@Schema(description = "기관 로고 이미지 URL", example = "https://example.com/logo.jpg") String orgLogoUrl,
 
 		@Schema(description = "기관 시설 이미지 URL 목록") List<String> orgFacilityImageUrls,
@@ -171,6 +174,7 @@ public record LectureResponse(
 				mapListSafe(lecture.getTeachers(), TeacherResponse::from),
 				extractCategoryName(lecture),
 				mapListSafe(lecture.getLectureCurriculums(), CurriculumResponse::from),
+				mapListSafe(lecture.getSpecialCurriculums(), SpecialCurriculumResponse::from),
 				organization != null ? organization.getLogoUrl() : null,
 				extractFacilityImageUrls(organization),
 
@@ -281,6 +285,21 @@ public record LectureResponse(
 					curriculum != null ? curriculum.getCurriculumName() : "",
 					curriculum != null ? curriculum.getCurriculumDesc() : "",
 					lc.getLevel().name());
+		}
+	}
+
+	@Schema(description = "특화 커리큘럼 응답")
+	public record SpecialCurriculumResponse(
+			@Schema(description = "특화 커리큘럼 ID", example = "1") Long specialCurriculumId,
+
+			@Schema(description = "제목", example = "AI 프로젝트") String title,
+
+			@Schema(description = "정렬 순서", example = "1") Integer sortOrder) {
+		public static SpecialCurriculumResponse from(LectureSpecialCurriculum sc) {
+			return new SpecialCurriculumResponse(
+					sc.getSpecialCurriculumId(),
+					sc.getTitle(),
+					sc.getSortOrder());
 		}
 	}
 }

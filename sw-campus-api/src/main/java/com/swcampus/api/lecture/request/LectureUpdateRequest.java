@@ -20,10 +20,13 @@ import com.swcampus.domain.lecture.LectureDay;
 import com.swcampus.domain.lecture.LectureLocation;
 import com.swcampus.domain.lecture.LectureQual;
 import com.swcampus.domain.lecture.LectureQualType;
+import com.swcampus.domain.lecture.LectureSpecialCurriculum;
 import com.swcampus.domain.lecture.LectureStep;
 import com.swcampus.domain.lecture.RecruitType;
 import com.swcampus.domain.lecture.SelectionStepType;
 import com.swcampus.domain.teacher.Teacher;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -99,7 +102,10 @@ public record LectureUpdateRequest(
 
         @Schema(description = "강사 목록") List<TeacherRequest> teachers,
 
-        @Schema(description = "커리큘럼 목록") List<CurriculumRequest> curriculums) {
+        @Schema(description = "커리큘럼 목록") List<CurriculumRequest> curriculums,
+
+        @Size(max = 5, message = "특화 커리큘럼은 최대 5개까지 등록할 수 있습니다")
+        @Schema(description = "특화 커리큘럼 목록 (최대 5개)") List<SpecialCurriculumRequest> specialCurriculums) {
 
     public Lecture toDomain() {
         return Lecture.builder()
@@ -166,6 +172,11 @@ public record LectureUpdateRequest(
                         ? curriculums.stream().map(CurriculumRequest::toDomainInfo).toList()
                         : List.of())
 
+                // 특화 커리큘럼(SpecialCurriculums) 변환
+                .specialCurriculums(specialCurriculums != null
+                        ? specialCurriculums.stream().map(SpecialCurriculumRequest::toDomain).toList()
+                        : List.of())
+
                 .build();
     }
 
@@ -229,6 +240,23 @@ public record LectureUpdateRequest(
             return LectureCurriculum.builder()
                     .curriculumId(curriculumId)
                     .level(level != null ? level : CurriculumLevel.NONE)
+                    .build();
+        }
+    }
+
+    @Schema(description = "특화 커리큘럼")
+    public record SpecialCurriculumRequest(
+            @NotBlank(message = "특화 커리큘럼 제목은 필수입니다")
+            @Size(max = 20, message = "특화 커리큘럼 제목은 20자 이내로 입력해주세요")
+            @Schema(description = "제목", example = "AI 프로젝트") String title,
+
+            @NotNull(message = "정렬 순서는 필수입니다")
+            @Min(value = 1, message = "정렬 순서는 1 이상이어야 합니다")
+            @Schema(description = "정렬 순서", example = "1") Integer sortOrder) {
+        public LectureSpecialCurriculum toDomain() {
+            return LectureSpecialCurriculum.builder()
+                    .title(title)
+                    .sortOrder(sortOrder)
                     .build();
         }
     }

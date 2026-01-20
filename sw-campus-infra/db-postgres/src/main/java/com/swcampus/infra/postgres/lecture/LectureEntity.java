@@ -38,7 +38,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = { "steps", "adds", "quals", "lectureTeachers", "lectureCurriculums" })
+@ToString(exclude = { "steps", "adds", "quals", "lectureTeachers", "lectureCurriculums", "specialCurriculums" })
 public class LectureEntity {
 
 	@Id
@@ -216,6 +216,10 @@ public class LectureEntity {
 	@Builder.Default
 	private List<LectureCurriculumEntity> lectureCurriculums = new ArrayList<>();
 
+	@OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private List<LectureSpecialCurriculumEntity> specialCurriculums = new ArrayList<>();
+
 	public static LectureEntity from(com.swcampus.domain.lecture.Lecture lecture) {
 		if (lecture == null) {
 			return null;
@@ -303,6 +307,18 @@ public class LectureEntity {
 					.toList());
 		}
 
+		// 1:N Relationships (SpecialCurriculums)
+		if (lecture.getSpecialCurriculums() != null) {
+			entity.getSpecialCurriculums().addAll(lecture.getSpecialCurriculums().stream()
+					.map(sc -> LectureSpecialCurriculumEntity.builder()
+							.specialCurriculumId(sc.getSpecialCurriculumId())
+							.lecture(entity)
+							.title(sc.getTitle())
+							.sortOrder(sc.getSortOrder())
+							.build())
+					.toList());
+		}
+
 		return entity;
 	}
 
@@ -339,6 +355,9 @@ public class LectureEntity {
 						.toList())
 				.lectureCurriculums(lectureCurriculums.stream()
 						.map(LectureCurriculumEntity::toDomain)
+						.toList())
+				.specialCurriculums(specialCurriculums.stream()
+						.map(LectureSpecialCurriculumEntity::toDomain)
 						.toList())
 				.build();
 	}
