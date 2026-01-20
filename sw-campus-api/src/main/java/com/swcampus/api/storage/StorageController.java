@@ -4,10 +4,13 @@ import com.swcampus.api.security.CurrentMember;
 import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.api.storage.request.PresignedUrlBatchRequest;
 import com.swcampus.api.storage.request.PresignedUploadRequest;
+import com.swcampus.api.storage.response.ImageUploadResponse;
 import com.swcampus.api.storage.response.PresignedUploadResponse;
 import com.swcampus.api.storage.response.PresignedUrlResponse;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.member.Role;
+import com.swcampus.domain.storage.FileStorageService;
+import com.swcampus.domain.storage.UploadResult;
 import com.swcampus.domain.storage.PresignedUrlService;
 import com.swcampus.api.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,9 +24,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Map;
 
 @Tag(name = "Storage", description = "스토리지 API")
@@ -33,6 +39,7 @@ import java.util.Map;
 public class StorageController {
 
     private final PresignedUrlService presignedUrlService;
+    private final FileStorageService fileStorageService;
 
     @Operation(summary = "Presigned GET URL 발급", description = "S3 객체에 접근하기 위한 Presigned GET URL을 발급합니다. Public 파일은 인증 없이, Private 파일은 관리자만 접근 가능합니다.")
     @ApiResponses({
@@ -112,5 +119,39 @@ public class StorageController {
 
     private boolean isAdmin(MemberPrincipal member) {
         return member != null && member.role() == Role.ADMIN;
+    }
+
+    @Operation(summary = "이미지 직접 업로드", description = "이미지 파일을 S3에 직접 업로드하고 URL을 반환합니다. 현재 posts 카테고리만 지원합니다.")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "업로드 성공"),
+            @ApiResponse(responseCode = "400", description = "파일이 비어있거나 잘못된 형식",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ImageUploadResponse> uploadImage(
+            @Parameter(description = "업로드할 이미지 파일")
+            @RequestPart("file") MultipartFile file,
+            @Parameter(description = "카테고리 (posts)")
+            @RequestParam(value = "category", defaultValue = "posts") String category,
+            @CurrentMember MemberPrincipal member) throws IOException {
+
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어있습니다.");
+        }
+
+        String originalFilename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "image.jpg";
+        String contentType = file.getContentType() != null ? file.getContentType() : "image/jpeg";
+
+        UploadResult result = fileStorageService.upload(
+                file.getBytes(),
+                category,
+                originalFilename,
+                contentType
+        );
+
+        return ResponseEntity.ok(new ImageUploadResponse(result.url(), result.key()));
     }
 }

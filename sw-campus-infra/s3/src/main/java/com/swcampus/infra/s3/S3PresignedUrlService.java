@@ -33,7 +33,7 @@ public class S3PresignedUrlService implements PresignedUrlService {
     private static final Set<String> PRIVATE_PREFIXES = Set.of("certificates/", "employment-certificates/", "members/");
     private static final Set<String> PRIVATE_CATEGORIES = Set.of("certificates", "employment-certificates", "members");
     private static final Set<String> VALID_CATEGORIES = Set.of(
-            "lectures", "organizations", "teachers", "banners", "thumbnails", "certificates", "employment-certificates", "members"
+            "lectures", "organizations", "teachers", "banners", "thumbnails", "certificates", "employment-certificates", "members", "posts"
     );
     // 관리자만 업로드 가능한 카테고리
     private static final Set<String> ADMIN_ONLY_CATEGORIES = Set.of("banners");
