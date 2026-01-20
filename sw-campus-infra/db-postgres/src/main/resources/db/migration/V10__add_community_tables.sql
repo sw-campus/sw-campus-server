@@ -235,22 +235,28 @@ ALTER TABLE "swcampus"."notifications"
     FOREIGN KEY ("sender_id") REFERENCES "swcampus"."members"("user_id");
 
 -- ========================================
--- 5. Seed Data (기본 게시판 카테고리)
+-- 5. 추가 컬럼 (V11 통합)
 -- ========================================
--- 상위 카테고리: 취준생, 현직자
--- 최상위 카테고리: 커뮤니티
-INSERT INTO "swcampus"."board_categories" ("board_category_id", "board_category_name", "board_pid") VALUES
-    (10, '커뮤니티', NULL);
 
--- 2단계 카테고리: 취준생, 현직자
-INSERT INTO "swcampus"."board_categories" ("board_category_id", "board_category_name", "board_pid") VALUES
-    (1, '취준생', 10),
-    (2, '현직자', 10);
+-- 게시글에 댓글 수 컬럼 추가 (비정규화)
+ALTER TABLE "swcampus"."posts" ADD COLUMN IF NOT EXISTS "comment_count" BIGINT NOT NULL DEFAULT 0;
 
--- 3단계 카테고리: 자유게시판
+-- 인덱스 추가 (댓글순 정렬 성능)
+CREATE INDEX IF NOT EXISTS "idx_posts_comment_count" ON "swcampus"."posts"("comment_count" DESC);
+
+-- 게시글 고정 여부 컬럼 추가
+ALTER TABLE "swcampus"."posts" ADD COLUMN IF NOT EXISTS "is_pinned" BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- 고정 게시글 조회 성능을 위한 부분 인덱스
+CREATE INDEX IF NOT EXISTS "idx_posts_is_pinned" ON "swcampus"."posts"("is_pinned") WHERE "is_pinned" = true;
+
+COMMENT ON COLUMN "swcampus"."posts"."is_pinned" IS '게시글 상단 고정 여부 (관리자만 설정 가능)';
+
+-- ========================================
+-- 6. Seed Data (기본 게시판 카테고리)
+-- ========================================
 INSERT INTO "swcampus"."board_categories" ("board_category_id", "board_category_name", "board_pid") VALUES
-    (3, '자유게시판', 1),  -- 커뮤니티 > 취준생 > 자유게시판
-    (4, '자유게시판', 2);  -- 커뮤니티 > 현직자 > 자유게시판
+    (1, '부트캠프 수강일기', NULL);
 
 -- Sequence 값 업데이트 (수동 삽입된 ID 이후부터 시작)
-SELECT setval('swcampus.board_categories_board_category_id_seq', 11, true);
+SELECT setval('swcampus.board_categories_board_category_id_seq', 1, true);
