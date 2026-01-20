@@ -337,17 +337,15 @@ class PostControllerTest {
     @DisplayName("게시글 상세 조회 성공 - 비로그인 사용자")
     void getPost_Success_Anonymous() throws Exception {
         // given
-        given(postService.getPostWithViewCount(anyLong()))
-                .willReturn(mockPost);
+        com.swcampus.domain.post.PostDetail mockPostDetail = com.swcampus.domain.post.PostDetail.builder()
+                .post(mockPost)
+                .authorNickname("Tester")
+                .categoryName("Free Board")
+                .commentCount(0L)
+                .build();
 
-        given(memberService.getMember(anyLong()))
-                .willReturn(mockMember);
-
-        given(boardCategoryService.getCategoryName(anyLong()))
-                .willReturn("Free Board");
-
-        given(commentService.countByPostId(anyLong()))
-                .willReturn(0L);
+        given(postService.getPostDetailWithViewCount(anyLong()))
+                .willReturn(mockPostDetail);
 
         given(bookmarkService.isBookmarked(any(), anyLong()))
                 .willReturn(false);
@@ -365,17 +363,15 @@ class PostControllerTest {
     @DisplayName("게시글 상세 조회 성공 - 로그인 사용자")
     void getPost_Success_Authenticated() throws Exception {
         // given
-        given(postService.getPostWithViewCount(anyLong()))
-                .willReturn(mockPost);
+        com.swcampus.domain.post.PostDetail mockPostDetail = com.swcampus.domain.post.PostDetail.builder()
+                .post(mockPost)
+                .authorNickname("Tester")
+                .categoryName("Free Board")
+                .commentCount(5L)
+                .build();
 
-        given(memberService.getMember(anyLong()))
-                .willReturn(mockMember);
-
-        given(boardCategoryService.getCategoryName(anyLong()))
-                .willReturn("Free Board");
-
-        given(commentService.countByPostId(anyLong()))
-                .willReturn(5L);
+        given(postService.getPostDetailWithViewCount(anyLong()))
+                .willReturn(mockPostDetail);
 
         given(bookmarkService.isBookmarked(any(), anyLong()))
                 .willReturn(true);
@@ -394,7 +390,7 @@ class PostControllerTest {
     @DisplayName("게시글 상세 조회 실패 - 존재하지 않는 게시글")
     void getPost_Fail_NotFound() throws Exception {
         // given
-        given(postService.getPostWithViewCount(anyLong()))
+        given(postService.getPostDetailWithViewCount(anyLong()))
                 .willThrow(new com.swcampus.domain.post.exception.PostNotFoundException(999L));
 
         // when & then
