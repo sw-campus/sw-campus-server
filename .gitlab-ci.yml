@@ -28,6 +28,8 @@ validate-migration:
     - if: $CI_COMMIT_BRANCH =~ /^(develop|main)$/
       changes:
         - sw-campus-infra/db-postgres/src/main/resources/db/migration/**
+  before_script:
+    - apt-get update && apt-get install -y git
   script:
     - |
       echo "마이그레이션 파일 변경 감지됨"
@@ -63,11 +65,11 @@ build-dev:
     TAG: "RHSA-$CI_COMMIT_SHA"
     DOCKER_HOST: tcp://docker:2375
   before_script:
+    # git & Docker CLI 설치
+    - apt-get update && apt-get install -y git docker.io
     # submodules 체크아웃
     - git submodule sync --recursive
     - git submodule update --init --recursive
-    # Docker CLI 설치
-    - apt-get update && apt-get install -y docker.io
   script:
     - |
       echo "Building DEV image with tag $TAG"
@@ -133,9 +135,11 @@ build-release:
   variables:
     DOCKER_HOST: tcp://docker:2375
   before_script:
+    # git & Docker CLI 설치
+    - apt-get update && apt-get install -y git docker.io
+    # submodules 체크아웃
     - git submodule sync --recursive
     - git submodule update --init --recursive
-    - apt-get update && apt-get install -y docker.io
   script:
     - |
       # gradle.properties에서 버전 읽기
