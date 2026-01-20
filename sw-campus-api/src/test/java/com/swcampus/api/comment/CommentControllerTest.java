@@ -3,6 +3,7 @@ package com.swcampus.api.comment;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swcampus.api.comment.request.CreateCommentRequest;
 import com.swcampus.api.comment.request.UpdateCommentRequest;
+import com.swcampus.api.comment.response.CommentResponse;
 import com.swcampus.api.config.SecurityConfig;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.comment.Comment;
@@ -19,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -37,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(CommentController.class)
 @Import({SecurityConfig.class, TokenProvider.class})
+@ActiveProfiles("test")
 class CommentControllerTest {
 
     @Autowired
@@ -56,6 +59,9 @@ class CommentControllerTest {
 
     @MockitoBean
     private CommentLikeService commentLikeService;
+
+    @MockitoBean
+    private CommentResponseMapper commentResponseMapper;
 
     private String validToken;
     private Member mockMember;
@@ -133,11 +139,13 @@ class CommentControllerTest {
             LocalDateTime.now(), LocalDateTime.now()
         );
 
+        CommentResponse mockResponse = CommentResponse.from(mockComment, "Tester", false, false);
+
         given(commentService.getCommentsByPostId(anyLong()))
                 .willReturn(List.of(mockComment));
 
-        given(memberService.getMembersByIds(any()))
-                .willReturn(List.of(mockMember));
+        given(commentResponseMapper.toTreeResponse(any(), any()))
+                .willReturn(List.of(mockResponse));
 
         // when & then
         mockMvc.perform(get("/api/v1/posts/1/comments")
