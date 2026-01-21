@@ -106,7 +106,8 @@ update-manifest-dev:
       git config user.email "gitlab-ci@${CI_SERVER_HOST}"
       git checkout develop
 
-      sed -i "/repository:.*sw-campus-server$/,/pullPolicy:/ s|tag: \".*\"|tag: \"$TAG\"|" k8s/environments/develop/values.yaml
+      # 수정된 sed 패턴: backend/server
+      sed -i "/repository:.*backend\/server/,/pullPolicy:/ s|tag: \".*\"|tag: \"$TAG\"|" k8s/environments/develop/values.yaml
 
       git add .
       if git diff --staged --quiet; then
@@ -209,7 +210,8 @@ update-manifest-release:
       git config user.email "gitlab-ci@${CI_SERVER_HOST}"
       git checkout release
 
-      sed -i "/repository:.*sw-campus-server$/,/pullPolicy:/ s|tag: \".*\"|tag: \"$VERSION_TAG\"|" k8s/environments/release/values.yaml
+      # 수정된 sed 패턴: backend/server
+      sed -i "/repository:.*backend\/server/,/pullPolicy:/ s|tag: \".*\"|tag: \"$VERSION_TAG\"|" k8s/environments/release/values.yaml
 
       BRANCH_NAME="auto-update/server-$VERSION_TAG"
       git checkout -b "$BRANCH_NAME"
