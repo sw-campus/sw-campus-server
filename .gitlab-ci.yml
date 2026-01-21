@@ -67,6 +67,7 @@ build-dev:
   before_script:
     # git & Docker CLI 설치
     - apt-get update && apt-get install -y git docker.io
+    - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
     # submodules 체크아웃
     - git submodule sync --recursive
     - git submodule update --init --recursive
@@ -137,6 +138,7 @@ build-release:
   before_script:
     # git & Docker CLI 설치
     - apt-get update && apt-get install -y git docker.io
+    - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
     # submodules 체크아웃
     - git submodule sync --recursive
     - git submodule update --init --recursive
