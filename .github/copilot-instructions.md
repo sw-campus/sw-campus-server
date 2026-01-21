@@ -2,6 +2,13 @@
 
 > 이 문서는 GitHub Copilot이 PR 리뷰 및 코드 작성 시 참고하는 지침입니다.
 
+## ⚠️ 중요: 언어 설정
+
+- **모든 PR 리뷰 코멘트는 반드시 한국어로 작성해주세요.**
+- **코드 제안, 설명, 피드백 등 모든 응답은 한국어로 작성합니다.**
+
+---
+
 ## 프로젝트 개요
 
 - **프로젝트**: sw-campus-server (교육 플랫폼 백엔드)
@@ -38,7 +45,7 @@ sw-campus-server/
 | domain | `{Domain}Repository` | `UserRepository` |
 | infra | `{Domain}Entity` | `UserEntity` |
 | infra | `{Domain}JpaRepository` | `UserJpaRepository` |
-| infra | `{Domain}RepositoryImpl` | `UserRepositoryImpl` |
+| infra | `{Domain}EntityRepository` | `UserEntityRepository` |
 
 #### 메서드 네이밍
 - Controller: `getUser()`, `getUserList()`, `createUser()`, `updateUser()`, `deleteUser()`
@@ -153,7 +160,53 @@ api → domain ← infra
 □ 적절한 HTTP Method 사용
 □ 적절한 Status Code 반환
 □ @Valid 사용
+□ Swagger 문서화 (@Tag, @Operation, @Schema)
 ```
+
+---
+
+## Swagger 문서화 규칙 (중간 우선순위)
+
+### 필수 어노테이션
+
+#### Controller 레벨
+| 어노테이션 | 용도 | 필수 |
+|-----------|------|------|
+| `@Tag` | API 그룹 분류 | ✅ |
+| `@Operation` | API summary/description | ✅ |
+| `@ApiResponses` | 응답 코드별 설명 | ✅ |
+| `@SecurityRequirement` | 인증 필요 표시 | 인증 API만 |
+
+#### Parameter/DTO 레벨
+| 어노테이션 | 용도 | 필수 |
+|-----------|------|------|
+| `@Parameter` | PathVariable, RequestParam 설명 | ✅ |
+| `@Schema` | Request/Response DTO 필드 설명 | ✅ |
+
+### Multipart 파일 업로드 (⚠️ 중요)
+
+```java
+// ❌ 금지: @ModelAttribute + MultipartFile (Swagger UI 오류)
+@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<Response> upload(@ModelAttribute Request request) { }
+
+// ✅ 필수: @RequestPart로 각 필드 분리
+@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<Response> upload(
+        @Parameter(description = "이메일", example = "user@example.com")
+        @RequestPart(name = "email") String email,
+        @Parameter(description = "이미지 파일")
+        @RequestPart(name = "image") MultipartFile image) {
+    // Controller 내부에서 Request DTO 빌더로 생성
+}
+```
+
+### 문서화 Best Practice
+
+- `summary`: 10자 이내, 동작 설명
+- `description`: 필요시 상세 설명
+- `example`: 실제 의미 있는 값 사용
+- 설명은 **한글**로 작성
 
 ---
 
@@ -166,3 +219,4 @@ api → domain ← infra
 - 04-api-design.md
 - 05-exception-handling.md
 - 06-design-principles.md
+- 07-swagger-documentation.md

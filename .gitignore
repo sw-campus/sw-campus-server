@@ -35,3 +35,16 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Migration Logs ###
+migration-gen.log
+skipped_constraints.log
+
+.venv/
+scripts/output/
+scripts/data-migration/output/
+
+### Google Analytics ###
+*-ga-credentials.json
+
+.sdkmanrc

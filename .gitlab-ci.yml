@@ -1,0 +1,248 @@
+stages:
+  - validate
+  - build
+  - update-manifest
+
+variables:
+  IMAGE_NAME: $CI_REGISTRY_IMAGE
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  DOCKER_BUILDKIT: "0"    # BuildKit 비활성화 (buildx 미설치 환경)
+
+# Gradle 캐시 설정
+.gradle-cache:
+  cache:
+    key: "$CI_COMMIT_REF_SLUG"
+    paths:
+      - .gradle/caches
+      - .gradle/wrapper
+
+
+# DB Migration 검증
+validate-migration:
+  stage: validate
+  image: eclipse-temurin:17-jdk
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - sw-campus-infra/db-postgres/src/main/resources/db/migration/**
+    - if: $CI_COMMIT_BRANCH =~ /^(develop|main)$/
+      changes:
+        - sw-campus-infra/db-postgres/src/main/resources/db/migration/**
+  before_script:
+    - apt-get update && apt-get install -y git
+  script:
+    - |
+      echo "마이그레이션 파일 변경 감지됨"
+      echo "변경된 마이그레이션 파일:"
+      git diff --name-only HEAD~1 HEAD -- 'sw-campus-infra/db-postgres/src/main/resources/db/migration/**' || true
+
+      # 마이그레이션 파일명 규칙 검증
+      for file in sw-campus-infra/db-postgres/src/main/resources/db/migration/*.sql; do
+        if [ -f "$file" ]; then
+          filename=$(basename "$file")
+          if [[ ! "$filename" =~ ^V[0-9]+__.*\.sql$ ]]; then
+            echo "잘못된 파일명: $filename"
+            echo "올바른 형식: V{번호}__{설명}.sql"
+            exit 1
+          fi
+        fi
+      done
+      echo "모든 마이그레이션 파일명이 올바릅니다"
+
+
+# Build Dev (develop 브랜치)
+build-dev:
+  stage: build
+  image: eclipse-temurin:17-jdk
+  extends: .gradle-cache
+  services:
+    - docker:24-dind
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  variables:
+    TAG: "RHSA-$CI_COMMIT_SHA"
+    DOCKER_HOST: tcp://docker:2375
+  before_script:
+    # git & Docker CLI 설치
+    - apt-get update && apt-get install -y git docker.io
+    - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
+    # submodules 체크아웃
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
+  script:
+    - |
+      echo "Building DEV image with tag $TAG"
+
+      # Gradle 빌드
+      chmod +x gradlew
+      ./gradlew build -x test
+
+      # Docker 빌드 & 푸시
+      docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
+      docker build -t $IMAGE_NAME:$TAG .
+      docker push $IMAGE_NAME:$TAG
+
+      echo "IMAGE_TAG=$TAG" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+
+update-manifest-dev:
+  stage: update-manifest
+  image: alpine:latest
+  needs:
+    - job: build-dev
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  before_script:
+    - apk add --no-cache git curl bash
+  script:
+    - |
+      TAG="RHSA-$CI_COMMIT_SHA"
+
+      git clone https://oauth2:${MANIFEST_TOKEN}@${CI_SERVER_HOST}/${MANIFEST_PROJECT_PATH}.git manifest
+      cd manifest
+
+      git config user.name "GitLab CI"
+      git config user.email "gitlab-ci@${CI_SERVER_HOST}"
+      git checkout develop
+
+      # 이미지 태그 업데이트
+      sed -i "/repository:.*sw-campus-server$/,/pullPolicy:/ s|tag: \".*\"|tag: \"$TAG\"|" k8s/environments/develop/values.yaml
+
+      git add .
+      if git diff --staged --quiet; then
+        echo "No changes to commit"
+      else
+        git commit -m "chore(server): update dev image to $TAG"
+        git push origin develop
+      fi
+
+
+# Build Release (main 브랜치)
+build-release:
+  stage: build
+  image: eclipse-temurin:17-jdk
+  extends: .gradle-cache
+  services:
+    - docker:24-dind
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE !~ /\[skip ci\]/
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+  before_script:
+    # git & Docker CLI 설치
+    - apt-get update && apt-get install -y git docker.io
+    - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
+    # submodules 체크아웃
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
+  script:
+    - |
+      # gradle.properties에서 버전 읽기
+      CURRENT_VERSION=$(grep "applicationVersion=" gradle.properties | cut -d'=' -f2 | sed 's/-SNAPSHOT//')
+      echo "Current version: $CURRENT_VERSION"
+
+      # 버전 파싱 및 증가
+      MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+      MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+      PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+      NEW_PATCH=$((PATCH + 1))
+      NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+      VERSION_TAG="v${NEW_VERSION}"
+
+      echo "New version: $NEW_VERSION (tag: $VERSION_TAG)"
+      echo "VERSION_TAG=$VERSION_TAG" >> build.env
+      echo "NEW_VERSION=$NEW_VERSION" >> build.env
+
+      # gradle.properties 업데이트
+      sed -i "s/applicationVersion=.*/applicationVersion=${NEW_VERSION}-SNAPSHOT/" gradle.properties
+
+      # Gradle 빌드
+      chmod +x gradlew
+      ./gradlew build -x test
+
+      # Docker 빌드 & 푸시
+      docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
+      docker build -t $IMAGE_NAME:$VERSION_TAG .
+      docker push $IMAGE_NAME:$VERSION_TAG
+  artifacts:
+    reports:
+      dotenv: build.env
+    paths:
+      - gradle.properties
+
+commit-version-bump:
+  stage: build
+  image: alpine:latest
+  needs:
+    - job: build-release
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE !~ /\[skip ci\]/
+  before_script:
+    - apk add --no-cache git
+  script:
+    - |
+      git config user.name "GitLab CI"
+      git config user.email "gitlab-ci@${CI_SERVER_HOST}"
+
+      git remote set-url origin https://oauth2:${PROJECT_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
+
+      git add gradle.properties
+      git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+      git push origin HEAD:main
+
+      # 태그 생성
+      git tag -f "$VERSION_TAG"
+      git push origin "$VERSION_TAG" -f
+
+update-manifest-release:
+  stage: update-manifest
+  image: alpine:latest
+  needs:
+    - job: build-release
+      artifacts: true
+    - job: commit-version-bump
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE !~ /\[skip ci\]/
+  before_script:
+    - apk add --no-cache git curl bash
+  script:
+    - |
+      git clone https://oauth2:${MANIFEST_TOKEN}@${CI_SERVER_HOST}/${MANIFEST_PROJECT_PATH}.git manifest
+      cd manifest
+
+      git config user.name "GitLab CI"
+      git config user.email "gitlab-ci@${CI_SERVER_HOST}"
+      git checkout release
+
+      # 이미지 태그 업데이트
+      sed -i "/repository:.*sw-campus-server$/,/pullPolicy:/ s|tag: \".*\"|tag: \"$VERSION_TAG\"|" k8s/environments/release/values.yaml
+
+      # MR용 브랜치 생성
+      BRANCH_NAME="auto-update/server-$VERSION_TAG"
+      git checkout -b "$BRANCH_NAME"
+
+      git add .
+      git commit -m "chore(server): update prod image to $VERSION_TAG"
+      git push origin "$BRANCH_NAME"
+
+      # GitLab API로 MR 생성
+      curl --request POST \
+        --header "PRIVATE-TOKEN: ${MANIFEST_TOKEN}" \
+        --header "Content-Type: application/json" \
+        --data "{
+          \"source_branch\": \"$BRANCH_NAME\",
+          \"target_branch\": \"release\",
+          \"title\": \"chore(server): update prod image to $VERSION_TAG\",
+          \"description\": \"Auto-generated MR from Server build\n\n- **Image**: \`$CI_REGISTRY_IMAGE:$VERSION_TAG\`\n- **Commit**: $CI_COMMIT_SHA\",
+          \"remove_source_branch\": true
+        }" \
+        "https://${CI_SERVER_HOST}/api/v4/projects/${MANIFEST_PROJECT_ID}/merge_requests"

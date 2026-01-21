@@ -1,0 +1,22 @@
+<configuration>
+
+    <!-- LOCAL용: 사람이 읽기 좋은 포맷 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %clr(%d{HH:mm:ss.SSS}){faint} | %clr(%-5level){highlight} | %clr(%mdc{traceId:-}){cyan} | %logger{36} - %msg%n
+            </pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <!-- STAGING/PROD용: JSON 포맷 (Loki 검색용) -->
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeContext>true</includeContext>
+            <includeMdc>true</includeMdc>
+            <includeTags>true</includeTags>
+        </encoder>
+    </appender>
+
+</configuration>

@@ -1,3 +1,8 @@
 plugins {
     id 'java'
 }
+
+dependencies {
+    api "org.slf4j:slf4j-api"
+    api 'net.logstash.logback:logstash-logback-encoder:9.0' // 평문을 json으로
+}

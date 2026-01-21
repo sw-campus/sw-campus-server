@@ -1,15 +1,47 @@
 services:
-  postgres:
-    image: postgres:16
-    container_name: sw-campus-postgres
-    environment:
-      POSTGRES_DB: sw-campus
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+  # Redis Cache
+  prod-redis:
+    image: redis:alpine
+    container_name: sw-campus-redis
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - "6379:6379"
+    restart: unless-stopped
 
-volumes:
-  postgres_data:
+  # OCR AI Service (일시 비활성화 - certificate.ocr.enabled=false)
+  # CPU 사용량 최적화를 위해 비활성화, 재활성화 시 주석 해제
+  # ocr:
+  #   image: zionge2k/sw-campus-ocr:latest
+  #   container_name: sw-campus-ocr
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #   healthcheck:
+  #     test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
+  #     interval: 30s
+  #     timeout: 10s
+  #     start_period: 60s
+  #     retries: 3
+  #   restart: unless-stopped
+
+  # Spring Boot Server
+  server:
+    image: ghcr.io/sw-campus/sw-campus-server:${SERVER_TAG}
+    container_name: sw-campus-server
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - REDIS_HOST=prod-redis
+      - REDIS_PORT=6379
+      # OCR 비활성화로 인해 주석 처리 (재활성화 시 주석 해제)
+      # - OCR_SERVER_URL=http://ocr:8000
+    volumes:
+      - ./config:/app/config:ro
+    depends_on:
+      - prod-redis
+      # OCR 비활성화로 인해 주석 처리
+      # - ocr
+    restart: unless-stopped

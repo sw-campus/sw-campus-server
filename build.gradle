@@ -2,6 +2,12 @@ plugins {
     id 'java'
     id 'org.springframework.boot' apply false
     id 'io.spring.dependency-management' apply false
+    id 'eclipse'
+}
+
+// VSCode Java Extension 지원을 위한 Eclipse 프로젝트 파일 생성
+allprojects {
+    apply plugin: 'eclipse'
 }
 
 java {
@@ -20,9 +26,14 @@ allprojects {
 }
 
 subprojects {
-    apply {
-        plugin 'java'
-        plugin 'io.spring.dependency-management'
+    // 전파가 필요한 모듈에서는 java-library + api 사용
+    apply plugin: 'java-library'
+    apply plugin: 'io.spring.dependency-management'
+
+    // Java 컴파일 옵션: 파라미터 이름 정보 보존 + UTF-8 인코딩
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs.add('-parameters')
+        options.encoding = 'UTF-8'
     }
 
     dependencyManagement {
@@ -32,10 +43,14 @@ subprojects {
     }
 
     dependencies {
+        // 공통 Lombok
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
         testCompileOnly 'org.projectlombok:lombok'
         testAnnotationProcessor 'org.projectlombok:lombok'
+
+        // 공통 로깅 API
+        implementation 'org.slf4j:slf4j-api'
 
         // 공통 테스트 의존성
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -49,4 +64,17 @@ subprojects {
 
 project(':sw-campus-api') {
     apply plugin: 'org.springframework.boot'
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation project(':sw-campus-infra:db-postgres')
+    }
+
+    bootJar {
+        enabled = true
+    }
+
+    jar {
+        enabled = false
+    }
 }

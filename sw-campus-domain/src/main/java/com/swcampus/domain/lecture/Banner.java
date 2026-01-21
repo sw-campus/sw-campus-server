@@ -1,0 +1,20 @@
+package com.swcampus.domain.lecture;
+
+import lombok.Builder;
+import lombok.Getter;
+
+import java.time.OffsetDateTime;
+
+@Getter
+@Builder(toBuilder = true)
+public class Banner {
+    private Long id;
+    private Long lectureId;
+    private BannerType type;
+    private String url;
+    private String imageUrl;
+    private String backgroundColor;
+    private OffsetDateTime startDate;
+    private OffsetDateTime endDate;
+    private Boolean isActive;
+}

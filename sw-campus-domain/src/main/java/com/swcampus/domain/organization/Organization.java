@@ -1,5 +1,6 @@
 package com.swcampus.domain.organization;
 
+import com.swcampus.domain.common.ApprovalStatus;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,44 +14,73 @@ public class Organization {
     private Long userId;
     private String name;
     private String description;
+    private ApprovalStatus approvalStatus;
+    private String certificateKey;
     private String govAuth;
     private String facilityImageUrl;
     private String facilityImageUrl2;
     private String facilityImageUrl3;
     private String facilityImageUrl4;
     private String logoUrl;
+    private String homepage;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static Organization create(Long userId, String name, String description) {
+    public static Organization create(Long userId, String name, String description, String certificateKey) {
         Organization org = new Organization();
         org.userId = userId;
         org.name = name;
         org.description = description;
+        org.approvalStatus = ApprovalStatus.PENDING;
+        org.certificateKey = certificateKey;
         org.createdAt = LocalDateTime.now();
         org.updatedAt = LocalDateTime.now();
         return org;
     }
 
     public static Organization of(Long id, Long userId, String name, String description,
-                                  String govAuth, String facilityImageUrl,
-                                  String facilityImageUrl2, String facilityImageUrl3,
-                                  String facilityImageUrl4, String logoUrl,
-                                  LocalDateTime createdAt, LocalDateTime updatedAt) {
+            ApprovalStatus approvalStatus, String certificateKey,
+            String govAuth, String facilityImageUrl,
+            String facilityImageUrl2, String facilityImageUrl3,
+            String facilityImageUrl4, String logoUrl, String homepage,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
         Organization org = new Organization();
         org.id = id;
         org.userId = userId;
         org.name = name;
         org.description = description;
+        org.approvalStatus = approvalStatus;
+        org.certificateKey = certificateKey;
         org.govAuth = govAuth;
         org.facilityImageUrl = facilityImageUrl;
         org.facilityImageUrl2 = facilityImageUrl2;
         org.facilityImageUrl3 = facilityImageUrl3;
         org.facilityImageUrl4 = facilityImageUrl4;
         org.logoUrl = logoUrl;
+        org.homepage = homepage;
         org.createdAt = createdAt;
         org.updatedAt = updatedAt;
         return org;
+    }
+
+    public void approve() {
+        this.approvalStatus = ApprovalStatus.APPROVED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void reject() {
+        this.approvalStatus = ApprovalStatus.REJECTED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 반려된 기관이 정보 수정 시 승인 대기 상태로 변경합니다.
+     */
+    public void resubmit() {
+        if (this.approvalStatus == ApprovalStatus.REJECTED) {
+            this.approvalStatus = ApprovalStatus.PENDING;
+            this.updatedAt = LocalDateTime.now();
+        }
     }
 
     public void updateInfo(String name, String description) {
@@ -72,8 +102,33 @@ public class Organization {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void updateCertificateKey(String certificateKey) {
+        this.certificateKey = certificateKey;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void setGovAuth(String govAuth) {
         this.govAuth = govAuth;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateHomepage(String homepage) {
+        this.homepage = homepage;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 기관 비활성화 (담당자 탈퇴 시 호출)
+     * 상태를 PENDING으로 변경하여 새로운 담당자가 인수할 수 있도록 합니다.
+     */
+    public void deactivate() {
+        this.userId = null;
+        this.approvalStatus = ApprovalStatus.PENDING;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
         this.updatedAt = LocalDateTime.now();
     }
 }
