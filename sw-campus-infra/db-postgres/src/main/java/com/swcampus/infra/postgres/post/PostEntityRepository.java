@@ -155,7 +155,7 @@ public class PostEntityRepository implements PostRepository {
 
     private List<String> parseStringArray(Object arrayObj) {
         if (arrayObj == null) {
-            return new java.util.ArrayList<>();
+            return java.util.List.of();
         }
         if (arrayObj instanceof String[]) {
             return java.util.Arrays.asList((String[]) arrayObj);
@@ -167,10 +167,10 @@ public class PostEntityRepository implements PostRepository {
                     return java.util.Arrays.asList((String[]) array);
                 }
             } catch (java.sql.SQLException e) {
-                return new java.util.ArrayList<>();
+                return java.util.List.of();
             }
         }
-        return new java.util.ArrayList<>();
+        return java.util.List.of();
     }
 
     @Override
@@ -227,5 +227,51 @@ public class PostEntityRepository implements PostRepository {
     @Override
     public long countByUserId(Long userId) {
         return jpaRepository.countByUserIdNotDeleted(userId);
+    }
+
+    @Override
+    public List<PostSummary> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return java.util.List.of();
+        }
+
+        Long[] idsArray = ids.toArray(new Long[0]);
+        java.util.List<Object[]> results = jpaRepository.findAllByIdsWithDetails(idsArray);
+
+        return results.stream()
+                .map(row -> {
+                    Post post = mapRowToPost(row);
+                    String authorNickname = row[15] != null ? (String) row[15] : "알 수 없음";
+                    String categoryName = (String) row[16];
+
+                    return PostSummary.builder()
+                            .post(post)
+                            .authorNickname(authorNickname)
+                            .categoryName(categoryName)
+                            .build();
+                })
+                .toList();
+    }
+
+    @Override
+    public Page<PostSummary> findCommentedByUserId(Long userId, Pageable pageable) {
+        Page<Object[]> results = jpaRepository.findCommentedByUserIdWithDetails(userId, pageable);
+
+        return results.map(row -> {
+            Post post = mapRowToPost(row);
+            String authorNickname = row[15] != null ? (String) row[15] : "알 수 없음";
+            String categoryName = (String) row[16];
+
+            return PostSummary.builder()
+                    .post(post)
+                    .authorNickname(authorNickname)
+                    .categoryName(categoryName)
+                    .build();
+        });
+    }
+
+    @Override
+    public long countCommentedByUserId(Long userId) {
+        return jpaRepository.countCommentedByUserIdNotDeleted(userId);
     }
 }

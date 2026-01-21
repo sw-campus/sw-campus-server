@@ -100,9 +100,13 @@ public class SecurityConfig {
                         // 공개 API (조회) - PUBLIC_GET_APIS 상수 사용
                         .requestMatchers(HttpMethod.GET, PUBLIC_GET_APIS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/members/nickname/check").permitAll()
-                        // 커뮤니티 API (조회)
-                        .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()
+                        // 커뮤니티 API (조회) - 목록만 비로그인 허용, 상세/댓글은 인증 필요
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/board-categories/**").permitAll()
+                        // 사용자 프로필 API (조회) - 비로그인 허용
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/profile").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/commented-posts").permitAll()
                         // Storage API (인증 선택적)
                         .requestMatchers(HttpMethod.GET, "/api/v1/storage/presigned-urls").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/storage/presigned-urls/batch").permitAll()

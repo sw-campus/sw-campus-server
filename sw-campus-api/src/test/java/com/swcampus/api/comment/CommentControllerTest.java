@@ -149,6 +149,7 @@ class CommentControllerTest {
 
         // when & then
         mockMvc.perform(get("/api/v1/posts/1/comments")
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
