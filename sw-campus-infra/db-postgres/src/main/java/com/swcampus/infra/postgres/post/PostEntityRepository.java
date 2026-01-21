@@ -155,7 +155,7 @@ public class PostEntityRepository implements PostRepository {
 
     private List<String> parseStringArray(Object arrayObj) {
         if (arrayObj == null) {
-            return new java.util.ArrayList<>();
+            return java.util.List.of();
         }
         if (arrayObj instanceof String[]) {
             return java.util.Arrays.asList((String[]) arrayObj);
@@ -167,10 +167,10 @@ public class PostEntityRepository implements PostRepository {
                     return java.util.Arrays.asList((String[]) array);
                 }
             } catch (java.sql.SQLException e) {
-                return new java.util.ArrayList<>();
+                return java.util.List.of();
             }
         }
-        return new java.util.ArrayList<>();
+        return java.util.List.of();
     }
 
     @Override
@@ -232,7 +232,7 @@ public class PostEntityRepository implements PostRepository {
     @Override
     public List<PostSummary> findAllByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
-            return new java.util.ArrayList<>();
+            return java.util.List.of();
         }
 
         Long[] idsArray = ids.toArray(new Long[0]);

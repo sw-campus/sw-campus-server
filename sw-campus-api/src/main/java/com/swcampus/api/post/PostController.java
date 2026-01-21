@@ -134,13 +134,13 @@ public class PostController {
     })
     @GetMapping("/{postId}")
     public ResponseEntity<PostDetailResponse> getPost(
-            @CurrentMember MemberPrincipal member,
+            @OptionalCurrentMember MemberPrincipal member,
             @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
-        PostDetail postDetail = postService.getPostDetailWithViewCount(postId, member.memberId());
+        Long currentUserId = member != null ? member.memberId() : null;
+        PostDetail postDetail = postService.getPostDetailWithViewCount(postId, currentUserId);
         Post post = postDetail.getPost();
 
-        Long currentUserId = member != null ? member.memberId() : null;
         boolean isAuthor = currentUserId != null && post.isAuthor(currentUserId);
         boolean isBookmarked = bookmarkService.isBookmarked(currentUserId, postId);
         boolean isLiked = postLikeService.isLiked(currentUserId, postId);
