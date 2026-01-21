@@ -228,4 +228,50 @@ public class PostEntityRepository implements PostRepository {
     public long countByUserId(Long userId) {
         return jpaRepository.countByUserIdNotDeleted(userId);
     }
+
+    @Override
+    public List<PostSummary> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return new java.util.ArrayList<>();
+        }
+
+        Long[] idsArray = ids.toArray(new Long[0]);
+        java.util.List<Object[]> results = jpaRepository.findAllByIdsWithDetails(idsArray);
+
+        return results.stream()
+                .map(row -> {
+                    Post post = mapRowToPost(row);
+                    String authorNickname = row[15] != null ? (String) row[15] : "알 수 없음";
+                    String categoryName = (String) row[16];
+
+                    return PostSummary.builder()
+                            .post(post)
+                            .authorNickname(authorNickname)
+                            .categoryName(categoryName)
+                            .build();
+                })
+                .toList();
+    }
+
+    @Override
+    public Page<PostSummary> findCommentedByUserId(Long userId, Pageable pageable) {
+        Page<Object[]> results = jpaRepository.findCommentedByUserIdWithDetails(userId, pageable);
+
+        return results.map(row -> {
+            Post post = mapRowToPost(row);
+            String authorNickname = row[15] != null ? (String) row[15] : "알 수 없음";
+            String categoryName = (String) row[16];
+
+            return PostSummary.builder()
+                    .post(post)
+                    .authorNickname(authorNickname)
+                    .categoryName(categoryName)
+                    .build();
+        });
+    }
+
+    @Override
+    public long countCommentedByUserId(Long userId) {
+        return jpaRepository.countCommentedByUserIdNotDeleted(userId);
+    }
 }

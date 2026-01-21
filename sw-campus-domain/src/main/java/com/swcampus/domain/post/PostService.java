@@ -163,4 +163,18 @@ public class PostService {
         post.togglePin();
         return postRepository.save(post);
     }
+
+    /**
+     * 특정 유저가 댓글을 단 게시글 목록 조회
+     */
+    public Page<PostSummary> getCommentedPostsByUserId(Long userId, Pageable pageable) {
+        return postRepository.findCommentedByUserId(userId, pageable);
+    }
+
+    /**
+     * 특정 유저가 댓글을 단 게시글 수 조회
+     */
+    public long countCommentedPostsByUserId(Long userId) {
+        return postRepository.countCommentedByUserId(userId);
+    }
 }
