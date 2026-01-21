@@ -7,6 +7,7 @@ variables:
   IMAGE_NAME: $CI_REGISTRY_IMAGE
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  DOCKER_BUILDKIT: "0"    # BuildKit 비활성화 (buildx 미설치 환경)
 
 # Gradle 캐시 설정
 .gradle-cache:
@@ -64,7 +65,6 @@ build-dev:
   variables:
     TAG: "RHSA-$CI_COMMIT_SHA"
     DOCKER_HOST: tcp://docker:2375
-    DOCKER_BUILDKIT: "1"
   before_script:
     # git & Docker CLI 설치
     - apt-get update && apt-get install -y git docker.io
@@ -136,7 +136,6 @@ build-release:
       when: manual
   variables:
     DOCKER_HOST: tcp://docker:2375
-    DOCKER_BUILDKIT: "1"
   before_script:
     # git & Docker CLI 설치
     - apt-get update && apt-get install -y git docker.io
