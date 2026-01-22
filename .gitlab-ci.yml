@@ -7,7 +7,7 @@ variables:
   IMAGE_NAME: $CI_REGISTRY_IMAGE
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
-  DOCKER_BUILDKIT: "0"    # BuildKit 비활성화 (buildx 미설치 환경)
+  DOCKER_BUILDKIT: "0"
 
 # Gradle 캐시 설정
 .gradle-cache:
@@ -37,7 +37,6 @@ validate-migration:
       echo "변경된 마이그레이션 파일:"
       git diff --name-only HEAD~1 HEAD -- 'sw-campus-infra/db-postgres/src/main/resources/db/migration/**' || true
 
-      # 마이그레이션 파일명 규칙 검증
       for file in sw-campus-infra/db-postgres/src/main/resources/db/migration/*.sql; do
         if [ -f "$file" ]; then
           filename=$(basename "$file")
@@ -51,7 +50,7 @@ validate-migration:
       echo "모든 마이그레이션 파일명이 올바릅니다"
 
 
-# Build Dev (develop 브랜치)
+# Build Dev (develop 브랜치 전용)
 build-dev:
   stage: build
   image: eclipse-temurin:17-jdk
@@ -60,27 +59,23 @@ build-dev:
     - docker:24-dind
   rules:
     - if: $CI_COMMIT_BRANCH == "develop"
-    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "web"
       when: manual
   variables:
     TAG: "RHSA-$CI_COMMIT_SHA"
     DOCKER_HOST: tcp://docker:2375
   before_script:
-    # git & Docker CLI 설치
     - apt-get update && apt-get install -y git docker.io
     - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
-    # submodules 체크아웃
     - git submodule sync --recursive
     - git submodule update --init --recursive
   script:
     - |
       echo "Building DEV image with tag $TAG"
 
-      # Gradle 빌드
       chmod +x gradlew
       ./gradlew build -x test
 
-      # Docker 빌드 & 푸시
       docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
       docker build -t $IMAGE_NAME:$TAG .
       docker push $IMAGE_NAME:$TAG
@@ -111,8 +106,8 @@ update-manifest-dev:
       git config user.email "gitlab-ci@${CI_SERVER_HOST}"
       git checkout develop
 
-      # 이미지 태그 업데이트
-      sed -i "/repository:.*sw-campus-server$/,/pullPolicy:/ s|tag: \".*\"|tag: \"$TAG\"|" k8s/environments/develop/values.yaml
+      # 수정된 sed 패턴: backend/server
+      sed -i "/repository:.*backend\/server/,/pullPolicy:/ s|tag: \".*\"|tag: \"$TAG\"|" k8s/environments/develop/values.yaml
 
       git add .
       if git diff --staged --quiet; then
@@ -123,7 +118,7 @@ update-manifest-dev:
       fi
 
 
-# Build Release (main 브랜치)
+# Build Release (main 브랜치 전용)
 build-release:
   stage: build
   image: eclipse-temurin:17-jdk
@@ -132,24 +127,20 @@ build-release:
     - docker:24-dind
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE !~ /\[skip ci\]/
-    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "web"
       when: manual
   variables:
     DOCKER_HOST: tcp://docker:2375
   before_script:
-    # git & Docker CLI 설치
     - apt-get update && apt-get install -y git docker.io
     - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
-    # submodules 체크아웃
     - git submodule sync --recursive
     - git submodule update --init --recursive
   script:
     - |
-      # gradle.properties에서 버전 읽기
       CURRENT_VERSION=$(grep "applicationVersion=" gradle.properties | cut -d'=' -f2 | sed 's/-SNAPSHOT//')
       echo "Current version: $CURRENT_VERSION"
 
-      # 버전 파싱 및 증가
       MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
       MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
       PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
@@ -161,14 +152,11 @@ build-release:
       echo "VERSION_TAG=$VERSION_TAG" >> build.env
       echo "NEW_VERSION=$NEW_VERSION" >> build.env
 
-      # gradle.properties 업데이트
       sed -i "s/applicationVersion=.*/applicationVersion=${NEW_VERSION}-SNAPSHOT/" gradle.properties
 
-      # Gradle 빌드
       chmod +x gradlew
       ./gradlew build -x test
 
-      # Docker 빌드 & 푸시
       docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
       docker build -t $IMAGE_NAME:$VERSION_TAG .
       docker push $IMAGE_NAME:$VERSION_TAG
@@ -199,7 +187,6 @@ commit-version-bump:
       git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
       git push origin HEAD:main
 
-      # 태그 생성
       git tag -f "$VERSION_TAG"
       git push origin "$VERSION_TAG" -f
 
@@ -223,10 +210,9 @@ update-manifest-release:
       git config user.email "gitlab-ci@${CI_SERVER_HOST}"
       git checkout release
 
-      # 이미지 태그 업데이트
-      sed -i "/repository:.*sw-campus-server$/,/pullPolicy:/ s|tag: \".*\"|tag: \"$VERSION_TAG\"|" k8s/environments/release/values.yaml
+      # 수정된 sed 패턴: backend/server
+      sed -i "/repository:.*backend\/server/,/pullPolicy:/ s|tag: \".*\"|tag: \"$VERSION_TAG\"|" k8s/environments/release/values.yaml
 
-      # MR용 브랜치 생성
       BRANCH_NAME="auto-update/server-$VERSION_TAG"
       git checkout -b "$BRANCH_NAME"
 
@@ -234,7 +220,6 @@ update-manifest-release:
       git commit -m "chore(server): update prod image to $VERSION_TAG"
       git push origin "$BRANCH_NAME"
 
-      # GitLab API로 MR 생성
       curl --request POST \
         --header "PRIVATE-TOKEN: ${MANIFEST_TOKEN}" \
         --header "Content-Type: application/json" \

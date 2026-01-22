@@ -1,17 +1,20 @@
 package com.swcampus.api.member;
 
 import com.swcampus.api.member.request.WithdrawRequest;
+import com.swcampus.api.member.response.CurrentMemberResponse;
 import com.swcampus.api.member.response.NicknameAvailableResponse;
 import com.swcampus.api.member.response.WithdrawResponse;
 import com.swcampus.api.ratelimit.RateLimited;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
+import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.oauth.OAuthProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +29,23 @@ import java.util.List;
 public class MemberController {
 
     private final MemberService memberService;
+
+    @Operation(
+            summary = "현재 사용자 정보 조회",
+            description = "현재 로그인한 사용자의 정보를 조회합니다."
+    )
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @GetMapping("/me")
+    public ResponseEntity<CurrentMemberResponse> getCurrentMember(
+            @CurrentMember MemberPrincipal principal
+    ) {
+        Member member = memberService.getMember(principal.memberId());
+        return ResponseEntity.ok(CurrentMemberResponse.from(member));
+    }
 
     @Operation(
             summary = "닉네임 중복 검사",
