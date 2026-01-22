@@ -7,7 +7,7 @@ variables:
   IMAGE_NAME: $CI_REGISTRY_IMAGE
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
-  DOCKER_BUILDKIT: "1"
+  DOCKER_BUILDKIT: "0"
 
 # Gradle 캐시 설정
 .gradle-cache:
