@@ -1,5 +1,6 @@
 package com.swcampus.domain.postlike;
 
+import java.util.List;
 import java.util.Set;
 
 public interface PostLikeRepository {
@@ -13,4 +14,6 @@ public interface PostLikeRepository {
     long countByPostId(Long postId);
 
     Set<Long> findPostIdsByUserId(Long userId);
+
+    List<Long> findUserIdsByPostId(Long postId);
 }

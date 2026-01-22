@@ -37,6 +37,9 @@ dependencies {
     // Swagger UI + OpenAPI 3.0
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
 
+    // Jsoup (HTML 파싱 - 미리보기 텍스트 추출)
+    implementation 'org.jsoup:jsoup:1.17.2'
+
     // Prometheus
     implementation 'io.micrometer:micrometer-registry-prometheus' // Actuator → Prometheus (Pull)
 

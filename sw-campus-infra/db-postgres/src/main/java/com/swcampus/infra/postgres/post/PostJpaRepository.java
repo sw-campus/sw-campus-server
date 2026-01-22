@@ -20,13 +20,13 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             SELECT * FROM swcampus.posts p
             WHERE p.is_deleted = false
             AND (CAST(:categoryIds AS bigint[]) IS NULL OR p.board_category_id = ANY(CAST(:categoryIds AS bigint[])))
-            AND (CAST(:tags AS text[]) IS NULL OR p.tags && CAST(:tags AS text[]))
+            AND (CAST(:tags AS text[]) IS NULL OR p.tags @> CAST(:tags AS text[]))
             """,
             countQuery = """
             SELECT COUNT(*) FROM swcampus.posts p
             WHERE p.is_deleted = false
             AND (CAST(:categoryIds AS bigint[]) IS NULL OR p.board_category_id = ANY(CAST(:categoryIds AS bigint[])))
-            AND (CAST(:tags AS text[]) IS NULL OR p.tags && CAST(:tags AS text[]))
+            AND (CAST(:tags AS text[]) IS NULL OR p.tags @> CAST(:tags AS text[]))
             """,
             nativeQuery = true)
     Page<PostEntity> findAllWithFilters(
@@ -83,7 +83,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             LEFT JOIN swcampus.board_categories bc ON p.board_category_id = bc.board_category_id
             WHERE p.is_deleted = false
             AND (CAST(:categoryIds AS bigint[]) IS NULL OR p.board_category_id = ANY(CAST(:categoryIds AS bigint[])))
-            AND (CAST(:tags AS text[]) IS NULL OR p.tags && CAST(:tags AS text[]))
+            AND (CAST(:tags AS text[]) IS NULL OR p.tags @> CAST(:tags AS text[]))
             AND (:keyword IS NULL OR :keyword = '' OR 
                  p.post_title ILIKE '%' || :keyword || '%' OR 
                  p.post_body ILIKE '%' || :keyword || '%' OR 
@@ -93,7 +93,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             SELECT COUNT(*) FROM swcampus.posts p
             WHERE p.is_deleted = false
             AND (CAST(:categoryIds AS bigint[]) IS NULL OR p.board_category_id = ANY(CAST(:categoryIds AS bigint[])))
-            AND (CAST(:tags AS text[]) IS NULL OR p.tags && CAST(:tags AS text[]))
+            AND (CAST(:tags AS text[]) IS NULL OR p.tags @> CAST(:tags AS text[]))
             AND (:keyword IS NULL OR :keyword = '' OR 
                  p.post_title ILIKE '%' || :keyword || '%' OR 
                  p.post_body ILIKE '%' || :keyword || '%' OR 

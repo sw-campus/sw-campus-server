@@ -334,12 +334,29 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 상세 조회 실패 - 비로그인 사용자")
-    void getPost_Fail_Anonymous() throws Exception {
+    @DisplayName("게시글 상세 조회 성공 - 비로그인 사용자 (미리보기 제공)")
+    void getPost_Success_Anonymous() throws Exception {
+        // given
+        com.swcampus.domain.post.PostDetail mockPostDetail = com.swcampus.domain.post.PostDetail.builder()
+                .post(mockPost)
+                .authorNickname("Tester")
+                .categoryName("Free Board")
+                .commentCount(5L)
+                .build();
+
+        given(postService.getPostDetailWithViewCount(anyLong(), any()))
+                .willReturn(mockPostDetail);
+
+        given(bookmarkService.isBookmarked(any(), anyLong()))
+                .willReturn(false);
+
+        given(postLikeService.isLiked(any(), anyLong()))
+                .willReturn(false);
+
         // when & then
         mockMvc.perform(get("/api/v1/posts/1"))
                 .andDo(print())
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk());
     }
 
     @Test

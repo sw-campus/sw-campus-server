@@ -3,12 +3,15 @@ package com.swcampus.api.comment;
 import com.swcampus.api.comment.request.CreateCommentRequest;
 import com.swcampus.api.comment.request.UpdateCommentRequest;
 import com.swcampus.api.comment.response.CommentResponse;
+import com.swcampus.api.notification.SseEmitterService;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.comment.Comment;
+import com.swcampus.domain.comment.CommentNotificationResult;
 import com.swcampus.domain.comment.CommentService;
 import com.swcampus.domain.commentlike.CommentLikeService;
+import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.member.Role;
 
@@ -36,6 +39,7 @@ public class CommentController {
     private final MemberService memberService;
     private final CommentLikeService commentLikeService;
     private final CommentResponseMapper commentResponseMapper;
+    private final SseEmitterService sseEmitterService;
 
     @Operation(summary = "댓글 작성", description = "게시글에 댓글을 작성합니다.")
     @SecurityRequirement(name = "cookieAuth")
@@ -49,7 +53,8 @@ public class CommentController {
             @CurrentMember MemberPrincipal member,
             @Valid @RequestBody CreateCommentRequest request) {
 
-        Comment comment = commentService.createComment(
+        // 댓글 생성 및 알림 생성 (비즈니스 로직은 Service에서 처리)
+        CommentNotificationResult result = commentService.createCommentWithNotification(
                 request.getPostId(),
                 member.memberId(),
                 request.getParentId(),
@@ -57,9 +62,20 @@ public class CommentController {
                 request.getImageUrl()
         );
 
-        String nickname = memberService.getMember(member.memberId()).getNickname();
+        Member commenter = memberService.getMember(member.memberId());
+        String nickname = commenter.getNickname();
 
-        CommentResponse response = CommentResponse.from(comment, nickname, true, false);
+        // SSE로 실시간 전송 (presentation 관심사)
+        if (result.notification() != null) {
+            sseEmitterService.sendNotification(
+                    result.recipientId(),
+                    result.notification(),
+                    nickname,
+                    result.postId()
+            );
+        }
+
+        CommentResponse response = CommentResponse.from(result.comment(), nickname, true, false);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
