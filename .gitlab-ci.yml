@@ -210,24 +210,12 @@ update-manifest-release:
       git config user.email "gitlab-ci@${CI_SERVER_HOST}"
       git checkout release
 
-      # 수정된 sed 패턴: backend/server
       sed -i "/repository:.*backend\/server/,/pullPolicy:/ s|tag: \".*\"|tag: \"$VERSION_TAG\"|" k8s/environments/release/values.yaml
 
-      BRANCH_NAME="auto-update/server-$VERSION_TAG"
-      git checkout -b "$BRANCH_NAME"
-
       git add .
-      git commit -m "chore(server): update prod image to $VERSION_TAG"
-      git push origin "$BRANCH_NAME"
-
-      curl --request POST \
-        --header "PRIVATE-TOKEN: ${MANIFEST_TOKEN}" \
-        --header "Content-Type: application/json" \
-        --data "{
-          \"source_branch\": \"$BRANCH_NAME\",
-          \"target_branch\": \"release\",
-          \"title\": \"chore(server): update prod image to $VERSION_TAG\",
-          \"description\": \"Auto-generated MR from Server build\n\n- **Image**: \`$CI_REGISTRY_IMAGE:$VERSION_TAG\`\n- **Commit**: $CI_COMMIT_SHA\",
-          \"remove_source_branch\": true
-        }" \
-        "https://${CI_SERVER_HOST}/api/v4/projects/${MANIFEST_PROJECT_ID}/merge_requests"
+      if git diff --staged --quiet; then
+        echo "No changes to commit"
+      else
+        git commit -m "chore(server): update prod image to $VERSION_TAG"
+        git push origin release
+      fi
