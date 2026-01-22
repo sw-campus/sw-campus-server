@@ -22,4 +22,11 @@ public class LikerResponse {
                 .nickname(member.getNickname())
                 .build();
     }
+
+    public static LikerResponse from(com.swcampus.domain.postlike.LikerInfo likerInfo) {
+        return LikerResponse.builder()
+                .id(likerInfo.getId())
+                .nickname(likerInfo.getNickname())
+                .build();
+    }
 }

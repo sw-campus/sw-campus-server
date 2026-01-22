@@ -4,8 +4,6 @@ import com.swcampus.api.postlike.response.LikeToggleResponse;
 import com.swcampus.api.postlike.response.LikerResponse;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
-import com.swcampus.domain.member.Member;
-import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.postlike.PostLikeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,7 +24,6 @@ import java.util.List;
 public class PostLikeController {
 
     private final PostLikeService postLikeService;
-    private final MemberService memberService;
 
     @Operation(summary = "게시글 추천 토글", description = "게시글을 추천하거나 추천을 취소합니다.")
     @SecurityRequirement(name = "cookieAuth")
@@ -72,10 +69,7 @@ public class PostLikeController {
     public ResponseEntity<List<LikerResponse>> getLikers(
             @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
-        List<Long> likerIds = postLikeService.getLikerIds(postId);
-
-        List<LikerResponse> response = likerIds.stream()
-                .map(memberService::getMember)
+        List<LikerResponse> response = postLikeService.getLikers(postId).stream()
                 .map(LikerResponse::from)
                 .toList();
 

@@ -2,11 +2,7 @@ package com.swcampus.api.notification;
 
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
-import com.swcampus.domain.comment.Comment;
-import com.swcampus.domain.comment.CommentRepository;
-import com.swcampus.domain.member.Member;
-import com.swcampus.domain.member.MemberRepository;
-import com.swcampus.domain.notification.Notification;
+import com.swcampus.domain.notification.NotificationResult;
 import com.swcampus.domain.notification.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,9 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Tag(name = "Notification", description = "알림 API")
 @RestController
@@ -34,8 +27,6 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     private final SseEmitterService sseEmitterService;
-    private final MemberRepository memberRepository;
-    private final CommentRepository commentRepository;
 
     @Operation(summary = "SSE 연결", description = "실시간 알림을 수신하기 위한 SSE 연결을 맺습니다.")
     @ApiResponses({
@@ -54,41 +45,13 @@ public class NotificationController {
     })
     @GetMapping
     public ResponseEntity<NotificationListResponse> getNotifications(@CurrentMember MemberPrincipal member) {
-        List<Notification> notifications = notificationService.getNotifications(member.memberId());
-        long unreadCount = notificationService.getUnreadCount(member.memberId());
+        NotificationResult result = notificationService.getNotificationsWithDetails(member.memberId());
 
-        // sender ID 목록 추출 및 Member 조회
-        List<Long> senderIds = notifications.stream()
-                .map(Notification::getSenderId)
-                .distinct()
+        List<NotificationResponse> responses = result.getNotifications().stream()
+                .map(NotificationResponse::from)
                 .toList();
 
-        Map<Long, Member> senderMap = memberRepository.findAllByIds(senderIds).stream()
-                .collect(Collectors.toMap(Member::getId, Function.identity()));
-
-        // comment ID 목록 추출 및 Comment 조회 (postId를 가져오기 위해)
-        List<Long> commentIds = notifications.stream()
-                .map(Notification::getTargetId)
-                .distinct()
-                .toList();
-
-        Map<Long, Comment> commentMap = commentRepository.findAllByIds(commentIds).stream()
-                .collect(Collectors.toMap(Comment::getId, Function.identity()));
-
-        // NotificationResponse 생성
-        List<NotificationResponse> responses = notifications.stream()
-                .map(n -> {
-                    Member sender = senderMap.get(n.getSenderId());
-                    String nickname = sender != null ? sender.getNickname() : "알 수 없음";
-                    Comment comment = commentMap.get(n.getTargetId());
-                    Long postId = comment != null ? comment.getPostId() : null;
-                    return NotificationResponse.from(n, nickname, postId);
-                })
-                .toList();
-
-        NotificationListResponse response = NotificationListResponse.of(responses, unreadCount);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(NotificationListResponse.of(responses, result.getUnreadCount()));
     }
 
     @Operation(summary = "읽지 않은 알림 개수 조회", description = "읽지 않은 알림 개수를 조회합니다.")

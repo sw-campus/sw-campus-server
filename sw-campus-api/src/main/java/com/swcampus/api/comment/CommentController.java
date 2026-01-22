@@ -8,16 +8,12 @@ import com.swcampus.api.security.CurrentMember;
 import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.comment.Comment;
+import com.swcampus.domain.comment.CommentNotificationResult;
 import com.swcampus.domain.comment.CommentService;
 import com.swcampus.domain.commentlike.CommentLikeService;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.member.Role;
-import com.swcampus.domain.notification.Notification;
-import com.swcampus.domain.notification.NotificationService;
-import com.swcampus.domain.notification.NotificationType;
-import com.swcampus.domain.post.Post;
-import com.swcampus.domain.post.PostService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,8 +39,6 @@ public class CommentController {
     private final MemberService memberService;
     private final CommentLikeService commentLikeService;
     private final CommentResponseMapper commentResponseMapper;
-    private final PostService postService;
-    private final NotificationService notificationService;
     private final SseEmitterService sseEmitterService;
 
     @Operation(summary = "댓글 작성", description = "게시글에 댓글을 작성합니다.")
@@ -59,7 +53,8 @@ public class CommentController {
             @CurrentMember MemberPrincipal member,
             @Valid @RequestBody CreateCommentRequest request) {
 
-        Comment comment = commentService.createComment(
+        // 댓글 생성 및 알림 생성 (비즈니스 로직은 Service에서 처리)
+        CommentNotificationResult result = commentService.createCommentWithNotification(
                 request.getPostId(),
                 member.memberId(),
                 request.getParentId(),
@@ -70,43 +65,19 @@ public class CommentController {
         Member commenter = memberService.getMember(member.memberId());
         String nickname = commenter.getNickname();
 
-        // 알림 생성 및 SSE 전송
-        sendCommentNotification(comment, commenter, request.getPostId(), request.getParentId());
+        // SSE로 실시간 전송 (presentation 관심사)
+        if (result.notification() != null) {
+            sseEmitterService.sendNotification(
+                    result.recipientId(),
+                    result.notification(),
+                    nickname,
+                    result.postId()
+            );
+        }
 
-        CommentResponse response = CommentResponse.from(comment, nickname, true, false);
+        CommentResponse response = CommentResponse.from(result.comment(), nickname, true, false);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    private void sendCommentNotification(Comment comment, Member commenter, Long postId, Long parentId) {
-        Long recipientId;
-        NotificationType type;
-
-        if (parentId != null) {
-            // 대댓글인 경우: 부모 댓글 작성자에게 알림
-            Comment parentComment = commentService.getComment(parentId);
-            recipientId = parentComment.getUserId();
-            type = NotificationType.REPLY;
-        } else {
-            // 일반 댓글인 경우: 게시글 작성자에게 알림
-            Post post = postService.getPost(postId);
-            recipientId = post.getUserId();
-            type = NotificationType.COMMENT;
-        }
-
-        // 알림 생성 (본인에게는 알림을 보내지 않음)
-        // targetId에 댓글 ID를 저장 (알림 클릭 시 해당 댓글로 이동)
-        Notification notification = notificationService.createNotification(
-                recipientId,
-                commenter.getId(),
-                comment.getId(),  // 댓글 ID
-                type
-        );
-
-        // SSE로 실시간 전송
-        if (notification != null) {
-            sseEmitterService.sendNotification(recipientId, notification, commenter.getNickname(), postId);
-        }
     }
 
     @Operation(summary = "게시글별 댓글 목록 조회", description = "게시글의 댓글 목록을 계층 구조로 조회합니다.")

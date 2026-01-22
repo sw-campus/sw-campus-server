@@ -1,12 +1,17 @@
 package com.swcampus.domain.postlike;
 
+import com.swcampus.domain.member.Member;
+import com.swcampus.domain.member.MemberRepository;
 import com.swcampus.domain.post.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +20,7 @@ public class PostLikeService {
 
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
+    private final MemberRepository memberRepository;
 
     /**
      * 게시글 추천 토글 - 이미 추천했으면 취소, 없으면 추천
@@ -66,5 +72,28 @@ public class PostLikeService {
      */
     public List<Long> getLikerIds(Long postId) {
         return postLikeRepository.findUserIdsByPostId(postId);
+    }
+
+    /**
+     * 게시글에 좋아요 누른 사용자 정보 목록 조회 (일괄 조회)
+     */
+    public List<LikerInfo> getLikers(Long postId) {
+        List<Long> likerIds = postLikeRepository.findUserIdsByPostId(postId);
+
+        if (likerIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Member> memberMap = memberRepository.findAllByIds(likerIds).stream()
+                .collect(Collectors.toMap(Member::getId, Function.identity()));
+
+        return likerIds.stream()
+                .map(id -> {
+                    Member member = memberMap.get(id);
+                    return member != null
+                            ? LikerInfo.of(member.getId(), member.getNickname())
+                            : LikerInfo.of(id, "알 수 없음");
+                })
+                .toList();
     }
 }

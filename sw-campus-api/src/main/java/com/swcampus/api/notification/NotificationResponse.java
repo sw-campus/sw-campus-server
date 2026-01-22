@@ -50,4 +50,17 @@ public class NotificationResponse {
                 .createdAt(notification.getCreatedAt())
                 .build();
     }
+
+    public static NotificationResponse from(com.swcampus.domain.notification.NotificationDetail detail) {
+        return NotificationResponse.builder()
+                .id(detail.getId())
+                .type(detail.getType())
+                .targetId(detail.getTargetId())
+                .postId(detail.getPostId())
+                .senderId(detail.getSenderId())
+                .senderNickname(detail.getSenderNickname())
+                .read(detail.isRead())
+                .createdAt(detail.getCreatedAt())
+                .build();
+    }
 }
