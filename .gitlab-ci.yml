@@ -67,7 +67,6 @@ build-dev:
   before_script:
     - apt-get update && apt-get install -y git docker.io
     - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
-    - git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
     - git submodule sync --recursive
     - git submodule update --init --recursive
   script:
@@ -135,7 +134,6 @@ build-release:
   before_script:
     - apt-get update && apt-get install -y git docker.io
     - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
-    - git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
     - git submodule sync --recursive
     - git submodule update --init --recursive
   script:
