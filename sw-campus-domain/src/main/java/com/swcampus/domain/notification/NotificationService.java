@@ -1,0 +1,58 @@
+package com.swcampus.domain.notification;
+
+import com.swcampus.domain.notification.exception.NotificationAccessDeniedException;
+import com.swcampus.domain.notification.exception.NotificationNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class NotificationService {
+
+    private final NotificationRepository notificationRepository;
+
+    @Transactional
+    public Notification createNotification(Long userId, Long senderId, Long targetId, NotificationType type) {
+        // 본인에게 알림을 보내지 않음
+        if (userId.equals(senderId)) {
+            return null;
+        }
+
+        Notification notification = Notification.create(userId, senderId, targetId, type);
+        return notificationRepository.save(notification);
+    }
+
+    public List<Notification> getNotifications(Long userId) {
+        return notificationRepository.findByUserId(userId);
+    }
+
+    public List<Notification> getUnreadNotifications(Long userId) {
+        return notificationRepository.findByUserIdAndReadFalse(userId);
+    }
+
+    public long getUnreadCount(Long userId) {
+        return notificationRepository.countByUserIdAndReadFalse(userId);
+    }
+
+    @Transactional
+    public Notification markAsRead(Long notificationId, Long userId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new NotificationNotFoundException(notificationId));
+
+        if (!notification.getUserId().equals(userId)) {
+            throw new NotificationAccessDeniedException("본인의 알림만 읽음 처리할 수 있습니다.");
+        }
+
+        notification.markAsRead();
+        return notificationRepository.save(notification);
+    }
+
+    @Transactional
+    public void markAllAsRead(Long userId) {
+        notificationRepository.markAllAsReadByUserId(userId);
+    }
+}

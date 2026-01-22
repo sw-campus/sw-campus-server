@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -58,5 +59,12 @@ public class PostLikeService {
             return Set.of();
         }
         return postLikeRepository.findPostIdsByUserId(userId);
+    }
+
+    /**
+     * 게시글에 좋아요 누른 사용자 ID 목록 조회
+     */
+    public List<Long> getLikerIds(Long postId) {
+        return postLikeRepository.findUserIdsByPostId(postId);
     }
 }

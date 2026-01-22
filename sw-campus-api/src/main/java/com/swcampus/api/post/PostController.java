@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.jsoup.Jsoup;
 
 @Tag(name = "Post", description = "게시글 API")
 @RestController
@@ -127,7 +128,9 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다. 동일 세션에서 1시간 내 재조회 시 조회수가 증가하지 않습니다.")
+    private static final int PREVIEW_LENGTH = 200;
+
+    @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다. 동일 세션에서 1시간 내 재조회 시 조회수가 증가하지 않습니다. 비로그인 사용자에게는 본문 미리보기(200자)만 제공됩니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
@@ -138,6 +141,8 @@ public class PostController {
             @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
         Long currentUserId = member != null ? member.memberId() : null;
+        boolean isLoggedIn = member != null;
+
         PostDetail postDetail = postService.getPostDetailWithViewCount(postId, currentUserId);
         Post post = postDetail.getPost();
 
@@ -145,17 +150,50 @@ public class PostController {
         boolean isBookmarked = bookmarkService.isBookmarked(currentUserId, postId);
         boolean isLiked = postLikeService.isLiked(currentUserId, postId);
 
-        PostDetailResponse response = PostDetailResponse.from(
-                post,
-                postDetail.getAuthorNickname(),
-                postDetail.getCategoryName(),
-                postDetail.getCommentCount(),
-                isBookmarked,
-                isLiked,
-                isAuthor
-        );
+        // 비로그인 사용자에게는 미리보기만 제공
+        String bodyContent = isLoggedIn ? post.getBody() : extractPreview(post.getBody());
+
+        PostDetailResponse response = PostDetailResponse.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .body(bodyContent)
+                .authorId(post.getUserId())
+                .authorNickname(postDetail.getAuthorNickname())
+                .categoryId(post.getBoardCategoryId())
+                .categoryName(postDetail.getCategoryName())
+                .images(isLoggedIn ? post.getImages() : List.of())
+                .tags(post.getTags())
+                .viewCount(post.getViewCount())
+                .likeCount(post.getLikeCount())
+                .commentCount(postDetail.getCommentCount())
+                .selectedCommentId(post.getSelectedCommentId())
+                .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
+                .bookmarked(isBookmarked)
+                .liked(isLiked)
+                .pinned(post.isPinned())
+                .isAuthor(isAuthor)
+                .build();
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * HTML 본문에서 텍스트를 추출하여 미리보기를 생성합니다.
+     * 비로그인 사용자에게 제공되는 본문 미리보기입니다.
+     * h3 태그(질문/제목)는 제외하고 본문 내용만 추출합니다.
+     */
+    private String extractPreview(String htmlBody) {
+        if (htmlBody == null || htmlBody.isBlank()) {
+            return "";
+        }
+        org.jsoup.nodes.Document doc = Jsoup.parse(htmlBody);
+        doc.select("h3").remove();  // 질문/제목 태그 제거
+        String textOnly = doc.text();
+        if (textOnly.length() <= PREVIEW_LENGTH) {
+            return textOnly;
+        }
+        return textOnly.substring(0, PREVIEW_LENGTH) + "...";
     }
 
     @Operation(summary = "게시글 수정", description = "본인이 작성한 게시글을 수정합니다. (관리자는 모든 게시글 수정 가능)")

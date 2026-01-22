@@ -1,8 +1,11 @@
 package com.swcampus.api.postlike;
 
 import com.swcampus.api.postlike.response.LikeToggleResponse;
+import com.swcampus.api.postlike.response.LikerResponse;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
+import com.swcampus.domain.member.Member;
+import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.postlike.PostLikeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "Post Like", description = "게시글 추천 API")
 @RestController
 @RequestMapping("/api/v1/posts")
@@ -21,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class PostLikeController {
 
     private final PostLikeService postLikeService;
+    private final MemberService memberService;
 
     @Operation(summary = "게시글 추천 토글", description = "게시글을 추천하거나 추천을 취소합니다.")
     @SecurityRequirement(name = "cookieAuth")
@@ -56,5 +62,23 @@ public class PostLikeController {
         boolean liked = postLikeService.isLiked(member.memberId(), postId);
 
         return ResponseEntity.ok(liked);
+    }
+
+    @Operation(summary = "게시글 추천 목록 조회", description = "게시글을 추천한 사용자 목록을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    @GetMapping("/{postId}/likers")
+    public ResponseEntity<List<LikerResponse>> getLikers(
+            @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
+
+        List<Long> likerIds = postLikeService.getLikerIds(postId);
+
+        List<LikerResponse> response = likerIds.stream()
+                .map(memberService::getMember)
+                .map(LikerResponse::from)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }
