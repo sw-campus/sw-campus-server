@@ -2,10 +2,12 @@ package com.swcampus.api.bookmark;
 
 import com.swcampus.api.bookmark.response.BookmarkResponse;
 import com.swcampus.api.bookmark.response.BookmarkToggleResponse;
+import com.swcampus.api.bookmark.response.BookmarkWithPostResponse;
 import com.swcampus.api.security.CurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.bookmark.Bookmark;
 import com.swcampus.domain.bookmark.BookmarkService;
+import com.swcampus.domain.bookmark.BookmarkWithPost;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -46,20 +48,20 @@ public class BookmarkController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "내 북마크 목록", description = "로그인한 사용자의 북마크 목록을 조회합니다.")
+    @Operation(summary = "내 북마크 목록", description = "로그인한 사용자의 북마크 목록을 게시글 정보와 함께 조회합니다.")
     @SecurityRequirement(name = "cookieAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "401", description = "인증 필요")
     })
     @GetMapping
-    public ResponseEntity<List<BookmarkResponse>> getMyBookmarks(
+    public ResponseEntity<List<BookmarkWithPostResponse>> getMyBookmarks(
             @CurrentMember MemberPrincipal member) {
 
-        List<Bookmark> bookmarks = bookmarkService.getMyBookmarks(member.memberId());
+        List<BookmarkWithPost> bookmarks = bookmarkService.getMyBookmarksWithPosts(member.memberId());
 
-        List<BookmarkResponse> response = bookmarks.stream()
-                .map(BookmarkResponse::from)
+        List<BookmarkWithPostResponse> response = bookmarks.stream()
+                .map(BookmarkWithPostResponse::from)
                 .toList();
 
         return ResponseEntity.ok(response);

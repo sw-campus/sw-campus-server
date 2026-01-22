@@ -70,6 +70,9 @@ public class Lecture {
 	private List<com.swcampus.domain.teacher.Teacher> teachers;
 	private List<LectureCurriculum> lectureCurriculums;
 
+	// 1:N Relationships (SpecialCurriculums)
+	private List<LectureSpecialCurriculum> specialCurriculums;
+
 	public Lecture close() {
 		return this.toBuilder()
 				.status(LectureStatus.FINISHED)

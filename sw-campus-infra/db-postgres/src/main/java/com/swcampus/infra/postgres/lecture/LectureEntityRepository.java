@@ -74,6 +74,8 @@ public class LectureEntityRepository implements LectureRepository {
 		entity.getAdds().clear();
 		// 1:N Quals
 		entity.getQuals().clear();
+		// 1:N SpecialCurriculums
+		entity.getSpecialCurriculums().clear();
 		// N:M Teachers
 		entity.getLectureTeachers().clear();
 		// N:M Curriculums
@@ -142,6 +144,17 @@ public class LectureEntityRepository implements LectureRepository {
 						.level(lc.getLevel())
 						.build());
 			});
+		}
+
+		// 1:N SpecialCurriculums
+		if (lecture.getSpecialCurriculums() != null) {
+			entity.getSpecialCurriculums().addAll(lecture.getSpecialCurriculums().stream()
+					.map(sc -> LectureSpecialCurriculumEntity.builder()
+							.lecture(entity)
+							.title(sc.getTitle())
+							.sortOrder(sc.getSortOrder())
+							.build())
+					.toList());
 		}
 	}
 
