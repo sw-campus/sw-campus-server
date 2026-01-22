@@ -1,3 +1,4 @@
 [submodule "sw-campus-api/src/main/resources/config"]
 	path = sw-campus-api/src/main/resources/config
 	url = https://gitlab.com/software_campus/infra/config.git
+

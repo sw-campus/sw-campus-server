@@ -16,4 +16,7 @@ public interface PostLikeJpaRepository extends JpaRepository<PostLikeEntity, Lon
 
     @Query("SELECT pl.postId FROM PostLikeEntity pl WHERE pl.userId = :userId")
     List<Long> findPostIdsByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT pl.userId FROM PostLikeEntity pl WHERE pl.postId = :postId ORDER BY pl.createdAt DESC")
+    List<Long> findUserIdsByPostId(@Param("postId") Long postId);
 }

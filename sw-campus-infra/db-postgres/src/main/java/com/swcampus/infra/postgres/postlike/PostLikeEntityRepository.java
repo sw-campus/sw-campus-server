@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Repository
@@ -41,5 +42,10 @@ public class PostLikeEntityRepository implements PostLikeRepository {
     @Override
     public Set<Long> findPostIdsByUserId(Long userId) {
         return new HashSet<>(jpaRepository.findPostIdsByUserId(userId));
+    }
+
+    @Override
+    public List<Long> findUserIdsByPostId(Long postId) {
+        return jpaRepository.findUserIdsByPostId(postId);
     }
 }

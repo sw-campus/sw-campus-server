@@ -100,8 +100,10 @@ public class SecurityConfig {
                         // 공개 API (조회) - PUBLIC_GET_APIS 상수 사용
                         .requestMatchers(HttpMethod.GET, PUBLIC_GET_APIS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/members/nickname/check").permitAll()
-                        // 커뮤니티 API (조회) - 목록만 비로그인 허용, 상세/댓글은 인증 필요
+                        // 커뮤니티 API (조회) - 목록/상세/인접글 비로그인 허용
                         .requestMatchers(HttpMethod.GET, "/api/v1/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts/*/adjacent").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/board-categories/**").permitAll()
                         // 사용자 프로필 API (조회) - 비로그인 허용
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/profile").permitAll()
