@@ -20,8 +20,10 @@ import java.util.List;
 public class PostService {
 
     private static final String UNKNOWN_AUTHOR = "알 수 없음";
+    private static final long VIEW_COUNT_TTL_SECONDS = 3600; // 1시간
 
     private final PostRepository postRepository;
+    private final PostViewRepository postViewRepository;
     private final BoardCategoryService boardCategoryService;
     private final MemberService memberService;
     private final CommentService commentService;
@@ -69,16 +71,24 @@ public class PostService {
     }
 
     /**
-     * 게시글 상세 정보를 조회합니다. 조회수가 1 증가합니다.
+     * 게시글 상세 정보를 조회합니다.
+     * 동일 사용자가 1시간 내 중복 조회 시 조회수가 증가하지 않습니다.
      * 탈퇴한 회원의 경우 작성자 닉네임이 "알 수 없음"으로 표시됩니다.
+     *
+     * @param postId 게시글 ID
+     * @param userId 조회하는 사용자 ID
      */
     @Transactional
-    public PostDetail getPostDetailWithViewCount(Long postId) {
+    public PostDetail getPostDetailWithViewCount(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException(postId));
 
-        postRepository.incrementViewCount(postId);
-        post.incrementViewCount();
+        // 중복 조회 체크: 이미 조회한 경우 조회수 증가하지 않음
+        boolean alreadyViewed = postViewRepository.hasViewed(postId, userId, VIEW_COUNT_TTL_SECONDS);
+        if (!alreadyViewed) {
+            postRepository.incrementViewCount(postId);
+            post.incrementViewCount();
+        }
 
         String authorNickname = getAuthorNickname(post.getUserId());
         String categoryName = boardCategoryService.getCategoryName(post.getBoardCategoryId());
@@ -162,5 +172,19 @@ public class PostService {
                 .orElseThrow(() -> new PostNotFoundException(postId));
         post.togglePin();
         return postRepository.save(post);
+    }
+
+    /**
+     * 특정 유저가 댓글을 단 게시글 목록 조회
+     */
+    public Page<PostSummary> getCommentedPostsByUserId(Long userId, Pageable pageable) {
+        return postRepository.findCommentedByUserId(userId, pageable);
+    }
+
+    /**
+     * 특정 유저가 댓글을 단 게시글 수 조회
+     */
+    public long countCommentedPostsByUserId(Long userId) {
+        return postRepository.countCommentedByUserId(userId);
     }
 }

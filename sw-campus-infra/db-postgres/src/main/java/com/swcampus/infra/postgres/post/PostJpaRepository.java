@@ -207,4 +207,85 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
      */
     @Query("SELECT COUNT(p) FROM PostEntity p WHERE p.userId = :userId AND p.deleted = false")
     long countByUserIdNotDeleted(@Param("userId") Long userId);
+
+    /**
+     * 여러 게시글 ID로 게시글 목록 조회 (삭제되지 않은 게시글만)
+     * 북마크 목록 조회 등에 사용
+     */
+    @Query(value = """
+            SELECT
+                p.post_id,
+                p.board_category_id,
+                p.user_id,
+                p.post_title,
+                p.post_body,
+                p.post_images,
+                p.tags,
+                p.view_count,
+                p.like_count,
+                p.comment_count,
+                p.selected_comment_id,
+                p.is_deleted,
+                p.created_at,
+                p.updated_at,
+                p.is_pinned,
+                COALESCE(m.nickname, '알 수 없음') as author_nickname,
+                COALESCE(bc.board_category_name, '알 수 없음') as category_name
+            FROM swcampus.posts p
+            LEFT JOIN swcampus.members m ON p.user_id = m.user_id
+            LEFT JOIN swcampus.board_categories bc ON p.board_category_id = bc.board_category_id
+            WHERE p.is_deleted = false AND p.post_id = ANY(CAST(:ids AS bigint[]))
+            ORDER BY p.created_at DESC
+            """, nativeQuery = true)
+    java.util.List<Object[]> findAllByIdsWithDetails(@Param("ids") Long[] ids);
+
+    /**
+     * 특정 유저가 댓글을 단 게시글 목록 조회 (삭제되지 않은 게시글만, 중복 제거)
+     */
+    @Query(value = """
+            SELECT DISTINCT
+                p.post_id,
+                p.board_category_id,
+                p.user_id,
+                p.post_title,
+                p.post_body,
+                p.post_images,
+                p.tags,
+                p.view_count,
+                p.like_count,
+                p.comment_count,
+                p.selected_comment_id,
+                p.is_deleted,
+                p.created_at,
+                p.updated_at,
+                p.is_pinned,
+                COALESCE(m.nickname, '알 수 없음') as author_nickname,
+                COALESCE(bc.board_category_name, '알 수 없음') as category_name,
+                (SELECT MAX(c2.created_at) FROM swcampus.comments c2 WHERE c2.post_id = p.post_id AND c2.user_id = :userId AND c2.is_deleted = false) as last_comment_at
+            FROM swcampus.posts p
+            INNER JOIN swcampus.comments c ON p.post_id = c.post_id AND c.user_id = :userId AND c.is_deleted = false
+            LEFT JOIN swcampus.members m ON p.user_id = m.user_id
+            LEFT JOIN swcampus.board_categories bc ON p.board_category_id = bc.board_category_id
+            WHERE p.is_deleted = false
+            ORDER BY last_comment_at DESC
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT p.post_id)
+            FROM swcampus.posts p
+            INNER JOIN swcampus.comments c ON p.post_id = c.post_id AND c.user_id = :userId AND c.is_deleted = false
+            WHERE p.is_deleted = false
+            """,
+            nativeQuery = true)
+    Page<Object[]> findCommentedByUserIdWithDetails(@Param("userId") Long userId, Pageable pageable);
+
+    /**
+     * 특정 유저가 댓글을 단 게시글 수 조회 (삭제되지 않은 게시글만, 중복 제거)
+     */
+    @Query(value = """
+            SELECT COUNT(DISTINCT p.post_id)
+            FROM swcampus.posts p
+            INNER JOIN swcampus.comments c ON p.post_id = c.post_id AND c.user_id = :userId AND c.is_deleted = false
+            WHERE p.is_deleted = false
+            """, nativeQuery = true)
+    long countCommentedByUserIdNotDeleted(@Param("userId") Long userId);
 }

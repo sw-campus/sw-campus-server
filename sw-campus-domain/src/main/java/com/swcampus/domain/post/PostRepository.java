@@ -54,4 +54,20 @@ public interface PostRepository {
      * 특정 유저가 작성한 게시글 수 조회 (삭제되지 않은 게시글만)
      */
     long countByUserId(Long userId);
+
+    /**
+     * 여러 게시글 ID로 게시글 목록 조회 (삭제되지 않은 게시글만)
+     * 북마크 목록 조회 등에 사용
+     */
+    List<PostSummary> findAllByIds(List<Long> ids);
+
+    /**
+     * 특정 유저가 댓글을 단 게시글 목록 조회 (삭제되지 않은 게시글만)
+     */
+    Page<PostSummary> findCommentedByUserId(Long userId, Pageable pageable);
+
+    /**
+     * 특정 유저가 댓글을 단 게시글 수 조회 (삭제되지 않은 게시글만)
+     */
+    long countCommentedByUserId(Long userId);
 }

@@ -4,6 +4,7 @@ import com.swcampus.domain.member.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ import java.util.Date;
 public class TokenProvider {
 
     private final SecretKey secretKey;
+    private final JwtParser jwtParser;
     private final long accessTokenValidity;
     private final long refreshTokenValidity;
 
@@ -25,6 +27,9 @@ public class TokenProvider {
             @Value("${jwt.access-token-validity}") long accessTokenValidity,
             @Value("${jwt.refresh-token-validity}") long refreshTokenValidity) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.jwtParser = Jwts.parser()
+                .verifyWith(secretKey)
+                .build();
         this.accessTokenValidity = accessTokenValidity;
         this.refreshTokenValidity = refreshTokenValidity;
     }
@@ -60,10 +65,7 @@ public class TokenProvider {
             return false;
         }
         try {
-            Jwts.parser()
-                    .verifyWith(secretKey)
-                    .build()
-                    .parseSignedClaims(token);
+            jwtParser.parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
@@ -75,10 +77,7 @@ public class TokenProvider {
             return TokenValidationResult.INVALID;
         }
         try {
-            Jwts.parser()
-                    .verifyWith(secretKey)
-                    .build()
-                    .parseSignedClaims(token);
+            jwtParser.parseSignedClaims(token);
             return TokenValidationResult.VALID;
         } catch (ExpiredJwtException e) {
             return TokenValidationResult.EXPIRED;
@@ -111,10 +110,7 @@ public class TokenProvider {
     }
 
     private Claims parseClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
+        return jwtParser.parseSignedClaims(token)
                 .getPayload();
     }
 }

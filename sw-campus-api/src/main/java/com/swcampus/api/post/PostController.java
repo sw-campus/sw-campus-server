@@ -127,7 +127,7 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다. 조회수가 1 증가합니다.")
+    @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다. 동일 세션에서 1시간 내 재조회 시 조회수가 증가하지 않습니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
@@ -137,10 +137,10 @@ public class PostController {
             @OptionalCurrentMember MemberPrincipal member,
             @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
 
-        PostDetail postDetail = postService.getPostDetailWithViewCount(postId);
+        Long currentUserId = member != null ? member.memberId() : null;
+        PostDetail postDetail = postService.getPostDetailWithViewCount(postId, currentUserId);
         Post post = postDetail.getPost();
 
-        Long currentUserId = member != null ? member.memberId() : null;
         boolean isAuthor = currentUserId != null && post.isAuthor(currentUserId);
         boolean isBookmarked = bookmarkService.isBookmarked(currentUserId, postId);
         boolean isLiked = postLikeService.isLiked(currentUserId, postId);
@@ -253,8 +253,9 @@ public class PostController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<java.util.Map<String, Boolean>> togglePin(
             @Parameter(description = "게시글 ID", required = true) @PathVariable("postId") Long postId) {
-        
+
         com.swcampus.domain.post.Post post = postService.togglePin(postId);
         return ResponseEntity.ok(java.util.Map.of("pinned", post.isPinned()));
     }
+
 }
