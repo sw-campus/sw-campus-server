@@ -12,7 +12,7 @@ public class Notification {
     private Long id;
     private Long userId;        // 알림 수신자
     private Long senderId;      // 알림 발신자
-    private Long targetId;      // 대상 게시글 ID
+    private Long targetId;      // 알림 대상 ID (댓글 ID 등)
     private NotificationType type;
     private boolean read;
     private LocalDateTime createdAt;
