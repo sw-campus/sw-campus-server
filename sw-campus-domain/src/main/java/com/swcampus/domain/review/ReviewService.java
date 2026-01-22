@@ -11,6 +11,7 @@ import com.swcampus.domain.review.exception.ReviewAlreadyExistsException;
 import com.swcampus.domain.review.exception.ReviewNotFoundException;
 import com.swcampus.domain.review.exception.ReviewNotModifiableException;
 import com.swcampus.domain.review.exception.ReviewNotOwnerException;
+import com.swcampus.domain.review.dto.ReviewListResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +31,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final CertificateRepository certificateRepository;
     private final MemberRepository memberRepository;
+    private final ReviewAccessService reviewAccessService;
 
     /**
      * 후기 작성 가능 여부 확인
@@ -171,6 +173,29 @@ public class ReviewService {
     public List<ReviewWithNickname> getApprovedReviewsWithNicknameByLecture(Long lectureId) {
         List<Review> reviews = getApprovedReviewsByLecture(lectureId);
         return toReviewsWithNicknames(reviews);
+    }
+
+
+    /**
+     * 강의별 승인된 후기 목록 조회 (블라인드 필터링 적용)
+     * 
+     * @param lectureId 강의 ID
+     * @param requesterId 요청자 ID (null이면 비회원)
+     * @return 블라인드 필터링이 적용된 리뷰 목록 (totalCount, isUnblinded 포함)
+     */
+    public ReviewListResult getApprovedReviewsWithBlind(Long lectureId, Long requesterId) {
+        List<Review> allReviews = getApprovedReviewsByLecture(lectureId);
+        boolean isUnblinded = reviewAccessService.isReviewUnblinded(requesterId);
+
+        List<Review> visibleReviews = isUnblinded
+            ? allReviews
+            : allReviews.stream().limit(1).toList();
+
+        return ReviewListResult.of(
+            toReviewsWithNicknames(visibleReviews),
+            allReviews.size(),
+            isUnblinded
+        );
     }
 
     /**

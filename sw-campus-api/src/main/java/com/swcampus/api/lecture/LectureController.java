@@ -26,7 +26,9 @@ import com.swcampus.api.lecture.request.LectureUpdateRequest;
 import com.swcampus.api.lecture.response.LectureResponse;
 import com.swcampus.api.lecture.response.LectureSummaryResponse;
 import com.swcampus.api.review.response.ReviewResponse;
+import com.swcampus.api.review.response.ReviewListResponse;
 import com.swcampus.api.security.CurrentMember;
+import com.swcampus.api.security.OptionalCurrentMember;
 import com.swcampus.domain.auth.MemberPrincipal;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.lecture.Lecture;
@@ -35,6 +37,7 @@ import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
 import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.review.ReviewWithNickname;
+import com.swcampus.domain.review.dto.ReviewListResult;
 
 import com.swcampus.api.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -225,17 +228,16 @@ public class LectureController {
 	}
 
 	@GetMapping("/{lectureId}/reviews")
-	@Operation(summary = "강의별 승인된 후기 조회", description = "강의 ID로 승인된 후기 목록을 조회합니다.")
+	@Operation(summary = "강의별 승인된 후기 조회", description = "강의 ID로 승인된 후기 목록을 조회합니다. 블라인드 미해제 사용자는 1개만 조회됩니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공")
 	})
-	public ResponseEntity<List<ReviewResponse>> getApprovedReviewsByLecture(
+	public ResponseEntity<ReviewListResponse> getApprovedReviewsByLecture(
+			@OptionalCurrentMember MemberPrincipal member,
 			@Parameter(description = "강의 ID", example = "1", required = true) @PathVariable("lectureId") Long lectureId) {
-		List<ReviewWithNickname> reviewsWithNicknames = reviewService.getApprovedReviewsWithNicknameByLecture(lectureId);
-		List<ReviewResponse> responses = reviewsWithNicknames.stream()
-				.map(rwn -> ReviewResponse.from(rwn.review(), rwn.nickname()))
-				.toList();
-		return ResponseEntity.ok(responses);
+		Long requesterId = member != null ? member.memberId() : null;
+		ReviewListResult result = reviewService.getApprovedReviewsWithBlind(lectureId, requesterId);
+		return ResponseEntity.ok(ReviewListResponse.from(result));
 	}
 
 	private List<LectureService.ImageContent> processTeacherImages(List<MultipartFile> teacherImages)

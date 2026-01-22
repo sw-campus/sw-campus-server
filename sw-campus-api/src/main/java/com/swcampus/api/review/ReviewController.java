@@ -11,8 +11,11 @@ import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewCategory;
 import com.swcampus.domain.review.ReviewDetail;
 import com.swcampus.domain.review.ReviewEligibility;
+import com.swcampus.domain.review.ReviewAccessService;
 import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.review.ReviewWithNickname;
+import com.swcampus.domain.review.dto.ReviewBlindStatus;
+import com.swcampus.api.review.response.ReviewBlindStatusResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,6 +41,7 @@ import java.util.stream.Collectors;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ReviewAccessService reviewAccessService;
 
     @Operation(summary = "후기 작성 가능 여부 확인", description = "닉네임 설정, 수료증 인증, 기존 후기 여부를 확인합니다.")
     @SecurityRequirement(name = "cookieAuth")
@@ -283,5 +287,30 @@ public class ReviewController {
                 reviewWithNickname.review(),
                 reviewWithNickname.nickname()
         ));
+    }
+
+
+    @Operation(summary = "블라인드 해제 상태 조회", description = "현재 로그인한 사용자의 리뷰 블라인드 해제 상태를 조회합니다.")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = ReviewBlindStatusResponse.class),
+                examples = @ExampleObject(value = """
+                    {
+                      "isUnblinded": false,
+                      "hasApprovedReview": false,
+                      "hasSurveyCompleted": false
+                    }
+                    """))),
+        @ApiResponse(responseCode = "401", description = "인증 필요",
+            content = @Content(schema = @Schema(implementation = com.swcampus.api.exception.ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                    {"status": 401, "message": "인증이 필요합니다", "timestamp": "2025-12-09T12:00:00"}
+                    """)))
+    })
+    @GetMapping("/blind-status")
+    public ResponseEntity<ReviewBlindStatusResponse> getBlindStatus(@CurrentMember MemberPrincipal member) {
+        ReviewBlindStatus status = reviewAccessService.getBlindStatus(member.memberId());
+        return ResponseEntity.ok(ReviewBlindStatusResponse.from(status));
     }
 }

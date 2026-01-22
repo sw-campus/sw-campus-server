@@ -184,4 +184,10 @@ public class ReviewEntityRepository implements ReviewRepository {
     public void deleteByMemberId(Long memberId) {
         jpaRepository.deleteByMemberId(memberId);
     }
+
+
+    @Override
+    public boolean existsByMemberIdAndApprovalStatus(Long memberId, ApprovalStatus status) {
+        return jpaRepository.existsByMemberIdAndApprovalStatus(memberId, status);
+    }
 }

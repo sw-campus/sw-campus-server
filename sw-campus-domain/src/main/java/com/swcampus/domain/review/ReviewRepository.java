@@ -65,4 +65,10 @@ public interface ReviewRepository {
 
     void deleteById(Long id);
     void deleteByMemberId(Long memberId);
+
+    /**
+     * 특정 회원이 특정 승인 상태의 리뷰를 보유하고 있는지 확인합니다.
+     * 블라인드 해제 조건 확인에 사용됩니다.
+     */
+    boolean existsByMemberIdAndApprovalStatus(Long memberId, ApprovalStatus status);
 }
