@@ -41,6 +41,16 @@ public class CommentEntityRepository implements CommentRepository {
     }
 
     @Override
+    public List<Comment> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return jpaRepository.findAllById(ids).stream()
+                .map(CommentEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<Comment> findByPostId(Long postId) {
         return jpaRepository.findAllByPostId(postId)
                 .stream()

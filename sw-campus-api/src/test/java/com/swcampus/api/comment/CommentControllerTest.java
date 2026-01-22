@@ -5,8 +5,10 @@ import com.swcampus.api.comment.request.CreateCommentRequest;
 import com.swcampus.api.comment.request.UpdateCommentRequest;
 import com.swcampus.api.comment.response.CommentResponse;
 import com.swcampus.api.config.SecurityConfig;
+import com.swcampus.api.notification.SseEmitterService;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.comment.Comment;
+import com.swcampus.domain.comment.CommentNotificationResult;
 import com.swcampus.domain.comment.CommentService;
 import com.swcampus.domain.commentlike.CommentLikeService;
 import com.swcampus.domain.member.Member;
@@ -63,6 +65,9 @@ class CommentControllerTest {
     @MockitoBean
     private CommentResponseMapper commentResponseMapper;
 
+    @MockitoBean
+    private SseEmitterService sseEmitterService;
+
     private String validToken;
     private Member mockMember;
 
@@ -93,8 +98,12 @@ class CommentControllerTest {
             LocalDateTime.now(), LocalDateTime.now()
         );
 
-        given(commentService.createComment(anyLong(), anyLong(), any(), any(), any()))
-                .willReturn(mockComment);
+        CommentNotificationResult mockResult = new CommentNotificationResult(
+            mockComment, null, 2L, 1L
+        );
+
+        given(commentService.createCommentWithNotification(anyLong(), anyLong(), any(), any(), any()))
+                .willReturn(mockResult);
 
         given(memberService.getMember(anyLong()))
                 .willReturn(mockMember);
@@ -333,8 +342,12 @@ class CommentControllerTest {
             LocalDateTime.now(), LocalDateTime.now()
         );
 
-        given(commentService.createComment(anyLong(), anyLong(), any(), any(), any()))
-                .willReturn(mockReply);
+        CommentNotificationResult mockResult = new CommentNotificationResult(
+            mockReply, null, 2L, 1L
+        );
+
+        given(commentService.createCommentWithNotification(anyLong(), anyLong(), any(), any(), any()))
+                .willReturn(mockResult);
 
         given(memberService.getMember(anyLong()))
                 .willReturn(mockMember);

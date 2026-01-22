@@ -9,6 +9,8 @@ public interface CommentRepository {
 
     Optional<Comment> findById(Long id);
 
+    List<Comment> findAllByIds(List<Long> ids);
+
     List<Comment> findByPostId(Long postId);
 
     long countByPostId(Long postId);

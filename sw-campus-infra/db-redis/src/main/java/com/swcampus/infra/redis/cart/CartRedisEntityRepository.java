@@ -1,5 +1,6 @@
 package com.swcampus.infra.redis.cart;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +45,8 @@ public class CartRedisEntityRepository implements CartCacheRepository {
     @Override
     public void saveCartLectureIds(Long userId, List<Long> lectureIds) {
         try {
-            redisTemplate.opsForValue().set(getKey(userId), lectureIds, TTL_DAYS, TimeUnit.DAYS);
+            // ArrayList로 변환하여 저장 (불변 리스트는 Jackson 역직렬화 실패)
+            redisTemplate.opsForValue().set(getKey(userId), new ArrayList<>(lectureIds), TTL_DAYS, TimeUnit.DAYS);
         } catch (Exception e) {
             log.error("Failed to save cart lecture ids for userId: {}", userId, e);
         }
