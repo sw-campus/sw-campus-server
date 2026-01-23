@@ -23,6 +23,7 @@ import com.swcampus.api.security.JwtAuthenticationFilter;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.auth.TokenValidationResult;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
@@ -83,6 +84,8 @@ public class SecurityConfig {
                             response.getWriter().write("{\"message\":\"접근 권한이 없습니다\"}");
                         }))
                 .authorizeHttpRequests(auth -> auth
+                        // Async/Error dispatch는 원래 요청에서 이미 인증됨 (SSE 등)
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
                         // 인증 없이 접근 가능
                         .requestMatchers(
                                 "/api/v1/auth/**",
