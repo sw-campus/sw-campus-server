@@ -1,6 +1,8 @@
 package com.swcampus.api.notification;
 
 import com.swcampus.domain.notification.Notification;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -8,13 +10,48 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
 public class SseEmitterService {
 
     private static final Long TIMEOUT = 30 * 60 * 1000L; // 30분
+    private static final long HEARTBEAT_INTERVAL = 30L; // 30초마다 heartbeat
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private ScheduledExecutorService heartbeatScheduler;
+
+    @PostConstruct
+    public void init() {
+        heartbeatScheduler = Executors.newSingleThreadScheduledExecutor();
+        heartbeatScheduler.scheduleAtFixedRate(
+                this::sendHeartbeatToAll,
+                HEARTBEAT_INTERVAL,
+                HEARTBEAT_INTERVAL,
+                TimeUnit.SECONDS
+        );
+        log.info("SSE heartbeat scheduler started with {}s interval", HEARTBEAT_INTERVAL);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (heartbeatScheduler != null) {
+            heartbeatScheduler.shutdown();
+        }
+    }
+
+    private void sendHeartbeatToAll() {
+        emitters.forEach((userId, emitter) -> {
+            try {
+                emitter.send(SseEmitter.event().comment("heartbeat"));
+            } catch (IOException e) {
+                log.debug("Heartbeat failed for user: {}, removing emitter", userId);
+                emitters.remove(userId);
+            }
+        });
+    }
 
     public SseEmitter createEmitter(Long userId) {
         // 기존 연결이 있으면 종료
