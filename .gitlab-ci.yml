@@ -18,6 +18,23 @@ variables:
       - .gradle/wrapper
 
 
+# Compile Check (MR 시)
+compile:
+  stage: validate
+  image: eclipse-temurin:17-jdk
+  extends: .gradle-cache
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  before_script:
+    - apt-get update && apt-get install -y git
+    - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
+  script:
+    - chmod +x gradlew
+    - ./gradlew compileJava compileTestJava
+
+
 # DB Migration 검증
 validate-migration:
   stage: validate
