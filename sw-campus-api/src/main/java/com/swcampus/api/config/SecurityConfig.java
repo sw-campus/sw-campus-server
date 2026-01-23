@@ -86,6 +86,8 @@ public class SecurityConfig {
                         // 인증 없이 접근 가능
                         .requestMatchers(
                                 "/api/v1/auth/**",
+                                // error page
+                                "/error",
                                 // health check
                                 "/healthz", // ALB 헬스체크 전용 엔드포인트
                                 "/actuator/health",
