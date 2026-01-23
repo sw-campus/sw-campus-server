@@ -85,7 +85,7 @@ public class SecurityConfig {
                         }))
                 .authorizeHttpRequests(auth -> auth
                         // Async/Error dispatch는 원래 요청에서 이미 인증됨 (SSE 등)
-                        .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR, DispatcherType.INCLUDE).permitAll()
                         // 인증 없이 접근 가능
                         .requestMatchers(
                                 "/api/v1/auth/**",
