@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -42,6 +43,12 @@ class AuthServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private TokenProvider tokenProvider;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+
     @Spy
     private PasswordValidator passwordValidator = new PasswordValidator();
 
@@ -53,7 +60,7 @@ class AuthServiceTest {
     class Signup {
 
         @Test
-        @DisplayName("일반 회원가입에 성공한다")
+        @DisplayName("일반 회원가입에 성공하고 isFirstLogin이 true이다")
         void success() {
             // given
             SignupCommand command = SignupCommand.builder()
@@ -66,6 +73,7 @@ class AuthServiceTest {
                     .build();
 
             when(memberRepository.existsByEmail(command.getEmail())).thenReturn(false);
+            when(memberRepository.existsByNicknameIgnoreCase(command.getNickname())).thenReturn(false);
             when(emailVerificationRepository.findByEmailAndVerified(command.getEmail(), true))
                     .thenReturn(Optional.of(mock(EmailVerification.class)));
             when(passwordEncoder.encode(command.getPassword())).thenReturn("encodedPassword");
@@ -74,22 +82,29 @@ class AuthServiceTest {
                 ReflectionTestUtils.setField(m, "id", 1L);
                 return m;
             });
+            when(tokenProvider.createAccessToken(anyLong(), anyString(), any())).thenReturn("access-token");
+            when(tokenProvider.createRefreshToken(anyLong())).thenReturn("refresh-token");
+            when(tokenProvider.getRefreshTokenValidity()).thenReturn(86400L);
 
             // when
-            Member member = authService.signup(command);
+            LoginResult result = authService.signup(command);
 
             // then
-            assertThat(member.getId()).isEqualTo(1L);
-            assertThat(member.getEmail()).isEqualTo("user@example.com");
-            assertThat(member.getName()).isEqualTo("홍길동");
-            assertThat(member.getNickname()).isEqualTo("길동이");
-            assertThat(member.getRole()).isEqualTo(Role.USER);
+            assertThat(result.getMember().getId()).isEqualTo(1L);
+            assertThat(result.getMember().getEmail()).isEqualTo("user@example.com");
+            assertThat(result.getMember().getName()).isEqualTo("홍길동");
+            assertThat(result.getMember().getNickname()).isEqualTo("길동이");
+            assertThat(result.getMember().getRole()).isEqualTo(Role.USER);
+            assertThat(result.isFirstLogin()).isTrue();
+            assertThat(result.getAccessToken()).isEqualTo("access-token");
+            assertThat(result.getRefreshToken()).isEqualTo("refresh-token");
 
             verify(memberRepository).existsByEmail(command.getEmail());
             verify(emailVerificationRepository).findByEmailAndVerified(command.getEmail(), true);
             verify(passwordValidator).validate(command.getPassword());
             verify(passwordEncoder).encode(command.getPassword());
             verify(memberRepository).save(any(Member.class));
+            verify(refreshTokenRepository).save(any(RefreshToken.class));
         }
 
         @Test
@@ -166,6 +181,44 @@ class AuthServiceTest {
             verify(memberRepository).existsByEmail(command.getEmail());
             verify(emailVerificationRepository).findByEmailAndVerified(command.getEmail(), true);
             verify(memberRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("로그인")
+    class Login {
+
+        @Test
+        @DisplayName("기존 회원 로그인 시 isFirstLogin이 false이다")
+        void loginReturnsIsFirstLoginFalse() {
+            // given
+            String email = "user@example.com";
+            String password = "Password1!";
+
+            Member member = mock(Member.class);
+            when(member.getId()).thenReturn(1L);
+            when(member.getEmail()).thenReturn(email);
+            when(member.getPassword()).thenReturn("encodedPassword");
+            when(member.getRole()).thenReturn(Role.USER);
+
+            when(memberRepository.findByEmail(email)).thenReturn(Optional.of(member));
+            when(passwordEncoder.matches(password, "encodedPassword")).thenReturn(true);
+            when(tokenProvider.createAccessToken(anyLong(), anyString(), any())).thenReturn("access-token");
+            when(tokenProvider.createRefreshToken(anyLong())).thenReturn("refresh-token");
+            when(tokenProvider.getRefreshTokenValidity()).thenReturn(86400L);
+
+            // when
+            LoginResult result = authService.login(email, password);
+
+            // then
+            assertThat(result.getMember().getId()).isEqualTo(1L);
+            assertThat(result.isFirstLogin()).isFalse();
+            assertThat(result.getAccessToken()).isEqualTo("access-token");
+            assertThat(result.getRefreshToken()).isEqualTo("refresh-token");
+
+            verify(memberRepository).findByEmail(email);
+            verify(refreshTokenRepository).deleteByMemberId(1L);
+            verify(refreshTokenRepository).save(any(RefreshToken.class));
         }
     }
 }
