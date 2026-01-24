@@ -74,7 +74,7 @@ class OAuthControllerTest {
             when(member.getNickname()).thenReturn("사용자_a1b2c3d4");
             when(member.getRole()).thenReturn(Role.USER);
 
-            OAuthLoginResult result = new OAuthLoginResult("access-token", "refresh-token", member);
+            OAuthLoginResult result = new OAuthLoginResult("access-token", "refresh-token", member, false);
 
             when(oAuthService.loginOrRegister(eq(OAuthProvider.GOOGLE), eq("google-auth-code"))).thenReturn(result);
             when(tokenProvider.getAccessTokenValidity()).thenReturn(3600L);
@@ -109,7 +109,7 @@ class OAuthControllerTest {
             when(member.getNickname()).thenReturn("사용자_b2c3d4e5");
             when(member.getRole()).thenReturn(Role.USER);
 
-            OAuthLoginResult result = new OAuthLoginResult("access-token", "refresh-token", member);
+            OAuthLoginResult result = new OAuthLoginResult("access-token", "refresh-token", member, false);
 
             when(oAuthService.loginOrRegister(eq(OAuthProvider.GITHUB), eq("github-auth-code"))).thenReturn(result);
             when(tokenProvider.getAccessTokenValidity()).thenReturn(3600L);

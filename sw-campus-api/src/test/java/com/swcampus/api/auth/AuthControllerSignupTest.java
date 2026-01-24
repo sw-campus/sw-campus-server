@@ -9,6 +9,7 @@ import com.swcampus.domain.auth.EmailService;
 import com.swcampus.domain.auth.exception.DuplicateEmailException;
 import com.swcampus.domain.auth.exception.EmailNotVerifiedException;
 import com.swcampus.domain.auth.exception.InvalidPasswordException;
+import com.swcampus.domain.auth.LoginResult;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.organization.OrganizationService;
@@ -97,7 +98,8 @@ class AuthControllerSignupTest {
                     null,
                     null
             );
-            when(authService.signup(any())).thenReturn(member);
+            LoginResult loginResult = new LoginResult("access-token", "refresh-token", member, null, true);
+            when(authService.signup(any())).thenReturn(loginResult);
             
             ResponseCookie deleteCookie = ResponseCookie.from("verifiedEmail", "")
                     .httpOnly(true)
