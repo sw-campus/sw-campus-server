@@ -10,4 +10,6 @@ import lombok.Getter;
 public class OrganizationSignupResult {
     private final Member member;
     private final Organization organization;
+    private final String accessToken;
+    private final String refreshToken;
 }

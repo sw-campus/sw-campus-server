@@ -162,7 +162,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    @Operation(summary = "일반 회원가입", description = "이메일 인증 완료 후 일반 사용자로 회원가입합니다.")
+    @Operation(summary = "일반 회원가입", description = "이메일 인증 완료 후 일반 사용자로 회원가입합니다. 가입 완료 시 자동 로그인됩니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "회원가입 성공"),
         @ApiResponse(responseCode = "400", description = "잘못된 요청",
@@ -172,12 +172,22 @@ public class AuthController {
     })
     public ResponseEntity<SignupResponse> signup(
             @Valid @RequestBody SignupRequest request) {
-        Member member = authService.signup(request.toCommand());
+        LoginResult result = authService.signup(request.toCommand());
+
+        // 인증 이메일 쿠키 삭제
         ResponseCookie deleteEmailCookie = cookieUtil.deleteVerifiedEmailCookie();
-        
+
+        // 자동 로그인: 토큰 쿠키 설정
+        ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(
+                result.getAccessToken(), tokenProvider.getAccessTokenValidity());
+        ResponseCookie refreshTokenCookie = cookieUtil.createRefreshTokenCookie(
+                result.getRefreshToken(), tokenProvider.getRefreshTokenValidity());
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .header(HttpHeaders.SET_COOKIE, deleteEmailCookie.toString())
-                .body(SignupResponse.from(member));
+                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                .body(SignupResponse.from(result));
     }
 
     @PostMapping(value = "/signup/organization", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -231,7 +241,16 @@ public class AuthController {
                 .build();
 
         OrganizationSignupResult result = authService.signupOrganization(request.toCommand());
+
+        // 자동 로그인: 토큰 쿠키 설정
+        ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(
+                result.getAccessToken(), tokenProvider.getAccessTokenValidity());
+        ResponseCookie refreshTokenCookie = cookieUtil.createRefreshTokenCookie(
+                result.getRefreshToken(), tokenProvider.getRefreshTokenValidity());
+
         return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
                 .body(OrganizationSignupResponse.from(result));
     }
 

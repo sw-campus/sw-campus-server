@@ -1,5 +1,7 @@
 package com.swcampus.api.auth.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.swcampus.domain.auth.LoginResult;
 import com.swcampus.domain.member.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -25,13 +27,19 @@ public class SignupResponse {
     @Schema(description = "권한", example = "USER")
     private String role;
 
-    public static SignupResponse from(Member member) {
+    @JsonProperty("isFirstLogin")
+    @Schema(description = "최초 로그인 여부", example = "true")
+    private boolean isFirstLogin;
+
+    public static SignupResponse from(LoginResult result) {
+        Member member = result.getMember();
         return new SignupResponse(
                 member.getId(),
                 member.getEmail(),
                 member.getName(),
                 member.getNickname(),
-                member.getRole().name()
+                member.getRole().name(),
+                result.isFirstLogin()
         );
     }
 }

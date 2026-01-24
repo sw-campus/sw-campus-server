@@ -5,6 +5,7 @@ import com.swcampus.domain.auth.RefreshTokenRepository;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
+import com.swcampus.domain.member.exception.MemberNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,11 +46,12 @@ public class OAuthService {
                 .findByProviderAndProviderId(userInfo.getProvider(), userInfo.getProviderId());
 
         Member member;
+        boolean isFirstLogin = false;
 
         if (existingSocialAccount.isPresent()) {
             // 기존 소셜 계정이 있으면 해당 회원으로 로그인
             member = memberRepository.findById(existingSocialAccount.get().getMemberId())
-                    .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다"));
+                    .orElseThrow(() -> new MemberNotFoundException(existingSocialAccount.get().getMemberId()));
         } else {
             // 이메일로 기존 회원 조회
             Optional<Member> existingMember = memberRepository.findByEmail(userInfo.getEmail());
@@ -61,11 +63,12 @@ public class OAuthService {
             } else {
                 // 신규 회원 생성 (랜덤 닉네임 자동 생성)
                 member = createOAuthMember(userInfo);
+                isFirstLogin = true;
             }
         }
 
         // 토큰 발급
-        return issueTokens(member);
+        return issueTokens(member, isFirstLogin);
     }
 
     /**
@@ -101,7 +104,7 @@ public class OAuthService {
     /**
      * 토큰 발급
      */
-    private OAuthLoginResult issueTokens(Member member) {
+    private OAuthLoginResult issueTokens(Member member, boolean isFirstLogin) {
         // 기존 RT 삭제
         refreshTokenRepository.deleteByMemberId(member.getId());
 
@@ -118,6 +121,6 @@ public class OAuthService {
         );
         refreshTokenRepository.save(refreshTokenEntity);
 
-        return new OAuthLoginResult(accessToken, refreshToken, member);
+        return new OAuthLoginResult(accessToken, refreshToken, member, isFirstLogin);
     }
 }
