@@ -84,6 +84,7 @@ class OAuthServiceTest {
             // then
             assertThat(result.getAccessToken()).isEqualTo("access-token");
             assertThat(result.getRefreshToken()).isEqualTo("refresh-token");
+            assertThat(result.isFirstLogin()).isFalse();
             verify(socialAccountRepository, never()).save(any());
         }
 
@@ -125,6 +126,7 @@ class OAuthServiceTest {
 
             // then
             assertThat(result.getMember().getNickname()).isNotNull();
+            assertThat(result.isFirstLogin()).isTrue();
             verify(memberRepository).save(any(Member.class));
             verify(socialAccountRepository).save(any(SocialAccount.class));
         }
@@ -164,6 +166,7 @@ class OAuthServiceTest {
             OAuthLoginResult result = oAuthService.loginOrRegister(provider, code);
 
             // then
+            assertThat(result.isFirstLogin()).isFalse();
             verify(socialAccountRepository).save(any(SocialAccount.class));
             verify(memberRepository, never()).save(any(Member.class));
         }
