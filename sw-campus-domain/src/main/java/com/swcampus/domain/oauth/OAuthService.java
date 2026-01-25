@@ -5,6 +5,7 @@ import com.swcampus.domain.auth.RefreshTokenRepository;
 import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberRepository;
+import com.swcampus.domain.member.NicknameGenerator;
 import com.swcampus.domain.member.exception.MemberNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class OAuthService {
+
+    private static final int MAX_NICKNAME_RETRY_COUNT = 3;
 
     private final OAuthClientFactory oAuthClientFactory;
     private final SocialAccountRepository socialAccountRepository;
@@ -84,10 +87,11 @@ public class OAuthService {
     }
 
     /**
-     * OAuth 신규 회원 생성 (랜덤 닉네임 자동 생성)
+     * OAuth 신규 회원 생성 (3단어 조합 닉네임 자동 생성)
      */
     private Member createOAuthMember(OAuthUserInfo userInfo) {
-        Member member = Member.createOAuthUser(userInfo.getEmail(), userInfo.getName());
+        String nickname = generateUniqueNickname();
+        Member member = Member.createOAuthUser(userInfo.getEmail(), userInfo.getName(), nickname);
         Member savedMember = memberRepository.save(member);
 
         // 소셜 계정 연동
@@ -99,6 +103,19 @@ public class OAuthService {
         socialAccountRepository.save(socialAccount);
 
         return savedMember;
+    }
+
+    /**
+     * 고유한 닉네임 생성 (중복 시 재시도)
+     */
+    private String generateUniqueNickname() {
+        for (int attempt = 0; attempt < MAX_NICKNAME_RETRY_COUNT; attempt++) {
+            String nickname = NicknameGenerator.generate();
+            if (!memberRepository.existsByNicknameIgnoreCase(nickname)) {
+                return nickname;
+            }
+        }
+        return NicknameGenerator.generateFallback();
     }
 
     /**

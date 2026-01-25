@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -77,13 +76,17 @@ public class Member {
     }
 
     /**
-     * OAuth 사용자 생성 - 랜덤 닉네임 자동 생성
+     * OAuth 사용자 생성
+     *
+     * @param email    이메일
+     * @param name     이름 (null인 경우 닉네임 사용)
+     * @param nickname 닉네임 (외부에서 생성하여 전달)
      */
-    public static Member createOAuthUser(String email, String name) {
+    public static Member createOAuthUser(String email, String name, String nickname) {
         Member member = new Member();
         member.email = email;
-        member.nickname = generateRandomNickname();  // 랜덤 닉네임 생성
-        member.name = (name != null && !name.isBlank()) ? name : member.nickname;  // name이 null이면 닉네임 사용
+        member.nickname = nickname;
+        member.name = (name != null && !name.isBlank()) ? name : nickname;
         member.password = null;  // OAuth 사용자는 비밀번호 없음
         member.phone = null;     // nullable
         member.location = null;  // nullable
@@ -91,14 +94,6 @@ public class Member {
         member.createdAt = LocalDateTime.now();
         member.updatedAt = LocalDateTime.now();
         return member;
-    }
-
-    /**
-     * 랜덤 닉네임 생성 (예: "사용자_a1b2c3d4")
-     */
-    private static String generateRandomNickname() {
-        String randomSuffix = UUID.randomUUID().toString().substring(0, 8);
-        return "사용자_" + randomSuffix;
     }
 
     public void updateProfile(String nickname, String phone, String location) {
