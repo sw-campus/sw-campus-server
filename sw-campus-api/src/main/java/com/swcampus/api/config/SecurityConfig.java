@@ -61,6 +61,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
+                            // SSE 요청인 경우 JSON 응답 대신 연결만 종료
+                            String accept = request.getHeader("Accept");
+                            if (accept != null && accept.contains("text/event-stream")) {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                return;
+                            }
+
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json;charset=UTF-8");
 
@@ -79,6 +86,13 @@ public class SecurityConfig {
                             response.getWriter().write(responseBody);
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            // SSE 요청인 경우 JSON 응답 대신 연결만 종료
+                            String accept = request.getHeader("Accept");
+                            if (accept != null && accept.contains("text/event-stream")) {
+                                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                                return;
+                            }
+
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json;charset=UTF-8");
                             response.getWriter().write("{\"message\":\"접근 권한이 없습니다\"}");

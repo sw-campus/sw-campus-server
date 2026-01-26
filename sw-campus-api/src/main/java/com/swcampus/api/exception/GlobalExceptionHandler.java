@@ -3,26 +3,44 @@ package com.swcampus.api.exception;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import com.swcampus.shared.error.BusinessException;
 import com.swcampus.shared.error.ErrorCode;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+	private boolean isSseRequest() {
+		ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+		if (attrs == null) {
+			return false;
+		}
+		HttpServletRequest request = attrs.getRequest();
+		String accept = request.getHeader("Accept");
+		return accept != null && accept.contains(MediaType.TEXT_EVENT_STREAM_VALUE);
+	}
+
 	// === 비즈니스 예외 (단일 핸들러) ===
 
 	@ExceptionHandler(BusinessException.class)
 	public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
+		if (isSseRequest()) {
+			log.debug("SSE 요청에서 비즈니스 예외 발생: {}", e.getMessage());
+			return null;
+		}
 		log.warn("{}: {}", e.getClass().getSimpleName(), e.getMessage());
 		ErrorCode errorCode = e.getErrorCode();
 		return ResponseEntity
@@ -111,6 +129,10 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
 	public ResponseEntity<ErrorResponse> handleAccessDeniedException(
 			org.springframework.security.access.AccessDeniedException e) {
+		if (isSseRequest()) {
+			log.debug("SSE 요청에서 접근 거부: {}", e.getMessage());
+			return null;
+		}
 		log.warn("접근 권한 없음: {}", e.getMessage());
 		return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
@@ -120,6 +142,10 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(org.springframework.security.authorization.AuthorizationDeniedException.class)
 	public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
 			org.springframework.security.authorization.AuthorizationDeniedException e) {
+		if (isSseRequest()) {
+			log.debug("SSE 요청에서 인가 거부: {}", e.getMessage());
+			return null;
+		}
 		log.warn("인가 거부: {}", e.getMessage());
 		return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
@@ -130,6 +156,10 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleException(Exception e) {
+		if (isSseRequest()) {
+			log.debug("SSE 요청에서 예외 발생: {}", e.getMessage());
+			return null;
+		}
 		log.error("예기치 않은 오류 발생: {}", e.getMessage(), e);
 		return ResponseEntity
 				.status(HttpStatus.INTERNAL_SERVER_ERROR)
