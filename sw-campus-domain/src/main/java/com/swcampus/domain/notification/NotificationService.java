@@ -100,4 +100,16 @@ public class NotificationService {
     public void markAllAsRead(Long userId) {
         notificationRepository.markAllAsReadByUserId(userId);
     }
+
+    @Transactional
+    public void deleteNotification(Long notificationId, Long userId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new NotificationNotFoundException(notificationId));
+
+        if (!notification.getUserId().equals(userId)) {
+            throw new NotificationAccessDeniedException("본인의 알림만 삭제할 수 있습니다.");
+        }
+
+        notificationRepository.deleteById(notificationId);
+    }
 }
