@@ -48,4 +48,10 @@ public class PostLikeEntityRepository implements PostLikeRepository {
     public List<Long> findUserIdsByPostId(Long postId) {
         return jpaRepository.findUserIdsByPostId(postId);
     }
+
+    @Override
+    @Transactional
+    public void deleteByUserId(Long userId) {
+        jpaRepository.deleteByUserId(userId);
+    }
 }

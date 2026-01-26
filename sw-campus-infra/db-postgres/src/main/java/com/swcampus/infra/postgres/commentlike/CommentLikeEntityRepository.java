@@ -42,4 +42,10 @@ public class CommentLikeEntityRepository implements CommentLikeRepository {
     public Set<Long> findCommentIdsByUserId(Long userId) {
         return new HashSet<>(jpaRepository.findCommentIdsByUserId(userId));
     }
+
+    @Override
+    @Transactional
+    public void deleteByUserId(Long userId) {
+        jpaRepository.deleteByUserId(userId);
+    }
 }

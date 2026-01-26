@@ -104,9 +104,12 @@ public class PostService {
 
     /**
      * 작성자 닉네임을 조회합니다.
-     * 탈퇴한 회원의 경우 "알 수 없음"을 반환합니다.
+     * 탈퇴한 회원(userId가 NULL)의 경우 "알 수 없음"을 반환합니다.
      */
     private String getAuthorNickname(Long userId) {
+        if (userId == null) {
+            return UNKNOWN_AUTHOR;
+        }
         try {
             return memberService.getMember(userId).getNickname();
         } catch (MemberNotFoundException e) {

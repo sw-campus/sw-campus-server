@@ -58,4 +58,9 @@ public class NotificationEntityRepository implements NotificationRepository {
     public void markAllAsReadByUserId(Long userId) {
         jpaRepository.markAllAsReadByUserId(userId);
     }
+
+    @Override
+    public void deleteById(Long id) {
+        jpaRepository.deleteById(id);
+    }
 }

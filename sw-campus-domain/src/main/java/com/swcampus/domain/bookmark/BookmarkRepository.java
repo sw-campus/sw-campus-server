@@ -14,4 +14,6 @@ public interface BookmarkRepository {
     List<Bookmark> findByUserId(Long userId);
 
     Set<Long> findPostIdsByUserId(Long userId);
+
+    void deleteByUserId(Long userId);
 }

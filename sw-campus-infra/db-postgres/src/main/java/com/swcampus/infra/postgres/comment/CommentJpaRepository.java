@@ -31,4 +31,8 @@ public interface CommentJpaRepository extends JpaRepository<CommentEntity, Long>
     @org.springframework.data.jpa.repository.Modifying
     @Query("UPDATE CommentEntity c SET c.likeCount = c.likeCount - 1 WHERE c.id = :commentId AND c.likeCount > 0")
     void decrementLikeCount(@Param("commentId") Long commentId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE CommentEntity c SET c.userId = NULL WHERE c.userId = :userId")
+    void setUserIdNullByUserId(@Param("userId") Long userId);
 }

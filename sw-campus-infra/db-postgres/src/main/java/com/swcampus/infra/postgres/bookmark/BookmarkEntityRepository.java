@@ -46,4 +46,10 @@ public class BookmarkEntityRepository implements BookmarkRepository {
     public Set<Long> findPostIdsByUserId(Long userId) {
         return new HashSet<>(jpaRepository.findPostIdsByUserId(userId));
     }
+
+    @Override
+    @Transactional
+    public void deleteByUserId(Long userId) {
+        jpaRepository.deleteByUserId(userId);
+    }
 }

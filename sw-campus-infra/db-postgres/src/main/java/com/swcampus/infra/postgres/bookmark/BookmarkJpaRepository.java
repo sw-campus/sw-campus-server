@@ -17,4 +17,6 @@ public interface BookmarkJpaRepository extends JpaRepository<BookmarkEntity, Lon
 
     @Query("SELECT b.postId FROM BookmarkEntity b WHERE b.userId = :userId")
     List<Long> findPostIdsByUserId(@Param("userId") Long userId);
+
+    void deleteByUserId(Long userId);
 }
