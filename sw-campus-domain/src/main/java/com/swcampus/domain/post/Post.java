@@ -100,7 +100,14 @@ public class Post {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * 작성자 여부 확인
+     * 탈퇴한 회원의 게시글(this.userId가 NULL)은 누구도 작성자가 아님
+     */
     public boolean isAuthor(Long userId) {
+        if (this.userId == null) {
+            return false;
+        }
         return this.userId.equals(userId);
     }
 

@@ -20,4 +20,9 @@ public interface CommentRepository {
     void incrementLikeCount(Long commentId);
 
     void decrementLikeCount(Long commentId);
+
+    /**
+     * 특정 유저의 댓글 작성자를 NULL로 설정 (회원 탈퇴 시 사용)
+     */
+    void setUserIdNullByUserId(Long userId);
 }

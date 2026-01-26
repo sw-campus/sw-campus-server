@@ -13,4 +13,6 @@ public interface CommentLikeRepository {
     long countByCommentId(Long commentId);
 
     Set<Long> findCommentIdsByUserId(Long userId);
+
+    void deleteByUserId(Long userId);
 }

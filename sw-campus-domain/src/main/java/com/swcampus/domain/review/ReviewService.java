@@ -94,8 +94,8 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(ReviewNotFoundException::new);
 
-        // 2. 작성자 확인
-        if (!review.getMemberId().equals(memberId)) {
+        // 2. 작성자 확인 (탈퇴한 회원의 후기는 수정 불가)
+        if (review.getMemberId() == null || !review.getMemberId().equals(memberId)) {
             throw new ReviewNotOwnerException();
         }
 
@@ -143,16 +143,22 @@ public class ReviewService {
             throw new ReviewNotFoundException();
         }
 
-        String nickname = memberRepository.findById(review.getMemberId())
-                .map(Member::getNickname)
-                .orElse(null);
+        String nickname = review.getMemberId() == null
+                ? null
+                : memberRepository.findById(review.getMemberId())
+                        .map(Member::getNickname)
+                        .orElse(null);
         return ReviewWithNickname.of(review, nickname);
     }
 
     /**
      * 회원 닉네임 조회
+     * 탈퇴한 회원(memberId가 NULL)의 경우 null을 반환합니다.
      */
     public String getNickname(Long memberId) {
+        if (memberId == null) {
+            return null;
+        }
         return memberRepository.findById(memberId)
                 .map(Member::getNickname)
                 .orElse(null);
@@ -234,19 +240,22 @@ public class ReviewService {
 
         List<Long> memberIds = reviews.stream()
                 .map(Review::getMemberId)
+                .filter(id -> id != null)
                 .distinct()
                 .toList();
 
-        Map<Long, String> nicknameMap = memberRepository.findAllByIds(memberIds).stream()
-                .collect(Collectors.toMap(
-                        Member::getId,
-                        member -> member.getNickname() != null ? member.getNickname() : "",
-                        (existing, replacement) -> existing
-                ));
+        Map<Long, String> nicknameMap = memberIds.isEmpty()
+                ? Map.of()
+                : memberRepository.findAllByIds(memberIds).stream()
+                        .collect(Collectors.toMap(
+                                Member::getId,
+                                member -> member.getNickname() != null ? member.getNickname() : "",
+                                (existing, replacement) -> existing
+                        ));
 
         return reviewPage.map(review -> ReviewWithNickname.of(
                 review,
-                nicknameMap.get(review.getMemberId())
+                review.getMemberId() == null ? null : nicknameMap.get(review.getMemberId())
         ));
     }
 
@@ -269,6 +278,7 @@ public class ReviewService {
 
     /**
      * 리뷰 목록에 닉네임을 배치로 조회하여 매핑
+     * 탈퇴한 회원(memberId가 NULL)의 경우 닉네임이 null로 설정됩니다.
      */
     private List<ReviewWithNickname> toReviewsWithNicknames(List<Review> reviews) {
         if (reviews.isEmpty()) {
@@ -277,20 +287,23 @@ public class ReviewService {
 
         List<Long> memberIds = reviews.stream()
                 .map(Review::getMemberId)
+                .filter(id -> id != null)
                 .distinct()
                 .toList();
 
-        Map<Long, String> nicknameMap = memberRepository.findAllByIds(memberIds).stream()
-                .collect(Collectors.toMap(
-                        Member::getId,
-                        member -> member.getNickname() != null ? member.getNickname() : "",
-                        (existing, replacement) -> existing
-                ));
+        Map<Long, String> nicknameMap = memberIds.isEmpty()
+                ? Map.of()
+                : memberRepository.findAllByIds(memberIds).stream()
+                        .collect(Collectors.toMap(
+                                Member::getId,
+                                member -> member.getNickname() != null ? member.getNickname() : "",
+                                (existing, replacement) -> existing
+                        ));
 
         return reviews.stream()
                 .map(review -> ReviewWithNickname.of(
                         review,
-                        nicknameMap.get(review.getMemberId())
+                        review.getMemberId() == null ? null : nicknameMap.get(review.getMemberId())
                 ))
                 .toList();
     }

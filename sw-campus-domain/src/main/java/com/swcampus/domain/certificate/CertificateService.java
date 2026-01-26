@@ -122,8 +122,8 @@ public class CertificateService {
         Certificate certificate = certificateRepository.findById(certificateId)
                 .orElseThrow(() -> new CertificateNotFoundException(certificateId));
 
-        // 2. 소유권 검증
-        if (!certificate.getMemberId().equals(memberId)) {
+        // 2. 소유권 검증 (탈퇴한 회원의 수료증은 수정 불가)
+        if (certificate.getMemberId() == null || !certificate.getMemberId().equals(memberId)) {
             throw new AccessDeniedException("수료증 수정 권한이 없습니다.");
         }
 

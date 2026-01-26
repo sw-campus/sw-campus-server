@@ -60,6 +60,9 @@ class ReviewControllerTest {
     @MockitoBean
     private ReviewService reviewService;
 
+    @MockitoBean
+    private ReviewAccessService reviewAccessService;
+
     private void setAuthentication(Long memberId) {
         MemberPrincipal principal = new MemberPrincipal(memberId, "user@example.com", Role.USER);
         UsernamePasswordAuthenticationToken authWithDetails =

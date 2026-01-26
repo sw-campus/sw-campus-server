@@ -5,9 +5,16 @@ package com.swcampus.domain.review;
  */
 public record ReviewWithNickname(
     Review review,
+    Long memberId,
     String nickname
 ) {
+    private static final String UNKNOWN_AUTHOR = "알 수 없음";
+
     public static ReviewWithNickname of(Review review, String nickname) {
-        return new ReviewWithNickname(review, nickname != null ? nickname : "");
+        Long memberId = review.getMemberId();
+        String displayNickname = (memberId == null || nickname == null || nickname.isBlank())
+                ? UNKNOWN_AUTHOR
+                : nickname;
+        return new ReviewWithNickname(review, memberId, displayNickname);
     }
 }

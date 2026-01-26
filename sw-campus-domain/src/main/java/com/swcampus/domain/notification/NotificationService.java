@@ -43,14 +43,17 @@ public class NotificationService {
         List<Notification> notifications = notificationRepository.findByUserId(userId);
         long unreadCount = notificationRepository.countByUserIdAndReadFalse(userId);
 
-        // sender ID 목록 추출 및 Member 조회
+        // sender ID 목록 추출 및 Member 조회 (탈퇴한 회원의 null ID 제외)
         List<Long> senderIds = notifications.stream()
                 .map(Notification::getSenderId)
+                .filter(id -> id != null)
                 .distinct()
                 .toList();
 
-        Map<Long, Member> senderMap = memberRepository.findAllByIds(senderIds).stream()
-                .collect(Collectors.toMap(Member::getId, Function.identity()));
+        Map<Long, Member> senderMap = senderIds.isEmpty()
+                ? Map.of()
+                : memberRepository.findAllByIds(senderIds).stream()
+                        .collect(Collectors.toMap(Member::getId, Function.identity()));
 
         // comment ID 목록 추출 및 Comment 조회 (postId를 가져오기 위해)
         List<Long> commentIds = notifications.stream()

@@ -40,6 +40,7 @@ public class CommentService {
      * - 대댓글인 경우: 부모 댓글 작성자에게 REPLY 알림
      * - 일반 댓글인 경우: 게시글 작성자에게 COMMENT 알림
      * - 본인에게는 알림을 보내지 않음
+     * - 탈퇴한 회원(recipientId가 NULL)에게는 알림을 보내지 않음
      *
      * @return CommentNotificationResult 댓글과 알림 정보
      */
@@ -66,13 +67,16 @@ public class CommentService {
             type = NotificationType.COMMENT;
         }
 
-        // 3. 알림 생성 (본인에게는 알림을 보내지 않음 - NotificationService 내부에서 처리)
-        Notification notification = notificationService.createNotification(
-                recipientId,
-                userId,
-                comment.getId(),
-                type
-        );
+        // 3. 알림 생성 (탈퇴한 회원이나 본인에게는 알림을 보내지 않음)
+        Notification notification = null;
+        if (recipientId != null) {
+            notification = notificationService.createNotification(
+                    recipientId,
+                    userId,
+                    comment.getId(),
+                    type
+            );
+        }
 
         return new CommentNotificationResult(comment, notification, recipientId, postId);
     }

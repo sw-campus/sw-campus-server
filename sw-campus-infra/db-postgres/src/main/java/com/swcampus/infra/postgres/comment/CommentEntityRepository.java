@@ -85,4 +85,9 @@ public class CommentEntityRepository implements CommentRepository {
     public void decrementLikeCount(Long commentId) {
         jpaRepository.decrementLikeCount(commentId);
     }
+
+    @Override
+    public void setUserIdNullByUserId(Long userId) {
+        jpaRepository.setUserIdNullByUserId(userId);
+    }
 }

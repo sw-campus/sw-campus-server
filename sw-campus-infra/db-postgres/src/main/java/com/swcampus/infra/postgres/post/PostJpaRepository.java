@@ -288,4 +288,11 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             WHERE p.is_deleted = false
             """, nativeQuery = true)
     long countCommentedByUserIdNotDeleted(@Param("userId") Long userId);
+
+    /**
+     * 특정 유저의 게시글 작성자를 NULL로 설정 (회원 탈퇴 시 사용)
+     */
+    @Modifying
+    @Query("UPDATE PostEntity p SET p.userId = NULL WHERE p.userId = :userId")
+    void setUserIdNullByUserId(@Param("userId") Long userId);
 }

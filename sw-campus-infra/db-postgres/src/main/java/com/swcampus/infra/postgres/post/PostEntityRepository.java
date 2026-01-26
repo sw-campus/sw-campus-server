@@ -274,4 +274,9 @@ public class PostEntityRepository implements PostRepository {
     public long countCommentedByUserId(Long userId) {
         return jpaRepository.countCommentedByUserIdNotDeleted(userId);
     }
+
+    @Override
+    public void setUserIdNullByUserId(Long userId) {
+        jpaRepository.setUserIdNullByUserId(userId);
+    }
 }
