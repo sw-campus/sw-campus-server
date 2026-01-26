@@ -34,7 +34,7 @@ public class AuthService {
     private final FileStorageService fileStorageService;
     private final TokenProvider tokenProvider;
 
-    public Member signup(SignupCommand command) {
+    public LoginResult signup(SignupCommand command) {
         // 1. 중복 이메일 검증
         if (memberRepository.existsByEmail(command.getEmail())) {
             throw new DuplicateEmailException(command.getEmail());
@@ -65,7 +65,23 @@ public class AuthService {
                 command.getLocation()
         );
 
-        return memberRepository.save(member);
+        Member savedMember = memberRepository.save(member);
+
+        // 7. 자동 로그인 (토큰 발급)
+        String accessToken = tokenProvider.createAccessToken(
+                savedMember.getId(), savedMember.getEmail(), savedMember.getRole());
+        String refreshToken = tokenProvider.createRefreshToken(savedMember.getId());
+
+        // 8. Refresh Token 저장
+        RefreshToken refreshTokenEntity = RefreshToken.create(
+                savedMember.getId(),
+                refreshToken,
+                tokenProvider.getRefreshTokenValidity()
+        );
+        refreshTokenRepository.save(refreshTokenEntity);
+
+        // 9. 최초 로그인으로 반환
+        return new LoginResult(accessToken, refreshToken, savedMember, null, true);
     }
 
     public OrganizationSignupResult signupOrganization(OrganizationSignupCommand command) {
@@ -113,6 +129,8 @@ public class AuthService {
         );
 
         Organization organization;
+        Member savedMember;
+        Organization savedOrganization;
 
         if (command.getOrganizationId() != null) {
             // 기존 기관 선택
@@ -130,16 +148,14 @@ public class AuthService {
 
             // Member에 orgId 연결
             member.setOrgId(organization.getId());
-            Member savedMember = memberRepository.save(member);
+            savedMember = memberRepository.save(member);
 
             // Organization에 새 회원 ID 연결
             organization.setUserId(savedMember.getId());
-            Organization savedOrganization = organizationRepository.save(organization);
-
-            return new OrganizationSignupResult(savedMember, savedOrganization);
+            savedOrganization = organizationRepository.save(organization);
         } else {
             // 신규 기관 생성
-            Member savedMember = memberRepository.save(member);
+            savedMember = memberRepository.save(member);
 
             // Organization 생성 (approvalStatus = PENDING)
             organization = Organization.create(
@@ -148,14 +164,27 @@ public class AuthService {
                     null,
                     certificateKey
             );
-            Organization savedOrganization = organizationRepository.save(organization);
+            savedOrganization = organizationRepository.save(organization);
 
             // Member에 orgId 연결
             savedMember.setOrgId(savedOrganization.getId());
             memberRepository.save(savedMember);
-
-            return new OrganizationSignupResult(savedMember, savedOrganization);
         }
+
+        // 9. 자동 로그인 (토큰 발급)
+        String accessToken = tokenProvider.createAccessToken(
+                savedMember.getId(), savedMember.getEmail(), savedMember.getRole());
+        String refreshToken = tokenProvider.createRefreshToken(savedMember.getId());
+
+        // 10. Refresh Token 저장
+        RefreshToken refreshTokenEntity = RefreshToken.create(
+                savedMember.getId(),
+                refreshToken,
+                tokenProvider.getRefreshTokenValidity()
+        );
+        refreshTokenRepository.save(refreshTokenEntity);
+
+        return new OrganizationSignupResult(savedMember, savedOrganization, accessToken, refreshToken);
     }
 
     public LoginResult login(String email, String password) {

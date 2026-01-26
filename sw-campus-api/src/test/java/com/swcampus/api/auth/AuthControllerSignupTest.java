@@ -9,6 +9,7 @@ import com.swcampus.domain.auth.EmailService;
 import com.swcampus.domain.auth.exception.DuplicateEmailException;
 import com.swcampus.domain.auth.exception.EmailNotVerifiedException;
 import com.swcampus.domain.auth.exception.InvalidPasswordException;
+import com.swcampus.domain.auth.LoginResult;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.Role;
 import com.swcampus.domain.organization.OrganizationService;
@@ -27,6 +28,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -97,8 +99,16 @@ class AuthControllerSignupTest {
                     null,
                     null
             );
-            when(authService.signup(any())).thenReturn(member);
-            
+            LoginResult loginResult = new LoginResult("access-token", "refresh-token", member, null, true);
+            when(authService.signup(any())).thenReturn(loginResult);
+
+            when(tokenProvider.getAccessTokenValidity()).thenReturn(3600L);
+            when(tokenProvider.getRefreshTokenValidity()).thenReturn(86400L);
+            when(cookieUtil.createAccessTokenCookie(any(), anyLong()))
+                    .thenReturn(ResponseCookie.from("accessToken", "access-token").build());
+            when(cookieUtil.createRefreshTokenCookie(any(), anyLong()))
+                    .thenReturn(ResponseCookie.from("refreshToken", "refresh-token").build());
+
             ResponseCookie deleteCookie = ResponseCookie.from("verifiedEmail", "")
                     .httpOnly(true)
                     .secure(true)

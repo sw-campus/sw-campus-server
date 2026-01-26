@@ -1,5 +1,6 @@
 package com.swcampus.api.auth.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.oauth.OAuthLoginResult;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,6 +27,10 @@ public class OAuthLoginResponse {
     @Schema(description = "권한", example = "USER")
     private String role;
 
+    @JsonProperty("isFirstLogin")
+    @Schema(description = "최초 로그인 여부", example = "false")
+    private boolean isFirstLogin;
+
     public static OAuthLoginResponse from(OAuthLoginResult result) {
         Member member = result.getMember();
         return OAuthLoginResponse.builder()
@@ -34,6 +39,7 @@ public class OAuthLoginResponse {
                 .name(member.getName())
                 .nickname(member.getNickname())
                 .role(member.getRole().name())
+                .isFirstLogin(result.isFirstLogin())
                 .build();
     }
 }

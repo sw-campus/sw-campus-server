@@ -10,4 +10,5 @@ public class OAuthLoginResult {
     private final String accessToken;
     private final String refreshToken;
     private final Member member;
+    private final boolean isFirstLogin;
 }

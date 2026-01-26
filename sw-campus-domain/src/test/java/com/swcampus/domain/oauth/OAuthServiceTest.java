@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -84,12 +85,103 @@ class OAuthServiceTest {
             // then
             assertThat(result.getAccessToken()).isEqualTo("access-token");
             assertThat(result.getRefreshToken()).isEqualTo("refresh-token");
+            assertThat(result.isFirstLogin()).isFalse();
             verify(socialAccountRepository, never()).save(any());
         }
 
         @Test
-        @DisplayName("신규 소셜 사용자를 등록한다 - 랜덤 닉네임 자동 생성")
+        @DisplayName("신규 소셜 사용자를 등록한다 - 3단어 조합 닉네임 자동 생성")
         void registerNewSocialUser() {
+            // given
+            String code = "auth-code";
+            OAuthProvider provider = OAuthProvider.GOOGLE;
+
+            OAuthUserInfo userInfo = OAuthUserInfo.builder()
+                    .provider(OAuthProvider.GOOGLE)
+                    .providerId("google-123")
+                    .email("newuser@gmail.com")
+                    .name("신규유저")
+                    .build();
+
+            OAuthClient mockClient = mock(OAuthClient.class);
+            when(oAuthClientFactory.getClient(provider)).thenReturn(mockClient);
+            when(mockClient.getUserInfo(code)).thenReturn(userInfo);
+
+            Member savedMember = mock(Member.class);
+            when(savedMember.getId()).thenReturn(1L);
+            when(savedMember.getEmail()).thenReturn("newuser@gmail.com");
+            when(savedMember.getRole()).thenReturn(Role.USER);
+            when(savedMember.getNickname()).thenReturn("행복한고양이구름");
+
+            when(socialAccountRepository.findByProviderAndProviderId(OAuthProvider.GOOGLE, "google-123"))
+                    .thenReturn(Optional.empty());
+            when(memberRepository.findByEmail("newuser@gmail.com"))
+                    .thenReturn(Optional.empty());
+            when(memberRepository.existsByNicknameIgnoreCase(anyString())).thenReturn(false);
+            when(memberRepository.save(any(Member.class))).thenReturn(savedMember);
+            when(tokenProvider.createAccessToken(any(), any(), any())).thenReturn("access-token");
+            when(tokenProvider.createRefreshToken(any())).thenReturn("refresh-token");
+            when(tokenProvider.getRefreshTokenValidity()).thenReturn(86400L);
+
+            // when
+            OAuthLoginResult result = oAuthService.loginOrRegister(provider, code);
+
+            // then
+            assertThat(result.getMember().getNickname()).isNotNull();
+            assertThat(result.isFirstLogin()).isTrue();
+            verify(memberRepository).save(any(Member.class));
+            verify(socialAccountRepository).save(any(SocialAccount.class));
+            verify(memberRepository).existsByNicknameIgnoreCase(anyString());
+        }
+
+        @Test
+        @DisplayName("닉네임 중복 시 재시도하여 고유한 닉네임을 생성한다")
+        void retriesWhenNicknameDuplicate() {
+            // given
+            String code = "auth-code";
+            OAuthProvider provider = OAuthProvider.GOOGLE;
+
+            OAuthUserInfo userInfo = OAuthUserInfo.builder()
+                    .provider(OAuthProvider.GOOGLE)
+                    .providerId("google-123")
+                    .email("newuser@gmail.com")
+                    .name("신규유저")
+                    .build();
+
+            OAuthClient mockClient = mock(OAuthClient.class);
+            when(oAuthClientFactory.getClient(provider)).thenReturn(mockClient);
+            when(mockClient.getUserInfo(code)).thenReturn(userInfo);
+
+            Member savedMember = mock(Member.class);
+            when(savedMember.getId()).thenReturn(1L);
+            when(savedMember.getEmail()).thenReturn("newuser@gmail.com");
+            when(savedMember.getRole()).thenReturn(Role.USER);
+            when(savedMember.getNickname()).thenReturn("행복한강아지별빛");
+
+            when(socialAccountRepository.findByProviderAndProviderId(OAuthProvider.GOOGLE, "google-123"))
+                    .thenReturn(Optional.empty());
+            when(memberRepository.findByEmail("newuser@gmail.com"))
+                    .thenReturn(Optional.empty());
+            // 첫 번째는 중복, 두 번째는 성공
+            when(memberRepository.existsByNicknameIgnoreCase(anyString()))
+                    .thenReturn(true)
+                    .thenReturn(false);
+            when(memberRepository.save(any(Member.class))).thenReturn(savedMember);
+            when(tokenProvider.createAccessToken(any(), any(), any())).thenReturn("access-token");
+            when(tokenProvider.createRefreshToken(any())).thenReturn("refresh-token");
+            when(tokenProvider.getRefreshTokenValidity()).thenReturn(86400L);
+
+            // when
+            OAuthLoginResult result = oAuthService.loginOrRegister(provider, code);
+
+            // then
+            assertThat(result.getMember().getNickname()).isNotNull();
+            verify(memberRepository, times(2)).existsByNicknameIgnoreCase(anyString());
+        }
+
+        @Test
+        @DisplayName("재시도 횟수 초과 시 폴백 닉네임을 사용한다")
+        void usesFallbackWhenAllRetriesFail() {
             // given
             String code = "auth-code";
             OAuthProvider provider = OAuthProvider.GOOGLE;
@@ -115,6 +207,9 @@ class OAuthServiceTest {
                     .thenReturn(Optional.empty());
             when(memberRepository.findByEmail("newuser@gmail.com"))
                     .thenReturn(Optional.empty());
+            // 모든 재시도가 중복으로 실패
+            when(memberRepository.existsByNicknameIgnoreCase(anyString()))
+                    .thenReturn(true);
             when(memberRepository.save(any(Member.class))).thenReturn(savedMember);
             when(tokenProvider.createAccessToken(any(), any(), any())).thenReturn("access-token");
             when(tokenProvider.createRefreshToken(any())).thenReturn("refresh-token");
@@ -125,8 +220,9 @@ class OAuthServiceTest {
 
             // then
             assertThat(result.getMember().getNickname()).isNotNull();
+            // MAX_NICKNAME_RETRY_COUNT = 3 이므로 3번 시도
+            verify(memberRepository, times(3)).existsByNicknameIgnoreCase(anyString());
             verify(memberRepository).save(any(Member.class));
-            verify(socialAccountRepository).save(any(SocialAccount.class));
         }
 
         @Test
@@ -164,6 +260,7 @@ class OAuthServiceTest {
             OAuthLoginResult result = oAuthService.loginOrRegister(provider, code);
 
             // then
+            assertThat(result.isFirstLogin()).isFalse();
             verify(socialAccountRepository).save(any(SocialAccount.class));
             verify(memberRepository, never()).save(any(Member.class));
         }

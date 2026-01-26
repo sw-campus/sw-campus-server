@@ -76,7 +76,7 @@ class MemberServiceTest {
         Long memberId = 1L;
         String rawPassword = "anyPassword"; // OAuth 유저는 입력값 무시
 
-        Member member = Member.createOAuthUser("oauth@example.com", "OAuth User");
+        Member member = Member.createOAuthUser("oauth@example.com", "OAuth User", "행복한고양이구름");
 
         given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
 

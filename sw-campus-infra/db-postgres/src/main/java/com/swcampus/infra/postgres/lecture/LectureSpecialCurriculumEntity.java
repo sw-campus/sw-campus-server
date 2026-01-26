@@ -36,7 +36,7 @@ public class LectureSpecialCurriculumEntity {
 	@JoinColumn(name = "LECTURE_ID")
 	private LectureEntity lecture;
 
-	@Column(name = "TITLE", nullable = false, length = 20)
+	@Column(name = "TITLE", nullable = false, length = 255)
 	private String title;
 
 	@Column(name = "SORT_ORDER", nullable = false)
