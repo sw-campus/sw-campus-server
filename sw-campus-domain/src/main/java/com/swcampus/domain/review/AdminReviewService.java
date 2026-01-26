@@ -49,7 +49,9 @@ public class AdminReviewService {
         String lectureName = lectureService.getLectureNames(List.of(review.getLectureId()))
             .getOrDefault(review.getLectureId(), "알 수 없음");
 
-        Member member = memberRepository.findById(review.getMemberId()).orElse(null);
+        Member member = review.getMemberId() == null
+                ? null
+                : memberRepository.findById(review.getMemberId()).orElse(null);
         String userName = member != null ? member.getName() : "알 수 없음";
         String nickname = member != null ? member.getNickname() : "알 수 없음";
 
@@ -93,11 +95,13 @@ public class AdminReviewService {
         certificate.reject();
         Certificate saved = certificateRepository.save(certificate);
 
-        // 반려 이메일 발송
-        Member member = memberRepository.findById(certificate.getMemberId())
-                .orElse(null);
-        if (member != null) {
-            emailService.sendCertificateRejectionEmail(member.getEmail());
+        // 반려 이메일 발송 (탈퇴한 회원은 이메일 발송 생략)
+        if (certificate.getMemberId() != null) {
+            Member member = memberRepository.findById(certificate.getMemberId())
+                    .orElse(null);
+            if (member != null) {
+                emailService.sendCertificateRejectionEmail(member.getEmail());
+            }
         }
 
         return saved;
@@ -136,11 +140,13 @@ public class AdminReviewService {
         review.reject();
         Review saved = reviewRepository.save(review);
 
-        // 반려 이메일 발송
-        Member member = memberRepository.findById(review.getMemberId())
-                .orElse(null);
-        if (member != null) {
-            emailService.sendReviewRejectionEmail(member.getEmail());
+        // 반려 이메일 발송 (탈퇴한 회원은 이메일 발송 생략)
+        if (review.getMemberId() != null) {
+            Member member = memberRepository.findById(review.getMemberId())
+                    .orElse(null);
+            if (member != null) {
+                emailService.sendReviewRejectionEmail(member.getEmail());
+            }
         }
 
         return saved;
@@ -207,10 +213,13 @@ public class AdminReviewService {
 
         List<Long> memberIds = reviews.stream()
             .map(Review::getMemberId)
+            .filter(id -> id != null)
             .distinct()
             .toList();
-        Map<Long, Member> memberMap = memberRepository.findAllByIds(memberIds).stream()
-            .collect(Collectors.toMap(Member::getId, m -> m));
+        Map<Long, Member> memberMap = memberIds.isEmpty()
+            ? Map.of()
+            : memberRepository.findAllByIds(memberIds).stream()
+                .collect(Collectors.toMap(Member::getId, m -> m));
 
         List<Long> certificateIds = reviews.stream()
             .map(Review::getCertificateId)
@@ -223,10 +232,11 @@ public class AdminReviewService {
 
     /**
      * Review를 PendingReviewInfo로 변환
+     * 탈퇴한 회원(memberId가 NULL)의 경우 "알 수 없음"으로 표시
      */
     private PendingReviewInfo toReviewInfo(Review review, ReviewEnrichmentData data) {
         String lectureName = data.lectureNames().getOrDefault(review.getLectureId(), "알 수 없음");
-        Member member = data.memberMap().get(review.getMemberId());
+        Member member = review.getMemberId() == null ? null : data.memberMap().get(review.getMemberId());
         String userName = member != null ? member.getName() : "알 수 없음";
         String nickname = member != null ? member.getNickname() : "알 수 없음";
         Certificate certificate = data.certificateMap().get(review.getCertificateId());

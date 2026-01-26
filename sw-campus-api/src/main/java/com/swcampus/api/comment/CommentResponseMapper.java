@@ -47,15 +47,18 @@ public class CommentResponseMapper {
                 .filter(distinctByKey(Comment::getId))
                 .toList();
 
-        // 1. 작성자 ID 목록 수집
+        // 1. 작성자 ID 목록 수집 (탈퇴한 회원의 null ID 제외)
         List<Long> authorIds = uniqueComments.stream()
                 .map(Comment::getUserId)
+                .filter(id -> id != null)
                 .distinct()
                 .toList();
 
         // 2. 작성자 정보 일괄 조회
-        Map<Long, String> nicknameMap = memberService.getMembersByIds(authorIds).stream()
-                .collect(Collectors.toMap(Member::getId, Member::getNickname));
+        Map<Long, String> nicknameMap = authorIds.isEmpty()
+                ? Map.of()
+                : memberService.getMembersByIds(authorIds).stream()
+                        .collect(Collectors.toMap(Member::getId, Member::getNickname));
 
         Map<Long, CommentResponse> commentMap = new LinkedHashMap<>();
         List<CommentResponse> rootComments = new ArrayList<>();

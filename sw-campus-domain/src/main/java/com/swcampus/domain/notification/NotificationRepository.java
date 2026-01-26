@@ -10,4 +10,5 @@ public interface NotificationRepository {
     List<Notification> findByUserIdAndReadFalse(Long userId);
     long countByUserIdAndReadFalse(Long userId);
     void markAllAsReadByUserId(Long userId);
+    void deleteById(Long id);
 }

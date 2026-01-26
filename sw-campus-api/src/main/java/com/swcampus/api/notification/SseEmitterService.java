@@ -46,7 +46,7 @@ public class SseEmitterService {
         emitters.forEach((userId, emitter) -> {
             try {
                 emitter.send(SseEmitter.event().comment("heartbeat"));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.debug("Heartbeat failed for user: {}, removing emitter", userId);
                 emitters.remove(userId);
             }

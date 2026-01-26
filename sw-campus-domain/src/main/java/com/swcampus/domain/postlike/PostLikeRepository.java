@@ -16,4 +16,6 @@ public interface PostLikeRepository {
     Set<Long> findPostIdsByUserId(Long userId);
 
     List<Long> findUserIdsByPostId(Long postId);
+
+    void deleteByUserId(Long userId);
 }

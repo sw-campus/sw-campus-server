@@ -76,6 +76,7 @@ public class PostLikeService {
 
     /**
      * 게시글에 좋아요 누른 사용자 정보 목록 조회 (일괄 조회)
+     * 탈퇴한 회원(userId가 NULL)은 "알 수 없음"으로 표시됩니다.
      */
     public List<LikerInfo> getLikers(Long postId) {
         List<Long> likerIds = postLikeRepository.findUserIdsByPostId(postId);
@@ -84,11 +85,21 @@ public class PostLikeService {
             return List.of();
         }
 
-        Map<Long, Member> memberMap = memberRepository.findAllByIds(likerIds).stream()
-                .collect(Collectors.toMap(Member::getId, Function.identity()));
+        // 탈퇴한 회원의 null ID 제외
+        List<Long> validIds = likerIds.stream()
+                .filter(id -> id != null)
+                .toList();
+
+        Map<Long, Member> memberMap = validIds.isEmpty()
+                ? Map.of()
+                : memberRepository.findAllByIds(validIds).stream()
+                        .collect(Collectors.toMap(Member::getId, Function.identity()));
 
         return likerIds.stream()
                 .map(id -> {
+                    if (id == null) {
+                        return LikerInfo.of(null, "알 수 없음");
+                    }
                     Member member = memberMap.get(id);
                     return member != null
                             ? LikerInfo.of(member.getId(), member.getNickname())

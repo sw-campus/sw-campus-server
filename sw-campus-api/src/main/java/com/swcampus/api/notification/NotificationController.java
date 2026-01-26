@@ -91,4 +91,20 @@ public class NotificationController {
         notificationService.markAllAsRead(member.memberId());
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "알림 삭제", description = "특정 알림을 삭제합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "삭제 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "알림을 찾을 수 없음")
+    })
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<Void> deleteNotification(
+            @CurrentMember MemberPrincipal member,
+            @Parameter(description = "알림 ID", required = true) @PathVariable("notificationId") Long notificationId) {
+
+        notificationService.deleteNotification(notificationId, member.memberId());
+        return ResponseEntity.noContent().build();
+    }
 }
