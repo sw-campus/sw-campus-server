@@ -47,6 +47,8 @@ public interface ReviewRepository {
     Page<Review> findByOrganizationIdAndApprovalStatusWithPagination(Long organizationId, ApprovalStatus status,
             Pageable pageable);
 
+    long countByOrganizationIdAndApprovalStatus(Long organizationId, ApprovalStatus status);
+
     // Statistics methods
     long countAll();
 

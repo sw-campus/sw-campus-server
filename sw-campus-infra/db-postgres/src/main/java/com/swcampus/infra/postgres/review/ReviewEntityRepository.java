@@ -156,6 +156,11 @@ public class ReviewEntityRepository implements ReviewRepository {
     }
 
     @Override
+    public long countByOrganizationIdAndApprovalStatus(Long organizationId, ApprovalStatus status) {
+        return jpaRepository.countByOrganizationIdAndApprovalStatus(organizationId, status);
+    }
+
+    @Override
     public long countAll() {
         return jpaRepository.count();
     }

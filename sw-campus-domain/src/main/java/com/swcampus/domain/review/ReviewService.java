@@ -232,6 +232,41 @@ public class ReviewService {
         return toPageReviewsWithNicknames(reviewPage);
     }
 
+    /**
+     * 기관별 승인된 후기 목록 조회 (블라인드 필터링 적용)
+     *
+     * @param organizationId 기관 ID
+     * @param requesterId 요청자 ID (null이면 비회원)
+     * @param page 페이지 번호
+     * @param size 페이지 크기
+     * @param sortType 정렬 기준
+     * @return 블라인드 필터링이 적용된 리뷰 목록 (totalCount, isUnblinded 포함)
+     */
+    public ReviewListResult getApprovedReviewsByOrganizationWithBlind(
+            Long organizationId, Long requesterId, int page, int size, ReviewSortType sortType) {
+        boolean isUnblinded = reviewAccessService.isReviewUnblinded(requesterId);
+
+        // 전체 개수 조회
+        int totalCount = (int) reviewRepository.countByOrganizationIdAndApprovalStatus(
+                organizationId, ApprovalStatus.APPROVED);
+
+        if (isUnblinded) {
+            // 블라인드 해제: 페이지네이션 적용
+            Pageable pageable = PageRequest.of(page, size, sortType.getSort());
+            Page<Review> reviewPage = reviewRepository.findByOrganizationIdAndApprovalStatusWithPagination(
+                    organizationId, ApprovalStatus.APPROVED, pageable);
+            List<ReviewWithNickname> reviews = toPageReviewsWithNicknames(reviewPage).getContent();
+            return ReviewListResult.of(reviews, totalCount, true);
+        } else {
+            // 블라인드 상태: 1개만 반환
+            Pageable pageable = PageRequest.of(0, 1, sortType.getSort());
+            Page<Review> reviewPage = reviewRepository.findByOrganizationIdAndApprovalStatusWithPagination(
+                    organizationId, ApprovalStatus.APPROVED, pageable);
+            List<ReviewWithNickname> reviews = toPageReviewsWithNicknames(reviewPage).getContent();
+            return ReviewListResult.of(reviews, totalCount, false);
+        }
+    }
+
     private Page<ReviewWithNickname> toPageReviewsWithNicknames(Page<Review> reviewPage) {
         List<Review> reviews = reviewPage.getContent();
         if (reviews.isEmpty()) {

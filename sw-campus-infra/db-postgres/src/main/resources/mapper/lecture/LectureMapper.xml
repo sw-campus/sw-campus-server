@@ -49,6 +49,11 @@
     </sql>
 
     <sql id="searchConditions">
+        <!-- 기관 ID 검색 -->
+        <if test="cond.orgId != null">
+            AND l.org_id = #{cond.orgId}
+        </if>
+
         <!-- 텍스트 검색 (대소문자 무시) -->
         <if test="cond.text != null and cond.text != ''">
             AND (
