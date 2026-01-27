@@ -43,12 +43,22 @@ public class SseEmitterService {
     }
 
     private void sendHeartbeatToAll() {
-        emitters.forEach((userId, emitter) -> {
+        // 순회 중 제거를 위해 복사본으로 순회
+        emitters.keySet().forEach(userId -> {
+            SseEmitter emitter = emitters.get(userId);
+            if (emitter == null) {
+                return;
+            }
             try {
                 emitter.send(SseEmitter.event().comment("heartbeat"));
             } catch (Exception e) {
                 log.debug("Heartbeat failed for user: {}, removing emitter", userId);
                 emitters.remove(userId);
+                try {
+                    emitter.completeWithError(e);
+                } catch (Exception ignored) {
+                    // 이미 완료된 emitter일 수 있음
+                }
             }
         });
     }
