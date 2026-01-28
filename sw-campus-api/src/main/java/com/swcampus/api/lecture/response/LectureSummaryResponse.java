@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureStep;
+import com.swcampus.domain.lecture.dto.LectureSummaryDto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -58,6 +59,10 @@ public record LectureSummaryResponse(
 
     public static LectureSummaryResponse from(Lecture lecture, Double averageScore, Long reviewCount) {
         return from(lecture, null, averageScore, reviewCount);
+    }
+
+    public static LectureSummaryResponse from(LectureSummaryDto dto, String orgName) {
+        return from(dto.lecture(), orgName, dto.averageScore(), dto.reviewCount());
     }
 
     public static LectureSummaryResponse from(Lecture lecture, String orgName, Double averageScore, Long reviewCount) {

@@ -35,6 +35,12 @@ public class NotificationController {
     })
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@CurrentMember MemberPrincipal member) {
+        if (member == null) {
+            // 인증 실패 시 즉시 완료되는 빈 emitter 반환
+            SseEmitter emitter = new SseEmitter(0L);
+            emitter.complete();
+            return emitter;
+        }
         return sseEmitterService.createEmitter(member.memberId());
     }
 

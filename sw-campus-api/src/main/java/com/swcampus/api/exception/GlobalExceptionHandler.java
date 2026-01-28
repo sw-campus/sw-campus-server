@@ -36,10 +36,10 @@ public class GlobalExceptionHandler {
 	// === 비즈니스 예외 (단일 핸들러) ===
 
 	@ExceptionHandler(BusinessException.class)
-	public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
+	public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) throws BusinessException {
 		if (isSseRequest()) {
 			log.debug("SSE 요청에서 비즈니스 예외 발생: {}", e.getMessage());
-			return null;
+			throw e; // SSE 요청에서는 예외를 다시 던져 연결 종료
 		}
 		log.warn("{}: {}", e.getClass().getSimpleName(), e.getMessage());
 		ErrorCode errorCode = e.getErrorCode();
@@ -128,10 +128,11 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
 	public ResponseEntity<ErrorResponse> handleAccessDeniedException(
-			org.springframework.security.access.AccessDeniedException e) {
+			org.springframework.security.access.AccessDeniedException e)
+			throws org.springframework.security.access.AccessDeniedException {
 		if (isSseRequest()) {
 			log.debug("SSE 요청에서 접근 거부: {}", e.getMessage());
-			return null;
+			throw e; // SSE 요청에서는 예외를 다시 던져 연결 종료
 		}
 		log.warn("접근 권한 없음: {}", e.getMessage());
 		return ResponseEntity
@@ -141,10 +142,11 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(org.springframework.security.authorization.AuthorizationDeniedException.class)
 	public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
-			org.springframework.security.authorization.AuthorizationDeniedException e) {
+			org.springframework.security.authorization.AuthorizationDeniedException e)
+			throws org.springframework.security.authorization.AuthorizationDeniedException {
 		if (isSseRequest()) {
 			log.debug("SSE 요청에서 인가 거부: {}", e.getMessage());
-			return null;
+			throw e; // SSE 요청에서는 예외를 다시 던져 연결 종료
 		}
 		log.warn("인가 거부: {}", e.getMessage());
 		return ResponseEntity
@@ -155,10 +157,10 @@ public class GlobalExceptionHandler {
 	// === 기타 예외 ===
 
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ErrorResponse> handleException(Exception e) {
+	public ResponseEntity<ErrorResponse> handleException(Exception e) throws Exception {
 		if (isSseRequest()) {
 			log.debug("SSE 요청에서 예외 발생: {}", e.getMessage());
-			return null;
+			throw e; // SSE 요청에서는 예외를 다시 던져 연결 종료
 		}
 		log.error("예기치 않은 오류 발생: {}", e.getMessage(), e);
 		return ResponseEntity

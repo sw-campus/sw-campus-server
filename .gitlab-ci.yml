@@ -72,15 +72,13 @@ build-dev:
   stage: build
   image: eclipse-temurin:17-jdk
   extends: .gradle-cache
-  services:
-    - docker:24-dind
+  # Self-hosted Runner uses Docker socket binding (no DinD needed)
   rules:
     - if: $CI_COMMIT_BRANCH == "develop"
     - if: $CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "web"
       when: manual
   variables:
     TAG: "RHSA-$CI_COMMIT_SHA"
-    DOCKER_HOST: tcp://docker:2375
   before_script:
     - apt-get update && apt-get install -y git docker.io
     - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
@@ -140,14 +138,11 @@ build-release:
   stage: build
   image: eclipse-temurin:17-jdk
   extends: .gradle-cache
-  services:
-    - docker:24-dind
+  # Self-hosted Runner uses Docker socket binding (no DinD needed)
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE !~ /\[skip ci\]/
     - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "web"
       when: manual
-  variables:
-    DOCKER_HOST: tcp://docker:2375
   before_script:
     - apt-get update && apt-get install -y git docker.io
     - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"

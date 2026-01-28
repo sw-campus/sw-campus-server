@@ -68,7 +68,8 @@ public class CommentResponseMapper {
 
         // 4. 모든 댓글을 CommentResponse로 변환하고 Map에 저장
         for (Comment comment : uniqueComments) {
-            String nickname = nicknameMap.getOrDefault(comment.getUserId(), "알 수 없음");
+            Long userId = comment.getUserId();
+            String nickname = (userId == null) ? "알 수 없음" : nicknameMap.getOrDefault(userId, "알 수 없음");
             boolean isAuthor = currentUserId != null && comment.isAuthor(currentUserId);
             boolean isLiked = likedCommentIds.contains(comment.getId());
             CommentResponse response = CommentResponse.from(comment, nickname, isAuthor, isLiked);

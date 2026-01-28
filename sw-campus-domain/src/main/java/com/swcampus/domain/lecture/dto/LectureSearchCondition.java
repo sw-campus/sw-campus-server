@@ -13,6 +13,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class LectureSearchCondition {
+    private Long orgId; // 기관 ID (기관별 강의 조회 시 사용)
     private String text; // 제목, 내용, 기관명 검색
     private List<String> regions; // 지역
     private List<Long> categoryIds; // 카테고리 ID 목록 (대/중/소 모두 ID)

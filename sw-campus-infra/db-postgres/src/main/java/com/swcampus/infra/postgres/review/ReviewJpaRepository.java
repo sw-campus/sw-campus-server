@@ -109,6 +109,15 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         @Param("status") ApprovalStatus status,
                         Pageable pageable);
 
+        @Query("""
+                        SELECT COUNT(r) FROM ReviewEntity r
+                        WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId)
+                        AND r.approvalStatus = :status
+                        """)
+        long countByOrganizationIdAndApprovalStatus(
+                        @Param("organizationId") Long organizationId,
+                        @Param("status") ApprovalStatus status);
+
         long countByApprovalStatus(ApprovalStatus status);
 
         /**
