@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 
 @Schema(description = "배너 생성/수정 요청")
 public record BannerRequest(
-        @Schema(description = "강의 ID", example = "1", required = true) @NotNull(message = "강의 ID는 필수입니다") Long lectureId,
+        @Schema(description = "강의 ID (EVENT 타입은 선택사항)", example = "1") Long lectureId,
 
         @Schema(description = "배너 타입", example = "BIG", required = true) @NotNull(message = "배너 타입은 필수입니다") BannerType type,
 

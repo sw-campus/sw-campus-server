@@ -144,15 +144,49 @@ public class ReviewEntityRepository implements ReviewRepository {
 
     @Override
     public Page<Review> findAllWithDetails(ApprovalStatus status, String keyword, Pageable pageable) {
-        return jpaRepository.findAllWithDetailsAndKeyword(status, keyword, pageable)
-                .map(ReviewEntity::toDomain);
+        // 1단계: ID만 페이징 조회
+        Page<Long> idPage = jpaRepository.findAllIdsWithKeyword(status, keyword, pageable);
+        if (idPage.isEmpty()) {
+            return idPage.map(id -> null);
+        }
+
+        // 2단계: ID 목록으로 fetch join 조회
+        List<ReviewEntity> entities = jpaRepository.findByIdsWithDetails(idPage.getContent());
+
+        // ID 순서 유지를 위한 매핑
+        java.util.Map<Long, ReviewEntity> entityMap = entities.stream()
+                .collect(java.util.stream.Collectors.toMap(ReviewEntity::getId, e -> e));
+
+        List<Review> reviews = idPage.getContent().stream()
+                .map(entityMap::get)
+                .map(ReviewEntity::toDomain)
+                .toList();
+
+        return new org.springframework.data.domain.PageImpl<>(reviews, pageable, idPage.getTotalElements());
     }
 
     @Override
     public Page<Review> findByOrganizationIdAndApprovalStatusWithPagination(Long organizationId, ApprovalStatus status,
             Pageable pageable) {
-        return jpaRepository.findByOrganizationIdAndApprovalStatusWithPagination(organizationId, status, pageable)
-                .map(ReviewEntity::toDomain);
+        // 1단계: ID만 페이징 조회
+        Page<Long> idPage = jpaRepository.findIdsByOrganizationIdAndApprovalStatus(organizationId, status, pageable);
+        if (idPage.isEmpty()) {
+            return idPage.map(id -> null);
+        }
+
+        // 2단계: ID 목록으로 fetch join 조회
+        List<ReviewEntity> entities = jpaRepository.findByIdsWithDetails(idPage.getContent());
+
+        // ID 순서 유지를 위한 매핑
+        java.util.Map<Long, ReviewEntity> entityMap = entities.stream()
+                .collect(java.util.stream.Collectors.toMap(ReviewEntity::getId, e -> e));
+
+        List<Review> reviews = idPage.getContent().stream()
+                .map(entityMap::get)
+                .map(ReviewEntity::toDomain)
+                .toList();
+
+        return new org.springframework.data.domain.PageImpl<>(reviews, pageable, idPage.getTotalElements());
     }
 
     @Override
