@@ -256,9 +256,15 @@ commit-version-bump:
 
       git remote set-url origin https://oauth2:${PROJECT_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
 
+      # 최신 main 브랜치로 rebase 후 push
+      git fetch origin main
+      git checkout main
+      git reset --hard origin/main
+
+      # gradle.properties 변경사항 적용 (artifact에서 복사)
       git add gradle.properties
       git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
-      git push origin HEAD:main
+      git push origin main
 
       git tag -f "$VERSION_TAG"
       git push origin "$VERSION_TAG" -f
