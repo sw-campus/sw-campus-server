@@ -22,6 +22,7 @@ import com.swcampus.domain.member.Role;
 import com.swcampus.domain.mypage.MypageService;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
+import com.swcampus.domain.post.PostService;
 import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.review.ReviewWithNickname;
 import com.swcampus.domain.survey.MemberSurveyService;
@@ -65,6 +66,7 @@ public class MypageController {
     private final OrganizationService organizationService;
     private final MypageService mypageService;
     private final ReviewService reviewService;
+    private final PostService postService;
 
     @Operation(summary = "[공통] 비밀번호 확인", description = "[공통] 회원정보 수정 화면 진입 전 비밀번호를 확인합니다. 소셜 로그인 사용자는 비밀번호 검증 없이 항상 true를 반환합니다.")
     @ApiResponses({
@@ -102,7 +104,9 @@ public class MypageController {
         if (member.role() == Role.USER) {
             hasSurvey = memberSurveyService.existsByMemberId(member.memberId());
         }
-        return ResponseEntity.ok(MypageProfileResponse.from(memberEntity, hasSurvey));
+        long postCount = postService.countByUserId(member.memberId());
+        long commentedPostCount = postService.countCommentedPostsByUserId(member.memberId());
+        return ResponseEntity.ok(MypageProfileResponse.from(memberEntity, hasSurvey, postCount, commentedPostCount));
     }
 
     @Operation(summary = "[공통] 내 정보 수정", description = "[공통] 로그인한 사용자의 프로필 정보(닉네임, 연락처, 주소)를 수정합니다. 일반 사용자와 기관 모두 사용 가능합니다.")

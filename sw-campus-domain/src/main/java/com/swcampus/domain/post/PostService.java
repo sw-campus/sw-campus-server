@@ -190,4 +190,11 @@ public class PostService {
     public long countCommentedPostsByUserId(Long userId) {
         return postRepository.countCommentedByUserId(userId);
     }
+
+    /**
+     * 특정 유저가 작성한 게시글 수 조회
+     */
+    public long countByUserId(Long userId) {
+        return postRepository.countByUserId(userId);
+    }
 }

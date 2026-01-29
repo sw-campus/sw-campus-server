@@ -35,4 +35,10 @@ public interface CommentJpaRepository extends JpaRepository<CommentEntity, Long>
     @org.springframework.data.jpa.repository.Modifying
     @Query("UPDATE CommentEntity c SET c.userId = NULL WHERE c.userId = :userId")
     void setUserIdNullByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT c FROM CommentEntity c WHERE c.userId = :userId AND c.postId IN :postIds AND c.deleted = false ORDER BY c.createdAt DESC")
+    List<CommentEntity> findByUserIdAndPostIds(@Param("userId") Long userId, @Param("postIds") List<Long> postIds);
+
+    @Query("SELECT c.parentId, COUNT(c) FROM CommentEntity c WHERE c.parentId IN :parentIds AND c.deleted = false GROUP BY c.parentId")
+    List<Object[]> countRepliesByParentIds(@Param("parentIds") List<Long> parentIds);
 }

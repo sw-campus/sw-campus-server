@@ -90,4 +90,34 @@ public class CommentEntityRepository implements CommentRepository {
     public void setUserIdNullByUserId(Long userId) {
         jpaRepository.setUserIdNullByUserId(userId);
     }
+
+    @Override
+    public Map<Long, Comment> findLatestByUserIdAndPostIds(Long userId, List<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<CommentEntity> comments = jpaRepository.findByUserIdAndPostIds(userId, postIds);
+
+        // 각 postId별 가장 최근 댓글만 추출 (이미 createdAt DESC로 정렬되어 있음)
+        return comments.stream()
+                .collect(Collectors.toMap(
+                        CommentEntity::getPostId,
+                        CommentEntity::toDomain,
+                        (existing, replacement) -> existing // 첫 번째 값(가장 최근)만 유지
+                ));
+    }
+
+    @Override
+    public Map<Long, Long> countRepliesByParentIds(List<Long> commentIds) {
+        if (commentIds == null || commentIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return jpaRepository.countRepliesByParentIds(commentIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
 }

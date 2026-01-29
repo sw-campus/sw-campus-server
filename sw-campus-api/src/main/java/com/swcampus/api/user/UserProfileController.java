@@ -1,7 +1,9 @@
 package com.swcampus.api.user;
 
 import com.swcampus.api.post.response.PostResponse;
+import com.swcampus.api.user.response.CommentedPostResponse;
 import com.swcampus.api.user.response.UserProfileResponse;
+import com.swcampus.domain.comment.Comment;
 import com.swcampus.domain.comment.CommentService;
 import com.swcampus.domain.member.Member;
 import com.swcampus.domain.member.MemberService;
@@ -98,13 +100,13 @@ public class UserProfileController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "유저가 댓글 단 게시글 목록 조회", description = "특정 유저가 댓글을 작성한 게시글 목록을 조회합니다.")
+    @Operation(summary = "유저가 댓글 단 게시글 목록 조회", description = "특정 유저가 댓글을 작성한 게시글 목록을 조회합니다. 내가 단 댓글도 함께 반환합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "404", description = "유저를 찾을 수 없음")
     })
     @GetMapping("/{userId}/commented-posts")
-    public ResponseEntity<Page<PostResponse>> getUserCommentedPosts(
+    public ResponseEntity<Page<CommentedPostResponse>> getUserCommentedPosts(
             @Parameter(description = "유저 ID", required = true) @PathVariable("userId") Long userId,
             @PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC) Pageable pageable) {
 
@@ -117,21 +119,39 @@ public class UserProfileController {
             return ResponseEntity.ok(Page.empty(pageable));
         }
 
-        // 댓글 수 일괄 조회
+        // 게시글 ID 목록
         List<Long> postIds = posts.getContent().stream()
                 .map(summary -> summary.getPost().getId())
                 .toList();
 
+        // 댓글 수 일괄 조회
         Map<Long, Long> commentCounts = commentService.getCommentCounts(postIds);
 
-        Page<PostResponse> response = posts.map(summary ->
-                PostResponse.from(
-                        summary.getPost(),
-                        summary.getAuthorNickname(),
-                        summary.getCategoryName(),
-                        commentCounts.getOrDefault(summary.getPost().getId(), 0L)
-                )
-        );
+        // 해당 사용자가 각 게시글에 단 가장 최근 댓글 조회
+        Map<Long, Comment> myComments = commentService.getLatestCommentsByUserAndPosts(userId, postIds);
+
+        // 내 댓글 ID 목록
+        List<Long> myCommentIds = myComments.values().stream()
+                .map(Comment::getId)
+                .toList();
+
+        // 내 댓글들의 대댓글 수 조회
+        Map<Long, Long> replyCounts = commentService.getReplyCounts(myCommentIds);
+
+        Page<CommentedPostResponse> response = posts.map(summary -> {
+            Long postId = summary.getPost().getId();
+            Comment myComment = myComments.get(postId);
+            return CommentedPostResponse.from(
+                    summary.getPost(),
+                    summary.getAuthorNickname(),
+                    summary.getCategoryName(),
+                    commentCounts.getOrDefault(postId, 0L),
+                    myComment != null ? myComment.getBody() : null,
+                    myComment != null ? myComment.getCreatedAt() : null,
+                    myComment != null ? myComment.getLikeCount() : 0L,
+                    myComment != null ? replyCounts.getOrDefault(myComment.getId(), 0L) : 0L
+            );
+        });
 
         return ResponseEntity.ok(response);
     }
