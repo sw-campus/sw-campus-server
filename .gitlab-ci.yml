@@ -233,6 +233,10 @@ build-release:
         --context "${CI_PROJECT_DIR}" \
         --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
         --destination "$IMAGE_NAME:$VERSION_TAG"
+
+      # Pass variables to next job
+      echo "VERSION_TAG=$VERSION_TAG" >> build.env
+      echo "NEW_VERSION=$NEW_VERSION" >> build.env
   artifacts:
     reports:
       dotenv: build.env
