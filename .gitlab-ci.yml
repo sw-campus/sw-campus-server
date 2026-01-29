@@ -267,8 +267,14 @@ commit-version-bump:
       cp /tmp/gradle.properties gradle.properties
 
       git add gradle.properties
-      git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
-      git push origin main
+
+      # 변경사항이 있을 때만 커밋
+      if git diff --staged --quiet; then
+        echo "No changes to commit - version may already be bumped"
+      else
+        git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+        git push origin main
+      fi
 
       git tag -f "$VERSION_TAG"
       git push origin "$VERSION_TAG" -f
