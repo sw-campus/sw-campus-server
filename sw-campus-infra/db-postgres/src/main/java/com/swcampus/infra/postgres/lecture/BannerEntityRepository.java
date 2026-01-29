@@ -23,9 +23,13 @@ public class BannerEntityRepository implements BannerRepository {
 
     @Override
     public Banner save(Banner banner) {
-        LectureEntity lectureEntity = lectureJpaRepository.findById(banner.getLectureId())
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Lecture not found with id: " + banner.getLectureId()));
+        // EVENT 타입 배너는 lectureId가 null일 수 있음
+        LectureEntity lectureEntity = null;
+        if (banner.getLectureId() != null) {
+            lectureEntity = lectureJpaRepository.findById(banner.getLectureId())
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("Lecture not found with id: " + banner.getLectureId()));
+        }
 
         BannerEntity entity;
         if (banner.getId() != null) {

@@ -52,6 +52,7 @@ public class BannerService {
 
         List<Long> lectureIds = banners.stream()
                 .map(Banner::getLectureId)
+                .filter(id -> id != null)  // EVENT 타입 배너의 null lectureId 필터링
                 .distinct()
                 .toList();
 

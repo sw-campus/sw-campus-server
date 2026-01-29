@@ -67,12 +67,11 @@ validate-migration:
       echo "모든 마이그레이션 파일명이 올바릅니다"
 
 
-# Build Dev (develop 브랜치 전용)
-build-dev:
+# Build Dev (develop 브랜치 전용) - 2단계: Gradle 빌드
+build-dev-jar:
   stage: build
   image: eclipse-temurin:17-jdk
   extends: .gradle-cache
-  # Self-hosted Runner uses Docker socket binding (no DinD needed)
   rules:
     - if: $CI_COMMIT_BRANCH == "develop"
     - if: $CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "web"
@@ -80,20 +79,52 @@ build-dev:
   variables:
     TAG: "RHSA-$CI_COMMIT_SHA"
   before_script:
-    - apt-get update && apt-get install -y git docker.io
+    - apt-get update && apt-get install -y git
     - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
     - git submodule sync --recursive
     - git submodule update --init --recursive
   script:
     - |
-      echo "Building DEV image with tag $TAG"
-
+      echo "Building JAR with tag $TAG"
       chmod +x gradlew
       ./gradlew build -x test
+      echo "IMAGE_TAG=$TAG" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+    paths:
+      - sw-campus-api/build/libs/*.jar
+      - Dockerfile
 
-      docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
-      docker build -t $IMAGE_NAME:$TAG .
-      docker push $IMAGE_NAME:$TAG
+# Build Dev (develop 브랜치 전용) - Kaniko로 Docker 이미지 빌드
+build-dev:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  needs:
+    - job: build-dev-jar
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  variables:
+    TAG: "RHSA-$CI_COMMIT_SHA"
+  script:
+    - |
+      echo "Building DEV Docker image with tag $TAG using Kaniko"
+
+      # GitLab Container Registry 인증 설정
+      mkdir -p /kaniko/.docker
+      AUTH=$(echo -n "${CI_REGISTRY_USER}:${CI_JOB_TOKEN}" | base64 | tr -d '\n')
+      echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"${AUTH}\"}}}" > /kaniko/.docker/config.json
+
+      # Kaniko로 빌드 및 푸시
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+        --destination "$IMAGE_NAME:$TAG"
 
       echo "IMAGE_TAG=$TAG" >> build.env
   artifacts:
@@ -133,18 +164,17 @@ update-manifest-dev:
       fi
 
 
-# Build Release (main 브랜치 전용)
-build-release:
+# Build Release (main 브랜치 전용) - 1단계: Gradle 빌드
+build-release-jar:
   stage: build
   image: eclipse-temurin:17-jdk
   extends: .gradle-cache
-  # Self-hosted Runner uses Docker socket binding (no DinD needed)
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE !~ /\[skip ci\]/
     - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "web"
       when: manual
   before_script:
-    - apt-get update && apt-get install -y git docker.io
+    - apt-get update && apt-get install -y git
     - git config --global url."https://oauth2:${PROJECT_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
     - git submodule sync --recursive
     - git submodule update --init --recursive
@@ -168,10 +198,41 @@ build-release:
 
       chmod +x gradlew
       ./gradlew build -x test
+  artifacts:
+    reports:
+      dotenv: build.env
+    paths:
+      - gradle.properties
+      - sw-campus-api/build/libs/*.jar
+      - Dockerfile
 
-      docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
-      docker build -t $IMAGE_NAME:$VERSION_TAG .
-      docker push $IMAGE_NAME:$VERSION_TAG
+# Build Release (main 브랜치 전용) - 2단계: Kaniko로 Docker 이미지 빌드
+build-release:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  needs:
+    - job: build-release-jar
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE !~ /\[skip ci\]/
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  script:
+    - |
+      echo "Building Release Docker image with tag $VERSION_TAG using Kaniko"
+
+      # GitLab Container Registry 인증 설정
+      mkdir -p /kaniko/.docker
+      AUTH=$(echo -n "${CI_REGISTRY_USER}:${CI_JOB_TOKEN}" | base64 | tr -d '\n')
+      echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"${AUTH}\"}}}" > /kaniko/.docker/config.json
+
+      # Kaniko로 빌드 및 푸시
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+        --destination "$IMAGE_NAME:$VERSION_TAG"
   artifacts:
     reports:
       dotenv: build.env

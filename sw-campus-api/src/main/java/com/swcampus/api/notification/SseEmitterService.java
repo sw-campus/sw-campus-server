@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Service
 public class SseEmitterService {
 
-    private static final Long TIMEOUT = 30 * 60 * 1000L; // 30분
+    private static final Long TIMEOUT = -1L; // 무한 (heartbeat 실패 시 정리됨)
     private static final long HEARTBEAT_INTERVAL = 30L; // 30초마다 heartbeat
     private final Map<Long, EmitterWrapper> emitters = new ConcurrentHashMap<>();
     private ScheduledExecutorService heartbeatScheduler;
@@ -37,12 +37,19 @@ public class SseEmitterService {
             return completed.get();
         }
 
-        boolean trySend(SseEmitter.SseEventBuilder event) throws IOException {
+        boolean trySend(SseEmitter.SseEventBuilder event) {
             if (isCompleted()) {
                 return false;
             }
-            emitter.send(event);
-            return true;
+            try {
+                emitter.send(event);
+                return true;
+            } catch (IllegalStateException | IOException e) {
+                // IllegalStateException: emitter가 이미 완료됨 (race condition)
+                // IOException: 클라이언트 연결 끊김 (Broken pipe)
+                markCompleted();
+                return false;
+            }
         }
     }
 
@@ -67,13 +74,7 @@ public class SseEmitterService {
 
     private void sendHeartbeatToAll() {
         emitters.forEach((userId, wrapper) -> {
-            try {
-                if (!wrapper.trySend(SseEmitter.event().comment("heartbeat"))) {
-                    emitters.remove(userId, wrapper);
-                }
-            } catch (Exception e) {
-                log.debug("Heartbeat failed for user: {}, removing emitter", userId);
-                wrapper.markCompleted();
+            if (!wrapper.trySend(SseEmitter.event().comment("heartbeat"))) {
                 emitters.remove(userId, wrapper);
             }
         });
@@ -115,16 +116,9 @@ public class SseEmitterService {
         });
 
         // 연결 성공 이벤트 전송
-        try {
-            if (!wrapper.trySend(SseEmitter.event()
-                    .name("connect")
-                    .data("SSE connected"))) {
-                log.debug("Emitter already completed for user: {}", userId);
-                emitters.remove(userId, wrapper);
-            }
-        } catch (IOException e) {
-            log.debug("Failed to send connect event to user: {}", userId);
-            wrapper.markCompleted();
+        if (!wrapper.trySend(SseEmitter.event()
+                .name("connect")
+                .data("SSE connected"))) {
             emitters.remove(userId, wrapper);
         }
 
@@ -137,16 +131,9 @@ public class SseEmitterService {
             return;
         }
 
-        try {
-            if (!wrapper.trySend(SseEmitter.event()
-                    .name("notification")
-                    .data(NotificationResponse.from(notification, senderNickname, postId)))) {
-                log.debug("Emitter already completed for user: {}", userId);
-                emitters.remove(userId, wrapper);
-            }
-        } catch (IOException e) {
-            log.debug("Failed to send notification to user: {}", userId);
-            wrapper.markCompleted();
+        if (!wrapper.trySend(SseEmitter.event()
+                .name("notification")
+                .data(NotificationResponse.from(notification, senderNickname, postId)))) {
             emitters.remove(userId, wrapper);
         }
     }
