@@ -126,4 +126,18 @@ public class CommentService {
     public java.util.Map<Long, Long> getCommentCounts(List<Long> postIds) {
         return commentRepository.countByPostIds(postIds);
     }
+
+    /**
+     * 특정 사용자가 특정 게시글들에 단 가장 최근 댓글을 조회
+     */
+    public java.util.Map<Long, Comment> getLatestCommentsByUserAndPosts(Long userId, List<Long> postIds) {
+        return commentRepository.findLatestByUserIdAndPostIds(userId, postIds);
+    }
+
+    /**
+     * 특정 댓글들의 대댓글 수를 조회
+     */
+    public java.util.Map<Long, Long> getReplyCounts(List<Long> commentIds) {
+        return commentRepository.countRepliesByParentIds(commentIds);
+    }
 }

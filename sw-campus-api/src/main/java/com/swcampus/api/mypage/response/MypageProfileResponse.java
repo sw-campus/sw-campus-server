@@ -27,9 +27,15 @@ public record MypageProfileResponse(
     String role,
 
     @Schema(description = "설문조사 완료 여부")
-    Boolean hasSurvey
+    Boolean hasSurvey,
+
+    @Schema(description = "작성한 게시글 수", example = "12")
+    Long postCount,
+
+    @Schema(description = "댓글을 단 게시글 수", example = "5")
+    Long commentedPostCount
 ) {
-    public static MypageProfileResponse from(Member member, boolean hasSurvey) {
+    public static MypageProfileResponse from(Member member, boolean hasSurvey, long postCount, long commentedPostCount) {
         return new MypageProfileResponse(
             member.getEmail(),
             member.getName(),
@@ -38,7 +44,9 @@ public record MypageProfileResponse(
             member.getLocation(),
             member.isSocialUser() ? "OAUTH" : "LOCAL",
             member.getRole().name(),
-            hasSurvey
+            hasSurvey,
+            postCount,
+            commentedPostCount
         );
     }
 }
