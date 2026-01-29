@@ -19,7 +19,7 @@ public class CookieUtil {
         return ResponseCookie.from(ACCESS_TOKEN_NAME, token)
                 .httpOnly(true)
                 .secure(secure)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .path("/")
                 .maxAge(maxAge)
                 .build();
@@ -29,7 +29,7 @@ public class CookieUtil {
         return ResponseCookie.from(REFRESH_TOKEN_NAME, token)
                 .httpOnly(true)
                 .secure(secure)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .path("/")
                 .maxAge(maxAge)
                 .build();
@@ -39,7 +39,7 @@ public class CookieUtil {
         return ResponseCookie.from(ACCESS_TOKEN_NAME, "")
                 .httpOnly(true)
                 .secure(secure)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .path("/")
                 .maxAge(0)
                 .build();
@@ -49,7 +49,7 @@ public class CookieUtil {
         return ResponseCookie.from(REFRESH_TOKEN_NAME, "")
                 .httpOnly(true)
                 .secure(secure)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .path("/")
                 .maxAge(0)
                 .build();
@@ -59,7 +59,7 @@ public class CookieUtil {
         return ResponseCookie.from(VERIFIED_EMAIL_NAME, email)
                 .httpOnly(true)
                 .secure(secure)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .path("/")
                 .maxAge(VERIFIED_EMAIL_MAX_AGE)
                 .build();
@@ -69,7 +69,7 @@ public class CookieUtil {
         return ResponseCookie.from(VERIFIED_EMAIL_NAME, "")
                 .httpOnly(true)
                 .secure(secure)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .path("/")
                 .maxAge(0)
                 .build();
