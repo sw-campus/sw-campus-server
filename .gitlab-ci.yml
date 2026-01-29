@@ -117,7 +117,8 @@ build-dev:
 
       # GitLab Container Registry 인증 설정
       mkdir -p /kaniko/.docker
-      echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_JOB_TOKEN} | base64)\"}}}" > /kaniko/.docker/config.json
+      AUTH=$(echo -n "${CI_REGISTRY_USER}:${CI_JOB_TOKEN}" | base64 | tr -d '\n')
+      echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"${AUTH}\"}}}" > /kaniko/.docker/config.json
 
       # Kaniko로 빌드 및 푸시
       /kaniko/executor \
@@ -224,7 +225,8 @@ build-release:
 
       # GitLab Container Registry 인증 설정
       mkdir -p /kaniko/.docker
-      echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_JOB_TOKEN} | base64)\"}}}" > /kaniko/.docker/config.json
+      AUTH=$(echo -n "${CI_REGISTRY_USER}:${CI_JOB_TOKEN}" | base64 | tr -d '\n')
+      echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"${AUTH}\"}}}" > /kaniko/.docker/config.json
 
       # Kaniko로 빌드 및 푸시
       /kaniko/executor \
