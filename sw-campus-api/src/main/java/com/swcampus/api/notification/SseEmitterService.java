@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Service
 public class SseEmitterService {
 
-    private static final Long TIMEOUT = 30 * 60 * 1000L; // 30분
+    private static final Long TIMEOUT = -1L; // 무한 (heartbeat 실패 시 정리됨)
     private static final long HEARTBEAT_INTERVAL = 30L; // 30초마다 heartbeat
     private final Map<Long, EmitterWrapper> emitters = new ConcurrentHashMap<>();
     private ScheduledExecutorService heartbeatScheduler;
