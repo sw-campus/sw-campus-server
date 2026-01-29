@@ -76,8 +76,7 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         @Param("status") ApprovalStatus status);
 
         @Query(value = """
-                        SELECT DISTINCT r FROM ReviewEntity r
-                        LEFT JOIN FETCH r.details
+                        SELECT DISTINCT r.id FROM ReviewEntity r
                         LEFT JOIN LectureEntity l ON l.lectureId = r.lectureId
                         WHERE (:status IS NULL OR r.approvalStatus = :status)
                         AND (:keyword IS NULL OR :keyword = '' OR l.lectureName ILIKE CONCAT('%', :keyword, '%'))
@@ -88,14 +87,13 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         WHERE (:status IS NULL OR r.approvalStatus = :status)
                         AND (:keyword IS NULL OR :keyword = '' OR l.lectureName ILIKE CONCAT('%', :keyword, '%'))
                         """)
-        Page<ReviewEntity> findAllWithDetailsAndKeyword(
+        Page<Long> findAllIdsWithKeyword(
                         @Param("status") ApprovalStatus status,
                         @Param("keyword") String keyword,
                         Pageable pageable);
 
         @Query(value = """
-                        SELECT DISTINCT r FROM ReviewEntity r
-                        LEFT JOIN FETCH r.details
+                        SELECT DISTINCT r.id FROM ReviewEntity r
                         WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId)
                         AND r.approvalStatus = :status
                         """,
@@ -104,10 +102,13 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId)
                         AND r.approvalStatus = :status
                         """)
-        Page<ReviewEntity> findByOrganizationIdAndApprovalStatusWithPagination(
+        Page<Long> findIdsByOrganizationIdAndApprovalStatus(
                         @Param("organizationId") Long organizationId,
                         @Param("status") ApprovalStatus status,
                         Pageable pageable);
+
+        @Query("SELECT r FROM ReviewEntity r LEFT JOIN FETCH r.details WHERE r.id IN :ids")
+        List<ReviewEntity> findByIdsWithDetails(@Param("ids") List<Long> ids);
 
         @Query("""
                         SELECT COUNT(r) FROM ReviewEntity r

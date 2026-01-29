@@ -32,6 +32,7 @@ public class AdminBannerService {
         List<Banner> banners = bannerRepository.findAll();
         List<Long> lectureIds = banners.stream()
                 .map(Banner::getLectureId)
+                .filter(id -> id != null)  // EVENT 타입 배너의 null lectureId 필터링
                 .distinct()
                 .toList();
         Map<Long, String> lectureNames = lectureRepository.findLectureNamesByIds(lectureIds);
@@ -46,9 +47,10 @@ public class AdminBannerService {
      */
     public Page<BannerDetailsDto> searchBanners(String keyword, BannerPeriodStatus periodStatus, BannerType type, Pageable pageable) {
         Page<Banner> bannerPage = bannerRepository.searchBanners(keyword, periodStatus, type, pageable);
-        
+
         List<Long> lectureIds = bannerPage.getContent().stream()
                 .map(Banner::getLectureId)
+                .filter(id -> id != null)  // EVENT 타입 배너의 null lectureId 필터링
                 .distinct()
                 .toList();
         Map<Long, String> lectureNames = lectureRepository.findLectureNamesByIds(lectureIds);
@@ -76,9 +78,12 @@ public class AdminBannerService {
     /**
      * 배너 생성 (이미지 파일 업로드 포함)
      * isActive가 null인 경우 기본값 true 설정
+     * EVENT 타입이 아닌 경우 lectureId 필수
      */
     @Transactional
     public BannerDetailsDto createBanner(Banner banner, byte[] imageContent, String imageName, String contentType) {
+        validateLectureIdForNonEventType(banner);
+
         String imageUrl = banner.getImageUrl();
 
         // 이미지 파일이 업로드된 경우 S3에 저장하고 URL 획득
@@ -107,9 +112,12 @@ public class AdminBannerService {
     /**
      * 배너 수정 (이미지 파일 업로드 포함)
      * 새 이미지가 업로드되면 기존 이미지 URL을 대체
+     * EVENT 타입이 아닌 경우 lectureId 필수
      */
     @Transactional
     public BannerDetailsDto updateBanner(Long id, Banner banner, byte[] imageContent, String imageName, String contentType) {
+        validateLectureIdForNonEventType(banner);
+
         Banner existing = getBanner(id);
         String imageUrl = existing.getImageUrl(); // 기존 이미지 URL 유지
 
@@ -153,6 +161,7 @@ public class AdminBannerService {
                 .type(existing.getType())
                 .url(existing.getUrl())
                 .imageUrl(existing.getImageUrl())
+                .backgroundColor(existing.getBackgroundColor())
                 .startDate(existing.getStartDate())
                 .endDate(existing.getEndDate())
                 .isActive(isActive)
@@ -168,9 +177,22 @@ public class AdminBannerService {
     }
 
     /**
+     * EVENT 타입이 아닌 배너는 lectureId가 필수인지 검증합니다.
+     */
+    private void validateLectureIdForNonEventType(Banner banner) {
+        if (banner.getType() != BannerType.EVENT && banner.getLectureId() == null) {
+            throw new IllegalArgumentException("EVENT 타입이 아닌 배너는 강의 ID가 필수입니다.");
+        }
+    }
+
+    /**
      * 단일 배너를 BannerDetailsDto로 변환 (강의명 단건 조회)
      */
     private BannerDetailsDto toDetails(Banner banner) {
+        // EVENT 타입 배너는 lectureId가 null일 수 있음
+        if (banner.getLectureId() == null) {
+            return toDetails(banner, Map.of());
+        }
         Map<Long, String> lectureNames = lectureRepository
                 .findLectureNamesByIds(List.of(banner.getLectureId()));
         return toDetails(banner, lectureNames);
@@ -180,7 +202,10 @@ public class AdminBannerService {
      * 배너와 강의명 맵을 사용하여 BannerDetailsDto 생성
      */
     private BannerDetailsDto toDetails(Banner banner, Map<Long, String> lectureNames) {
-        String lectureName = lectureNames.getOrDefault(banner.getLectureId(), UNKNOWN_LECTURE_NAME);
+        // EVENT 타입 배너는 lectureId가 null일 수 있으므로, null인 경우 lectureName도 null로 설정
+        String lectureName = banner.getLectureId() != null
+                ? lectureNames.getOrDefault(banner.getLectureId(), UNKNOWN_LECTURE_NAME)
+                : null;
         return BannerDetailsDto.from(banner, lectureName);
     }
 
