@@ -24,7 +24,7 @@ public class BannerEntity extends BaseEntity {
     private Long bannerId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "LECTURE_ID", nullable = false)
+    @JoinColumn(name = "LECTURE_ID", nullable = true)
     private LectureEntity lecture;
 
     @Enumerated(EnumType.STRING)
