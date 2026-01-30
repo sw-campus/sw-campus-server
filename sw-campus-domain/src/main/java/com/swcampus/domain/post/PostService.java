@@ -142,6 +142,9 @@ public class PostService {
 
         post.delete();
         postRepository.save(post);
+
+        // 게시글에 달린 댓글도 soft delete
+        commentService.softDeleteByPostId(postId);
     }
 
     @Transactional

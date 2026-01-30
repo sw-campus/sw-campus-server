@@ -120,4 +120,9 @@ public class CommentEntityRepository implements CommentRepository {
                         row -> (Long) row[1]
                 ));
     }
+
+    @Override
+    public void softDeleteByPostId(Long postId) {
+        jpaRepository.softDeleteByPostId(postId);
+    }
 }

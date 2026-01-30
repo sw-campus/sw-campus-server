@@ -40,4 +40,9 @@ public interface CommentRepository {
      * @return Map<댓글ID, 대댓글수>
      */
     java.util.Map<Long, Long> countRepliesByParentIds(java.util.List<Long> commentIds);
+
+    /**
+     * 특정 게시글의 댓글을 일괄 soft delete (게시글 삭제 시 사용)
+     */
+    void softDeleteByPostId(Long postId);
 }

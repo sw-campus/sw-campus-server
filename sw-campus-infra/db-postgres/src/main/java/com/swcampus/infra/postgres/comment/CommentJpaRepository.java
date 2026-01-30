@@ -41,4 +41,8 @@ public interface CommentJpaRepository extends JpaRepository<CommentEntity, Long>
 
     @Query("SELECT c.parentId, COUNT(c) FROM CommentEntity c WHERE c.parentId IN :parentIds AND c.deleted = false GROUP BY c.parentId")
     List<Object[]> countRepliesByParentIds(@Param("parentIds") List<Long> parentIds);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE CommentEntity c SET c.deleted = true WHERE c.postId = :postId AND c.deleted = false")
+    void softDeleteByPostId(@Param("postId") Long postId);
 }

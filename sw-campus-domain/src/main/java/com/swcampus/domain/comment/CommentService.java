@@ -140,4 +140,9 @@ public class CommentService {
     public java.util.Map<Long, Long> getReplyCounts(List<Long> commentIds) {
         return commentRepository.countRepliesByParentIds(commentIds);
     }
+
+    @Transactional
+    public void softDeleteByPostId(Long postId) {
+        commentRepository.softDeleteByPostId(postId);
+    }
 }
