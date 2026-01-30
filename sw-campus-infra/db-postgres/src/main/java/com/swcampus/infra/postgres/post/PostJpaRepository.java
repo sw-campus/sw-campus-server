@@ -262,13 +262,18 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
                 p.is_pinned,
                 COALESCE(m.nickname, '알 수 없음') as author_nickname,
                 COALESCE(bc.board_category_name, '알 수 없음') as category_name,
-                (SELECT MAX(c2.created_at) FROM swcampus.comments c2 WHERE c2.post_id = p.post_id AND c2.user_id = :userId AND c2.is_deleted = false) as last_comment_at
+                ulc.last_comment_at
             FROM swcampus.posts p
-            INNER JOIN swcampus.comments c ON p.post_id = c.post_id AND c.user_id = :userId AND c.is_deleted = false
+            INNER JOIN (
+                SELECT post_id, MAX(created_at) as last_comment_at
+                FROM swcampus.comments
+                WHERE user_id = :userId AND is_deleted = false
+                GROUP BY post_id
+            ) ulc ON p.post_id = ulc.post_id
             LEFT JOIN swcampus.members m ON p.user_id = m.user_id
             LEFT JOIN swcampus.board_categories bc ON p.board_category_id = bc.board_category_id
             WHERE p.is_deleted = false
-            ORDER BY last_comment_at DESC
+            ORDER BY ulc.last_comment_at DESC
             """,
             countQuery = """
             SELECT COUNT(DISTINCT p.post_id)
