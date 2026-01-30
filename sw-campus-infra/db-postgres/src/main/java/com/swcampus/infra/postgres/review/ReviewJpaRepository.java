@@ -76,13 +76,13 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         @Param("status") ApprovalStatus status);
 
         @Query(value = """
-                        SELECT DISTINCT r.id FROM ReviewEntity r
+                        SELECT r.id FROM ReviewEntity r
                         LEFT JOIN LectureEntity l ON l.lectureId = r.lectureId
                         WHERE (:status IS NULL OR r.approvalStatus = :status)
                         AND (:keyword IS NULL OR :keyword = '' OR l.lectureName ILIKE CONCAT('%', :keyword, '%'))
                         """,
                         countQuery = """
-                        SELECT COUNT(DISTINCT r) FROM ReviewEntity r
+                        SELECT COUNT(r) FROM ReviewEntity r
                         LEFT JOIN LectureEntity l ON l.lectureId = r.lectureId
                         WHERE (:status IS NULL OR r.approvalStatus = :status)
                         AND (:keyword IS NULL OR :keyword = '' OR l.lectureName ILIKE CONCAT('%', :keyword, '%'))
@@ -93,12 +93,12 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
                         Pageable pageable);
 
         @Query(value = """
-                        SELECT DISTINCT r.id FROM ReviewEntity r
+                        SELECT r.id FROM ReviewEntity r
                         WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId)
                         AND r.approvalStatus = :status
                         """,
                         countQuery = """
-                        SELECT COUNT(DISTINCT r) FROM ReviewEntity r
+                        SELECT COUNT(r) FROM ReviewEntity r
                         WHERE EXISTS (SELECT 1 FROM LectureEntity l WHERE l.lectureId = r.lectureId AND l.orgId = :organizationId)
                         AND r.approvalStatus = :status
                         """)
