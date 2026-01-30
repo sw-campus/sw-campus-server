@@ -2,6 +2,7 @@ package com.swcampus.api.user;
 
 import com.swcampus.api.post.response.PostResponse;
 import com.swcampus.api.user.response.CommentedPostResponse;
+import com.swcampus.api.user.response.UserCommentResponse;
 import com.swcampus.api.user.response.UserProfileResponse;
 import com.swcampus.domain.comment.Comment;
 import com.swcampus.domain.comment.CommentService;
@@ -48,14 +49,14 @@ public class UserProfileController {
 
         Member member = memberService.getMember(userId);
         long postCount = postRepository.countByUserId(userId);
-        long commentedPostCount = postService.countCommentedPostsByUserId(userId);
+        long commentCount = commentService.countByUserId(userId);
 
         UserProfileResponse response = UserProfileResponse.of(
                 member.getId(),
                 member.getNickname(),
                 member.getCreatedAt(),
                 postCount,
-                commentedPostCount
+                commentCount
         );
 
         return ResponseEntity.ok(response);
@@ -136,7 +137,7 @@ public class UserProfileController {
                 .toList();
 
         // 내 댓글들의 대댓글 수 조회
-        Map<Long, Long> replyCounts = commentService.getReplyCounts(myCommentIds);
+        Map<Long, Long> replyCounts = commentService.getReplyCountsByParentIds(myCommentIds);
 
         Page<CommentedPostResponse> response = posts.map(summary -> {
             Long postId = summary.getPost().getId();
@@ -152,6 +153,53 @@ public class UserProfileController {
                     myComment != null ? replyCounts.getOrDefault(myComment.getId(), 0L) : 0L
             );
         });
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "유저 댓글 목록 조회",
+               description = "특정 유저가 작성한 댓글 목록을 개별적으로 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "유저를 찾을 수 없음")
+    })
+    @GetMapping("/{userId}/comments")
+    public ResponseEntity<Page<UserCommentResponse>> getUserComments(
+            @Parameter(description = "유저 ID", required = true)
+            @PathVariable("userId") Long userId,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        // 유저 존재 여부 확인
+        memberService.getMember(userId);
+
+        Page<Comment> comments = commentService.getCommentsByUserId(userId, pageable);
+
+        // 게시글 제목 일괄 조회 (N+1 방지)
+        List<Long> postIds = comments.getContent().stream()
+                .map(Comment::getPostId)
+                .distinct()
+                .toList();
+        Map<Long, String> postTitles = postRepository.findTitlesByIds(postIds);
+
+        // 대댓글 수 일괄 조회
+        List<Long> commentIds = comments.getContent().stream()
+                .map(Comment::getId)
+                .toList();
+        Map<Long, Long> replyCounts = commentService.getReplyCountsByParentIds(commentIds);
+
+        Page<UserCommentResponse> response = comments.map(c ->
+                UserCommentResponse.builder()
+                        .commentId(c.getId())
+                        .postId(c.getPostId())
+                        .postTitle(postTitles.getOrDefault(
+                                c.getPostId(), "삭제된 게시글"))
+                        .body(c.getBody())
+                        .likeCount(c.getLikeCount())
+                        .replyCount(replyCounts.getOrDefault(c.getId(), 0L))
+                        .reply(c.isReply())
+                        .createdAt(c.getCreatedAt())
+                        .build()
+        );
 
         return ResponseEntity.ok(response);
     }

@@ -9,8 +9,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -271,12 +274,19 @@ public class PostEntityRepository implements PostRepository {
     }
 
     @Override
-    public long countCommentedByUserId(Long userId) {
-        return jpaRepository.countCommentedByUserIdNotDeleted(userId);
+    public void setUserIdNullByUserId(Long userId) {
+        jpaRepository.setUserIdNullByUserId(userId);
     }
 
     @Override
-    public void setUserIdNullByUserId(Long userId) {
-        jpaRepository.setUserIdNullByUserId(userId);
+    public Map<Long, String> findTitlesByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return jpaRepository.findTitlesByIds(ids).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (String) row[1]
+                ));
     }
 }

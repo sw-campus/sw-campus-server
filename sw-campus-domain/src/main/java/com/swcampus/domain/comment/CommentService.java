@@ -9,10 +9,15 @@ import com.swcampus.domain.post.Post;
 import com.swcampus.domain.post.PostRepository;
 import com.swcampus.domain.post.exception.PostNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -123,21 +128,43 @@ public class CommentService {
         return commentRepository.countByPostId(postId);
     }
 
-    public java.util.Map<Long, Long> getCommentCounts(List<Long> postIds) {
+    public Map<Long, Long> getCommentCounts(List<Long> postIds) {
         return commentRepository.countByPostIds(postIds);
     }
 
     /**
      * 특정 사용자가 특정 게시글들에 단 가장 최근 댓글을 조회
      */
-    public java.util.Map<Long, Comment> getLatestCommentsByUserAndPosts(Long userId, List<Long> postIds) {
+    public Map<Long, Comment> getLatestCommentsByUserAndPosts(Long userId, List<Long> postIds) {
         return commentRepository.findLatestByUserIdAndPostIds(userId, postIds);
     }
 
     /**
      * 특정 댓글들의 대댓글 수를 조회
      */
-    public java.util.Map<Long, Long> getReplyCounts(List<Long> commentIds) {
+    public Map<Long, Long> getReplyCountsByParentIds(List<Long> commentIds) {
         return commentRepository.countRepliesByParentIds(commentIds);
     }
+
+    @Transactional
+    public void softDeleteByPostId(Long postId) {
+        commentRepository.softDeleteByPostId(postId);
+    }
+
+    public Page<Comment> getCommentsByUserId(Long userId, Pageable pageable) {
+        // 수정 최신순 > 작성 최신순 > ID 역순 (페이지네이션 정렬 안정성 보장)
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "updatedAt")
+                        .and(Sort.by(Sort.Direction.DESC, "createdAt"))
+                        .and(Sort.by(Sort.Direction.DESC, "id"))
+        );
+        return commentRepository.findByUserId(userId, sortedPageable);
+    }
+
+    public long countByUserId(Long userId) {
+        return commentRepository.countByUserId(userId);
+    }
+
 }

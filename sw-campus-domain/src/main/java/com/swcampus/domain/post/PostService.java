@@ -142,6 +142,9 @@ public class PostService {
 
         post.delete();
         postRepository.save(post);
+
+        // 게시글에 달린 댓글도 soft delete
+        commentService.softDeleteByPostId(postId);
     }
 
     @Transactional
@@ -182,13 +185,6 @@ public class PostService {
      */
     public Page<PostSummary> getCommentedPostsByUserId(Long userId, Pageable pageable) {
         return postRepository.findCommentedByUserId(userId, pageable);
-    }
-
-    /**
-     * 특정 유저가 댓글을 단 게시글 수 조회
-     */
-    public long countCommentedPostsByUserId(Long userId) {
-        return postRepository.countCommentedByUserId(userId);
     }
 
     /**

@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface PostRepository {
@@ -67,12 +68,12 @@ public interface PostRepository {
     Page<PostSummary> findCommentedByUserId(Long userId, Pageable pageable);
 
     /**
-     * 특정 유저가 댓글을 단 게시글 수 조회 (삭제되지 않은 게시글만)
-     */
-    long countCommentedByUserId(Long userId);
-
-    /**
      * 특정 유저의 게시글 작성자를 NULL로 설정 (회원 탈퇴 시 사용)
      */
     void setUserIdNullByUserId(Long userId);
+
+    /**
+     * 여러 게시글 ID로 게시글 제목을 일괄 조회합니다.
+     */
+    Map<Long, String> findTitlesByIds(List<Long> ids);
 }

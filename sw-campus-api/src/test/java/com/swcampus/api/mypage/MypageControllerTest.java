@@ -30,6 +30,8 @@ import com.swcampus.domain.common.ApprovalStatus;
 import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewCategory;
 import com.swcampus.domain.review.ReviewDetail;
+import com.swcampus.domain.comment.CommentService;
+import com.swcampus.domain.post.PostService;
 import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.review.ReviewWithNickname;
 import com.swcampus.domain.review.exception.ReviewNotFoundException;
@@ -85,6 +87,12 @@ class MypageControllerTest {
 
     @MockitoBean
     private ReviewService reviewService;
+
+    @MockitoBean
+    private PostService postService;
+
+    @MockitoBean
+    private CommentService commentService;
 
     private MemberPrincipal memberPrincipal;
     private static final String TEST_PASSWORD = "password";

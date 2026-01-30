@@ -1,9 +1,10 @@
 package com.swcampus.api.organization;
 
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -16,6 +17,8 @@ import com.swcampus.domain.auth.TokenProvider;
 import com.swcampus.domain.lecture.Lecture;
 import com.swcampus.domain.lecture.LectureService;
 import com.swcampus.domain.lecture.LectureStatus;
+import com.swcampus.domain.lecture.dto.LectureSearchCondition;
+import com.swcampus.domain.lecture.dto.LectureSummaryDto;
 import com.swcampus.domain.organization.Organization;
 import com.swcampus.domain.organization.OrganizationService;
 import com.swcampus.domain.common.ApprovalStatus;
@@ -23,11 +26,13 @@ import com.swcampus.domain.review.Review;
 import com.swcampus.domain.review.ReviewService;
 import com.swcampus.domain.review.ReviewSortType;
 import com.swcampus.domain.review.ReviewWithNickname;
+import com.swcampus.domain.review.dto.ReviewListResult;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,18 +116,18 @@ class OrganizationControllerTest {
                 .lectureName("Org Lecture")
                 .status(LectureStatus.RECRUITING)
                 .build();
-        
+        LectureSummaryDto dto = LectureSummaryDto.from(lecture, 4.3, 10L);
+        Page<LectureSummaryDto> lecturePage = new PageImpl<>(List.of(dto), PageRequest.of(0, 6), 1);
+
         when(organizationService.getOrganization(10L)).thenReturn(organization);
-        when(lectureService.getPublishedLectureListByOrgId(10L)).thenReturn(List.of(lecture));
-        when(lectureService.getAverageScoresByLectureIds(anyList())).thenReturn(java.util.Map.of(100L, 4.3));
-        when(lectureService.getReviewCountsByLectureIds(anyList())).thenReturn(java.util.Map.of(100L, 10L));
+        when(lectureService.searchLecturesWithStats(any(LectureSearchCondition.class))).thenReturn(lecturePage);
 
         // when & then
         mockMvc.perform(get("/api/v1/organizations/{organizationId}/lectures", 10L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].lectureId").value(100))
-                .andExpect(jsonPath("$[0].lectureName").value("Org Lecture"))
-                .andExpect(jsonPath("$[0].averageScore").value(4.3));
+                .andExpect(jsonPath("$.lectures[0].lectureId").value(100))
+                .andExpect(jsonPath("$.lectures[0].lectureName").value("Org Lecture"))
+                .andExpect(jsonPath("$.lectures[0].averageScore").value(4.3));
     }
 
     @Test
@@ -138,11 +143,11 @@ class OrganizationControllerTest {
                 ReviewWithNickname.of(review1, "사용자1"),
                 ReviewWithNickname.of(review2, "사용자2")
         );
-        Page<ReviewWithNickname> reviewPage = new PageImpl<>(reviewsWithNicknames);
+        ReviewListResult result = ReviewListResult.of(reviewsWithNicknames, 2, true);
 
-        when(reviewService.getApprovedReviewsByOrganizationWithPagination(
-                eq(10L), eq(0), eq(10), eq(ReviewSortType.LATEST)))
-                .thenReturn(reviewPage);
+        when(reviewService.getApprovedReviewsByOrganizationWithBlind(
+                eq(10L), isNull(), eq(0), eq(10), eq(ReviewSortType.LATEST)))
+                .thenReturn(result);
 
         // when & then
         mockMvc.perform(get("/api/v1/organizations/{organizationId}/reviews", 10L)
@@ -150,30 +155,30 @@ class OrganizationControllerTest {
                         .param("size", "10")
                         .param("sort", "LATEST"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].reviewId").value(1))
-                .andExpect(jsonPath("$.content[0].comment").value("좋은 강의였습니다"))
-                .andExpect(jsonPath("$.content[0].score").value(4.5))
-                .andExpect(jsonPath("$.content[0].nickname").value("사용자1"))
-                .andExpect(jsonPath("$.content[1].reviewId").value(2));
+                .andExpect(jsonPath("$.reviews").isArray())
+                .andExpect(jsonPath("$.reviews.length()").value(2))
+                .andExpect(jsonPath("$.reviews[0].reviewId").value(1))
+                .andExpect(jsonPath("$.reviews[0].comment").value("좋은 강의였습니다"))
+                .andExpect(jsonPath("$.reviews[0].score").value(4.5))
+                .andExpect(jsonPath("$.reviews[0].nickname").value("사용자1"))
+                .andExpect(jsonPath("$.reviews[1].reviewId").value(2));
     }
 
     @Test
     @DisplayName("기관별 후기 조회 - 기본값으로 조회")
     void getApprovedReviewsByOrganization_withDefaultParams() throws Exception {
         // given
-        Page<ReviewWithNickname> emptyPage = new PageImpl<>(List.of());
+        ReviewListResult result = ReviewListResult.of(List.of(), 0, false);
 
-        when(reviewService.getApprovedReviewsByOrganizationWithPagination(
-                eq(10L), eq(0), eq(6), eq(ReviewSortType.LATEST)))
-                .thenReturn(emptyPage);
+        when(reviewService.getApprovedReviewsByOrganizationWithBlind(
+                eq(10L), isNull(), eq(0), eq(6), eq(ReviewSortType.LATEST)))
+                .thenReturn(result);
 
         // when & then
         mockMvc.perform(get("/api/v1/organizations/{organizationId}/reviews", 10L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(0));
+                .andExpect(jsonPath("$.reviews").isArray())
+                .andExpect(jsonPath("$.reviews.length()").value(0));
     }
 
     @Test
@@ -186,17 +191,17 @@ class OrganizationControllerTest {
         List<ReviewWithNickname> reviewsWithNicknames = List.of(
                 ReviewWithNickname.of(review, "베스트리뷰어")
         );
-        Page<ReviewWithNickname> reviewPage = new PageImpl<>(reviewsWithNicknames);
+        ReviewListResult result = ReviewListResult.of(reviewsWithNicknames, 1, false);
 
-        when(reviewService.getApprovedReviewsByOrganizationWithPagination(
-                eq(10L), eq(0), eq(6), eq(ReviewSortType.SCORE_DESC)))
-                .thenReturn(reviewPage);
+        when(reviewService.getApprovedReviewsByOrganizationWithBlind(
+                eq(10L), isNull(), eq(0), eq(6), eq(ReviewSortType.SCORE_DESC)))
+                .thenReturn(result);
 
         // when & then
         mockMvc.perform(get("/api/v1/organizations/{organizationId}/reviews", 10L)
                         .param("sort", "SCORE_DESC"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].score").value(5.0));
+                .andExpect(jsonPath("$.reviews[0].score").value(5.0));
     }
 
     @Test
@@ -209,17 +214,17 @@ class OrganizationControllerTest {
         List<ReviewWithNickname> reviewsWithNicknames = List.of(
                 ReviewWithNickname.of(review, "사용자11")
         );
-        Page<ReviewWithNickname> reviewPage = new PageImpl<>(reviewsWithNicknames);
+        ReviewListResult result = ReviewListResult.of(reviewsWithNicknames, 11, true);
 
-        when(reviewService.getApprovedReviewsByOrganizationWithPagination(
-                eq(10L), eq(1), eq(10), eq(ReviewSortType.LATEST)))
-                .thenReturn(reviewPage);
+        when(reviewService.getApprovedReviewsByOrganizationWithBlind(
+                eq(10L), isNull(), eq(1), eq(10), eq(ReviewSortType.LATEST)))
+                .thenReturn(result);
 
         // when & then
         mockMvc.perform(get("/api/v1/organizations/{organizationId}/reviews", 10L)
                         .param("page", "1")
                         .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].reviewId").value(11));
+                .andExpect(jsonPath("$.reviews[0].reviewId").value(11));
     }
 }
