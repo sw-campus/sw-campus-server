@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
@@ -135,7 +136,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             ORDER BY p.post_id DESC
             LIMIT 1
             """, nativeQuery = true)
-    java.util.List<Object[]> findPreviousPostWithDetails(@Param("currentPostId") Long currentPostId);
+    List<Object[]> findPreviousPostWithDetails(@Param("currentPostId") Long currentPostId);
 
     /**
      * 다음 게시글 조회 (현재 게시글보다 id가 크고, 삭제되지 않은 게시글 중 가장 작은 id)
@@ -166,7 +167,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             ORDER BY p.post_id ASC
             LIMIT 1
             """, nativeQuery = true)
-    java.util.List<Object[]> findNextPostWithDetails(@Param("currentPostId") Long currentPostId);
+    List<Object[]> findNextPostWithDetails(@Param("currentPostId") Long currentPostId);
 
     /**
      * 특정 유저가 작성한 게시글 목록 조회 (삭제되지 않은 게시글만)
@@ -237,7 +238,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             WHERE p.is_deleted = false AND p.post_id = ANY(CAST(:ids AS bigint[]))
             ORDER BY p.created_at DESC
             """, nativeQuery = true)
-    java.util.List<Object[]> findAllByIdsWithDetails(@Param("ids") Long[] ids);
+    List<Object[]> findAllByIdsWithDetails(@Param("ids") Long[] ids);
 
     /**
      * 특정 유저가 댓글을 단 게시글 목록 조회 (삭제되지 않은 게시글만, 중복 제거)
@@ -279,17 +280,6 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
     Page<Object[]> findCommentedByUserIdWithDetails(@Param("userId") Long userId, Pageable pageable);
 
     /**
-     * 특정 유저가 댓글을 단 게시글 수 조회 (삭제되지 않은 게시글만, 중복 제거)
-     */
-    @Query(value = """
-            SELECT COUNT(DISTINCT p.post_id)
-            FROM swcampus.posts p
-            INNER JOIN swcampus.comments c ON p.post_id = c.post_id AND c.user_id = :userId AND c.is_deleted = false
-            WHERE p.is_deleted = false
-            """, nativeQuery = true)
-    long countCommentedByUserIdNotDeleted(@Param("userId") Long userId);
-
-    /**
      * 특정 유저의 게시글 작성자를 NULL로 설정 (회원 탈퇴 시 사용)
      */
     @Modifying
@@ -297,5 +287,5 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
     void setUserIdNullByUserId(@Param("userId") Long userId);
 
     @Query("SELECT p.id, p.title FROM PostEntity p WHERE p.id IN :ids AND p.deleted = false")
-    java.util.List<Object[]> findTitlesByIds(@Param("ids") java.util.List<Long> ids);
+    List<Object[]> findTitlesByIds(@Param("ids") List<Long> ids);
 }

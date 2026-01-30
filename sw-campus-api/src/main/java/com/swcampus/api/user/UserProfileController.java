@@ -18,7 +18,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -170,23 +169,10 @@ public class UserProfileController {
             @PathVariable("userId") Long userId,
             @PageableDefault(size = 10) Pageable pageable) {
 
+        // 유저 존재 여부 확인
         memberService.getMember(userId);
 
-        // updatedAt DESC, createdAt DESC, id DESC (수정 최신순 > 작성 최신순 > ID 역순)
-        // id를 tiebreaker로 추가하여 페이지네이션 정렬 안정성 보장
-        Pageable sortedPageable = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "updatedAt")
-                        .and(Sort.by(Sort.Direction.DESC, "createdAt"))
-                        .and(Sort.by(Sort.Direction.DESC, "id"))
-        );
-
-        Page<Comment> comments = commentService.getCommentsByUserId(userId, sortedPageable);
-
-        if (comments.isEmpty()) {
-            return ResponseEntity.ok(Page.empty(pageable));
-        }
+        Page<Comment> comments = commentService.getCommentsByUserId(userId, pageable);
 
         // 게시글 제목 일괄 조회 (N+1 방지)
         List<Long> postIds = comments.getContent().stream()
@@ -199,7 +185,7 @@ public class UserProfileController {
         List<Long> commentIds = comments.getContent().stream()
                 .map(Comment::getId)
                 .toList();
-        Map<Long, Long> replyCounts = commentService.getReplyCounts(commentIds);
+        Map<Long, Long> replyCounts = commentService.getReplyCountsByParentIds(commentIds);
 
         Page<UserCommentResponse> response = comments.map(c ->
                 UserCommentResponse.builder()

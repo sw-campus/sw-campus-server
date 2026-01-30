@@ -139,15 +139,4 @@ public class CommentEntityRepository implements CommentRepository {
         return jpaRepository.countByUserIdAndNotDeleted(userId);
     }
 
-    @Override
-    public Map<Long, Long> countByParentIds(List<Long> parentIds) {
-        if (parentIds == null || parentIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        return jpaRepository.countByParentIds(parentIds).stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (Long) row[1]
-                ));
-    }
 }

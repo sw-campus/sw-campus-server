@@ -19,7 +19,7 @@ public interface CommentRepository {
 
     long countByPostId(Long postId);
 
-    java.util.Map<Long, Long> countByPostIds(java.util.List<Long> postIds);
+    Map<Long, Long> countByPostIds(List<Long> postIds);
 
     void incrementLikeCount(Long commentId);
 
@@ -36,14 +36,14 @@ public interface CommentRepository {
      * @param postIds 게시글 ID 목록
      * @return Map<게시글ID, 댓글>
      */
-    java.util.Map<Long, Comment> findLatestByUserIdAndPostIds(Long userId, java.util.List<Long> postIds);
+    Map<Long, Comment> findLatestByUserIdAndPostIds(Long userId, List<Long> postIds);
 
     /**
      * 특정 댓글들의 대댓글 수를 조회
      * @param commentIds 댓글 ID 목록
      * @return Map<댓글ID, 대댓글수>
      */
-    java.util.Map<Long, Long> countRepliesByParentIds(java.util.List<Long> commentIds);
+    Map<Long, Long> countRepliesByParentIds(List<Long> commentIds);
 
     /**
      * 특정 게시글의 댓글을 일괄 soft delete (게시글 삭제 시 사용)
@@ -53,6 +53,4 @@ public interface CommentRepository {
     Page<Comment> findByUserId(Long userId, Pageable pageable);
 
     long countByUserId(Long userId);
-
-    Map<Long, Long> countByParentIds(List<Long> parentIds);
 }
