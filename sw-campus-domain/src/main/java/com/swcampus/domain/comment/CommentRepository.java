@@ -1,6 +1,10 @@
 package com.swcampus.domain.comment;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface CommentRepository {
@@ -45,4 +49,10 @@ public interface CommentRepository {
      * 특정 게시글의 댓글을 일괄 soft delete (게시글 삭제 시 사용)
      */
     void softDeleteByPostId(Long postId);
+
+    Page<Comment> findByUserId(Long userId, Pageable pageable);
+
+    long countByUserId(Long userId);
+
+    Map<Long, Long> countByParentIds(List<Long> parentIds);
 }

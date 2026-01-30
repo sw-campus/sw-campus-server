@@ -9,10 +9,13 @@ import com.swcampus.domain.post.Post;
 import com.swcampus.domain.post.PostRepository;
 import com.swcampus.domain.post.exception.PostNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -137,12 +140,24 @@ public class CommentService {
     /**
      * 특정 댓글들의 대댓글 수를 조회
      */
-    public java.util.Map<Long, Long> getReplyCounts(List<Long> commentIds) {
+    public java.util.Map<Long, Long> getReplyCountsByParentIds(List<Long> commentIds) {
         return commentRepository.countRepliesByParentIds(commentIds);
     }
 
     @Transactional
     public void softDeleteByPostId(Long postId) {
         commentRepository.softDeleteByPostId(postId);
+    }
+
+    public Page<Comment> getCommentsByUserId(Long userId, Pageable pageable) {
+        return commentRepository.findByUserId(userId, pageable);
+    }
+
+    public long countByUserId(Long userId) {
+        return commentRepository.countByUserId(userId);
+    }
+
+    public Map<Long, Long> getReplyCounts(List<Long> parentIds) {
+        return commentRepository.countByParentIds(parentIds);
     }
 }

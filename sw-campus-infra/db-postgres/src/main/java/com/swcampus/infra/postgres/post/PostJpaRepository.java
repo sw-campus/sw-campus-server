@@ -295,4 +295,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
     @Modifying
     @Query("UPDATE PostEntity p SET p.userId = NULL WHERE p.userId = :userId")
     void setUserIdNullByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT p.id, p.title FROM PostEntity p WHERE p.id IN :ids AND p.deleted = false")
+    java.util.List<Object[]> findTitlesByIds(@Param("ids") java.util.List<Long> ids);
 }

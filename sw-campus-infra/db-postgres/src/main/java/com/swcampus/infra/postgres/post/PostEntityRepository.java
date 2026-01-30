@@ -279,4 +279,16 @@ public class PostEntityRepository implements PostRepository {
     public void setUserIdNullByUserId(Long userId) {
         jpaRepository.setUserIdNullByUserId(userId);
     }
+
+    @Override
+    public java.util.Map<Long, String> findTitlesByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        return jpaRepository.findTitlesByIds(ids).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (String) row[1]
+                ));
+    }
 }

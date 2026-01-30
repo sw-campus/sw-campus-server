@@ -1,6 +1,8 @@
 package com.swcampus.infra.postgres.comment;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -45,4 +47,13 @@ public interface CommentJpaRepository extends JpaRepository<CommentEntity, Long>
     @org.springframework.data.jpa.repository.Modifying
     @Query("UPDATE CommentEntity c SET c.deleted = true WHERE c.postId = :postId AND c.deleted = false")
     void softDeleteByPostId(@Param("postId") Long postId);
+
+    @Query("SELECT c FROM CommentEntity c WHERE c.userId = :userId AND c.deleted = false")
+    Page<CommentEntity> findByUserIdAndNotDeleted(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT COUNT(c) FROM CommentEntity c WHERE c.userId = :userId AND c.deleted = false")
+    long countByUserIdAndNotDeleted(@Param("userId") Long userId);
+
+    @Query("SELECT c.parentId, COUNT(c) FROM CommentEntity c WHERE c.parentId IN :parentIds AND c.deleted = false GROUP BY c.parentId")
+    List<Object[]> countByParentIds(@Param("parentIds") List<Long> parentIds);
 }

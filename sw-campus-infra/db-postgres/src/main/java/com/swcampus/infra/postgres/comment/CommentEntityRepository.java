@@ -4,6 +4,8 @@ import com.swcampus.domain.comment.Comment;
 import com.swcampus.domain.comment.CommentRepository;
 import com.swcampus.domain.comment.exception.CommentNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
@@ -124,5 +126,28 @@ public class CommentEntityRepository implements CommentRepository {
     @Override
     public void softDeleteByPostId(Long postId) {
         jpaRepository.softDeleteByPostId(postId);
+    }
+
+    @Override
+    public Page<Comment> findByUserId(Long userId, Pageable pageable) {
+        return jpaRepository.findByUserIdAndNotDeleted(userId, pageable)
+                .map(CommentEntity::toDomain);
+    }
+
+    @Override
+    public long countByUserId(Long userId) {
+        return jpaRepository.countByUserIdAndNotDeleted(userId);
+    }
+
+    @Override
+    public Map<Long, Long> countByParentIds(List<Long> parentIds) {
+        if (parentIds == null || parentIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return jpaRepository.countByParentIds(parentIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
     }
 }

@@ -32,10 +32,10 @@ public record MypageProfileResponse(
     @Schema(description = "작성한 게시글 수", example = "12")
     Long postCount,
 
-    @Schema(description = "댓글을 단 게시글 수", example = "5")
-    Long commentedPostCount
+    @Schema(description = "작성한 댓글 수", example = "15")
+    Long commentCount
 ) {
-    public static MypageProfileResponse from(Member member, boolean hasSurvey, long postCount, long commentedPostCount) {
+    public static MypageProfileResponse from(Member member, boolean hasSurvey, long postCount, long commentCount) {
         return new MypageProfileResponse(
             member.getEmail(),
             member.getName(),
@@ -46,7 +46,7 @@ public record MypageProfileResponse(
             member.getRole().name(),
             hasSurvey,
             postCount,
-            commentedPostCount
+            commentCount
         );
     }
 }

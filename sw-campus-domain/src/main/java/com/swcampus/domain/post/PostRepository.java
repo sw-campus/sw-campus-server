@@ -75,4 +75,9 @@ public interface PostRepository {
      * 특정 유저의 게시글 작성자를 NULL로 설정 (회원 탈퇴 시 사용)
      */
     void setUserIdNullByUserId(Long userId);
+
+    /**
+     * 여러 게시글 ID로 게시글 제목을 일괄 조회합니다.
+     */
+    java.util.Map<Long, String> findTitlesByIds(List<Long> ids);
 }
