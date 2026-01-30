@@ -1,6 +1,8 @@
 package com.swcampus.domain.post;
 
 import com.swcampus.domain.board.BoardCategoryService;
+import com.swcampus.domain.comment.CommentService;
+import com.swcampus.domain.member.MemberService;
 import com.swcampus.domain.post.exception.PostAccessDeniedException;
 import com.swcampus.domain.post.exception.PostNotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +39,16 @@ class PostServiceTest {
     private PostRepository postRepository;
 
     @Mock
+    private PostViewRepository postViewRepository;
+
+    @Mock
     private BoardCategoryService boardCategoryService;
+
+    @Mock
+    private MemberService memberService;
+
+    @Mock
+    private CommentService commentService;
 
     @Nested
     @DisplayName("게시글 작성")
@@ -410,6 +421,7 @@ class PostServiceTest {
 
             // then
             verify(postRepository).save(any(Post.class));
+            verify(commentService).softDeleteByPostId(postId);
             assertThat(post.isDeleted()).isTrue();
         }
 
@@ -434,6 +446,7 @@ class PostServiceTest {
 
             // then
             verify(postRepository).save(any(Post.class));
+            verify(commentService).softDeleteByPostId(postId);
             assertThat(post.isDeleted()).isTrue();
         }
 
@@ -449,6 +462,8 @@ class PostServiceTest {
             // when & then
             assertThatThrownBy(() -> postService.deletePost(postId, 1L, false))
                     .isInstanceOf(PostNotFoundException.class);
+
+            verify(commentService, never()).softDeleteByPostId(anyLong());
         }
 
         @Test
@@ -468,6 +483,8 @@ class PostServiceTest {
             // when & then
             assertThatThrownBy(() -> postService.deletePost(postId, otherUserId, isAdmin))
                     .isInstanceOf(PostAccessDeniedException.class);
+
+            verify(commentService, never()).softDeleteByPostId(anyLong());
         }
     }
 
@@ -666,6 +683,70 @@ class PostServiceTest {
             // when & then
             assertThatThrownBy(() -> postService.togglePin(postId))
                     .isInstanceOf(PostNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 단 게시글 조회")
+    class GetCommentedPostsByUserIdTest {
+
+        @Test
+        @DisplayName("사용자가 댓글 단 게시글 목록 조회 성공")
+        void getCommentedPostsByUserId_success() {
+            // given
+            Long userId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+            List<PostSummary> summaries = List.of(
+                    createMockPostSummary(1L),
+                    createMockPostSummary(2L)
+            );
+
+            given(postRepository.findCommentedByUserId(userId, pageable))
+                    .willReturn(new PageImpl<>(summaries, pageable, 2));
+
+            // when
+            Page<PostSummary> result = postService.getCommentedPostsByUserId(userId, pageable);
+
+            // then
+            assertThat(result.getContent()).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("결과 없는 경우 빈 페이지 반환")
+        void getCommentedPostsByUserId_empty() {
+            // given
+            Long userId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+
+            given(postRepository.findCommentedByUserId(userId, pageable))
+                    .willReturn(Page.empty(pageable));
+
+            // when
+            Page<PostSummary> result = postService.getCommentedPostsByUserId(userId, pageable);
+
+            // then
+            assertThat(result.getContent()).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("사용자별 게시글 수 조회")
+    class CountByUserIdTest {
+
+        @Test
+        @DisplayName("사용자별 게시글 수 조회 성공")
+        void countByUserId_success() {
+            // given
+            Long userId = 1L;
+
+            given(postRepository.countByUserId(userId))
+                    .willReturn(5L);
+
+            // when
+            long result = postService.countByUserId(userId);
+
+            // then
+            assertThat(result).isEqualTo(5L);
         }
     }
 
