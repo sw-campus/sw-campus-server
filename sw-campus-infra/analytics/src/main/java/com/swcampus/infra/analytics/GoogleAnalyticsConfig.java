@@ -17,7 +17,7 @@ import java.io.InputStream;
  * Google Analytics Data API 클라이언트 설정
  */
 @Configuration
-@ConditionalOnProperty(name = "google.analytics.credentials-path")
+@ConditionalOnProperty(name = "google.analytics.enabled", havingValue = "true", matchIfMissing = false)
 public class GoogleAnalyticsConfig {
 
     private final ResourceLoader resourceLoader;
